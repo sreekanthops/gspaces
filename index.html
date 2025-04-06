@@ -386,7 +386,7 @@
 	</section>
 
 	<!-- Down Arrow -->
-	<div style="width: 100%; display: flex; justify-content: center; position: relative; margin-top: -100px; margin-bottom: 50px;">
+	<div class="down-arrow-container" style="width: 100%; display: flex; justify-content: center; position: relative; margin-top: -100px; margin-bottom: 50px;">
 		<a href="#about" style="width: 50px; height: 50px; background: #000; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-decoration: none; animation: bounce 2s infinite;">
 			<i class="fa fa-angle-down" style="color: #fff; font-size: 24px;"></i>
 		</a>
@@ -402,6 +402,37 @@
 			}
 			60% {
 				transform: translateY(-10px);
+			}
+		}
+
+		@media (max-width: 768px) {
+			.item-slick1 {
+				flex-direction: column !important;
+				min-height: auto !important;
+			}
+			
+			.item-slick1 > div:first-child {
+				padding: 30px 20px !important;
+				order: 2;
+			}
+			
+			.item-slick1 > div:last-child {
+				height: 300px !important;
+				order: 1;
+			}
+			
+			.item-slick1 h2 {
+				font-size: 48px !important;
+				margin: 20px 0 15px 0 !important;
+			}
+			
+			.item-slick1 p {
+				margin-bottom: 30px !important;
+			}
+
+			/* Hide down arrow on mobile */
+			.down-arrow-container {
+				display: none !important;
 			}
 		}
 	</style>
@@ -1203,34 +1234,6 @@
 <!--===============================================================================================-->
 	<script src="js/main.js"></script>
 	<script src="js/products.js"></script>
-
-	<style>
-		@media (max-width: 768px) {
-			.item-slick1 {
-				flex-direction: column !important;
-				min-height: auto !important;
-			}
-			
-			.item-slick1 > div:first-child {
-				padding: 30px 20px !important;
-				order: 2;
-			}
-			
-			.item-slick1 > div:last-child {
-				height: 300px !important;
-				order: 1;
-			}
-			
-			.item-slick1 h2 {
-				font-size: 48px !important;
-				margin: 20px 0 15px 0 !important;
-			}
-			
-			.item-slick1 p {
-				margin-bottom: 30px !important;
-			}
-		}
-	</style>
 
 </body>
 </html>

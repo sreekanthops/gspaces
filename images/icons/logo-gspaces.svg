@@ -36,12 +36,12 @@
     </svg>
     
     <!-- Main text -->
-    <text x="54" y="34" font-family="Montserrat, sans-serif" font-size="32" font-weight="600" letter-spacing="-0.5px" fill="url(#logoGradient)">
+    <text x="51" y="34" font-family="Montserrat, sans-serif" font-size="32" font-weight="600" letter-spacing="-0.5px" fill="url(#logoGradient)">
         gspaces
     </text>
     
     <!-- .in text -->
-    <text x="174" y="34" font-family="Inter, sans-serif" font-size="22" font-weight="500" fill="url(#logoGradient)">
+    <text x="175" y="34" font-family="Inter, sans-serif" font-size="22" font-weight="500" fill="url(#logoGradient)">
         .in
     </text>
 </svg>

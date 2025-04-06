@@ -1,0 +1,393 @@
+{
+  "categories": [
+    {
+      "id": "premium",
+      "name": "Premium",
+      "description": "High-end, premium quality products"
+    },
+    {
+      "id": "classic",
+      "name": "Classic",
+      "description": "Timeless, traditional designs"
+    },
+    {
+      "id": "dark",
+      "name": "Dark",
+      "description": "Dark-themed products"
+    },
+    {
+      "id": "bright",
+      "name": "Bright",
+      "description": "Light and bright colored products"
+    },
+    {
+      "id": "wood",
+      "name": "Wood",
+      "description": "Wooden products"
+    }
+  ],
+  "products": [
+    {
+      "id": "premium-desk",
+      "name": "Premium Height Adjustable Desk",
+      "shortDescription": "Elegant and functional height-adjustable desk",
+      "longDescription": "A premium height-adjustable desk that combines style and functionality. Perfect for modern workspaces.",
+      "price": 24999,
+      "category": "premium",
+      "tags": ["featured", "holder"],
+      "images": [
+        {
+          "path": "images/product-detail-01.jpg",
+          "isMain": true
+        },
+        {
+          "path": "images/product-detail-02.jpg",
+          "isMain": false
+        },
+        {
+          "path": "images/product-detail-03.jpg",
+          "isMain": false
+        }
+      ],
+      "features": [
+        "Electric height adjustment",
+        "Spacious work surface",
+        "Premium materials",
+        "Cable management system"
+      ],
+      "specifications": {
+        "Material": "High-quality wood and metal",
+        "Dimensions": "120cm x 60cm x 72-120cm",
+        "Weight Capacity": "100kg",
+        "Color": "Natural wood finish"
+      },
+      "includedItems": [
+        "Desk frame",
+        "Table top",
+        "Cable management tray",
+        "Assembly tools"
+      ]
+    },
+    {
+      "id": "classic-workspace",
+      "name": "Classic WorkSpace Pro",
+      "shortDescription": "Traditional workspace with modern features",
+      "longDescription": "A classic workspace solution that combines traditional design with modern functionality.",
+      "price": 18999,
+      "category": "classic",
+      "tags": ["featured", "holder"],
+      "images": [
+        {
+          "path": "images/product-detail-02.jpg",
+          "isMain": true
+        },
+        {
+          "path": "images/product-detail-01.jpg",
+          "isMain": false
+        },
+        {
+          "path": "images/product-detail-03.jpg",
+          "isMain": false
+        }
+      ],
+      "features": [
+        "Classic design",
+        "Ample storage space",
+        "Durable construction",
+        "Easy assembly"
+      ],
+      "specifications": {
+        "Material": "Solid wood",
+        "Dimensions": "140cm x 70cm x 75cm",
+        "Weight Capacity": "80kg",
+        "Color": "Classic brown"
+      },
+      "includedItems": [
+        "Main desk unit",
+        "Storage drawers",
+        "Assembly instructions",
+        "Hardware kit"
+      ]
+    },
+    {
+      "id": "dark-edition",
+      "name": "Dark Edition Plus",
+      "shortDescription": "Sleek dark-themed workspace",
+      "longDescription": "A modern workspace with a dark, sophisticated theme perfect for contemporary offices.",
+      "price": 21999,
+      "category": "dark",
+      "tags": ["featured", "holder"],
+      "images": [
+        {
+          "path": "images/product-detail-03.jpg",
+          "isMain": true
+        },
+        {
+          "path": "images/product-detail-01.jpg",
+          "isMain": false
+        },
+        {
+          "path": "images/product-detail-02.jpg",
+          "isMain": false
+        }
+      ],
+      "features": [
+        "Dark finish",
+        "Modern design",
+        "Built-in power outlets",
+        "Cable management"
+      ],
+      "specifications": {
+        "Material": "Engineered wood with metal accents",
+        "Dimensions": "130cm x 65cm x 75cm",
+        "Weight Capacity": "90kg",
+        "Color": "Dark walnut"
+      },
+      "includedItems": [
+        "Desk unit",
+        "Power strip",
+        "Cable clips",
+        "Assembly tools"
+      ]
+    },
+    {
+      "id": "bright-space",
+      "name": "Bright Space Collection",
+      "shortDescription": "Light and airy workspace solution",
+      "longDescription": "A bright and modern workspace designed to create an uplifting work environment.",
+      "price": 17999,
+      "category": "bright",
+      "tags": ["holder"],
+      "images": [
+        {
+          "path": "images/product-detail-01.jpg",
+          "isMain": true
+        },
+        {
+          "path": "images/product-detail-02.jpg",
+          "isMain": false
+        },
+        {
+          "path": "images/product-detail-03.jpg",
+          "isMain": false
+        }
+      ],
+      "features": [
+        "Light color scheme",
+        "Modern minimalist design",
+        "Easy to clean surface",
+        "Space-saving design"
+      ],
+      "specifications": {
+        "Material": "High-quality laminate",
+        "Dimensions": "110cm x 60cm x 75cm",
+        "Weight Capacity": "70kg",
+        "Color": "White oak"
+      },
+      "includedItems": [
+        "Desk unit",
+        "Assembly hardware",
+        "Care instructions"
+      ]
+    },
+    {
+      "id": "wood-collection",
+      "name": "Wood Collection Pro",
+      "shortDescription": "Natural wood workspace",
+      "longDescription": "A beautiful workspace made from premium natural wood, perfect for traditional and modern settings.",
+      "price": 22999,
+      "category": "wood",
+      "tags": ["holder"],
+      "images": [
+        {
+          "path": "images/product-detail-02.jpg",
+          "isMain": true
+        },
+        {
+          "path": "images/product-detail-01.jpg",
+          "isMain": false
+        },
+        {
+          "path": "images/product-detail-03.jpg",
+          "isMain": false
+        }
+      ],
+      "features": [
+        "Natural wood finish",
+        "Handcrafted details",
+        "Durable construction",
+        "Classic design"
+      ],
+      "specifications": {
+        "Material": "Solid oak wood",
+        "Dimensions": "125cm x 65cm x 75cm",
+        "Weight Capacity": "85kg",
+        "Color": "Natural oak"
+      },
+      "includedItems": [
+        "Desk unit",
+        "Wood care kit",
+        "Assembly guide"
+      ]
+    },
+    {
+      "id": "premium-plant",
+      "name": "Premium Office Plant",
+      "shortDescription": "Elegant indoor plant for office spaces",
+      "longDescription": "A beautiful indoor plant that adds life and freshness to any workspace.",
+      "price": 2999,
+      "category": "premium",
+      "tags": ["plant"],
+      "images": [
+        {
+          "path": "images/product-detail-03.jpg",
+          "isMain": true
+        },
+        {
+          "path": "images/product-detail-01.jpg",
+          "isMain": false
+        },
+        {
+          "path": "images/product-detail-02.jpg",
+          "isMain": false
+        }
+      ],
+      "features": [
+        "Low maintenance",
+        "Air purifying",
+        "Premium ceramic pot",
+        "Easy to care for"
+      ],
+      "specifications": {
+        "Type": "Indoor plant",
+        "Height": "30-40cm",
+        "Pot Size": "20cm diameter",
+        "Light Requirements": "Medium to low"
+      },
+      "includedItems": [
+        "Plant",
+        "Ceramic pot",
+        "Care instructions"
+      ]
+    },
+    {
+      "id": "wall-decor",
+      "name": "Modern Wall Decor",
+      "shortDescription": "Contemporary wall decoration",
+      "longDescription": "A stylish wall decor piece that adds character to any workspace.",
+      "price": 4999,
+      "category": "bright",
+      "tags": ["wall"],
+      "images": [
+        {
+          "path": "images/product-detail-01.jpg",
+          "isMain": true
+        },
+        {
+          "path": "images/product-detail-02.jpg",
+          "isMain": false
+        },
+        {
+          "path": "images/product-detail-03.jpg",
+          "isMain": false
+        }
+      ],
+      "features": [
+        "Modern design",
+        "Easy to install",
+        "Durable materials",
+        "Versatile placement"
+      ],
+      "specifications": {
+        "Material": "Metal and wood",
+        "Dimensions": "60cm x 40cm",
+        "Weight": "2kg",
+        "Color": "Silver and wood"
+      },
+      "includedItems": [
+        "Wall decor piece",
+        "Mounting hardware",
+        "Installation guide"
+      ]
+    },
+    {
+      "id": "desk-lamp",
+      "name": "Premium Desk Lamp",
+      "shortDescription": "Modern LED desk lamp",
+      "longDescription": "A sleek and functional LED desk lamp perfect for any workspace.",
+      "price": 3999,
+      "category": "premium",
+      "tags": ["lamp"],
+      "images": [
+        {
+          "path": "images/product-detail-02.jpg",
+          "isMain": true
+        },
+        {
+          "path": "images/product-detail-01.jpg",
+          "isMain": false
+        },
+        {
+          "path": "images/product-detail-03.jpg",
+          "isMain": false
+        }
+      ],
+      "features": [
+        "LED lighting",
+        "Adjustable brightness",
+        "Energy efficient",
+        "Modern design"
+      ],
+      "specifications": {
+        "Type": "LED desk lamp",
+        "Power": "5W",
+        "Color Temperature": "3000K-6000K",
+        "Material": "Metal and plastic"
+      },
+      "includedItems": [
+        "Lamp unit",
+        "Power adapter",
+        "User manual"
+      ]
+    },
+    {
+      "id": "desk-mat",
+      "name": "Premium Desk Mat",
+      "shortDescription": "Large desk mat for comfort",
+      "longDescription": "A premium desk mat that provides comfort and protection for your workspace.",
+      "price": 1999,
+      "category": "premium",
+      "tags": ["mat"],
+      "images": [
+        {
+          "path": "images/product-detail-03.jpg",
+          "isMain": true
+        },
+        {
+          "path": "images/product-detail-01.jpg",
+          "isMain": false
+        },
+        {
+          "path": "images/product-detail-02.jpg",
+          "isMain": false
+        }
+      ],
+      "features": [
+        "Premium materials",
+        "Non-slip base",
+        "Easy to clean",
+        "Comfortable surface"
+      ],
+      "specifications": {
+        "Material": "Premium PU leather",
+        "Dimensions": "80cm x 40cm",
+        "Thickness": "3mm",
+        "Color": "Black"
+      },
+      "includedItems": [
+        "Desk mat",
+        "Care instructions"
+      ]
+    }
+  ]
+} 

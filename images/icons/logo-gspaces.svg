@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="200" height="50" viewBox="0 0 200 50" version="1.1" xmlns="http://www.w3.org/2000/svg">
+    <!-- Import Google Fonts -->
+    <defs>
+        <style type="text/css">
+            @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600&amp;family=Inter:wght@400;500&amp;display=swap');
+        </style>
+        <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" style="stop-color:#2C3E50;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#3498DB;stop-opacity:1" />
+        </linearGradient>
+    </defs>
+    
+    <!-- Main text -->
+    <text x="10" y="35" font-family="Montserrat, sans-serif" font-size="32" font-weight="600" letter-spacing="-0.5px" fill="url(#logoGradient)">
+        gspaces
+    </text>
+    
+    <!-- .in text -->
+    <text x="142" y="35" font-family="Inter, sans-serif" font-size="22" font-weight="500" fill="#2C3E50">
+        .in
+    </text>
+    
+    <!-- Geometric element -->
+    <path d="M 165 15 L 175 15 L 175 25 L 165 25 Z" fill="url(#logoGradient)" opacity="0.8">
+        <animate attributeName="opacity" values="0.8;0.4;0.8" dur="3s" repeatCount="indefinite" />
+    </path>
+</svg> 

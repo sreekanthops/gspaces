@@ -639,6 +639,34 @@ Input, textarea : 14px/1.6 '', Arial, sans-serif;
 /*---------------------------------------------*/
 .main-menu > li.active-menu > a {
   color: #6c7ae0;
+  text-decoration: none;
+  position: relative;
+}
+
+.main-menu > li.active-menu > a::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 2px;
+  background: #000;
+  bottom: 0;
+  left: 0;
+}
+
+.main-menu-m > li.active-menu > a {
+  color: #000;
+  text-decoration: none;
+  position: relative;
+}
+
+.main-menu-m > li.active-menu > a::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 2px;
+  background: #000;
+  bottom: 0;
+  left: 0;
 }
 
 
@@ -732,15 +760,17 @@ Input, textarea : 14px/1.6 '', Arial, sans-serif;
 .main-menu-m {
   padding-top: 10px;
   padding-bottom: 10px;
-  background-color: #717fe0;
+  background-color: #fff;
 }
 
 .main-menu-m > li > a {
   font-family: Poppins-Medium;
   font-size: 14px;
-  color: white;
-  line-height: 2.8;
+  text-transform: uppercase;
+  color: #000;
+  line-height: 2.857143;
   padding: 8px 20px 8px 20px;
+  display: block;
 }
 
 .main-menu-m > li {
@@ -750,8 +780,7 @@ Input, textarea : 14px/1.6 '', Arial, sans-serif;
 
 .arrow-main-menu-m {
   font-size: 14px;
-  color: #fff;
-
+  color: #000;
   display: -webkit-box;
   display: -webkit-flex;
   display: -moz-box;
@@ -1209,7 +1238,7 @@ Input, textarea : 14px/1.6 '', Arial, sans-serif;
 }
 
 .item-slick1 {
-  height: calc(100vh - 40px);
+  height: calc(92vh - 40px);
   background-size: cover;
   background-repeat: no-repeat;
   background-position: center center;
@@ -2123,18 +2152,18 @@ input.num-product::-webkit-inner-spin-button {
     TEXT TEXT TEXT TEXT TEXT TEXT TEXT TEXT TEXT TEXT TEXT TEXT TEXT
 ==================================================================*/
 .cl0 {color: #fff;}
-.cl1 {color: #717fe0;}
-.cl2 {color: #333;}
-.cl3 {color: #666;}
-.cl4 {color: #999;}
-.cl5 {color: #222;}
-.cl6 {color: #888;}
-.cl7 {color: #b2b2b2;}
-.cl8 {color: #555;}
-.cl9 {color: #aaa;}
-.cl10 {color: #1d1d1d;}
-.cl11 {color: #f9ba48;}
-.cl12 {color: #ccc;}
+.cl1 {color: #000;}  /* Changed from #717fe0 */
+.cl2 {color: #000;}  /* Changed from #333 */
+.cl3 {color: #333;}  /* Changed from #666 */
+.cl4 {color: #666;}  /* Changed from #999 */
+.cl5 {color: #000;}  /* Changed from #222 */
+.cl6 {color: #333;}  /* Changed from #888 */
+.cl7 {color: #666;}  /* Changed from #b2b2b2 */
+.cl8 {color: #000;}  /* Changed from #555 */
+.cl9 {color: #666;}  /* Changed from #aaa */
+.cl10 {color: #000;} /* Changed from #1d1d1d */
+.cl11 {color: #000;} /* Changed from #f9ba48 */
+.cl12 {color: #666;} /* Changed from #ccc */
 
 /*//////////////////////////////////////////////////////////////////
 [ S-Text 0 - 15 ]*/
@@ -2172,7 +2201,7 @@ input.num-product::-webkit-inner-spin-button {
 
 .stext-106 {
   font-family: Poppins-Regular;
-  font-size: 15px;
+  font-size: 14px;  /* Slightly reduced from 15px */
   line-height: 1.2;
 }
 
@@ -2641,13 +2670,13 @@ input.num-product::-webkit-inner-spin-button {
 ==================================================================*/
 .bg-none {background-color: transparent;}
 .bg0 {background-color: #fff;}
-.bg1 {background-color: #717fe0;}
-.bg2 {background-color: #e6e6e6;}
-.bg3 {background-color: #222;}
+.bg1 {background-color: #000;} /* Changed from #717fe0 */
+.bg2 {background-color: #f0f0f0;} /* Changed from #e6e6e6 - slightly lighter gray */
+.bg3 {background-color: #000;} /* Changed from #222 */
 .bg5 {background-color: rgba(0,0,0,0.5);}
-.bg6 {background-color: #f2f2f2;}
-.bg7 {background-color: #333;}
-.bg8 {background-color: #f3f3f3;}
+.bg6 {background-color: #f8f8f8;} /* Changed from #f2f2f2 - slightly lighter gray */
+.bg7 {background-color: #000;} /* Changed from #333 */
+.bg8 {background-color: #f5f5f5;} /* Changed from #f3f3f3 - slightly lighter gray */
 .bg9 {background-color: rgba(255,255,255,0.9);}
 
 /*---------------------------------------------*/
@@ -3051,8 +3080,8 @@ input.num-product::-webkit-inner-spin-button {
 
 .hov-cl0:hover {color: #fff;}
 .hov-bg0:hover {background-color: #fff;}
-.hov-cl1:hover {color: #717fe0;}
-.hov-bg1:hover {background-color: #717fe0;}
+.hov-cl1:hover {color: #000;} /* Changed from #717fe0 */
+.hov-bg1:hover {background-color: #000;} /* Changed from #717fe0 */
 
 /*---------------------------------------------*/
 .hov-img0 {
@@ -3078,8 +3107,8 @@ input.num-product::-webkit-inner-spin-button {
 
 /*---------------------------------------------*/
 .hov-btn1:hover {
-  border-color: #222;
-  background-color: #222;
+  border-color: #000; /* Changed from #717fe0 */
+  background-color: #000; /* Changed from #717fe0 */
   color: #fff;
 }
 
@@ -3091,13 +3120,13 @@ input.num-product::-webkit-inner-spin-button {
 .hov-btn2:hover {
   border-color: #fff;
   background-color: #fff;
-  color: #717fe0;
+  color: #000; /* Changed from #717fe0 */
 }
 
 /*---------------------------------------------*/
 .hov-btn3:hover {
-  border-color: #717fe0;
-  background-color: #717fe0;
+  border-color: #000; /* Changed from #717fe0 */
+  background-color: #000; /* Changed from #717fe0 */
   color: #fff;
 }
 
@@ -3329,4 +3358,352 @@ input.num-product::-webkit-inner-spin-button {
     padding: 20px;
   }
 
+}
+
+/* Links and Interactive Elements */
+.main-menu > li > a:hover {
+    color: #000; /* Changed from #717fe0 */
+}
+
+.main-menu > li.active-menu > a {
+    color: #000; /* Changed from #717fe0 */
+}
+
+.sub-menu li:hover {
+    background-color: #f5f5f5;
+}
+
+.sub-menu > li:hover > a {
+    color: #000; /* Changed from #717fe0 */
+}
+
+/* Search and Cart */
+.icon-header-item:hover {
+    color: #000; /* Changed from #717fe0 */
+}
+
+.wrap-search-header button:hover {
+    color: #000; /* Changed from #717fe0 */
+}
+
+/* Product Items */
+.block2-btn {
+    background-color: #fff;
+    color: #000; /* Changed from #717fe0 */
+}
+
+.block2-btn:hover {
+    background-color: #000;
+    color: #fff;
+}
+
+/* Filter and Sort */
+.filter-link:hover {
+    color: #000; /* Changed from #717fe0 */
+}
+
+.filter-link-active {
+    color: #000; /* Changed from #717fe0 */
+}
+
+/* Buttons and Forms */
+.btn-num-product-up:hover,
+.btn-num-product-down:hover {
+    background-color: #000; /* Changed from #717fe0 */
+    color: #fff;
+}
+
+/* Modal and Overlay */
+.js-hide-modal-search:hover {
+    color: #000; /* Changed from #717fe0 */
+}
+
+/* Newsletter and Footer */
+.btn-addwish-b2:hover .icon-heart2 {
+    opacity: 1;
+    color: #000; /* Changed from #717fe0 */
+}
+
+/* Form Elements */
+input:focus::placeholder {
+    color: #000;
+}
+
+/* Pagination */
+.active-pagination1 {
+    background-color: #000; /* Changed from #717fe0 */
+    color: #fff;
+}
+
+.how-pagination1:hover {
+    background-color: #000; /* Changed from #717fe0 */
+    color: #fff;
+}
+
+/* Product Quick View */
+.js-addcart-detail:hover {
+    background-color: #000; /* Changed from #717fe0 */
+    color: #fff;
+}
+
+/* Price and Sale Tags */
+.price-sale {
+    color: #000; /* Changed from red/special colors */
+}
+
+/* Newsletter Form */
+.wrap-input1 .focus-input1 {
+    background-color: #000; /* Changed from #717fe0 */
+}
+
+/* Footer Links */
+.footer-link:hover {
+    color: #000; /* Changed from #717fe0 */
+}
+
+/* Social Media Icons */
+.social-icon:hover {
+    color: #000; /* Changed from #717fe0 */
+}
+
+/* Back to Top Button */
+.btn-back-to-top {
+    background-color: #000; /* Changed from #717fe0 */
+}
+
+.btn-back-to-top:hover {
+    background-color: #333;
+}
+
+/* Selection Color */
+::selection {
+    background-color: #000;
+    color: #fff;
+}
+
+::-moz-selection {
+    background-color: #000;
+    color: #fff;
+}
+
+/* Best Seller Cards */
+.block1-txt {
+    color: #fff;
+}
+
+.block1-name {
+    color: #fff;
+}
+
+.block1-info {
+    color: #fff;
+}
+
+.block1-txt:hover {
+    background-color: rgba(51, 51, 51, 0.9); /* Dark gray with opacity */
+}
+
+.block1-txt:hover .block1-name,
+.block1-txt:hover .block1-info {
+    color: #fff;
+}
+
+/* Cart and Favorite Icon Notifications */
+.icon-header-noti::after {
+    background-color: #000;
+    color: #fff;
+}
+
+.header-cart-item-info {
+    color: #fff;
+}
+
+/* Update hover effects for consistency */
+.block1-link {
+    color: #fff;
+    background-color: rgba(0, 0, 0, 0.6);
+}
+
+.block1-txt:hover .block1-link {
+    color: #fff;
+    background-color: #333;
+}
+
+/* Notification Badges */
+.icon-header-noti::after {
+    background-color: #000;
+    color: #fff;
+    border: 1px solid #fff;
+}
+
+/* Best Seller Card Overlay */
+.block1-txt {
+    background-color: rgba(0, 0, 0, 0.5);
+    transition: all 0.3s;
+}
+
+.block1-txt:hover {
+    background-color: rgba(51, 51, 51, 0.95);
+}
+
+/* Shop Now Button */
+.block1-link {
+    color: #fff;
+    background-color: rgba(0, 0, 0, 0.8);
+    transition: all 0.3s;
+}
+
+.block1-txt:hover .block1-link {
+    background-color: #333;
+    color: #fff;
+}
+
+/* Mobile Header Notifications */
+.wrap-header-mobile .icon-header-noti::after {
+    background-color: #000;
+    color: #fff;
+    border: 1px solid #fff;
+}
+
+/* Filter and Search Buttons */
+.flex-c-m.stext-106.cl6.size-104.bor4.pointer.hov-btn3.trans-04.m-r-8.m-tb-4,
+.flex-c-m.stext-106.cl6.size-105.bor4.pointer.hov-btn3.trans-04.m-tb-4 {
+    border: 1px solid #ccc;
+    background-color: #fff;
+    color: #333;
+    transition: all 0.3s;
+}
+
+.flex-c-m.stext-106.cl6.size-104.bor4.pointer.hov-btn3.trans-04.m-r-8.m-tb-4:hover,
+.flex-c-m.stext-106.cl6.size-105.bor4.pointer.hov-btn3.trans-04.m-tb-4:hover {
+    background-color: #000;
+    color: #fff;
+    border-color: #000;
+}
+
+/* Filter and Search Icons */
+.icon-filter.cl2,
+.icon-search.cl2 {
+    color: #333;
+    transition: all 0.3s;
+}
+
+.flex-c-m.stext-106.cl6.size-104.bor4.pointer.hov-btn3.trans-04.m-r-8.m-tb-4:hover .icon-filter.cl2,
+.flex-c-m.stext-106.cl6.size-105.bor4.pointer.hov-btn3.trans-04.m-tb-4:hover .icon-search.cl2 {
+    color: #fff;
+}
+
+/* Close Icons */
+.icon-close-filter.cl2,
+.icon-close-search.cl2 {
+    color: #333;
+    transition: all 0.3s;
+}
+
+.flex-c-m.stext-106.cl6.size-104.bor4.pointer.hov-btn3.trans-04.m-r-8.m-tb-4:hover .icon-close-filter.cl2,
+.flex-c-m.stext-106.cl6.size-105.bor4.pointer.hov-btn3.trans-04.m-tb-4:hover .icon-close-search.cl2 {
+    color: #fff;
+}
+
+/* Active State */
+.show-filter .icon-filter,
+.show-search .icon-search {
+    color: #fff;
+}
+
+.show-filter .flex-c-m.stext-106.cl6.size-104.bor4.pointer.hov-btn3.trans-04.m-r-8.m-tb-4,
+.show-search .flex-c-m.stext-106.cl6.size-105.bor4.pointer.hov-btn3.trans-04.m-tb-4 {
+    background-color: #000;
+    color: #fff;
+    border-color: #000;
+}
+
+/* Override default hover styles */
+.hov-btn3:hover {
+    background-color: #000 !important;
+    border-color: #000 !important;
+    color: #fff !important;
+}
+
+/* Filter and Search Button Container */
+.filter-tope-group button {
+    transition: all 0.3s;
+}
+
+.filter-tope-group button:hover {
+    background-color: #000;
+    color: #fff;
+}
+
+/* Fix for icon alignment */
+.icon-filter,
+.icon-search,
+.icon-close-filter,
+.icon-close-search {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 5px;
+}
+
+/* Active button states */
+.how-active1,
+.how-active1:hover {
+    background-color: #000;
+    color: #fff;
+    border-color: #000;
+}
+
+/* Product Category Buttons */
+.filter-tope-group button {
+    padding: 6px 15px;
+    border-radius: 23px;
+    background-color: #f8f9fa;
+    transition: all 0.3s;
+    margin-right: 10px;  /* Reduced from 32px */
+    margin-bottom: 5px;  /* Reduced from default */
+}
+
+.filter-tope-group button:hover {
+    background-color: #e9ecef;
+    color: #000;
+}
+
+.how-active1 {
+    background-color: #000 !important;
+    color: #fff !important;
+}
+
+.how-active1:hover {
+    background-color: #333 !important;
+    color: #fff !important;
+}
+
+/* Hide Filter and Search Options */
+.flex-w.flex-c-m.m-tb-10 {
+    display: none !important;
+}
+
+.panel-filter,
+.panel-search,
+.dis-none.panel-search.w-full.p-t-10.p-b-15,
+.dis-none.panel-filter.w-full.p-t-10 {
+    display: none !important;
+}
+
+.icon-filter,
+.icon-search,
+.icon-close-filter,
+.icon-close-search {
+    display: none !important;
+}
+
+.js-show-filter,
+.js-show-search {
+    display: none !important;
+}
+
+/* Remove spacing that was reserved for filter/search */
+.flex-w.flex-sb-m.p-b-52 {
+    padding-bottom: 20px !important;
 }

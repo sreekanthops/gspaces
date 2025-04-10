@@ -369,12 +369,30 @@ Input, textarea : 14px/1.6 '', Arial, sans-serif;
 .main-menu > li > a {
   font-family: Poppins-Medium;
   font-size: 14px;
-  color: #333;
+  color: #6c7ae0; /* Updated to a premium color */
   padding: 5px 0px;
   transition: all 0.4s;
   -webkit-transition: all 0.4s;
   -o-transition: all 0.4s;
   -moz-transition: all 0.4s;
+}
+
+.sub-menu a {
+  font-family: Poppins-Regular;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #555; /* Updated to a premium color */
+  display: block;
+  padding: 8px 20px; 
+  width: 100%;
+  transition: all 0.4s;
+  -webkit-transition: all 0.4s;
+  -o-transition: all 0.4s;
+  -moz-transition: all 0.4s;
+}
+
+.sub-menu a:hover {
+  color: #6c7ae0; /* Updated hover color for premium look */
 }
 
 .header-v3 .main-menu > li > a {

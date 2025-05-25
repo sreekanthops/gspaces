@@ -29,10 +29,10 @@
   "products": [
     {
       "id": "premium-desk",
-      "name": "Premium Height Adjustable Desk",
+      "name": "Premium Bright Desk",
       "shortDescription": "Elegant and functional height-adjustable desk",
       "longDescription": "A premium height-adjustable desk that combines style and functionality. Perfect for modern workspaces.",
-      "price": 24999,
+      "price": 34999,
       "category": "premium",
       "tags": ["featured", "holder"],
       "images": [
@@ -73,7 +73,7 @@
       "name": "Classic WorkSpace Pro",
       "shortDescription": "Traditional workspace with modern features",
       "longDescription": "A classic workspace solution that combines traditional design with modern functionality.",
-      "price": 18999,
+      "price": 39999,
       "category": "classic",
       "tags": ["featured", "holder"],
       "images": [
@@ -114,7 +114,7 @@
       "name": "Dark Edition Plus",
       "shortDescription": "Sleek dark-themed workspace",
       "longDescription": "A modern workspace with a dark, sophisticated theme perfect for contemporary offices.",
-      "price": 21999,
+      "price": 44999,
       "category": "dark",
       "tags": ["featured", "holder"],
       "images": [
@@ -152,10 +152,10 @@
     },
     {
       "id": "premium-desk-duplicate",
-      "name": "Premium Height Adjustable Desk",
+      "name": "Premium Bright Desk",
       "shortDescription": "Elegant and functional height-adjustable desk",
       "longDescription": "A premium height-adjustable desk that combines style and functionality. Perfect for modern workspaces.",
-      "price": 24999,
+      "price": 34999,
       "category": "premium",
       "tags": ["featured", "holder"],
       "images": [
@@ -188,334 +188,6 @@
         "Desk frame",
         "Table top",
         "Cable management tray",
-        "Assembly tools"
-      ]
-    },
-    {
-      "id": "classic-workspace-duplicate",
-      "name": "Classic WorkSpace Pro",
-      "shortDescription": "Traditional workspace with modern features",
-      "longDescription": "A classic workspace solution that combines traditional design with modern functionality.",
-      "price": 18999,
-      "category": "classic",
-      "tags": ["featured", "holder"],
-      "images": [
-        {
-          "path": "images/product-detail-02.jpg",
-          "isMain": true
-        },
-        {
-          "path": "images/product-detail-01.jpg",
-          "isMain": false
-        },
-        {
-          "path": "images/product-detail-03.jpg",
-          "isMain": false
-        }
-      ],
-      "features": [
-        "Classic design",
-        "Ample storage space",
-        "Durable construction",
-        "Easy assembly"
-      ],
-      "specifications": {
-        "Material": "Solid wood",
-        "Dimensions": "140cm x 70cm x 75cm",
-        "Weight Capacity": "80kg",
-        "Color": "Classic brown"
-      },
-      "includedItems": [
-        "Main desk unit",
-        "Storage drawers",
-        "Assembly instructions",
-        "Hardware kit"
-      ]
-    },
-    {
-      "id": "dark-edition",
-      "name": "Dark Edition Plus",
-      "shortDescription": "Sleek dark-themed workspace",
-      "longDescription": "A modern workspace with a dark, sophisticated theme perfect for contemporary offices.",
-      "price": 21999,
-      "category": "dark",
-      "tags": ["featured", "holder"],
-      "images": [
-        {
-          "path": "images/product-detail-03.jpg",
-          "isMain": true
-        },
-        {
-          "path": "images/product-detail-01.jpg",
-          "isMain": false
-        },
-        {
-          "path": "images/product-detail-02.jpg",
-          "isMain": false
-        }
-      ],
-      "features": [
-        "Dark finish",
-        "Modern design",
-        "Built-in power outlets",
-        "Cable management"
-      ],
-      "specifications": {
-        "Material": "Engineered wood with metal accents",
-        "Dimensions": "130cm x 65cm x 75cm",
-        "Weight Capacity": "90kg",
-        "Color": "Dark walnut"
-      },
-      "includedItems": [
-        "Desk unit",
-        "Power strip",
-        "Cable clips",
-        "Assembly tools"
-      ]
-    },
-    {
-      "id": "premium-desk-duplicate",
-      "name": "Premium Height Adjustable Desk",
-      "shortDescription": "Elegant and functional height-adjustable desk",
-      "longDescription": "A premium height-adjustable desk that combines style and functionality. Perfect for modern workspaces.",
-      "price": 24999,
-      "category": "premium",
-      "tags": ["featured", "holder"],
-      "images": [
-        {
-          "path": "images/product-detail-01.jpg",
-          "isMain": true
-        },
-        {
-          "path": "images/product-detail-02.jpg",
-          "isMain": false
-        },
-        {
-          "path": "images/product-detail-03.jpg",
-          "isMain": false
-        }
-      ],
-      "features": [
-        "Electric height adjustment",
-        "Spacious work surface",
-        "Premium materials",
-        "Cable management system"
-      ],
-      "specifications": {
-        "Material": "High-quality wood and metal",
-        "Dimensions": "120cm x 60cm x 72-120cm",
-        "Weight Capacity": "100kg",
-        "Color": "Natural wood finish"
-      },
-      "includedItems": [
-        "Desk frame",
-        "Table top",
-        "Cable management tray",
-        "Assembly tools"
-      ]
-    },
-    {
-      "id": "classic-workspace-duplicate",
-      "name": "Classic WorkSpace Pro",
-      "shortDescription": "Traditional workspace with modern features",
-      "longDescription": "A classic workspace solution that combines traditional design with modern functionality.",
-      "price": 18999,
-      "category": "classic",
-      "tags": ["featured", "holder"],
-      "images": [
-        {
-          "path": "images/product-detail-02.jpg",
-          "isMain": true
-        },
-        {
-          "path": "images/product-detail-01.jpg",
-          "isMain": false
-        },
-        {
-          "path": "images/product-detail-03.jpg",
-          "isMain": false
-        }
-      ],
-      "features": [
-        "Classic design",
-        "Ample storage space",
-        "Durable construction",
-        "Easy assembly"
-      ],
-      "specifications": {
-        "Material": "Solid wood",
-        "Dimensions": "140cm x 70cm x 75cm",
-        "Weight Capacity": "80kg",
-        "Color": "Classic brown"
-      },
-      "includedItems": [
-        "Main desk unit",
-        "Storage drawers",
-        "Assembly instructions",
-        "Hardware kit"
-      ]
-    },
-    {
-      "id": "dark-edition",
-      "name": "Dark Edition Plus",
-      "shortDescription": "Sleek dark-themed workspace",
-      "longDescription": "A modern workspace with a dark, sophisticated theme perfect for contemporary offices.",
-      "price": 21999,
-      "category": "dark",
-      "tags": ["featured", "holder"],
-      "images": [
-        {
-          "path": "images/product-detail-03.jpg",
-          "isMain": true
-        },
-        {
-          "path": "images/product-detail-01.jpg",
-          "isMain": false
-        },
-        {
-          "path": "images/product-detail-02.jpg",
-          "isMain": false
-        }
-      ],
-      "features": [
-        "Dark finish",
-        "Modern design",
-        "Built-in power outlets",
-        "Cable management"
-      ],
-      "specifications": {
-        "Material": "Engineered wood with metal accents",
-        "Dimensions": "130cm x 65cm x 75cm",
-        "Weight Capacity": "90kg",
-        "Color": "Dark walnut"
-      },
-      "includedItems": [
-        "Desk unit",
-        "Power strip",
-        "Cable clips",
-        "Assembly tools"
-      ]
-    },
-    {
-      "id": "premium-desk-duplicate",
-      "name": "Premium Height Adjustable Desk",
-      "shortDescription": "Elegant and functional height-adjustable desk",
-      "longDescription": "A premium height-adjustable desk that combines style and functionality. Perfect for modern workspaces.",
-      "price": 24999,
-      "category": "premium",
-      "tags": ["featured", "holder"],
-      "images": [
-        {
-          "path": "images/product-detail-01.jpg",
-          "isMain": true
-        },
-        {
-          "path": "images/product-detail-02.jpg",
-          "isMain": false
-        },
-        {
-          "path": "images/product-detail-03.jpg",
-          "isMain": false
-        }
-      ],
-      "features": [
-        "Electric height adjustment",
-        "Spacious work surface",
-        "Premium materials",
-        "Cable management system"
-      ],
-      "specifications": {
-        "Material": "High-quality wood and metal",
-        "Dimensions": "120cm x 60cm x 72-120cm",
-        "Weight Capacity": "100kg",
-        "Color": "Natural wood finish"
-      },
-      "includedItems": [
-        "Desk frame",
-        "Table top",
-        "Cable management tray",
-        "Assembly tools"
-      ]
-    },
-    {
-      "id": "classic-workspace-duplicate",
-      "name": "Classic WorkSpace Pro",
-      "shortDescription": "Traditional workspace with modern features",
-      "longDescription": "A classic workspace solution that combines traditional design with modern functionality.",
-      "price": 18999,
-      "category": "classic",
-      "tags": ["featured", "holder"],
-      "images": [
-        {
-          "path": "images/product-detail-02.jpg",
-          "isMain": true
-        },
-        {
-          "path": "images/product-detail-01.jpg",
-          "isMain": false
-        },
-        {
-          "path": "images/product-detail-03.jpg",
-          "isMain": false
-        }
-      ],
-      "features": [
-        "Classic design",
-        "Ample storage space",
-        "Durable construction",
-        "Easy assembly"
-      ],
-      "specifications": {
-        "Material": "Solid wood",
-        "Dimensions": "140cm x 70cm x 75cm",
-        "Weight Capacity": "80kg",
-        "Color": "Classic brown"
-      },
-      "includedItems": [
-        "Main desk unit",
-        "Storage drawers",
-        "Assembly instructions",
-        "Hardware kit"
-      ]
-    },
-    {
-      "id": "dark-edition-duplicate",
-      "name": "Dark Edition Plus",
-      "shortDescription": "Sleek dark-themed workspace",
-      "longDescription": "A modern workspace with a dark, sophisticated theme perfect for contemporary offices.",
-      "price": 21999,
-      "category": "dark",
-      "tags": ["featured", "holder"],
-      "images": [
-        {
-          "path": "images/product-detail-03.jpg",
-          "isMain": true
-        },
-        {
-          "path": "images/product-detail-01.jpg",
-          "isMain": false
-        },
-        {
-          "path": "images/product-detail-02.jpg",
-          "isMain": false
-        }
-      ],
-      "features": [
-        "Dark finish",
-        "Modern design",
-        "Built-in power outlets",
-        "Cable management"
-      ],
-      "specifications": {
-        "Material": "Engineered wood with metal accents",
-        "Dimensions": "130cm x 65cm x 75cm",
-        "Weight Capacity": "90kg",
-        "Color": "Dark walnut"
-      },
-      "includedItems": [
-        "Desk unit",
-        "Power strip",
-        "Cable clips",
         "Assembly tools"
       ]
     }

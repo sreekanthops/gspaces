@@ -1,1710 +1,1307 @@
-/* Fonts */
-:root {
-  --default-font: "Mozilla Text", system-ui, -apple-system, "Mozilla Text", Roboto, "Mozilla Text";
-  --heading-font: "Mozilla Text", sans-serif;
-  --nav-font: "Mozilla Text", sans-serif;
-}
-/* Global Colors - The following color variables are used throughout the website. Updating them here will change the color scheme of the entire website */
-:root { 
-  --background-color: #ffffff; /* Background color for the entire website, including individual sections */
-  --default-color: #444444; /* Default color used for the majority of the text content across the entire website */
-  --heading-color: #273d4e; /* Color for headings, subheadings and title throughout the website */
-  --accent-color: #ff4a17; /* Accent color that represents your brand on the website. It's used for buttons, links, and other elements that need to stand out */
-  --surface-color: #ffffff; /* The surface color is used as a background of boxed elements within sections, such as cards, icon boxes, or other elements that require a visual separation from the global background. */
-  --contrast-color: #ffffff; /* Contrast color for text, ensuring readability against backgrounds of accent, heading, or default colors. */
-}
+import os
+import sys
+import random
+import string
+import psycopg2
+from psycopg2 import Error
+from psycopg2.extras import RealDictCursor # Import RealDictCursor
+from flask_login import login_required, current_user
+from flask import jsonify
+import smtplib
+import requests
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from flask import Flask, render_template_string
+# Flask imports
+from flask import (
+    Flask, render_template, request, redirect, url_for, flash,
+    session, jsonify, make_response, send_from_directory
+)
+from werkzeug.utils import secure_filename
 
-/* Nav Menu Colors - The following color variables are used specifically for the navigation menu. They are separate from the global colors to allow for more customization options */
-:root {
-  --nav-color: #e5eaee;  /* The default color of the main navmenu links */
-  --nav-hover-color: #ff4a17; /* Applied to main navmenu links when they are hovered over or active */
- --nav-mobile-background-color: rgba(21, 34, 43, 0.9);/* Used as the background color for mobile navigation menu */
-  --nav-dropdown-background-color: #ffffff; /* Used as the background color for dropdown items that appear when hovering over primary navigation items */
-  --nav-dropdown-color: #444444; /* Used for navigation links of the dropdown items in the navigation menu. */
-  --nav-dropdown-hover-color: #ff4a17; /* Similar to --nav-hover-color, this color is applied to dropdown navigation links when they are hovered over. */
-}
+# Flask-Login imports
+from flask_login import (
+    LoginManager, login_user, logout_user, login_required, current_user, UserMixin
+)
 
-/* Color Presets - These classes override global colors when applied to any section or element, providing reuse of the sam color scheme. */
-.light-background {
-  --background-color: #f1f4fa;
-  --surface-color: #ffffff;
-}
+# Google OAuth imports
+from google.oauth2 import id_token as google_id_token
+from google.auth.transport import requests as google_requests
+from authlib.integrations.flask_client import OAuth
 
-.dark-background {
-  --background-color: #000910;
-  --default-color: #ffffff;
-  --heading-color: #ffffff;
-  --surface-color: #28323a;
-  --contrast-color: #ffffff;
-}
+# Email imports
+from flask_mail import Mail, Message
 
-/* Smooth scroll */
-:root {
-  scroll-behavior: smooth;
-}
+# Password reset imports
+from itsdangerous import URLSafeTimedSerializer
 
-/*--------------------------------------------------------------
-# General Styling & Shared Classes
---------------------------------------------------------------*/
-body {
-  color: var(--default-color);
-  background-color: var(--background-color);
-  font-family: var(--default-font);
-}
+# Payment gateway imports
+import razorpay
+# Datetime import
+from datetime import datetime
 
-a {
-  color: var(--accent-color);
-  text-decoration: none;
-  transition: 0.3s;
-}
+# --- CONFIGURATION ---
+# Read from environment variables if available; fallback to development defaults.
+# IMPORTANT: In production, NEVER hardcode sensitive information like this.
+# Use environment variables (e.g., FLASK_APP_SECRET_KEY, DB_PASSWORD, RAZORPAY_KEY_ID)
+# or a proper configuration management system.
 
-a:hover {
-  color: color-mix(in srgb, var(--accent-color), transparent 25%);
-  text-decoration: none;
-}
+# Flask App Configuration
+app = Flask(__name__)
+app.config['SECRET_KEY'] = os.getenv('FLASK_APP_SECRET_KEY', 'your_super_secret_fallback_key') # Replace with a strong, random key
+app.config['SESSION_COOKIE_SECURE'] = os.getenv('SESSION_COOKIE_SECURE', 'False').lower() == 'true' # True in production
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  color: var(--heading-color);
-  font-family: var(--heading-font);
-}
+# Mail Configuration
+app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER', 'smtp.gmail.com')
+app.config['MAIL_PORT'] = int(os.getenv('MAIL_PORT', 587))
+app.config['MAIL_USE_TLS'] = os.getenv('MAIL_USE_TLS', 'True').lower() == 'true'
+app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME', 'sri.chityala501@gmail.com') # Your email for sending
+app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD', 'zupd zixc vvzp kptk') # Your app password
+app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_DEFAULT_SENDER', 'sri.chityala501@gmail.com')
 
-/* PHP Email Form Messages
-------------------------------*/
-.php-email-form .error-message {
-  display: none;
-  background: #df1529;
-  color: #ffffff;
-  text-align: left;
-  padding: 15px;
-  margin-bottom: 24px;
-  font-weight: 600;
-}
+mail = Mail(app)
 
-.php-email-form .sent-message {
-  display: none;
-  color: #ffffff;
-  background: #059652;
-  text-align: center;
-  padding: 15px;
-  margin-bottom: 24px;
-  font-weight: 600;
-}
+# Serializer for password reset (uses app.config['SECRET_KEY'])
+s = URLSafeTimedSerializer(app.config['SECRET_KEY'])
 
-.php-email-form .loading {
-  display: none;
-  background: var(--surface-color);
-  text-align: center;
-  padding: 15px;
-  margin-bottom: 24px;
-}
+# Google OAuth Configuration
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "226581903418-3ed1eqsl14qlou4nmk2m9sdf6il1mluu.apps.googleusercontent.com")
+GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "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")
 
-.php-email-form .loading:before {
-  content: "";
-  display: inline-block;
-  border-radius: 50%;
-  width: 24px;
-  height: 24px;
-  margin: 0 10px -6px 0;
-  border: 3px solid var(--accent-color);
-  border-top-color: var(--surface-color);
-  animation: php-email-form-loading 1s linear infinite;
-}
+# Admin Emails (for simple admin check)
+ADMIN_EMAILS = {"sri.chityala501@gmail.com", "srichityala501@gmail.com", "sreekanth.chityala@gspaces.com"} # Replace with actual admin emails
 
-@keyframes php-email-form-loading {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-}
+# Database Configuration
+DB_NAME = os.getenv("DB_NAME", "gspaces")
+DB_USER = os.getenv("DB_USER", "sri")
+DB_PASSWORD = os.getenv("DB_PASSWORD", "gspaces2025")
+DB_HOST = os.getenv("DB_HOST", "localhost")
+DB_PORT = os.getenv("DB_PORT", "5432")
 
-/* Pulsating Play Button
-------------------------------*/
-.pulsating-play-btn {
-  width: 94px;
-  height: 94px;
-  background: radial-gradient(var(--accent-color) 50%, color-mix(in srgb, var(--accent-color), transparent 75%) 52%);
-  border-radius: 50%;
-  display: block;
-  position: relative;
-  overflow: hidden;
-}
+# File Uploads Configuration
+UPLOAD_FOLDER = os.path.join('static', 'img', 'Products')
+os.makedirs(UPLOAD_FOLDER, exist_ok=True) # Ensure directory exists
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-.pulsating-play-btn:before {
-  content: "";
-  position: absolute;
-  width: 120px;
-  height: 120px;
-  animation-delay: 0s;
-  animation: pulsate-play-btn 2s;
-  animation-direction: forwards;
-  animation-iteration-count: infinite;
-  animation-timing-function: steps;
-  opacity: 1;
-  border-radius: 50%;
-  border: 5px solid color-mix(in srgb, var(--accent-color), transparent 30%);
-  top: -15%;
-  left: -15%;
-  background: rgba(198, 16, 0, 0);
-}
+# Razorpay Configuration
+RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID", "rzp_live_R6wg6buSedSnTV") # Test Key ID
+RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET", "xeBC7q5tEirlDg4y4Tc3JEc3") # Test Key Secret
 
-.pulsating-play-btn:after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translateX(-40%) translateY(-50%);
-  width: 0;
-  height: 0;
-  border-top: 10px solid transparent;
-  border-bottom: 10px solid transparent;
-  border-left: 15px solid #fff;
-  z-index: 100;
-  transition: all 400ms cubic-bezier(0.55, 0.055, 0.675, 0.19);
-}
+# Initialize Razorpay client
+razorpay_client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET))
 
-.pulsating-play-btn:hover:before {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translateX(-40%) translateY(-50%);
-  width: 0;
-  height: 0;
-  border: none;
-  border-top: 10px solid transparent;
-  border-bottom: 10px solid transparent;
-  border-left: 15px solid #fff;
-  z-index: 200;
-  animation: none;
-  border-radius: 0;
-}
 
-.pulsating-play-btn:hover:after {
-  border-left: 15px solid var(--accent-color);
-  transform: scale(20);
-}
+# --- FLASK-LOGIN SETUP ---
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login' # The endpoint name for the login page
 
-@keyframes pulsate-play-btn {
-  0% {
-    transform: scale(0.6, 0.6);
-    opacity: 1;
-  }
-  100% {
-    transform: scale(1, 1);
-    opacity: 0;
-  }
-}
-/*--------------------------------------------------------------
-# Global Header
---------------------------------------------------------------*/
-.custom-navbar {
-  background: transparent !important;
-  padding-top: 12px;
-  padding-bottom: 12px;
-  font-family: 'Roboto', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  font-weight: 500;
-  font-size: 1rem; /* Suitable size for menu text */
-}
+# User class for Flask-Login
+class User(UserMixin):
+    def __init__(self, id, email, name, is_admin=False):
+        self.id = id
+        self.email = email
+        self.name = name
+        self.is_admin = is_admin
 
-.custom-navbar .navbar-brand img {
-  height: 100px; /* Increased logo size */
-  width: auto;
-}
+    def get_id(self):
+        return str(self.id)
 
-.custom-navbar .custom-navbar-nav {
-  display: flex;
-  gap: 1.5rem;
-}
+    def __repr__(self):
+        return f"<User {self.id} {self.email}>"
 
-.custom-navbar .custom-navbar-nav li a {
-  font-weight: 500;
-  color: #000 !important;
-  opacity: 0.8;
-  transition: 0.3s ease;
-  position: relative;
-}
 
-.custom-navbar .custom-navbar-nav li a:hover {
-  opacity: 1;
-}
+@login_manager.user_loader
+def load_user(user_id):
+    conn = None
+    try:
+        conn = connect_to_db()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        cursor.execute("SELECT id, email, name FROM users WHERE id = %s", (user_id,))
+        user_data = cursor.fetchone()
+        if user_data:
+            # Check if the user's email is in ADMIN_EMAILS to set is_admin
+            is_admin = user_data['email'] in ADMIN_EMAILS
+            return User(id=user_data['id'], email=user_data['email'], name=user_data['name'], is_admin=is_admin)
+        else:
+            return None
+    except Exception as e:
+        print(f"Error loading user: {e}")
+        return None
+    finally:
+        if conn:
+            conn.close()
 
-.custom-navbar .custom-navbar-nav li a:before {
-  content: "";
-  position: absolute;
-  bottom: -6px;
-  left: 8px;
-  right: 8px;
-  background: #111;
-  height: 2px;
-  width: 0;
-  transition: 0.3s ease;
-}
+# --- GOOGLE OAUTH SETUP ---
+oauth = OAuth(app)
+google = oauth.register(
+    name="google",
+    client_id=GOOGLE_CLIENT_ID,
+    client_secret=GOOGLE_CLIENT_SECRET,
+    server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
+    client_kwargs={"scope": "openid email profile"},
+)
 
-.custom-navbar .custom-navbar-nav li a:hover:before,
-.custom-navbar .custom-navbar-nav li.active a:before {
-  width: calc(100% - 16px);
-}
+# --- DATABASE HELPERS ---
+def connect_to_db():
+    try:
+        conn = psycopg2.connect(
+            database=DB_NAME, user=DB_USER, password=DB_PASSWORD,
+            host=DB_HOST, port=DB_PORT
+        )
+        return conn
+    except Error as e:
+        print(f"DB connection error: {e}")
+        return None
 
-.custom-navbar .custom-navbar-cta {
-  display: flex;
-  gap: 1rem;
-  margin-left: 30px !important;
-}
+def create_users_table(conn):
+    try:
+        cur = conn.cursor()
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                id SERIAL PRIMARY KEY,
+                name VARCHAR(255) NOT NULL,
+                email VARCHAR(255) UNIQUE NOT NULL,
+                password VARCHAR(255) NOT NULL,
+                address VARCHAR(255),
+                phone VARCHAR(50)
+            );
+        """)
+        conn.commit()
+    except Error as e:
+        print(f"Error creating users table: {e}")
 
-.custom-navbar .custom-navbar-cta img {
-  height: 42px;
-  width: auto;
-}
+def create_products_table(conn):
+    try:
+        cur = conn.cursor()
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS products (
+                id SERIAL PRIMARY KEY,
+                name VARCHAR(255) NOT NULL,
+                description TEXT,
+                category VARCHAR(100),
+                price DECIMAL(10, 2),
+                rating DECIMAL(2, 1),
+                image_url VARCHAR(255),
+                created_by VARCHAR(255)
+            );
+        """)
+        conn.commit()
+    except Error as e:
+        print(f"Error creating products table: {e}")
 
-.badge {
-  font-size: 0.75rem;
-  padding: 4px 6px;
-}
+def create_reviews_table(conn):
+    try:
+        cur = conn.cursor()
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS reviews (
+                id SERIAL PRIMARY KEY,
+                product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+                user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                username VARCHAR(255),
+                rating INTEGER CHECK (rating BETWEEN 1 AND 5),
+                comment TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        """)
+        conn.commit()
+    except Error as e:
+        print(f"Error creating reviews table: {e}")
 
-@media (max-width: 992px) {
-    .custom-navbar .custom-navbar-nav {
-        gap: 1rem;
+def create_orders_table(conn):
+    try:
+        cur = conn.cursor()
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS orders (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                user_email VARCHAR(255) NOT NULL,
+                razorpay_order_id VARCHAR(255) UNIQUE NOT NULL,
+                razorpay_payment_id VARCHAR(255),
+                total_amount DECIMAL(10, 2) NOT NULL,
+                status VARCHAR(50) NOT NULL,
+                order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        """)
+        conn.commit()
+    except Error as e:
+        print(f"Error creating orders table: {e}")
+
+def create_order_items_table(conn):
+    try:
+        cur = conn.cursor()
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS order_items (
+                id SERIAL PRIMARY KEY,
+                order_id INTEGER NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+                product_id INTEGER NOT NULL REFERENCES products(id),
+                product_name VARCHAR(255) NOT NULL,
+                quantity INTEGER NOT NULL,
+                price_at_purchase DECIMAL(10, 2) NOT NULL,
+                image_url VARCHAR(255)
+            );
+        """)
+        conn.commit()
+    except Error as e:
+        print(f"Error creating order_items table: {e}")
+
+
+# --- UTILITY FUNCTIONS ---
+@app.template_filter('inr')
+def inr_format(value):
+    try:
+        return f"{float(value):.2f}"
+    except:
+        return value
+
+def upsert_user_from_google(google_sub, name, email):
+    """Insert user if missing; return (id, name, email)."""
+    conn = connect_to_db()
+    if not conn:
+        return None
+    try:
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute("SELECT id, name, email FROM users WHERE email = %s", (email,))
+        user_data = cur.fetchone()
+        if not user_data:
+            # For Google users, we can use a dummy password or handle it differently
+            # In a real app, you might distinguish between password and OAuth users
+            dummy_password = "oauth_user_no_password_" + ''.join(random.choices(string.ascii_letters + string.digits, k=16))
+            cur.execute("""
+                INSERT INTO users (name, email, password)
+                VALUES (%s, %s, %s)
+                RETURNING id, name, email
+            """, (name or email.split("@")[0], email, dummy_password))
+            user_data = cur.fetchone()
+            conn.commit()
+        return user_data
+    except Exception as e:
+        print(f"upsert_user_from_google error: {e}")
+        return None
+    finally:
+        if conn:
+            cur.close()
+            conn.close()
+
+# --- ROUTES: MARKETING & LEGAL ---
+@app.route('/privacy')
+def privacy():
+    return render_template('privacy.html')
+
+@app.route('/terms')
+def terms():
+    return render_template('terms.html')
+
+@app.route('/refund')
+def refund_policy():
+    return render_template('refund.html')
+
+@app.route('/shipping')
+def shipping_policy():
+    return render_template('shipping.html')
+# --- AUTHENTICATION ROUTES (Email/Password & Google) ---
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if current_user.is_authenticated:
+        flash("You are already logged in.", "info")
+        return redirect(url_for('index'))
+
+    if request.method == 'POST':
+        email = request.form.get('email')
+        password = request.form.get('password')  # In production, use hashed passwords!
+
+        conn = connect_to_db()
+        if not conn:
+            flash("Database connection failed during login.", "error")
+            return render_template('login.html')
+
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        try:
+            cur.execute("SELECT id, name, email, password FROM users WHERE email = %s", (email,))
+            user_data = cur.fetchone()
+
+            if user_data and user_data['password'] == password:  
+                # ✅ Create a User object for Flask-Login
+                user_obj = User(
+                    id=user_data['id'],
+                    email=user_data['email'],
+                    name=user_data['name'],
+                    is_admin=(user_data['email'] in ADMIN_EMAILS)
+                )
+
+                # ✅ Tell Flask-Login this user is logged in
+                login_user(user_obj, remember=True)  # 'remember=True' keeps session active
+
+                # ✅ Store email in session (optional, for easier access)
+                session['user_email'] = user_data['email']
+
+                flash(f"Welcome, {user_data['name']}!", "success")
+                return redirect(url_for('index'))
+            else:
+                return render_template('login.html')
+
+        except Error as e:
+            print(f"Login DB error: {e}")
+            flash("An error occurred during login.", "error")
+            return render_template('login.html')
+
+        finally:
+            if conn:
+                cur.close()
+                conn.close()
+
+    return render_template('login.html')
+
+@app.route('/signup', methods=['GET', 'POST'])
+def signup():
+    if current_user.is_authenticated:
+        flash("You are already logged in.", "info")
+        return redirect(url_for('index'))
+
+    if request.method == 'POST':
+        try:
+            name = request.form.get('name')
+            email = request.form.get('email')
+            password = request.form.get('password') # In production, use hashed passwords!
+
+            conn = connect_to_db()
+            if not conn:
+                flash("Database connection failed.", "error")
+                return redirect(url_for('signup'))
+            cursor = conn.cursor(cursor_factory=RealDictCursor) # Use RealDictCursor
+
+            cursor.execute("SELECT id FROM users WHERE email = %s", (email,))
+            if cursor.fetchone():
+                return render_template('login.html')
+
+            cursor.execute("""
+                INSERT INTO users (name, email, password)
+                VALUES (%s, %s, %s) RETURNING id, name, email
+            """, (name, email, password)) # Password should be hashed
+            new_user_data = cursor.fetchone()
+            conn.commit()
+
+            # Automatically log in the new user after signup
+            if new_user_data:
+                new_user_obj = User(id=new_user_data['id'], email=new_user_data['email'],
+                                    name=new_user_data['name'], is_admin=(new_user_data['email'] in ADMIN_EMAILS))
+                login_user(new_user_obj)
+                flash("Signup successful! You have been logged in.", "success")
+                return redirect(url_for('index'))
+            else:
+                flash("Signup failed. No user data returned after insert.", "error")
+                return render_template('login.html')
+
+        except Exception as e:
+            print(f"❌ Signup error: {e}")
+            flash("Signup failed due to a server error. Please try again.", "error")
+            return render_template('login.html')
+        finally:
+            if conn:
+                cursor.close()
+                conn.close()
+    return render_template('signup.html') # Ensure you have a signup.html template
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user() # Flask-Login handles clearing the session
+    return redirect(url_for('index'))
+
+# --- GOOGLE OAUTH ROUTES ---
+@app.route("/login/google")
+def login_google():
+    redirect_uri = url_for("auth_callback", _external=True)
+    return google.authorize_redirect(redirect_uri)
+
+@app.route("/auth/callback")
+def auth_callback():
+    try:
+        token = google.authorize_access_token()
+        user_info = google.parse_id_token(token)
+        email = user_info.get("email")
+        name = user_info.get("name") or (email.split("@")[0] if email else "User")
+
+        if not email:
+            flash("Google did not return an email. Cannot log you in.", "danger")
+            return redirect(url_for("login"))
+
+        # Upsert user and get their DB ID
+        user_data_db = upsert_user_from_google(user_info.get('sub'), name, email)
+
+        if user_data_db:
+            user_obj = User(id=user_data_db['id'], email=user_data_db['email'],
+                            name=user_data_db['name'], is_admin=(user_data_db['email'] in ADMIN_EMAILS))
+            login_user(user_obj)
+            flash(f"Welcome, {user_data_db['name']} (Google Login)!", "success")
+            return redirect(url_for("index")) # Redirect to index or profile page
+        else:
+            flash("Failed to process Google login. Please try again.", "danger")
+            return redirect(url_for("login"))
+
+    except Exception as e:
+        print(f"Google callback error: {e}")
+        flash("Google login failed. Please try again.", "danger")
+        return redirect(url_for("login"))
+
+@app.route('/google_signin', methods=['GET', 'POST'])
+def google_signin():
+    # This route is typically for One Tap, which handles its own redirects or responses via JS.
+    # The current implementation primarily handles the POST request from One Tap's credential response.
+    if request.method == "GET":
+        # If a GET request comes here, redirect to the full OAuth flow for clarity
+        return redirect(url_for("login_google"))
+
+    try:
+        data = request.get_json(silent=True) or {}
+        token = data.get('credential')
+        if not token:
+            return make_response(jsonify({"success": False, "message": "Missing credential"}), 400)
+
+        idinfo = google_id_token.verify_oauth2_token(
+            token,
+            google_requests.Request(),
+            GOOGLE_CLIENT_ID
+        )
+
+        if idinfo.get('iss') not in ('accounts.google.com', 'https://accounts.google.com'):
+            return make_response(jsonify({"success": False, "message": "Invalid issuer"}), 400)
+
+        email = idinfo.get('email')
+        name = idinfo.get('name') or (email.split("@")[0] if email else "User")
+        if not email:
+            return make_response(jsonify({"success": False, "message": "Email missing in token"}), 400)
+
+        user_data_db = upsert_user_from_google(idinfo.get('sub'), name, email)
+
+        if user_data_db:
+            user_obj = User(id=user_data_db['id'], email=user_data_db['email'],
+                            name=user_data_db['name'], is_admin=(user_data_db['email'] in ADMIN_EMAILS))
+            login_user(user_obj)
+            return jsonify({"success": True, "redirect": url_for('index')})
+        else:
+            return make_response(jsonify({"success": False, "message": "Failed to process user"}), 500)
+
+    except ValueError as e:
+        print(f"Google token verify error: {e}")
+        return make_response(jsonify({"success": False, "message": "Invalid token"}), 400)
+    except Exception as e:
+        print(f"google_signin server error: {e}")
+        return make_response(jsonify({"success": False, "message": "Server error"}), 500)
+
+# --- PASSWORD RESET ROUTES ---
+@app.route('/forgot_password', methods=['GET', 'POST'])
+def forgot_password():
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+
+    if request.method == 'POST':
+        email = request.form['email']
+        conn = None
+        try:
+            conn = connect_to_db()
+            cur = conn.cursor()
+            cur.execute("SELECT id FROM users WHERE email = %s", (email,))
+            user = cur.fetchone()
+            if user:
+                token = s.dumps(email, salt='password-reset-salt')
+                reset_url = url_for('reset_password', token=token, _external=True)
+
+                msg = Message('Password Reset Request for GSpaces', recipients=[email])
+                msg.body = f'''Hi,\n\nTo reset your password, click the link below:\n{reset_url}\n\nIf you didn’t request this, please ignore.\n\nRegards,\nGSpaces Team\n'''
+                mail.send(msg)
+                flash('A password reset link has been sent to your email.', 'success')
+            else:
+                flash('No account found with that email address.', 'danger')
+        except Exception as e:
+            print(f"Forgot password error: {e}")
+            flash('An error occurred while processing your request.', 'error')
+        finally:
+            if conn:
+                cur.close()
+                conn.close()
+    return render_template('forgot_password.html')
+
+
+@app.route('/reset_password/<token>', methods=['GET', 'POST'])
+def reset_password(token):
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+
+    try:
+        email = s.loads(token, salt='password-reset-salt', max_age=3600) # Token valid for 1 hour
+    except Exception:
+        flash('The password reset link is invalid or has expired.', 'danger')
+        return redirect(url_for('login'))
+
+    if request.method == 'POST':
+        new_password = request.form['password']
+        confirm_password = request.form['confirm_password']
+
+        if new_password != confirm_password:
+            flash("New password and confirmation do not match.", "error")
+            return render_template('reset_password.html', token=token) # Stay on the reset page
+
+        conn = None
+        try:
+            conn = connect_to_db()
+            cur = conn.cursor()
+            # IMPORTANT: In production, hash the new_password before updating!
+            cur.execute("UPDATE users SET password = %s WHERE email = %s", (new_password, email))
+            conn.commit()
+            flash('Your password has been reset successfully. Please log in with your new password.', 'success')
+            return redirect(url_for('login'))
+        except Exception as e:
+            print(f"Reset password DB error: {e}")
+            flash('An error occurred while resetting your password.', 'error')
+        finally:
+            if conn:
+                cur.close()
+                conn.close()
+
+    return render_template('reset_password.html', token=token)
+
+# --- HOME ROUTE ---
+@app.route('/')
+def index():
+    conn = connect_to_db()
+    product_list = []
+    if conn:
+        try:
+            cursor = conn.cursor(cursor_factory=RealDictCursor) # Use RealDictCursor
+            cursor.execute("""
+                SELECT id, name, description, category, price, rating, image_url
+                FROM products ORDER BY id;
+            """)
+            product_list = cursor.fetchall() # Fetches as list of dicts
+        except Error as e:
+            print(f"Error fetching products: {e}")
+            flash("Error fetching products from database.", "error")
+        finally:
+            if conn:
+                conn.close()
+    else:
+        flash("Error connecting to database to fetch products.", "error")
+
+    # current_user is now available via Flask-Login
+    user_display = current_user.name if current_user.is_authenticated else None
+    return render_template('index.html',
+                           products=product_list,
+                           user=user_display,
+                           is_admin=current_user.is_authenticated and current_user.is_admin)
+
+# --- USER PROFILE ROUTES ---
+@app.route('/profile')
+@login_required
+def profile():
+    # Obtain current user's ID and email via Flask-Login
+    user_email = current_user.email
+    user_id = current_user.id
+    # Default user details in case DB fields are null
+    user_details = {
+        'name': current_user.name,
+        'email': user_email,
+        'address': 'Not provided',
+        'phone': 'Not provided'
     }
-
-    .custom-navbar .custom-navbar-cta img {
-        height: 32px;
-    }
-
-    .custom-navbar .navbar-brand img {
-        height: 80px;
-    }
-}
-
-
-/*--------------------------------------------------------------
-# Mobile Navigation (for screens <= 991px)
---------------------------------------------------------------*/
-/* Remove the hamburger icon completely */
-.mobile-nav-toggle {
-  display: none !important; /* Forces the hamburger to be hidden always */
-}
-
-@media (max-width: 991px) { /* Applies to all screens up to 991px (tablet & mobile) */
-  .header {
-    display: flex;
-    flex-wrap: nowrap; /* Keep items on one line */
-    align-items: center;
-    justify-content: flex-start; /* CRITICAL: Force left alignment */
-    padding: 5px 3px; /* VERY REDUCED: Minimal padding for header */
-    height: auto;
-    overflow-x: hidden; /* Prevent header itself from scrolling */
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .header .logo {
-    order: 1;
-    flex-shrink: 0; /* Prevent shrinking */
-    max-width: 15%; /* EXTREME: Very small logo size */
-    margin-right: 2px; /* EXTREME: Minimal space after logo */
-  }
-  .header .logo img {
-    width: 100%;
-    height: auto;
-  }
-
-  .header .cta-btn {
-    order: 3;
-    flex-shrink: 0; /* Prevent shrinking */
-    text-align: right;
-    margin-left: auto; /* Push CTA button to the right, taking whatever space is left */
-    padding: 3px 6px; /* EXTREME: Smaller padding for CTA */
-    white-space: nowrap;
-    font-size: 9px; /* EXTREME: Smaller font for CTA */
-  }
-
-  .navmenu {
-    order: 2;
-    flex-grow: 1; /* Allow navmenu to take remaining space */
-    width: auto;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    margin-top: 0;
-    background: transparent;
-    position: static;
-    height: auto;
-    right: auto;
-    z-index: auto;
-    box-shadow: none;
-    transition: none;
-    /* Allow horizontal scrolling on the menu itself if content overflows */
-    overflow-x: auto;
-    scrollbar-width: none; /* Firefox */
-    -ms-overflow-style: none;  /* IE and Edge */
-  }
-  /* Hide scrollbar for Chrome, Safari, Opera */
-  .navmenu::-webkit-scrollbar {
-      display: none;
-  }
-
-  .navmenu ul {
-    display: flex;
-    flex-direction: row;
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    background: transparent;
-    /* Allow menu list to be wider than its container for scrolling */
-    width: max-content; /* CRITICAL: Allow content to dictate width */
-    min-width: 100%; /* Ensure it fills parent if content is small */
-    border-radius: 0;
-    overflow-y: visible;
-    box-shadow: none;
-  }
-
-  .navmenu > ul > li {
-    padding: 2px 4px; /* EXTREME: Very reduced padding for items */
-    white-space: nowrap; /* Keep items on single line */
-    flex-shrink: 0; /* Prevent items from shrinking */
-  }
-
-  .navmenu a,
-  .navmenu a:focus {
-    padding: 0; /* Padding handled by li */
-    color: var(--default-color);
-    font-size: 11px; /* EXTREME: Smaller font size for menu links */
-    text-transform: capitalize;
-    display: block;
-  }
-
-  .navmenu a:hover,
-  .navmenu .active,
-  .navmenu li:hover > a {
-    color: var(--nav-hover-color);
-  }
-
-  /* Adjust dropdowns for mobile */
-  .navmenu .dropdown ul {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    display: flex;
-    flex-direction: column;
-    background: var(--nav-dropdown-background-color);
-    box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
-    padding: 5px 0;
-    margin: 0;
-    min-width: 100px; /* Reduced min-width for dropdowns */
-    opacity: 0;
-    visibility: hidden;
-    transition: all 0.3s ease;
-  }
-
-  .navmenu .dropdown:hover > ul {
-    opacity: 1;
-    visibility: visible;
-  }
-
-  .navmenu .dropdown ul li {
-    width: 100%;
-    text-align: left;
-  }
-
-  .navmenu .dropdown ul a {
-    padding: 6px 10px; /* Reduced padding for dropdown links */
-    font-size: 12px; /* Reduced font size for dropdown links */
-  }
-
-  /* Remove all mobile-nav-active specific rules as they are no longer needed */
-  .mobile-nav-active .navmenu {
-    right: auto;
-  }
-}
-
-/* Ensure footer logo is also responsive */
-.footer .footer-about .logo img {
-  max-width: 100%;
-  height: auto;
-  max-height: 40px; /* Example, can also use clamp like header */
-  margin-right: 6px;
-}
-
-/*--------------------------------------------------------------
-# Global Footer
---------------------------------------------------------------*/
-.footer {
-  color: var(--default-color);
-  background-color: var(--background-color);
-  font-size: 14px;
-  position: relative;
-}
-
-.footer .footer-top {
-  padding-top: 50px;
-  border-top: 1px solid color-mix(in srgb, var(--default-color), transparent 90%);
-}
-
-.footer .footer-about .logo {
-  line-height: 1;
-  margin-bottom: 25px;
-}
-
-/* Ensure footer logo is also responsive */
-.footer .footer-about .logo img {
-  max-width: 100%;
-  height: auto;
-  max-height: 40px; /* Example, can also use clamp like header */
-  margin-right: 6px;
-}
-
-.footer .footer-about .logo span {
-  font-size: 26px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  font-family: var(--heading-font);
-  color: var(--heading-color);
-}
-
-.footer .footer-about p {
-  font-size: 14px;
-  font-family: var(--heading-font);
-}
-
-.footer .social-links a {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  border: 1px solid color-mix(in srgb, var(--default-color), transparent 50%);
-  font-size: 16px;
-  color: color-mix(in srgb, var(--default-color), transparent 30%);
-  margin-right: 10px;
-  transition: 0.3s;
-}
-
-.footer .social-links a:hover {
-  color: var(--accent-color);
-  border-color: var(--accent-color);
-}
-
-.footer h4 {
-  font-size: 16px;
-  font-weight: bold;
-  position: relative;
-  padding-bottom: 12px;
-}
-
-.footer .footer-links {
-  margin-bottom: 30px;
-}
-
-.footer .footer-links ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.footer .footer-links ul i {
-  padding-right: 3px;
-  font-size: 13px;
-  line-height: 0;
-  color: var(--accent-color);
-}
-
-.footer .footer-links ul li {
-  padding: 10px 0;
-  display: flex;
-  align-items: center;
-}
-
-.footer .footer-links ul li:first-child {
-  padding-top: 0;
-}
-
-.footer .footer-links ul a {
-  color: color-mix(in srgb, var(--default-color), transparent 30%);
-  display: inline-block;
-  line-height: 1;
-}
-
-.footer .footer-links ul a:hover {
-  color: var(--accent-color);
-}
-
-.footer .footer-contact p {
-  margin-bottom: 5px;
-}
-
-.footer .footer-newsletter .newsletter-form {
-  margin-top: 30px;
-  margin-bottom: 15px;
-  padding: 6px 8px;
-  position: relative;
-  border-radius: 4px;
-  border: 1px solid color-mix(in srgb, var(--default-color), transparent 80%);
-  display: flex;
-  background-color: var(--background-color);
-  transition: 0.3s;
-}
-
-.footer .footer-newsletter .newsletter-form:focus-within {
-  border-color: var(--accent-color);
-}
-
-.footer .footer-newsletter .newsletter-form input[type=email] {
-  border: 0;
-  padding: 4px;
-  width: 100%;
-  background-color: var(--background-color);
-  color: var(--default-color);
-}
-
-.footer .footer-newsletter .newsletter-form input[type=email]:focus-visible {
-  outline: none;
-}
-
-.footer .footer-newsletter .newsletter-form input[type=submit] {
-  border: 0;
-  font-size: 16px;
-  padding: 0 20px;
-  margin: -7px -8px -7px 0;
-  background: var(--accent-color);
-  color: var(--contrast-color);
-  transition: 0.3s;
-  border-radius: 0 4px 4px 0;
-}
-
-.footer .footer-newsletter .newsletter-form input[type=submit]:hover {
-  background: color-mix(in srgb, var(--accent-color), transparent 20%);
-}
-
-.footer .copyright {
-  padding: 25px 0;
-  border-top: 1px solid color-mix(in srgb, var(--default-color), transparent 90%);
-}
-
-.footer .copyright p {
-  margin-bottom: 0;
-}
-
-.footer .credits {
-  margin-top: 6px;
-  font-size: 13px;
-}
-
-/*--------------------------------------------------------------
-# Preloader
---------------------------------------------------------------*/
-#preloader {
-  display: none;
-  position: fixed;
-  inset: 0;
-  z-index: 999999;
-  overflow: hidden;
-  background: var(--background-color);
-  transition: all 0.6s ease-out;
-}
-
-#preloader:before {
-  content: "";
-  position: fixed;
-  top: calc(50% - 30px);
-  left: calc(50% - 30px);
-  border: 6px solid #ffffff;
-  border-color: var(--accent-color) transparent var(--accent-color) transparent;
-  border-radius: 50%;
-  width: 60px;
-  height: 60px;
-  animation: animate-preloader 1.5s linear infinite;
-}
-
-@keyframes animate-preloader {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
-/*--------------------------------------------------------------
-# Scroll Top Button
---------------------------------------------------------------*/
-.scroll-top {
-  position: fixed;
-  visibility: hidden;
-  opacity: 0;
-  right: 15px;
-  bottom: 15px;
-  z-index: 99999;
-  background-color: var(--accent-color);
-  width: 40px;
-  height: 40px;
-  border-radius: 4px;
-  transition: all 0.4s;
-}
-
-.scroll-top i {
-  font-size: 24px;
-  color: var(--contrast-color);
-  line-height: 0;
-}
-
-.scroll-top:hover {
-  background-color: color-mix(in srgb, var(--accent-color), transparent 20%);
-  color: var(--contrast-color);
-}
-
-.scroll-top.active {
-  visibility: visible;
-  opacity: 1;
-}
-
-/*--------------------------------------------------------------
-# Disable aos animation delay on mobile devices
---------------------------------------------------------------*/
-@media screen and (max-width: 768px) {
-  [data-aos-delay] {
-    transition-delay: 0 !important;
-  }
-}
-
-/*--------------------------------------------------------------
-# Global Page Titles & Breadcrumbs
---------------------------------------------------------------*/
-.page-title {
-  color: var(--default-color);
-  background-color: var(--background-color);
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  padding: 160px 0 80px 0;
-  text-align: center;
-  position: relative;
-}
-
-.page-title:before {
-  content: "";
-  background: color-mix(in srgb, var(--background-color), transparent 30%);
-  position: absolute;
-  inset: 0;
-}
-
-.page-title h1 {
-  font-size: 42px;
-  font-weight: 700;
-  margin-bottom: 10px;
-}
-
-.page-title .breadcrumbs ol {
-  display: flex;
-  flex-wrap: wrap;
-  list-style: none;
-  justify-content: center;
-  padding: 0;
-  margin: 0;
-  font-size: 16px;
-  font-weight: 400;
-}
-
-.page-title .breadcrumbs ol li+li {
-  padding-left: 10px;
-}
-
-.page-title .breadcrumbs ol li+li::before {
-  content: "/";
-  display: inline-block;
-  padding-right: 10px;
-  color: color-mix(in srgb, var(--default-color), transparent 50%);
-}
-
-/*--------------------------------------------------------------
-# Global Sections
---------------------------------------------------------------*/
-section,
-.section {
-  color: var(--default-color);
-  background-color: var(--background-color);
-  padding: 60px 0;
-  scroll-margin-top: 90px;
-  overflow: clip;
-}
-
-@media (max-width: 1199px) {
-  section,
-  .section {
-    scroll-margin-top: 76px;
-  }
-}
-
-/*--------------------------------------------------------------
-# Global Section Titles
---------------------------------------------------------------*/
-.section-title {
-  padding-bottom: 60px;
-  position: relative;
-}
-
-.section-title h2 {
-  font-size: 14px;
-  font-weight: 500;
-  padding: 0;
-  line-height: 1px;
-  margin: 0;
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-  color: color-mix(in srgb, var(--default-color), transparent 50%);
-  position: relative;
-}
-
-.section-title h2::after {
-  content: "";
-  width: 120px;
-  height: 1px;
-  display: inline-block;
-  background: var(--accent-color);
-  margin: 4px 10px;
-}
-
-.section-title p {
-  color: var(--heading-color);
-  margin: 0;
-  font-size: 36px;
-  font-weight: 800;
-  text-transform: uppercase;
-  font-family: var(--heading-font);
-}
-
-/* 4. Mobile logo override to remove fixed sizing */
-@media (max-width: 768px) {
-  .header .logo img,
-  .footer .footer-about .logo img {
-    max-width: 100%;
-    height: auto;
-    max-height: none !important;
-  }
-}
-@media screen and (max-width: 768px) {
-  .section-title h2 {
-    font-size: 20px; /* reduce font size on smaller screens */
-    line-height: 1.4; /* add spacing between lines */
-    word-break: break-word; /* avoid text overflow */
-  }
-  .section-title p {
-    font-size: 16px;
-  }
-}
-
-/* Mobile responsiveness fix */
-@media screen and (max-width: 768px) {
-  .section-title h2 {
-    font-size: 20px;
-    line-height: 1.4;
-    word-break: break-word;
-  }
-
-  .section-title p {
-    font-size: 16px;
-    line-height: 1.4;
-  }
-}
-/*--------------------------------------------------------------
-# Hero Section
---------------------------------------------------------------*/
-.hero {
-    background-color: #ffffff;
-    padding: 2rem 0;
-    color: #333;
-}
-
-.hero-content {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 2rem;
-    flex-wrap: nowrap; /* Prevent wrapping */
-}
-
-.hero-image {
-    flex: 0 0 50%; /* Fixed 50% width */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.hero-image img {
-    width: 100%; /* Fill the 50% container */
-    max-width: 600px;
-    height: auto;
-    border-radius: 10px;
-    object-fit: cover;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-}
-
-.hero-text {
-    flex: 0 0 50%; /* Fixed 50% width */
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    padding-left: 2rem;
-}
-
-.hero-text h2 {
-    font-size: 2.5rem;
-    font-weight: bold;
-    margin-bottom: 1rem;
-    color: #333;
-}
-
-.hero-text p {
-    font-size: 1.25rem;
-    color: #555;
-}
-
-/* Responsive adjustments */
-@media (max-width: 992px) {
-    .hero-content {
-        flex-direction: column;
-        text-align: center;
-    }
-
-    .hero-text {
-        padding-left: 0;
-    }
-
-    .hero-image {
-        width: 100%;
-    }
-
-    .hero-text, .hero-image {
-        flex: 0 0 auto;
-    }
-}
-
-
-/*--------------------------------------------------------------
-# About Section
---------------------------------------------------------------*/
-.about h3 {
-  font-family: 'Roboto', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  font-weight: 700;
-  font-size: 36px;
-  line-height: 1.3;
-  color: #1f1f1f;
-  margin-bottom: 20px;
-}
-
-.about .fst-italic {
-  font-family: 'Roboto', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  font-style: italic;
-  color: #666;
-  font-size: 17px;
-  margin-bottom: 15px;
-}
-
-.about p,
-.about li,
-.about ul {
-  font-family: 'Roboto', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  font-weight: 400;
-  font-size: 16px;
-  color: #444;
-  line-height: 1.8;
-}
-
-.about .content ul {
-  list-style: none;
-  padding: 0;
-  margin: 20px 0;
-}
-
-.about .content ul li {
-  padding: 0 0 12px 32px;
-  position: relative;
-}
-
-.about .content ul i {
-  position: absolute;
-  font-size: 18px;
-  left: 0;
-  top: 2px;
-  color: var(--accent-color); /* Keep your brand color here */
-}
-
-.about .content p:last-child {
-  margin-bottom: 0;
-}
-
-.about .pulsating-play-btn {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  background: #F5A994; /* Bright orange background */
-  border-radius: 50%;
-  padding: 20px;
-  font-size: 32px;
-  color: #ffffff; /* White play icon */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-}
-
-
-/*--------------------------------------------------------------
-# Stats Section
---------------------------------------------------------------*/
-.stats .stats-item {
-  background: #fff;
-  border-radius: 12px;
-  padding: 25px 20px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease;
-}
-
-.stats .stats-item i {
-  font-size: 36px;
-  margin-right: 15px;
-  color: var(--accent-color); /* use your brand tone here */
-}
-
-.stats .stats-item span {
-  font-size: 32px;
-  font-weight: 700;
-  font-family: 'Roboto', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  color: #1a1a1a;
-}
-
-.stats .stats-item p {
-  margin: 0;
-  font-size: 15px;
-  font-family: 'Roboto', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  color: #555;
-}
-
-.stats .stats-item:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
-}
-
-/*--------------------
-colors
-----------------------*/
-.color-blue { color: #4A60A1; }
-.color-orange { color: #D88A27; }
-.color-green { color: #2E8B57; }
-.color-pink { color: #B76BA3; }
-
-/*--------------------------------------------------------------
-# Services Section
---------------------------------------------------------------*/
-.services .img {
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.services .img img {
-  transition: 0.6s;
-}
-
-.services .details {
-  background: color-mix(in srgb, var(--surface-color), transparent 5%);
-  padding: 50px 30px;
-  margin: -100px 30px 0 30px;
-  transition: all ease-in-out 0.3s;
-  position: relative;
-  text-align: center;
-  border-radius: 8px;
-  box-shadow: 0px 0 25px rgba(0, 0, 0, 0.1);
-}
-
-.services .details .icon {
-  margin: 0;
-  width: 72px;
-  height: 72px;
-  background: var(--accent-color);
-  color: var(--contrast-color);
-  border: 6px solid var(--contrast-color);
-  border-radius: 50px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 20px;
-  font-size: 28px;
-  transition: ease-in-out 0.3s;
-  position: absolute;
-  top: -36px;
-  left: calc(50% - 36px);
-}
-
-.services .details h3 {
-  font-weight: 700;
-  margin: 10px 0 15px 0;
-  font-size: 22px;
-  transition: ease-in-out 0.3s;
-}
-
-.services .details p {
-  color: color-mix(in srgb, var(--default-color), transparent 10%);
-  line-height: 24px;
-  font-size: 14px;
-  margin-bottom: 0;
-}
-
-.services .service-item:hover .details h3 {
-  color: var(--accent-color);
-}
-
-.services .service-item:hover .details .icon {
-  background: var(--surface-color);
-  border: 2px solid var(--accent-color);
-}
-
-.services .service-item:hover .details .icon i {
-  color: var(--accent-color);
-}
-
-.services .service-item:hover .img img {
-  transform: scale(1.2);
-}
-
-/*--------------------------------------------------------------
-# Clients Section
---------------------------------------------------------------*/
-.clients {
-  padding: 20px 0;
-}
-
-.clients .client-logo {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  overflow: hidden;
-}
-
-.clients .client-logo img {
-  padding: 20px 40px;
-  max-width: 90%;
-  transition: 0.3s;
-  opacity: 0.5;
-  filter: grayscale(100);
-}
-
-.clients .client-logo img:hover {
-  filter: none;
-  opacity: 1;
-}
-
-@media (max-width: 640px) {
-  .clients .client-logo img {
-    padding: 20px;
-  }
-}
-
-/*--------------------------------------------------------------
-# Features Section
---------------------------------------------------------------*/
-/* Removed as no corresponding #features section found in HTML files */
-
-/*--------------------------------------------------------------
-# Services 2 Section
---------------------------------------------------------------*/
-/* Removed as no corresponding .services-2 section found in HTML files */
-
-/*--------------------------------------------------------------
-# Testimonials Section
---------------------------------------------------------------*/
-.testimonials {
-  padding: 80px 0;
-  position: relative;
-}
-
-.testimonials:before {
-  content: "";
-  background: color-mix(in srgb, var(--background-color), transparent 30%);
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-}
-
-.testimonials .testimonials-bg {
-  position: absolute;
-  inset: 0;
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  z-index: 1;
-}
-
-.testimonials .container {
-  position: relative;
-  z-index: 3;
-}
-
-.testimonials .testimonials-carousel,
-.testimonials .testimonials-slider {
-  overflow: hidden;
-}
-
-.testimonials .testimonial-item {
-  text-align: center;
-}
-
-.testimonials .testimonial-item .testimonial-img {
-  width: 100px;
-  border-radius: 50%;
-  border: 6px solid color-mix(in srgb, var(--default-color), transparent 85%);
-  margin: 0 auto;
-}
-
-.testimonials .testimonial-item h3 {
-  font-size: 20px;
-  font-weight: bold;
-  margin: 10px 0 5px 0;
-}
-
-.testimonials .testimonial-item h4 {
-  font-size: 14px;
-  margin: 0 0 15px 0;
-  color: color-mix(in srgb, var(--default-color), transparent 40%);
-}
-
-.testimonials .testimonial-item .stars {
-  margin-bottom: 15px;
-}
-
-.testimonials .testimonial-item .stars i {
-  color: #ffc107;
-  margin: 0 1px;
-}
-
-.testimonials .testimonial-item .quote-icon-left,
-.testimonials .testimonial-item .quote-icon-right {
-  color: color-mix(in srgb, var(--default-color), transparent 40%);
-  font-size: 26px;
-  line-height: 0;
-}
-
-.testimonials .testimonial-item .quote-icon-left {
-  display: inline-block;
-  left: -5px;
-  position: relative;
-}
-
-.testimonials .testimonial-item .quote-icon-right {
-  display: inline-block;
-  right: -5px;
-  position: relative;
-  top: 10px;
-  transform: scale(-1, -1);
-}
-
-.testimonials .testimonial-item p {
-  font-style: italic;
-  margin: 0 auto 15px auto;
-}
-
-.testimonials .swiper-wrapper {
-  height: auto;
-}
-
-.testimonials .swiper-pagination {
-  margin-top: 20px;
-  position: relative;
-}
-
-.testimonials .swiper-pagination .swiper-pagination-bullet {
-  width: 12px;
-  height: 12px;
-  background-color: color-mix(in srgb, var(--default-color), transparent 50%);
-  opacity: 0.5;
-}
-
-.testimonials .swiper-pagination .swiper-pagination-bullet-active {
-  background-color: var(--default-color);
-  opacity: 1;
-}
-
-@media (min-width: 992px) {
-  .testimonials .testimonial-item p {
-    width: 80%;
-  }
-}
-
-/*--------------------------------------------------------------
-# Portfolio Section
---------------------------------------------------------------*/
-
-.portfolio .portfolio-filters {
-  padding: 0;
-  margin: 0 auto 20px auto;
-  list-style: none;
-  text-align: center;
-}
-
-.portfolio .portfolio-filters li {
-  cursor: pointer;
-  display: inline-block;
-  font-size: 18px;
-  font-weight: 500;
-  margin: 0 10px 5px 10px;
-  line-height: 1;
-  transition: all 0.3s ease-in-out;
-}
-
-.portfolio .portfolio-filters li:hover,
-.portfolio .portfolio-filters li.filter-active {
-  color: var(--accent-color);
-}
-
-.portfolio .portfolio-content {
-  aspect-ratio: 3 / 4;
-  background: #f5f5f5;
-  border-radius: 16px;
-  overflow: hidden;
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-}
-
-.portfolio .portfolio-content:hover {
-  transform: scale(1.02);
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
-}
-
-.portfolio .portfolio-content img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.3s ease;
-}
-
-.portfolio-content img {
-  border-bottom: 1px solid #eee;
-  transition: transform 0.3s ease;
-}
-
-.portfolio .portfolio-content:hover img {
-  transform: scale(1.02);
-}
-
-.portfolio .portfolio-info {
-  opacity: 0;
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  z-index: 3;
-  padding: 20px;
-  transition: opacity 0.3s ease-in-out;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-}
-
-.portfolio .portfolio-content:hover .portfolio-info {
-  opacity: 1;
-}
-
-.portfolio .portfolio-info h4 {
-  font-size: 16px;
-  font-weight: 600;
-  color: #fff;
-  background-color: var(--accent-color);
-  display: inline-block;
-  padding: 6px 12px;
-  border-radius: 6px;
-  margin-bottom: 10px;
-}
-
-.portfolio .portfolio-info p {
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 14px;
-  margin-top: auto;
-  text-align: center;
-}
-
-.portfolio .preview-link {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  color: #fff;
-  font-size: 28px;
-  transition: 0.3s ease;
-}
-
-.portfolio .preview-link:hover {
-  color: var(--accent-color);
-}
-
-.product-meta {
-  background: #fff;
-  border-radius: 0 0 12px 12px;
-  padding: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.section-header {
-  text-align: center;
-  margin-bottom: 30px;
-}
-
-#portfolio-flters {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-#portfolio-flters li {
-  cursor: pointer;
-  margin: 0 15px;
-  font-weight: 500;
-  color: #444;
-  transition: all 0.3s;
-}
-
-#portfolio-flters li.filter-active {
-  color: #ff4500;
-  font-weight: bold;
-  border-bottom: 2px solid #ff4500;
-}
-
-/*--------------------------------------------------------------
-# Team Section
---------------------------------------------------------------*/
-.team .member {
-  position: relative;
-}
-
-.team .member .pic {
-  width: 100%;
-  height: 380px; /* Set standard portrait height */
-  overflow: hidden;
-  border-radius: 12px;
-  background: #f5f5f5;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 50px;
-}
-
-.team .member .pic img {
-  height: 100%;
-  width: auto;
-  object-fit: cover;
-  object-position: center;
-  transition: transform 0.3s ease;
-}
-
-.team .member:hover .pic img {
-  transform: scale(1.05);
-}
-
-.team .member .member-info {
-  background-color: var(--surface-color);
-  color: color-mix(in srgb, var(--default-color), transparent 20%);
-  box-shadow: 0px 2px 15px rgba(0, 0, 0, 0.1);
-  position: absolute;
-  bottom: -50px;
-  left: 20px;
-  right: 20px;
-  padding: 20px 15px;
-  overflow: hidden;
-  transition: 0.5s;
-  border-radius: 10px;
-}
-
-.team .member h4 {
-  font-weight: 700;
-  margin-bottom: 10px;
-  font-size: 16px;
-  position: relative;
-  padding-bottom: 10px;
-}
-
-.team .member h4::after {
-  content: "";
-  position: absolute;
-  display: block;
-  width: 50px;
-  height: 1px;
-  background: color-mix(in srgb, var(--default-color), transparent 60%);
-  bottom: 0;
-  left: 0;
-}
-
-.team .member span {
-  font-style: italic;
-  display: block;
-  font-size: 13px;
-}
-
-.team .member .social {
-  position: absolute;
-  right: 15px;
-  bottom: 15px;
-}
-
-.team .member .social a {
-  transition: color 0.3s;
-  color: color-mix(in srgb, var(--default-color), transparent 70%);
-}
-
-.team .member .social a:hover {
-  color: var(--accent-color);
-}
-
-.team .member .social i {
-  font-size: 16px;
-  margin: 0 2px;
-}
-
-/*--------------------------------------------------------------
-# Contact Section
---------------------------------------------------------------*/
-.contact .info-item {
-  background-color: var(--surface-color);
-  box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.1);
-  padding: 24px 0 30px 0;
-}
-
-.contact .info-item i {
-  font-size: 20px;
-  color: var(--accent-color);
-  width: 56px;
-  height: 56px;
-  font-size: 24px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  border-radius: 4px;
-  transition: all 0.3s ease-in-out;
-  border-radius: 50%;
-  border: 2px dotted color-mix(in srgb, var(--accent-color), transparent 40%);
-}
-
-.contact .info-item h3 {
-  font-size: 20px;
-  color: color-mix(in srgb, var(--default-color), transparent 20%);
-  font-size: 18px;
-  font-weight: 700;
-  margin: 10px 0;
-}
-
-.contact .info-item p {
-  padding: 0;
-  margin-bottom: 0;
-  font-size: 14px;
-}
-
-.contact .php-email-form {
-  background-color: var(--surface-color);
-  box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.1);
-  height: 100%;
-  padding: 30px;
-}
-
-@media (max-width: 575px) {
-  .contact .php-email-form {
-    padding: 20px;
-  }
-}
-
-.contact .php-email-form input[type=text],
-.contact .php-email-form input[type=email],
-.contact .php-email-form textarea {
-  font-size: 14px;
-  padding: 10px 15px;
-  box-shadow: none;
-  border-radius: 0;
-  color: var(--default-color);
-  background-color: var(--surface-color);
-  border-color: color-mix(in srgb, var(--default-color), transparent 80%);
-}
-
-.contact .php-email-form input[type=text]:focus,
-.contact .php-email-form input[type=email]:focus,
-.contact .php-email-form textarea:focus {
-  border-color: var(--accent-color);
-}
-
-.contact .php-email-form input[type=text]::placeholder,
-.contact .php-email-form input[type=email]::placeholder,
-.contact .php-email-form textarea::placeholder {
-  color: color-mix(in srgb, var(--default-color), transparent 70%);
-}
-
-.contact .php-email-form button[type=submit] {
-  color: var(--contrast-color);
-  background: var(--accent-color);
-  border: 0;
-  padding: 10px 30px;
-  transition: 0.4s;
-  border-radius: 50px;
-}
-
-.contact .php-email-form button[type=submit]:hover {
-  background: color-mix(in srgb, var(--accent-color), transparent 20%);
-}
-
-/*--------------------------------------------------------------
-# Portfolio Details Section
---------------------------------------------------------------*/
-.portfolio-details .portfolio-details-slider img {
-  width: 100%;
-}
-
-/* Enforce portrait ratio on slider container */
-.portfolio-details .swiper-slide {
-  aspect-ratio: 3 / 4;
-  max-height: 480px;
-  width: 100%;
-  overflow: hidden;
-  border-radius: 12px;
-  background: #f5f5f5;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.portfolio-details .swiper-slide img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.3s ease;
-}
-
-.portfolio-details .swiper-slide:hover img {
-  transform: scale(1.05);
-}
-
-.portfolio-details .portfolio-details-slider .swiper-pagination {
-  margin-top: 20px;
-  position: relative;
-}
-
-.portfolio-details .portfolio-details-slider .swiper-pagination .swiper-pagination-bullet {
-  width: 12px;
-  height: 12px;
-  background-color: color-mix(in srgb, var(--default-color), transparent 85%);
-  opacity: 1;
-}
-
-.portfolio-details .portfolio-details-slider .swiper-pagination .swiper-pagination-bullet-active {
-  background-color: var(--accent-color);
-}
-
-.portfolio-details .portfolio-info {
-  background-color: var(--surface-color);
-  padding: 30px;
-  box-shadow: 0px 0 30px rgba(0, 0, 0, 0.1);
-}
-
-.portfolio-details .portfolio-info h3 {
-  font-size: 22px;
-  font-weight: 700;
-  margin-bottom: 20px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid color-mix(in srgb, var(--default-color), transparent 85%);
-}
-
-.portfolio-details .portfolio-info ul {
-  list-style: none;
-  padding: 0;
-  font-size: 15px;
-}
-
-.portfolio-details .portfolio-info ul li+li {
-  margin-top: 10px;
-}
-
-.portfolio-details .portfolio-description {
-  padding-top: 30px;
-}
-
-.portfolio-details .portfolio-description h2 {
-  font-size: 26px;
-  font-weight: 700;
-  margin-bottom: 20px;
-}
-
-.portfolio-details .portfolio-description p {
-  padding: 0;
-  color: color-mix(in srgb, var(--default-color), transparent 30%);
-}
-
-/*--------------------------------------------------------------
-# Service Details Section
---------------------------------------------------------------*/
-.service-details .services-list {
-  background-color: var(--surface-color);
-  padding: 10px 30px;
-  border: 1px solid color-mix(in srgb, var(--default-color), transparent 90%);
-  margin-bottom: 20px;
-}
-
-.service-details .services-list a {
-  display: block;
-  line-height: 1;
-  padding: 8px 0 8px 15px;
-  border-left: 3px solid color-mix(in srgb, var(--default-color), transparent 70%);
-  margin: 20px 0;
-  color: color-mix(in srgb, var(--default-color), transparent 20%);
-  transition: 0.3s;
-}
-
-.service-details .services-list a.active {
-  color: var(--heading-color);
-  font-weight: 700;
-  border-color: var(--accent-color);
-}
-
-.service-details .services-list a:hover {
-  border-color: var(--accent-color);
-}
-
-.service-details .services-img {
-  margin-bottom: 20px;
-}
-
-.service-details h3 {
-  font-size: 26px;
-  font-weight: 700;
-}
-
-.service-details h4 {
-  font-size: 20px;
-  font-weight: 700;
-}
-
-.service-details p {
-  font-size: 15px;
-}
-
-.service-details ul {
-  list-style: none;
-  padding: 0;
-  font-size: 15px;
-}
-
-.service-details ul li {
-  padding: 5px 0;
-  display: flex;
-  align-items: center;
-}
-
-.service-details ul i {
-  font-size: 20px;
-  margin-right: 8px;
-  color: var(--accent-color);
-}
-
+    user_orders = []
+    conn = connect_to_db()
+    if conn:
+        try:
+            cursor = conn.cursor(cursor_factory=RealDictCursor)
+            # 1. Fetch user details
+            cursor.execute(
+                "SELECT name, email, address, phone FROM users WHERE id = %s",
+                (user_id,)
+            )
+            rec = cursor.fetchone()
+            if rec:
+                user_details['name']    = rec['name']
+                user_details['email']   = rec['email']
+                user_details['address'] = rec['address'] or 'Not provided'
+                user_details['phone']   = rec['phone']   or 'Not provided'
+            # 2. Fetch orders with JSON aggregation of items, using a new alias 'order_products'
+            cursor.execute("""
+                SELECT
+                    o.id,
+                    o.razorpay_order_id,
+                    o.total_amount,
+                    o.status,
+                    o.order_date,
+                    json_agg(
+                        json_build_object(
+                            'product_id',      oi.product_id,
+                            'product_name',    oi.product_name,
+                            'quantity',        oi.quantity,
+                            'price_at_purchase', oi.price_at_purchase,
+                            'image_url',       oi.image_url
+                        )
+                    ) AS order_products -- CHANGED ALIAS HERE from 'items' to 'order_products'
+                FROM orders o
+                JOIN order_items oi ON o.id = oi.order_id
+                WHERE o.user_id = %s
+                GROUP BY
+                    o.id, o.razorpay_order_id, o.total_amount, o.status, o.order_date
+                ORDER BY o.order_date DESC;
+            """, (user_id,))
+            orders_data = cursor.fetchall()
+            # 3. Format each order’s date and collect into list
+            for order_row in orders_data:
+                order_row['order_date'] = order_row['order_date'].strftime('%Y-%m-%d %H:%M:%S')
+                
+                # IMPORTANT: Take the data from 'order_products' and assign it to 'items'
+                # This ensures the template still uses 'order.items' as expected.
+                if 'order_products' in order_row:
+                    order_row['items'] = order_row['order_products']
+                else:
+                    # Fallback in case 'order_products' is missing (shouldn't happen with correct SQL)
+                    order_row['items'] = [] 
+                    print(f"Warning: 'order_products' key missing in order_row: {order_row}")
+                user_orders.append(order_row)
+        except Exception as e:
+            print(f"Error fetching profile data or orders: {e}")
+            flash("Error loading profile data or orders.", "error")
+        finally:
+            if conn: # Ensure conn exists before closing
+                conn.close()
+    # Render the profile page with gathered data
+    return render_template(
+        'profile.html',
+        user=user_details['name'],
+        user_details=user_details,
+        user_orders=user_orders
+    )
+
+
+@app.route('/update_profile', methods=['POST'])
+@login_required # Protect this route
+def update_profile():
+    # current_user is available
+    user_id = current_user.id
+
+    name = request.form.get('name')
+    email = request.form.get('email') # Should handle if email changes and is unique
+    address = request.form.get('address')
+    phone = request.form.get('phone')
+
+    conn = connect_to_db()
+    if not conn:
+        flash("Database connection failed.", "error")
+        return redirect(url_for('profile'))
+
+    try:
+        cur = conn.cursor()
+        cur.execute("""
+            UPDATE users
+               SET name = %s, email = %s, address = %s, phone = %s
+             WHERE id = %s -- Update by ID, not email
+        """, (name, email, address, phone, user_id))
+        conn.commit()
+
+        # Update current_user object and session for immediate reflection
+        current_user.name = name
+        current_user.email = email
+        flash("Profile updated successfully!", "success")
+    except Error as e:
+        print(f"Error updating profile: {e}")
+        flash("Failed to update profile.", "error")
+    finally:
+        if conn:
+            cur.close()
+            conn.close()
+    return redirect(url_for('profile'))
+
+@app.route('/change_password', methods=['POST'])
+@login_required # Protect this route
+def change_password():
+    # current_user is available
+    user_id = current_user.id
+
+    current_password = request.form.get('current_password')
+    new_password = request.form.get('new_password')
+    confirm_password = request.form.get('confirm_password')
+
+    if new_password != confirm_password:
+        flash("New password and confirm password do not match.", "error")
+        return redirect(url_for('profile', _anchor='password-change')) # Redirect to correct tab
+
+    conn = connect_to_db()
+    if not conn:
+        flash("Database connection failed.", "error")
+        return redirect(url_for('profile'))
+
+    try:
+        cur = conn.cursor(cursor_factory=RealDictCursor) # Use RealDictCursor
+        cur.execute("SELECT password FROM users WHERE id = %s", (user_id,)) # Fetch by ID
+        rec = cur.fetchone()
+
+        if rec and rec['password'] == current_password:  # NOTE: Use password hashing (e.g., bcrypt) in production!
+            cur.execute("UPDATE users SET password = %s WHERE id = %s",
+                        (new_password, user_id))
+            conn.commit()
+            flash("Password changed successfully! You will be logged out for security.", "success")
+            logout_user() # Log out after password change for security
+            return redirect(url_for('login'))
+        else:
+            flash("Incorrect current password.", "error")
+    except Error as e:
+        print(f"Error changing password: {e}")
+        flash("Failed to change password.", "error")
+    finally:
+        if conn:
+            cur.close()
+            conn.close()
+    return redirect(url_for('profile', _anchor='password-change'))
+
+
+# --- PRODUCT & CART ROUTES ---
+@app.route('/add_product', methods=['GET', 'POST'])
+@login_required # Only logged-in users can add products
+def add_product():
+    if not current_user.is_admin: # Check admin status from current_user
+        if request.accept_mimetypes.accept_json:
+            return jsonify({'success': False, 'message': 'Admins only.'}), 403
+        flash("Unauthorized. Admins only.", "warning")
+        return redirect(url_for('index'))
+
+    if request.method == 'POST':
+        try:
+            name = request.form['name']
+            category = request.form['category']
+            rating = float(request.form['rating'])
+            price = float(request.form['price'])
+            description = request.form['description']
+            image_file = request.files.get('image')
+            image_url = None
+
+            if image_file and image_file.filename:
+                filename = secure_filename(image_file.filename)
+                file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                image_file.save(file_path)
+                image_url = f'img/Products/{filename}'
+
+            conn = connect_to_db()
+            if not conn:
+                return jsonify({'success': False, 'message': 'DB connection failed.'}), 500
+            cur = conn.cursor()
+            cur.execute("""
+                INSERT INTO products (name, category, rating, price, description, image_url, created_by)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+            """, (name, category, rating, price, description, image_url, current_user.email)) # Use current_user.email
+            conn.commit()
+            cur.close()
+            conn.close()
+            return jsonify({'success': True, 'message': 'Product added successfully!'})
+        except Exception as e:
+            print(f"Add product error: {e}")
+            return jsonify({'success': False, 'message': 'Error adding product.'}), 500
+
+    return render_template('add_product.html')
+
+@app.route('/edit_product/<int:product_id>', methods=['GET', 'POST'])
+@login_required # Only logged-in users can edit products
+def edit_product(product_id):
+    if not current_user.is_admin:
+        flash("Unauthorized. Admins only.", "warning")
+        return redirect(url_for('index'))
+
+    conn = connect_to_db()
+    if not conn:
+        flash("Database connection failed.")
+        return redirect(url_for('index'))
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+
+    if request.method == 'POST':
+        name = request.form['name']
+        description = request.form['description']
+        category = request.form['category']
+        price = request.form['price']
+        rating = request.form['rating']
+        image_file = request.files.get('image')
+        image_url = None
+        if image_file and image_file.filename:
+            filename = secure_filename(image_file.filename)
+            image_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            image_file.save(image_path)
+            image_url = f'img/Products/{filename}'
+        try:
+            if image_url:
+                cur.execute("""
+                    UPDATE products
+                       SET name=%s, description=%s, category=%s, price=%s, rating=%s, image_url=%s
+                     WHERE id=%s
+                """, (name, description, category, price, rating, image_url, product_id))
+            else:
+                cur.execute("""
+                    UPDATE products
+                       SET name=%s, description=%s, category=%s, price=%s, rating=%s
+                     WHERE id=%s
+                """, (name, description, category, price, rating, product_id))
+            conn.commit()
+            flash("Product updated!", "success")
+            return redirect(url_for('index'))
+        except Exception as e:
+            print(f"Update product error: {e}")
+            flash("Error updating product.", "error")
+            return redirect(url_for('index'))
+        finally:
+            if conn:
+                cur.close()
+                conn.close()
+
+    try:
+        cur.execute("SELECT id, name, description, category, price, rating, image_url FROM products WHERE id = %s", (product_id,))
+        product = cur.fetchone() # Fetch as dict
+        if not product:
+            flash("Product not found.", "warning")
+            return redirect(url_for('index'))
+        return render_template('edit_product.html', product=product)
+    except Exception as e:
+        print(f"Fetch product error: {e}")
+        flash("Error fetching product.", "error")
+        return redirect(url_for('index'))
+    finally:
+        if conn:
+            cur.close()
+            conn.close()
+
+@app.route('/delete_product/<int:product_id>', methods=['POST'])
+@login_required # Only logged-in users can delete products
+def delete_product(product_id):
+    if not current_user.is_admin:
+        flash("Unauthorized. Admins only.", "warning")
+        return redirect(url_for('index'))
+
+    conn = connect_to_db()
+    if conn:
+        try:
+            cur = conn.cursor()
+            cur.execute("DELETE FROM products WHERE id = %s", (product_id,))
+            conn.commit()
+            flash("Product deleted!", "success")
+        except Error as e:
+            print(f"Delete product error: {e}")
+            flash("Error deleting product.", "error")
+        finally:
+            if conn:
+                conn.close()
+        return redirect(url_for('index'))
+    flash("Database connection failed.", "error")
+    return "Database connection failed", 500
+
+@app.route('/product/<int:product_id>', methods=['GET', 'POST'])
+def product_detail(product_id):
+    conn = connect_to_db()
+    if not conn:
+        flash("Database connection failed.", "error")
+        return redirect(url_for('index'))
+
+    product, reviews, user_review = None, [], None
+    try:
+        cur = conn.cursor(cursor_factory=RealDictCursor) # Use RealDictCursor
+        cur.execute("SELECT id, name, description, category, price, rating, image_url FROM products WHERE id = %s",
+                    (product_id,))
+        product = cur.fetchone() # Fetch as dict
+        if not product:
+            flash("Product not found.", "warning")
+            return redirect(url_for('index'))
+
+        if request.method == 'POST':
+            if not current_user.is_authenticated: # Check Flask-Login authentication
+                return redirect(url_for('login'))
+
+            # Current user's ID from Flask-Login
+            user_id = current_user.id
+            user_name = current_user.name # Or fetch from DB if more detailed name is needed
+
+            rating = request.form.get('rating', type=int)
+            comment = request.form.get('comment')
+
+            if not rating or not comment:
+                flash("Provide both a rating and a comment.", "error")
+            elif rating < 1 or rating > 5:
+                flash("Rating must be between 1 and 5.", "error")
+            else:
+                cur.execute("SELECT id FROM reviews WHERE product_id = %s AND user_id = %s",
+                            (product_id, user_id))
+                existing = cur.fetchone()
+                if existing:
+                    cur.execute("""
+                        UPDATE reviews
+                           SET rating=%s, comment=%s, created_at=CURRENT_TIMESTAMP
+                         WHERE id=%s
+                    """, (rating, comment, existing['id'])) # Access 'id' from dict
+                    flash("Your review has been updated!", "success")
+                else:
+                    cur.execute("""
+                        INSERT INTO reviews (product_id, user_id, username, rating, comment)
+                        VALUES (%s, %s, %s, %s, %s)
+                    """, (product_id, user_id, user_name, rating, comment))
+                    flash("Thanks for your review!", "success")
+                conn.commit()
+                return redirect(url_for('product_detail', product_id=product_id))
+
+        cur.execute("""
+            SELECT username, rating, comment, created_at
+              FROM reviews
+             WHERE product_id = %s
+          ORDER BY created_at DESC
+        """, (product_id,))
+        reviews_data = cur.fetchall() # Fetches as list of dicts
+        for r in reviews_data:
+            r['created_at'] = r['created_at'].strftime('%Y-%m-%d %H:%M') # Format date
+            reviews.append(r)
+
+        if current_user.is_authenticated: # Check Flask-Login authentication
+            cur.execute("""
+                SELECT r.rating, r.comment
+                  FROM reviews r
+                  JOIN users u ON u.id = r.user_id
+                 WHERE r.product_id = %s AND u.id = %s -- Use user_id
+            """, (product_id, current_user.id))
+            ur = cur.fetchone()
+            if ur:
+                user_review = {'rating': ur['rating'], 'comment': ur['comment']} # Access as dict
+
+    except Error as e:
+        print(f"product_detail error: {e}")
+        return redirect(url_for('index'))
+    finally:
+        if conn:
+            conn.close()
+
+    return render_template('product_detail.html', product=product, reviews=reviews, user_review=user_review)
+
+
+@app.route("/add_to_cart/<int:product_id>", methods=["POST", "GET"])
+@login_required
+def add_to_cart(product_id):
+    try:
+        conn = connect_to_db()
+        cur = conn.cursor()
+
+        # Check if product already exists in cart
+        cur.execute(
+            "SELECT quantity FROM cart WHERE user_id = %s AND product_id = %s",
+            (current_user.id, product_id)
+        )
+        row = cur.fetchone()
+
+        if row:
+            # If exists → increment quantity
+            cur.execute(
+                "UPDATE cart SET quantity = quantity + 1 WHERE user_id = %s AND product_id = %s",
+                (current_user.id, product_id)
+            )
+        else:
+            # If not exists → insert new row
+            cur.execute(
+                "INSERT INTO cart (user_id, product_id, quantity) VALUES (%s, %s, %s)",
+                (current_user.id, product_id, 1)
+            )
+
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        flash("Product added to cart.")
+    except Exception as e:
+        flash(f"Error adding product to cart: {str(e)}")
+
+    return redirect(url_for("cart"))
+
+# ------------------ PAYMENT ROUTE ------------------ #
+
+@app.route("/send_order", methods=["POST"])
+@login_required
+def send_order():
+    try:
+        # Example: getting cart/order data
+        data = request.json or {}
+        order_id = data.get("order_id", "N/A")
+        total_amount = data.get("amount", 0)
+
+        # Use plain text INR instead of ₹ symbol
+        message_body = f"""
+        Hello {current_user.name},
+
+        Your order has been placed successfully ✅
+        Order ID: {order_id}
+        Total Amount: INR {total_amount}
+
+        Thank you for shopping with us!
+        """
+
+        # ------------------ EMAIL ------------------ #
+        msg = MIMEMultipart()
+        msg["From"] = "no-reply@gspaces.in"
+        msg["To"] = current_user.email
+        msg["Subject"] = "Order Confirmation"
+
+        # Attach as plain ASCII text (safe encoding)
+        msg.attach(MIMEText(message_body, "plain", "utf-8"))
+
+        with smtplib.SMTP("smtp.gmail.com", 587) as server:
+            server.starttls()
+            server.login(os.getenv("EMAIL_USER"), os.getenv("EMAIL_PASS"))
+            server.sendmail(msg["From"], [msg["To"]], msg.as_string())
+
+        # ------------------ RESPONSE ------------------ #
+        return jsonify({"status": "success", "message": "Order email sent successfully"}), 200
+
+    except Exception as e:
+        return jsonify({"status": "failed", "error": str(e)}), 500
+
+    
+@app.route('/remove_from_cart/<int:product_id>', methods=['POST', 'GET'])
+@login_required
+def remove_from_cart(product_id):
+    conn = connect_to_db()
+    if conn:
+        try:
+            cur = conn.cursor()
+            cur.execute("DELETE FROM cart WHERE user_id=%s AND product_id=%s", (current_user.id, product_id))
+            conn.commit()
+            flash("Item removed from cart.", "info")
+        except Exception as e:
+            print(f"Error removing from cart: {e}")
+            flash("Error removing product from cart.", "error")
+        finally:
+            conn.close()
+    return redirect(url_for('cart'))
+
+
+@app.route('/update_quantity/<int:product_id>/<string:action>', methods=['POST'])
+@login_required
+def update_quantity(product_id, action):
+    conn = connect_to_db()
+    if conn:
+        try:
+            cur = conn.cursor()
+            if action == 'increase':
+                cur.execute("""
+                    UPDATE cart SET quantity = quantity + 1
+                    WHERE user_id = %s AND product_id = %s
+                """, (current_user.id, product_id))
+            elif action == 'decrease':
+                cur.execute("""
+                    UPDATE cart SET quantity = quantity - 1
+                    WHERE user_id = %s AND product_id = %s AND quantity > 1
+                """, (current_user.id, product_id))
+                # If quantity goes below 1, delete item
+                cur.execute("""
+                    DELETE FROM cart WHERE user_id=%s AND product_id=%s AND quantity <= 0
+                """, (current_user.id, product_id))
+            conn.commit()
+        except Exception as e:
+            print(f"Error updating quantity: {e}")
+            flash("Error updating quantity.", "error")
+        finally:
+            conn.close()
+    return redirect(url_for('cart'))
+
+@app.route('/cart')
+@login_required
+def cart():
+    conn = connect_to_db()
+    cart_items = []
+    total_price = 0
+    if conn:
+        try:
+            cur = conn.cursor(cursor_factory=RealDictCursor)
+            cur.execute("""
+                SELECT c.product_id AS id, c.quantity, p.name, p.price, p.image_url
+                FROM cart c
+                JOIN products p ON c.product_id = p.id
+                WHERE c.user_id = %s
+            """, (current_user.id,))
+            cart_items = cur.fetchall()
+            total_price = sum(item['price'] * item['quantity'] for item in cart_items)
+        except Exception as e:
+            print(f"Error fetching cart: {e}")
+            flash("Error loading cart.", "error")
+        finally:
+            conn.close()
+
+    # Razorpay integration unchanged
+    razorpay_order_id = None
+    if total_price > 0:
+        try:
+            order_data = {"amount": int(total_price * 100), "currency": "INR", "payment_capture": 1}
+            order = razorpay_client.order.create(order_data)
+            razorpay_order_id = order['id']
+        except Exception as e:
+            print(f"Error creating Razorpay order: {e}")
+            flash("Error processing payment.", "error")
+
+    return render_template("cart.html",
+        cart_items=cart_items,
+        total_price=total_price,
+        razorpay_order_id=razorpay_order_id,
+        razorpay_key=RAZORPAY_KEY_ID
+    )
+
+@app.context_processor
+def inject_cart_count():
+    cart_count = 0
+    if current_user.is_authenticated:
+        conn = connect_to_db()
+        if conn:
+            try:
+                cur = conn.cursor()
+                cur.execute("SELECT COALESCE(SUM(quantity), 0) FROM cart WHERE user_id = %s", (current_user.id,))
+                cart_count = cur.fetchone()[0]
+            except Exception as e:
+                print(f"Error fetching cart count: {e}")
+            finally:
+                conn.close()
+    return dict(cart_count=cart_count)
+
+@app.route('/payment/success', methods=['POST'])
+@login_required
+def payment_success():
+    conn = None
+    try:
+        payment_id = request.form.get('razorpay_payment_id')
+        order_id_from_razorpay = request.form.get('razorpay_order_id')
+        signature = request.form.get('razorpay_signature')
+
+        # ✅ Verify signature from Razorpay
+        razorpay_client.utility.verify_payment_signature({
+            'razorpay_order_id': order_id_from_razorpay,
+            'razorpay_payment_id': payment_id,
+            'razorpay_signature': signature
+        })
+
+        conn = connect_to_db()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+
+        # Fetch cart items
+        cur.execute("""
+            SELECT c.product_id, c.quantity, p.name, p.price, p.image_url
+            FROM cart c
+            JOIN products p ON c.product_id = p.id
+            WHERE c.user_id = %s
+        """, (current_user.id,))
+        cart_items = cur.fetchall()
+        total_amount = sum(item['price'] * item['quantity'] for item in cart_items)
+
+        # Insert order
+        cur.execute("""
+            INSERT INTO orders (user_id, user_email, razorpay_order_id, razorpay_payment_id, total_amount, status, order_date)
+            VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id
+        """, (current_user.id, current_user.email, order_id_from_razorpay, payment_id, total_amount, 'Completed', datetime.now()))
+        new_order_id = cur.fetchone()['id']
+
+        # Insert order items
+        for item in cart_items:
+            cur.execute("""
+                INSERT INTO order_items (order_id, product_id, product_name, quantity, price_at_purchase, image_url)
+                VALUES (%s, %s, %s, %s, %s, %s)
+            """, (new_order_id, item['product_id'], item['name'], item['quantity'], item['price'], item['image_url']))
+
+        # Clear cart
+        cur.execute("DELETE FROM cart WHERE user_id=%s", (current_user.id,))
+        conn.commit()
+
+        # -----------------------------
+        # 📧 Build order confirmation email
+        # -----------------------------
+        sender = os.getenv("EMAIL_USER", "sri.chityala501@gmail.com")
+        receiver = current_user.email
+
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = f"Your GSpaces Order #{new_order_id} Confirmation"
+        msg["From"] = sender
+        msg["To"] = receiver
+
+        # Create HTML table of items
+        items_html = "".join([
+            f"""
+            <tr>
+                <td><img src='{url_for('static', filename=item['image_url'], _external=True)}' width='50'></td>
+                <td>{item['name']}</td>
+                <td>{item['quantity']}</td>
+                <td>{item['price']} INR</td>
+                <td>{item['price'] * item['quantity']} INR</td>
+            </tr>
+            """
+            for item in cart_items
+        ])
+
+        html_body = f"""
+        <html>
+        <body>
+            <h2>Thank you for your order, {current_user.email}!</h2>
+            <p>Your payment (<b>{payment_id}</b>) was successful. Here are your order details:</p>
+            <table border="1" cellspacing="0" cellpadding="6" style="border-collapse: collapse; width: 100%;">
+                <tr style="background-color:#f2f2f2;">
+                    <th>Image</th>
+                    <th>Product</th>
+                    <th>Qty</th>
+                    <th>Price</th>
+                    <th>Subtotal</th>
+                </tr>
+                {items_html}
+            </table>
+            <h3>Total: {total_amount} INR</h3>
+            <p>We will process your order shortly. You can track your order on your GSpaces account.</p>
+            <br>
+            <p>Best Regards,<br>Team GSpaces</p>
+        </body>
+        </html>
+        """
+
+        # Attach HTML with UTF-8 encoding
+        msg.attach(MIMEText(html_body, "html", "utf-8"))
+
+        # Send email via Gmail SMTP
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+            server.login(sender, os.getenv("EMAIL_PASS", "zupd zixc vvzp kptk"))
+            server.sendmail(sender, receiver, msg.as_string())
+
+        flash("✅ Payment successful! Your order has been placed. Confirmation email sent.", "success")
+        return redirect(url_for('thankyou'))
+
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        flash(f"❌ Payment failed: {e}", "error")
+        return redirect(url_for('cart'))
+    finally:
+        if conn:
+            conn.close()
+
+@app.route('/thankyou')
+def thankyou():
+    """
+    Renders the thank you page after a successful payment.
+    """
+    return render_template('thankyou.html')
+
+# --- SITEMAP (for local testing, typically served by web server in prod) ---
+@app.route('/sitemap.xml')
+def serve_sitemap():
+    if app.debug or os.environ.get('FLASK_ENV') == 'development':
+        return send_from_directory(app.root_path, 'sitemap.xml')
+    else:
+        return redirect(url_for('static', filename='sitemap.xml'), code=301)
+
+
+# --- APPLICATION BOOTSTRAP ---
+if __name__ == '__main__':
+    conn = connect_to_db()
+    if conn:
+        print("Database connection successful. Creating tables if they don't exist...")
+        create_users_table(conn)
+        create_products_table(conn)
+        create_reviews_table(conn)
+        create_orders_table(conn) # Create orders table
+        create_order_items_table(conn) # Create order_items table
+        conn.close()
+        print("Tables checked/created. Starting Flask app.")
+        app.run(host='0.0.0.0', port=5000, debug=True)
+    else:
+        print("Failed to connect to the database. Exiting.")

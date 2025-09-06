@@ -42,6 +42,38 @@
             justify-content: space-between;
             align-items: center;
         }
+        .trust-badges {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            flex-wrap: wrap;
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .trust-badges .badge-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 10px;
+            max-width: 150px;
+            text-align: center;
+        }
+
+        .trust-badges .badge-item img {
+            width: 60px;
+            height: auto;
+            margin-bottom: 10px;
+        }
+
+        .trust-badges .badge-item p {
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+        }
+
     </style>
 </head>
 <body>
@@ -95,6 +127,21 @@
                         <hr>
                         <button id="rzp-button1" class="btn btn-success w-100">Proceed to Checkout</button>
                         <a href="{{ url_for('index') }}" class="btn btn-outline-secondary w-100 mt-2">Continue Shopping</a>
+                    </div>
+                </div>
+                <!-- Below Cart Summary -->
+                <div class="trust-badges mt-4 text-center">
+                    <div class="badge-item">
+                        <img src="{{ url_for('static', filename='img/secure-payment.png') }}" alt="Secure Payment">
+                        <p>Secure Payment</p>
+                    </div>
+                    <div class="badge-item">
+                        <img src="{{ url_for('static', filename='img/easy-returns.png') }}" alt="Easy Returns">
+                        <p>Easy Returns</p>
+                    </div>
+                    <div class="badge-item">
+                        <img src="{{ url_for('static', filename='img/verified.png') }}" alt="Verified Seller">
+                        <p>Verified Seller</p>
                     </div>
                 </div>
             </div>

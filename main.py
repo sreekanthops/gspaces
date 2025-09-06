@@ -340,7 +340,6 @@ def login():
                 flash(f"Welcome, {user_data['name']}!", "success")
                 return redirect(url_for('index'))
             else:
-                flash("Invalid email or password", "error")
                 return render_template('login.html')
 
         except Error as e:
@@ -375,7 +374,6 @@ def signup():
 
             cursor.execute("SELECT id FROM users WHERE email = %s", (email,))
             if cursor.fetchone():
-                flash("Email already registered. Please log in or use another email.", "error")
                 return render_template('login.html')
 
             cursor.execute("""
@@ -410,7 +408,6 @@ def signup():
 @login_required
 def logout():
     logout_user() # Flask-Login handles clearing the session
-    flash("You have been logged out.", "info")
     return redirect(url_for('index'))
 
 # --- GOOGLE OAUTH ROUTES ---
@@ -913,7 +910,6 @@ def product_detail(product_id):
 
         if request.method == 'POST':
             if not current_user.is_authenticated: # Check Flask-Login authentication
-                flash("Please log in to submit a review.", "warning")
                 return redirect(url_for('login'))
 
             # Current user's ID from Flask-Login
@@ -971,7 +967,6 @@ def product_detail(product_id):
 
     except Error as e:
         print(f"product_detail error: {e}")
-        flash("Error loading product details.", "error")
         return redirect(url_for('index'))
     finally:
         if conn:
@@ -1018,69 +1013,6 @@ def add_to_cart(product_id):
     return redirect(url_for("cart"))
 
 # ------------------ PAYMENT ROUTE ------------------ #
-@app.route("/send-test-email", methods=["POST"])
-def send_test_email():
-    try:
-        sender_email = "sri.chityala501@gmail.com"
-        receiver_email = "sri.chityala504@gmail.com"
-        password = "zupd zixc vvzp kptk"  # app password
-
-        # Dummy values for testing
-        payment_id = "TEST12345"
-        total_amount = 4999
-
-        # Build sample HTML order (replace with real cart data if needed)
-        items_html = """
-        <tr>
-            <td><img src="https://via.placeholder.com/50" alt="Product" /></td>
-            <td>Sample Desk Setup</td>
-            <td>1</td>
-            <td>4999 INR</td>
-            <td>4999 INR</td>
-        </tr>
-        """
-
-        html_body = f"""
-        <html>
-        <body>
-            <h2>Thank you for your order, {current_user.email}!</h2>
-            <p>Your payment (<b>{payment_id}</b>) was successful. Here are your order details:</p>
-            <table border="1" cellspacing="0" cellpadding="6" style="border-collapse: collapse; width: 100%;">
-                <tr style="background-color:#f2f2f2;">
-                    <th>Image</th>
-                    <th>Product</th>
-                    <th>Qty</th>
-                    <th>Price</th>
-                    <th>Subtotal</th>
-                </tr>
-                {items_html}
-            </table>
-            <h3>Total: {total_amount} INR</h3>
-            <p>We will process your order shortly. You can track your order on your GSpaces account.</p>
-            <br>
-            <p>Best Regards,<br>Team GSpaces</p>
-        </body>
-        </html>
-        """
-
-        # Create message
-        msg = MIMEMultipart("alternative")
-        msg["From"] = sender_email
-        msg["To"] = receiver_email
-        msg["Subject"] = "Test Order Confirmation - GSpaces"
-
-        # Attach HTML body
-        msg.attach(MIMEText(html_body, "html", "utf-8"))
-
-        # Send email
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-            server.login(sender_email, password)
-            server.sendmail(sender_email, receiver_email, msg.as_string())
-
-        return jsonify({"message": "✅ Test email sent successfully!"})
-
-    except Exception as e:
-        return jsonify({"message": f"❌ Failed: {str(e)}"}), 500
 
 @app.route("/send_order", methods=["POST"])
 @login_required

@@ -8,6 +8,7 @@ from psycopg2.extras import RealDictCursor # Import RealDictCursor
 from flask_login import login_required, current_user
 from flask import jsonify
 import smtplib
+import pymysql
 import requests
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -80,9 +81,11 @@ DB_PASSWORD = os.getenv("DB_PASSWORD", "gspaces2025")
 DB_HOST = os.getenv("DB_HOST", "localhost")
 DB_PORT = os.getenv("DB_PORT", "5432")
 
+
+
 # File Uploads Configuration
 UPLOAD_FOLDER = os.path.join('static', 'img', 'Products')
-os.makedirs(UPLOAD_FOLDER, exist_ok=True) # Ensure directory exists
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # Razorpay Configuration
@@ -673,45 +676,100 @@ def profile():
         user_details=user_details,
         user_orders=user_orders
     )
+def get_next_product_id():
+    # Example: Generate sequential ID or use DB auto-increment
+    # return next ID from DB sequence
+    from random import randint
+    return randint(1000, 9999)  # Replace with actual logic
 
+def save_product_to_db(product_id, name, category, rating, price, description, image_filename):
+    # Example: Insert product metadata into your DB
+    pass
 
-@app.route('/update_profile', methods=['POST'])
-@login_required # Protect this route
-def update_profile():
-    # current_user is available
-    user_id = current_user.id
+def save_sub_image_record(product_id, filename, description):
+    # Example: Insert sub-image record into your DB with product_id link
+    pass
 
-    name = request.form.get('name')
-    email = request.form.get('email') # Should handle if email changes and is unique
-    address = request.form.get('address')
-    phone = request.form.get('phone')
+import psycopg2
 
-    conn = connect_to_db()
-    if not conn:
-        flash("Database connection failed.", "error")
-        return redirect(url_for('profile'))
+@app.route('/add_product', methods=['POST'])
+@login_required
+def add_product():
+    if not current_user.is_admin:
+        return jsonify({'success': False, 'message': 'Admins only.'}), 403
 
     try:
-        cur = conn.cursor()
-        cur.execute("""
-            UPDATE users
-               SET name = %s, email = %s, address = %s, phone = %s
-             WHERE id = %s -- Update by ID, not email
-        """, (name, email, address, phone, user_id))
-        conn.commit()
+        name = request.form['name']
+        category = request.form['category']
+        rating = float(request.form['rating'])
+        price = float(request.form['price'])
+        description = request.form['description']
+        created_by = current_user.email
 
-        # Update current_user object and session for immediate reflection
-        current_user.name = name
-        current_user.email = email
-        flash("Profile updated successfully!", "success")
-    except Error as e:
-        print(f"Error updating profile: {e}")
-        flash("Failed to update profile.", "error")
-    finally:
-        if conn:
-            cur.close()
-            conn.close()
-    return redirect(url_for('profile'))
+        main_image = request.files.get('images')
+        sub_images = request.files.getlist('sub_images')
+        sub_descriptions = request.form.getlist('sub_descriptions')
+
+        if not main_image or not main_image.filename:
+            return jsonify({'success': False, 'message': 'Main image is required.'}), 400
+
+        # --- Connect to PostgreSQL ---
+        conn = psycopg2.connect(
+            dbname=DB_NAME,
+            user=DB_USER,
+            password=DB_PASSWORD,
+            host=DB_HOST,
+            port=DB_PORT
+        )
+        cursor = conn.cursor()
+
+        # Insert product (placeholder for image_url)
+        cursor.execute("""
+            INSERT INTO products (name, category, rating, price, description, image_url, created_by)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            RETURNING id
+        """, (name, category, rating, price, description, '', created_by))
+        product_id = cursor.fetchone()[0]
+
+        # Create folder for this product
+        product_folder = os.path.join(app.config['UPLOAD_FOLDER'], str(product_id))
+        os.makedirs(product_folder, exist_ok=True)
+
+        # Save main image
+        main_filename = f"{product_id}.jpg"
+        main_path = os.path.join(product_folder, main_filename)
+        main_image.save(main_path)
+        main_image_url = f"img/Products/{product_id}/{main_filename}"
+
+        cursor.execute("UPDATE products SET image_url=%s WHERE id=%s", (main_image_url, product_id))
+
+        # Save sub images
+        for idx, sub_img in enumerate(sub_images):
+            if not sub_img.filename:
+                continue
+            sub_filename = f"{product_id}_sub{idx+1}.jpg"
+            sub_path = os.path.join(product_folder, sub_filename)
+            sub_img.save(sub_path)
+
+            sub_image_url = f"img/Products/{product_id}/{sub_filename}"
+            sub_desc = sub_descriptions[idx] if idx < len(sub_descriptions) else ''
+
+            cursor.execute("""
+                INSERT INTO product_sub_images (product_id, image_url, description)
+                VALUES (%s, %s, %s)
+            """, (product_id, sub_image_url, sub_desc))
+
+
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        return jsonify({'success': True, 'message': 'Product added successfully!'})
+
+    except Exception as e:
+        print(f"Add product error: {e}")
+        return jsonify({'success': False, 'message': 'Error adding product.'}), 500
+
 
 @app.route('/change_password', methods=['POST'])
 @login_required # Protect this route
@@ -754,51 +812,6 @@ def change_password():
             cur.close()
             conn.close()
     return redirect(url_for('profile', _anchor='password-change'))
-
-
-# --- PRODUCT & CART ROUTES ---
-@app.route('/add_product', methods=['GET', 'POST'])
-@login_required # Only logged-in users can add products
-def add_product():
-    if not current_user.is_admin: # Check admin status from current_user
-        if request.accept_mimetypes.accept_json:
-            return jsonify({'success': False, 'message': 'Admins only.'}), 403
-        flash("Unauthorized. Admins only.", "warning")
-        return redirect(url_for('index'))
-
-    if request.method == 'POST':
-        try:
-            name = request.form['name']
-            category = request.form['category']
-            rating = float(request.form['rating'])
-            price = float(request.form['price'])
-            description = request.form['description']
-            image_file = request.files.get('image')
-            image_url = None
-
-            if image_file and image_file.filename:
-                filename = secure_filename(image_file.filename)
-                file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-                image_file.save(file_path)
-                image_url = f'img/Products/{filename}'
-
-            conn = connect_to_db()
-            if not conn:
-                return jsonify({'success': False, 'message': 'DB connection failed.'}), 500
-            cur = conn.cursor()
-            cur.execute("""
-                INSERT INTO products (name, category, rating, price, description, image_url, created_by)
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
-            """, (name, category, rating, price, description, image_url, current_user.email)) # Use current_user.email
-            conn.commit()
-            cur.close()
-            conn.close()
-            return jsonify({'success': True, 'message': 'Product added successfully!'})
-        except Exception as e:
-            print(f"Add product error: {e}")
-            return jsonify({'success': False, 'message': 'Error adding product.'}), 500
-
-    return render_template('add_product.html')
 
 @app.route('/edit_product/<int:product_id>', methods=['GET', 'POST'])
 @login_required # Only logged-in users can edit products
@@ -891,6 +904,100 @@ def delete_product(product_id):
     flash("Database connection failed.", "error")
     return "Database connection failed", 500
 
+# -----------------------
+# DELETE MAIN IMAGE
+# -----------------------
+@app.route('/delete_main_image/<int:product_id>', methods=['POST'])
+@login_required
+def delete_main_image(product_id):
+    if not current_user.is_admin:
+        flash("Unauthorized", "warning")
+        return redirect(url_for('index'))
+
+    conn = connect_to_db()
+    if conn:
+        try:
+            cur = conn.cursor()
+            cur.execute("UPDATE products SET image_url = NULL WHERE id = %s", (product_id,))
+            conn.commit()
+            cur.close()
+            flash("Main image deleted", "success")
+        finally:
+            conn.close()
+
+    return redirect(url_for('edit_product', product_id=product_id))
+
+# -----------------------
+# DELETE SUB-IMAGE
+# -----------------------
+@app.route('/delete_sub_image/<int:sub_image_id>', methods=['POST'])
+@login_required
+def delete_sub_image(sub_image_id):
+    if not current_user.is_admin:
+        flash("Unauthorized", "warning")
+        return redirect(url_for('index'))
+
+    conn = connect_to_db()
+    if not conn:
+        flash("Database connection failed.", "error")
+        return redirect(url_for('index'))
+
+    try:
+        cur = conn.cursor()
+        cur.execute("DELETE FROM product_sub_images WHERE id=%s", (sub_image_id,))
+        conn.commit()
+        cur.close()
+        flash("Sub-image deleted", "success")
+    finally:
+        conn.close()
+
+    return redirect(request.referrer or url_for('index'))
+
+# -----------------------
+# EDIT SUB-IMAGE
+# -----------------------
+@app.route('/edit_sub_image/<int:sub_image_id>', methods=['POST'])
+@login_required
+def edit_sub_image(sub_image_id):
+    if not current_user.is_admin:
+        flash("Unauthorized", "warning")
+        return redirect(url_for('index'))
+
+    conn = connect_to_db()
+    if not conn:
+        flash("Database connection failed.", "error")
+        return redirect(url_for('index'))
+
+    try:
+        sub_image_file = request.files.get('sub_image')
+        sub_description = request.form['sub_description']
+
+        cur = conn.cursor()
+
+        if sub_image_file and sub_image_file.filename:
+            filename = secure_filename(sub_image_file.filename)
+            path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            sub_image_file.save(path)
+            image_url = f'img/Products/{filename}'
+            cur.execute(
+                "UPDATE product_sub_images SET image_url=%s, description=%s WHERE id=%s",
+                (image_url, sub_description, sub_image_id)
+            )
+        else:
+            cur.execute(
+                "UPDATE product_sub_images SET description=%s WHERE id=%s",
+                (sub_description, sub_image_id)
+            )
+
+        conn.commit()
+        flash("Sub-image updated", "success")
+        cur.close()
+    finally:
+        conn.close()
+
+    return redirect(request.referrer or url_for('index'))
+
+
 @app.route('/product/<int:product_id>', methods=['GET', 'POST'])
 def product_detail(product_id):
     conn = connect_to_db()
@@ -898,23 +1005,28 @@ def product_detail(product_id):
         flash("Database connection failed.", "error")
         return redirect(url_for('index'))
 
-    product, reviews, user_review = None, [], None
+    product, reviews, user_review, sub_images = None, [], None, []
     try:
-        cur = conn.cursor(cursor_factory=RealDictCursor) # Use RealDictCursor
-        cur.execute("SELECT id, name, description, category, price, rating, image_url FROM products WHERE id = %s",
-                    (product_id,))
-        product = cur.fetchone() # Fetch as dict
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+
+        # --- Fetch Product ---
+        cur.execute("""
+            SELECT id, name, description, category, price, rating, image_url
+              FROM products
+             WHERE id = %s
+        """, (product_id,))
+        product = cur.fetchone()
         if not product:
             flash("Product not found.", "warning")
             return redirect(url_for('index'))
 
+        # --- Handle Review Submission ---
         if request.method == 'POST':
-            if not current_user.is_authenticated: # Check Flask-Login authentication
+            if not current_user.is_authenticated:
                 return redirect(url_for('login'))
 
-            # Current user's ID from Flask-Login
             user_id = current_user.id
-            user_name = current_user.name # Or fetch from DB if more detailed name is needed
+            user_name = current_user.name
 
             rating = request.form.get('rating', type=int)
             comment = request.form.get('comment')
@@ -932,7 +1044,7 @@ def product_detail(product_id):
                         UPDATE reviews
                            SET rating=%s, comment=%s, created_at=CURRENT_TIMESTAMP
                          WHERE id=%s
-                    """, (rating, comment, existing['id'])) # Access 'id' from dict
+                    """, (rating, comment, existing['id']))
                     flash("Your review has been updated!", "success")
                 else:
                     cur.execute("""
@@ -943,27 +1055,38 @@ def product_detail(product_id):
                 conn.commit()
                 return redirect(url_for('product_detail', product_id=product_id))
 
+        # --- Fetch Reviews ---
         cur.execute("""
             SELECT username, rating, comment, created_at
               FROM reviews
              WHERE product_id = %s
           ORDER BY created_at DESC
         """, (product_id,))
-        reviews_data = cur.fetchall() # Fetches as list of dicts
+        reviews_data = cur.fetchall()
         for r in reviews_data:
-            r['created_at'] = r['created_at'].strftime('%Y-%m-%d %H:%M') # Format date
+            r['created_at'] = r['created_at'].strftime('%Y-%m-%d %H:%M')
             reviews.append(r)
 
-        if current_user.is_authenticated: # Check Flask-Login authentication
+        # --- Check if Current User Already Reviewed ---
+        if current_user.is_authenticated:
             cur.execute("""
                 SELECT r.rating, r.comment
                   FROM reviews r
                   JOIN users u ON u.id = r.user_id
-                 WHERE r.product_id = %s AND u.id = %s -- Use user_id
+                 WHERE r.product_id = %s AND u.id = %s
             """, (product_id, current_user.id))
             ur = cur.fetchone()
             if ur:
-                user_review = {'rating': ur['rating'], 'comment': ur['comment']} # Access as dict
+                user_review = {'rating': ur['rating'], 'comment': ur['comment']}
+
+        # --- Fetch Sub Images ---
+        cur.execute("""
+            SELECT id, image_url, description
+              FROM product_sub_images
+             WHERE product_id = %s
+          ORDER BY id ASC
+        """, (product_id,))
+        sub_images = cur.fetchall()  # list of dicts
 
     except Error as e:
         print(f"product_detail error: {e}")
@@ -972,7 +1095,51 @@ def product_detail(product_id):
         if conn:
             conn.close()
 
-    return render_template('product_detail.html', product=product, reviews=reviews, user_review=user_review)
+    return render_template(
+        'product_detail.html',
+        product=product,
+        reviews=reviews,
+        user_review=user_review,
+        sub_images=sub_images  # ✅ pass to template
+    )
+
+@app.route('/add_sub_image/<int:product_id>', methods=['POST'])
+@login_required
+def add_sub_image(product_id):
+    if not current_user.is_admin:
+        flash("Unauthorized", "warning")
+        return redirect(url_for('index'))
+
+    conn = connect_to_db()
+    if not conn:
+        flash("Database connection failed.", "error")
+        return redirect(url_for('index'))
+
+    try:
+        sub_image_file = request.files.get('sub_image')
+        sub_description = request.form['sub_description']
+
+        if not sub_image_file or not sub_image_file.filename:
+            flash("Please select an image.", "warning")
+            return redirect(request.referrer or url_for('edit_product', product_id=product_id))
+
+        filename = secure_filename(sub_image_file.filename)
+        path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        sub_image_file.save(path)
+        image_url = f'img/Products/{filename}'
+
+        cur = conn.cursor()
+        cur.execute(
+            "INSERT INTO product_sub_images (product_id, image_url, description) VALUES (%s, %s, %s)",
+            (product_id, image_url, sub_description)
+        )
+        conn.commit()
+        cur.close()
+        flash("Sub-image added successfully", "success")
+    finally:
+        conn.close()
+
+    return redirect(request.referrer or url_for('edit_product', product_id=product_id))
 
 
 @app.route("/add_to_cart/<int:product_id>", methods=["POST", "GET"])

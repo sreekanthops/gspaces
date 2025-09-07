@@ -686,7 +686,36 @@ def save_sub_image_record(product_id, filename, description):
     # Example: Insert sub-image record into your DB with product_id link
     pass
 
-import psycopg2
+@app.route('/update_profile', methods=['POST'])
+@login_required
+def update_profile():
+    user_id = current_user.id
+    name = request.form.get('name')
+    phone = request.form.get('phone')
+    address = request.form.get('address')
+
+    conn = connect_to_db()
+    if not conn:
+        flash("Database connection failed.", "error")
+        return redirect(url_for('profile'))
+
+    try:
+        cur = conn.cursor()
+        cur.execute("""
+            UPDATE users
+            SET name=%s, phone=%s, address=%s
+            WHERE id=%s
+        """, (name, phone, address, user_id))
+        conn.commit()
+        cur.close()
+        flash("Profile updated successfully.", "success")
+    except Exception as e:
+        print(f"Error updating profile: {e}")
+        flash("Failed to update profile.", "error")
+    finally:
+        conn.close()
+
+    return redirect(url_for('profile'))
 
 @app.route('/add_product', methods=['POST'])
 @login_required

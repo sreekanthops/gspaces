@@ -538,6 +538,24 @@
           <input type="file" class="form-control" name="image" accept="image/*" required>
         </div>
       </div>
+      <div class="mb-3">
+        <label for="image" class="form-label">Upload Main Image</label>
+        <input type="file" class="form-control" name="images" accept="image/*" required>
+      </div>
+
+      <!-- Sub Images Upload -->
+      <div id="subImagesContainer">
+        <div class="sub-image-entry mb-3">
+          <label class="form-label">Sub Image</label>
+          <input type="file" class="form-control mb-2" name="sub_images" accept="image/*">
+          <textarea class="form-control" name="sub_descriptions" rows="2" placeholder="Enter sub-image description"></textarea>
+        </div>
+      </div>
+
+      <!-- Button to add more sub-image fields -->
+      <button type="button" class="btn btn-outline-secondary btn-sm mb-3" id="addSubImageBtn">
+        + Add Another Sub Image
+      </button>
 
       <div class="modal-footer">
         <button type="submit" class="btn btn-success">Add Product</button>
@@ -928,6 +946,17 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     }
+});
+document.getElementById('addSubImageBtn').addEventListener('click', function() {
+  const container = document.getElementById('subImagesContainer');
+  const entry = document.createElement('div');
+  entry.classList.add('sub-image-entry', 'mb-3');
+  entry.innerHTML = `
+    <label class="form-label">Sub Image</label>
+    <input type="file" class="form-control mb-2" name="sub_images" accept="image/*">
+    <textarea class="form-control" name="sub_descriptions" rows="2" placeholder="Enter sub-image description"></textarea>
+  `;
+  container.appendChild(entry);
 });
 </script>
 </html>

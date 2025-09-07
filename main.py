@@ -308,7 +308,6 @@ def shipping_policy():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
-        flash("You are already logged in.", "info")
         return redirect(url_for('index'))
 
     if request.method == 'POST':
@@ -340,14 +339,12 @@ def login():
                 # ✅ Store email in session (optional, for easier access)
                 session['user_email'] = user_data['email']
 
-                flash(f"Welcome, {user_data['name']}!", "success")
                 return redirect(url_for('index'))
             else:
                 return render_template('login.html')
 
         except Error as e:
             print(f"Login DB error: {e}")
-            flash("An error occurred during login.", "error")
             return render_template('login.html')
 
         finally:
@@ -360,7 +357,6 @@ def login():
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
     if current_user.is_authenticated:
-        flash("You are already logged in.", "info")
         return redirect(url_for('index'))
 
     if request.method == 'POST':
@@ -822,7 +818,6 @@ def edit_product(product_id):
 
     conn = connect_to_db()
     if not conn:
-        flash("Database connection failed.")
         return redirect(url_for('index'))
     cur = conn.cursor(cursor_factory=RealDictCursor)
 
@@ -853,11 +848,9 @@ def edit_product(product_id):
                      WHERE id=%s
                 """, (name, description, category, price, rating, product_id))
             conn.commit()
-            flash("Product updated!", "success")
             return redirect(url_for('index'))
         except Exception as e:
             print(f"Update product error: {e}")
-            flash("Error updating product.", "error")
             return redirect(url_for('index'))
         finally:
             if conn:
@@ -893,15 +886,12 @@ def delete_product(product_id):
             cur = conn.cursor()
             cur.execute("DELETE FROM products WHERE id = %s", (product_id,))
             conn.commit()
-            flash("Product deleted!", "success")
         except Error as e:
             print(f"Delete product error: {e}")
-            flash("Error deleting product.", "error")
         finally:
             if conn:
                 conn.close()
         return redirect(url_for('index'))
-    flash("Database connection failed.", "error")
     return "Database connection failed", 500
 
 # -----------------------
@@ -911,7 +901,6 @@ def delete_product(product_id):
 @login_required
 def delete_main_image(product_id):
     if not current_user.is_admin:
-        flash("Unauthorized", "warning")
         return redirect(url_for('index'))
 
     conn = connect_to_db()
@@ -921,7 +910,6 @@ def delete_main_image(product_id):
             cur.execute("UPDATE products SET image_url = NULL WHERE id = %s", (product_id,))
             conn.commit()
             cur.close()
-            flash("Main image deleted", "success")
         finally:
             conn.close()
 
@@ -934,12 +922,10 @@ def delete_main_image(product_id):
 @login_required
 def delete_sub_image(sub_image_id):
     if not current_user.is_admin:
-        flash("Unauthorized", "warning")
         return redirect(url_for('index'))
 
     conn = connect_to_db()
     if not conn:
-        flash("Database connection failed.", "error")
         return redirect(url_for('index'))
 
     try:
@@ -947,7 +933,6 @@ def delete_sub_image(sub_image_id):
         cur.execute("DELETE FROM product_sub_images WHERE id=%s", (sub_image_id,))
         conn.commit()
         cur.close()
-        flash("Sub-image deleted", "success")
     finally:
         conn.close()
 
@@ -960,12 +945,10 @@ def delete_sub_image(sub_image_id):
 @login_required
 def edit_sub_image(sub_image_id):
     if not current_user.is_admin:
-        flash("Unauthorized", "warning")
         return redirect(url_for('index'))
 
     conn = connect_to_db()
     if not conn:
-        flash("Database connection failed.", "error")
         return redirect(url_for('index'))
 
     try:
@@ -990,7 +973,6 @@ def edit_sub_image(sub_image_id):
             )
 
         conn.commit()
-        flash("Sub-image updated", "success")
         cur.close()
     finally:
         conn.close()
@@ -1002,7 +984,6 @@ def edit_sub_image(sub_image_id):
 def product_detail(product_id):
     conn = connect_to_db()
     if not conn:
-        flash("Database connection failed.", "error")
         return redirect(url_for('index'))
 
     product, reviews, user_review, sub_images = None, [], None, []
@@ -1017,7 +998,6 @@ def product_detail(product_id):
         """, (product_id,))
         product = cur.fetchone()
         if not product:
-            flash("Product not found.", "warning")
             return redirect(url_for('index'))
 
         # --- Handle Review Submission ---
@@ -1045,13 +1025,11 @@ def product_detail(product_id):
                            SET rating=%s, comment=%s, created_at=CURRENT_TIMESTAMP
                          WHERE id=%s
                     """, (rating, comment, existing['id']))
-                    flash("Your review has been updated!", "success")
                 else:
                     cur.execute("""
                         INSERT INTO reviews (product_id, user_id, username, rating, comment)
                         VALUES (%s, %s, %s, %s, %s)
                     """, (product_id, user_id, user_name, rating, comment))
-                    flash("Thanks for your review!", "success")
                 conn.commit()
                 return redirect(url_for('product_detail', product_id=product_id))
 
@@ -1107,12 +1085,10 @@ def product_detail(product_id):
 @login_required
 def add_sub_image(product_id):
     if not current_user.is_admin:
-        flash("Unauthorized", "warning")
         return redirect(url_for('index'))
 
     conn = connect_to_db()
     if not conn:
-        flash("Database connection failed.", "error")
         return redirect(url_for('index'))
 
     try:
@@ -1135,7 +1111,6 @@ def add_sub_image(product_id):
         )
         conn.commit()
         cur.close()
-        flash("Sub-image added successfully", "success")
     finally:
         conn.close()
 
@@ -1172,8 +1147,6 @@ def add_to_cart(product_id):
         conn.commit()
         cur.close()
         conn.close()
-
-        flash("Product added to cart.")
     except Exception as e:
         flash(f"Error adding product to cart: {str(e)}")
 

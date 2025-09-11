@@ -8,6 +8,7 @@ from psycopg2.extras import RealDictCursor # Import RealDictCursor
 from flask_login import login_required, current_user
 from flask import jsonify
 import smtplib
+import markdown
 import pymysql
 import requests
 from email.mime.multipart import MIMEMultipart
@@ -1077,13 +1078,14 @@ def product_detail(product_id):
 
         # --- Fetch Product ---
         cur.execute("""
-            SELECT id, name, description, category, price, rating, image_url
-              FROM products
-             WHERE id = %s
+            SELECT id, name, description, detailed_description, category, price, rating, image_url
+            FROM products
+            WHERE id = %s
         """, (product_id,))
         product = cur.fetchone()
         if not product:
             return redirect(url_for('index'))
+
 
         # --- Handle Review Submission ---
         if request.method == 'POST':
@@ -1175,6 +1177,32 @@ def product_detail(product_id):
         sub_images=sub_images,  # ✅ pass to template
         countdown_data=countdown_data 
     )
+
+@app.route('/edit_detailed_description/<int:product_id>', methods=['POST'])
+@login_required
+def edit_detailed_description(product_id):
+    if not current_user.is_admin:
+        return redirect(url_for('index'))
+
+    detailed_description = request.form['detailed_description']
+
+    conn = connect_to_db()
+    if not conn:
+        return redirect(url_for('index'))
+
+    try:
+        cur = conn.cursor()
+        cur.execute("""
+            UPDATE products
+               SET detailed_description = %s
+             WHERE id = %s
+        """, (detailed_description, product_id))
+        conn.commit()
+    finally:
+        conn.close()
+
+    return redirect(url_for('product_detail', product_id=product_id))
+
 
 @app.route('/add_sub_image/<int:product_id>', methods=['POST'])
 @login_required

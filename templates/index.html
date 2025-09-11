@@ -527,6 +527,16 @@
         </div>
 
         <div class="mb-3">
+          <label for="short_description" class="form-label">Short Description (for Index Page)</label>
+          <textarea class="form-control" name="short_description" rows="2" placeholder="A brief summary to display in product grid"></textarea>
+        </div>
+
+        <div class="mb-3">
+          <label for="detailed_description" class="form-label">Detailed Description (for Product Detail Page)</label>
+          <textarea class="form-control" name="detailed_description" rows="5" placeholder="Complete details, offers, etc. You can use HTML here."></textarea>
+        </div>
+
+        <div class="mb-3">
           <label for="image" class="form-label">Upload Image</label>
           <input type="file" class="form-control" name="image" accept="image/*" required>
         </div>
@@ -595,8 +605,8 @@
                 </a>
             </h5>
 
-            {% if product.description %}
-            <p class="text-muted small mb-2">{{ product.description }}</p>
+            {% if product.short_description %}
+            <p class="text-muted small mb-2">{{ product.short_description }}</p>
             {% endif %}
 
             <p class="text-warning mb-1">

@@ -46,6 +46,12 @@ from datetime import datetime
 # IMPORTANT: In production, NEVER hardcode sensitive information like this.
 # Use environment variables (e.g., FLASK_APP_SECRET_KEY, DB_PASSWORD, RAZORPAY_KEY_ID)
 # or a proper configuration management system.
+from datetime import datetime, timedelta
+
+# Config
+COUNTDOWN_DURATION_MINUTES = 120
+countdown_start_time = None  # in-memory (replace with DB if needed)
+
 
 # Flask App Configuration
 app = Flask(__name__)
@@ -100,6 +106,50 @@ razorpay_client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET))
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login' # The endpoint name for the login page
+
+
+@app.context_processor
+def inject_countdown_data():
+    global countdown_start_time
+
+    if countdown_start_time:
+        end_time = countdown_start_time + timedelta(minutes=COUNTDOWN_DURATION_MINUTES)
+        now = datetime.utcnow()
+        remaining = max(0, int((end_time - now).total_seconds()))
+        return {"countdown_data": {"remaining": remaining}}
+
+    # no countdown started
+    return {"countdown_data": {"remaining": 0}}
+
+@app.route("/start_countdown", methods=["POST"])
+def start_countdown():
+    global countdown_start_time
+    if not current_user.is_authenticated or not getattr(current_user, "is_admin", False):
+        return "Unauthorized", 403
+
+    countdown_start_time = datetime.utcnow()
+    return redirect(url_for("index"))
+
+@app.route("/stop_countdown", methods=["POST"])
+def stop_countdown():
+    global countdown_start_time
+    if not current_user.is_authenticated or not getattr(current_user, "is_admin", False):
+        return "Unauthorized", 403
+
+    countdown_start_time = None
+    return redirect(url_for("index"))
+
+
+@app.route("/countdown_status")
+def countdown_status():
+    global countdown_start_time
+    if countdown_start_time:
+        end_time = countdown_start_time + timedelta(minutes=COUNTDOWN_DURATION_MINUTES)
+        now = datetime.utcnow()
+        remaining = max(0, int((end_time - now).total_seconds()))
+        return {"active": True, "remaining": remaining}
+
+    return {"active": False, "remaining": 0}
 
 # User class for Flask-Login
 class User(UserMixin):
@@ -1074,6 +1124,15 @@ def product_detail(product_id):
             r['created_at'] = r['created_at'].strftime('%Y-%m-%d %H:%M')
             reviews.append(r)
 
+        # --- Countdown Info ---
+        countdown_data = {"active": False, "remaining": 0}
+        if countdown_start_time:
+            end_time = countdown_start_time + timedelta(minutes=COUNTDOWN_DURATION_MINUTES)
+            now = datetime.utcnow()
+            countdown_data = {
+                "active": True,
+                "remaining": max(0, int((end_time - now).total_seconds()))
+            }
         # --- Check if Current User Already Reviewed ---
         if current_user.is_authenticated:
             cur.execute("""
@@ -1107,7 +1166,8 @@ def product_detail(product_id):
         product=product,
         reviews=reviews,
         user_review=user_review,
-        sub_images=sub_images  # ✅ pass to template
+        sub_images=sub_images,  # ✅ pass to template
+        countdown_data=countdown_data 
     )
 
 @app.route('/add_sub_image/<int:product_id>', methods=['POST'])

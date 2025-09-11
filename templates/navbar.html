@@ -1,3 +1,64 @@
+<!-- Urgency Banner -->
+<div id="urgency-banner" 
+     style="background:#1a1a1a; color:#f5d76e; font-weight:600; font-size:16px; text-align:center; padding:12px; position:sticky; top:0; z-index:999; letter-spacing:0.5px; border-bottom:2px solid #f5d76e;">
+  ⏳ Exclusive Deal! Ends in 
+  <span id="countdown">00:00:00</span> – Enjoy <strong style="color:#ffffff;">5% OFF + Free Delivery</strong>
+</div>
+
+<!-- Admin-only Start Countdown button -->
+{% if current_user.is_authenticated and current_user.is_admin %}
+  <div style="text-align:center; margin:10px 0;">
+    <form action="{{ url_for('start_countdown') }}" method="post" style="display:inline;">
+      <button type="submit" class="btn btn-success btn-sm">▶️ Start Deal</button>
+    </form>
+    <form action="{{ url_for('stop_countdown') }}" method="post" style="display:inline; margin-left:5px;">
+      <button type="submit" class="btn btn-danger btn-sm">⏹ Stop Deal</button>
+    </form>
+  </div>
+{% endif %}
+
+
+<script>
+function startCountdownFromBackend(elementId, initialRemaining) {
+  const el = document.getElementById(elementId);
+  if (!el) return;
+
+  let remaining = initialRemaining || 0;
+
+  async function fetchStatus() {
+    const res = await fetch("/countdown_status");
+    const data = await res.json();
+    if (data.active) remaining = data.remaining;
+    else remaining = 0;
+  }
+
+  function render() {
+    if (remaining <= 0) {
+      el.textContent = "00:00:00";
+      return;
+    }
+    let hours = Math.floor((remaining / 3600) % 24);
+    let minutes = Math.floor((remaining / 60) % 60);
+    let seconds = Math.floor(remaining % 60);
+
+    el.textContent =
+      (hours < 10 ? "0" + hours : hours) + ":" +
+      (minutes < 10 ? "0" + minutes : minutes) + ":" +
+      (seconds < 10 ? "0" + seconds : seconds);
+
+    remaining--;
+  }
+
+  // keep refreshing from backend every 30s for sync
+  setInterval(fetchStatus, 30000);
+  setInterval(render, 1000);
+  render();
+}
+
+// bootstrap navbar countdown
+startCountdownFromBackend("countdown", {{ countdown_data.remaining|default(0) }});
+</script>
+
 <nav class="custom-navbar navbar navbar-expand-md" aria-label="GSpaces Navigation Bar">
     <div class="container">
         <a class="navbar-brand" href="{{ url_for('index') }}">
@@ -13,7 +74,7 @@
                 </li>
                 <li class="nav-item"><a class="nav-link" href="{{ url_for('index') }}#about">About</a></li>
                 <li class="nav-item"><a class="nav-link" href="{{ url_for('index') }}#services">Services</a></li>
-                <li class="nav-item"><a class="nav-link" href="{{ url_for('index') }}#portfolio">Products</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('index') }}#products">Products</a></li>
                 <li class="nav-item"><a class="nav-link" href="{{ url_for('index') }}#team">Team</a></li>
                 <li class="nav-item"><a class="nav-link" href="{{ url_for('index') }}#contact">Contact</a></li>
             </ul>
@@ -27,9 +88,9 @@
                     </a>
                 </li>
                 <li>
-                    <form action="{{ url_for('update_profile') }}" method="POST">
+                    <a class="nav-link" href="{{ url_for('profile') }}">
                         <img src="{{ url_for('static', filename='img/user.svg') }}" alt="User">
-                    </form>
+                    </a>
                 </li>
             </ul>
         </div>

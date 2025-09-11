@@ -38,27 +38,20 @@
 
 <body class="index-page ">
 
-
-
 {% include 'navbar.html' %}
 <main class="main">
-    <!-- Hero Section -->
-<section id="hero" class="hero section">
-    <div class="container hero-content">
-        <div class="hero-image">
+    <!-- home Section -->
+<section id="home" class="home section">
+    <div class="container home-content">
+        <div class="home-image">
             <img src="{{ url_for('static', filename='img/banner.jpg') }}" alt="Background Image">
         </div>
-        <div class="hero-text text-start">
+        <div class="home-text text-start">
             <h2 data-aos="fade-up" data-aos-delay="100">GSpaces: CREATE. WORK. INSPIRE.</h2>
             <p data-aos="fade-up" data-aos-delay="200">From Empty to Extraordinary — Powered by GSpaces</p>
         </div>
     </div>
 </section>
-
-
-
-
-
 
     <!-- About Section -->
 
@@ -72,7 +65,7 @@
 
             <div class="col-lg-6" data-aos="fade-up" data-aos-delay="100">
 
-              <div class="content ps-0 ps-lg-5">
+              <div class="content">
 
                 <h3>GSpaces: Transforming Empty Spaces into Dream Workspaces</h3>
 
@@ -565,14 +558,14 @@
 </div>
    
 <!-- Start products section -->
-<section id="portfolio" class="portfolio section">
+<section id="products" class="products section">
 
   <div class="container">
 
     <div class="isotope-layout" data-default-filter="*" data-layout="masonry" data-sort="original-order">
 
       <!-- Filters -->
-      <ul class="portfolio-filters isotope-filters" data-aos="fade-up" data-aos-delay="100">
+      <ul class="products-filters isotope-filters" data-aos="fade-up" data-aos-delay="100">
         <li data-filter="*" class="filter-active">All</li>
         <li data-filter=".filter-ergonomic">Ergonomic</li>
         <li data-filter=".filter-minimalist">Minimalist</li>
@@ -585,9 +578,9 @@
       <div class="row gy-4 isotope-container" data-aos="fade-up" data-aos-delay="200">
 
         {% for product in products %}
-        <div class="col-lg-3 col-md-6 portfolio-item isotope-item filter-{{ product.category | lower }}">
+        <div class="col-lg-3 col-md-6 products-item isotope-item filter-{{ product.category | lower }}">
           <!-- Image block -->
-          <div class="portfolio-content">
+          <div class="products-content">
             <!-- Add <a> tag around the image -->
             <a href="{{ url_for('product_detail', product_id=product.id) }}">
               <img src="{{ url_for('static', filename=product.image_url) }}" class="img-fluid" alt="{{ product.name }}">
@@ -696,202 +689,89 @@
 
     <!-- Contact Section -->
 
-<section id="contact" class="contact section">
+    <section id="contact" class="contact section">
 
-  <!-- Section Title -->
+      <!-- Section Title -->
 
-  <div class="container section-title" data-aos="fade-up">
+      <div class="container section-title" data-aos="fade-up">
 
-    <h2>Contact</h2>
+        <h2>Contact</h2>
 
-    <p>We’re here to help you build your dream workspace</p>
+        <p>We’re here to help you build your dream workspace</p>
 
-  </div><!-- End Section Title -->
+      </div><!-- End Section Title -->
 
-  <div class="container" data-aos="fade-up" data-aos-delay="100">
-
-    <div class="row gy-4">
-
-      <div class="col-lg-6">
+      <div class="container" data-aos="fade-up" data-aos-delay="100">
 
         <div class="row gy-4">
 
-          <!-- Address -->
+          <div class="col-lg-6">
 
-          <div class="col-lg-12">
+            <div class="row gy-4">
 
-            <div class="info-item d-flex flex-column justify-content-center align-items-center" data-aos="fade-up" data-aos-delay="200">
+              <!-- Address -->
 
-              <i class="bi bi-geo-alt"></i>
+              <div class="col-lg-12">
 
-              <h3>Address</h3>
+                <div class="info-item d-flex flex-column justify-content-center align-items-center" data-aos="fade-up" data-aos-delay="200">
 
-              <p>H.No: 62, Road No. 5A, Chengicharla,<br>Hyderabad, Telangana - 500051</p>
+                  <i class="bi bi-geo-alt"></i>
+
+                  <h3>Address</h3>
+
+                  <p>H.No: 62, Road No. 5A, Chengicharla,<br>Hyderabad, Telangana - 500051</p>
+
+                </div>
+
+              </div><!-- End Info Item -->
+
+              <!-- Phone -->
+
+              <div class="col-md-6">
+
+                <div class="info-item d-flex flex-column justify-content-center align-items-center" data-aos="fade-up" data-aos-delay="300">
+
+                  <i class="bi bi-telephone"></i>
+
+                  <h3>Call Us</h3>
+
+                  <p>+91 70750 77384</p>
+
+                </div>
+
+              </div><!-- End Info Item -->
+
+              <!-- Email -->
+
+              <div class="col-md-6">
+
+                <div class="info-item d-flex flex-column justify-content-center align-items-center" data-aos="fade-up" data-aos-delay="400">
+
+                  <i class="bi bi-envelope"></i>
+
+                  <h3>Email Us</h3>
+
+                  <p>sreekanth.chityala@gspaces.in</p>
+
+                </div>
+
+              </div><!-- End Info Item -->
 
             </div>
 
-          </div><!-- End Info Item -->
+          </div>
 
-          <!-- Phone -->
-
-          <div class="col-md-6">
-
-            <div class="info-item d-flex flex-column justify-content-center align-items-center" data-aos="fade-up" data-aos-delay="300">
-
-              <i class="bi bi-telephone"></i>
-
-              <h3>Call Us</h3>
-
-              <p>+91 70750 77384</p>
-
-            </div>
-
-          </div><!-- End Info Item -->
-
-          <!-- Email -->
-
-          <div class="col-md-6">
-
-            <div class="info-item d-flex flex-column justify-content-center align-items-center" data-aos="fade-up" data-aos-delay="400">
-
-              <i class="bi bi-envelope"></i>
-
-              <h3>Email Us</h3>
-
-              <p>sreekanth.chityala@gspaces.in</p>
-
-            </div>
-
-          </div><!-- End Info Item -->
+          <!-- Optional: Add a contact form or map here if needed -->
 
         </div>
 
       </div>
-
-      <!-- Optional: Add a contact form or map here if needed -->
-
-    </div>
-
-  </div>
 
 </section><!-- End Contact Section -->
 
   </main>
+{% include 'footer.html' %}
 
-<!-- Footer Section -->
-
-<footer id="footer" class="footer dark-background">
-
-  <div class="container footer-top">
-
-    <div class="row gy-4">
-
-      <!-- Contact Info -->
-
-      <div class="col-lg-4 col-md-6 footer-about">
-
-        <a href="index.html" class="logo d-flex align-items-center">
-
-          <span class="sitename">GSpaces</span>
-
-        </a>
-
-        <div class="footer-contact pt-3">
-
-          <p>H.No: 62, Road No. 5A</p>
-
-          <p>Chengicharla, Hyderabad</p>
-
-          <p>Telangana - 500051</p>
-
-          <p class="mt-3"><strong>Phone:</strong> <span>+91 70750 77384</span></p>
-
-          <p><strong>Email:</strong> <span>sreekanth.chityala@gspaces.in</span></p>
-
-        </div>
-
-        <div class="social-links d-flex mt-4">
-
-                  <a href="https://www.facebook.com/profile.php?id=61575193145207"><i class="bi bi-facebook"></i></a>
-
-                  <a href="https://www.instagram.com/gspaces_desks/"><i class="bi bi-instagram"></i></a>
-
-                  <a href="https://www.linkedin.com/in/sreekanth-chityala-a70aa7bb/"><i class="bi bi-linkedin"></i></a>
-
-
-        </div>
-
-      </div>
-
-      <!-- Useful Links -->
-
-      <div class="col-lg-2 col-md-6 footer-links">
-
-        <h4>Quick Links</h4>
-
-        <ul>
-
-          <li><i class="bi bi-chevron-right"></i> <a href="#">Home</a></li>
-
-          <li><i class="bi bi-chevron-right"></i> <a href="#about">About</a></li>
-
-          <li><i class="bi bi-chevron-right"></i> <a href="#services">Services</a></li>
-
-          <li><i class="bi bi-chevron-right"></i> <a href="#portfolio">Products</a></li>
-
-          <li><i class="bi bi-chevron-right"></i> <a href="/privacy">Privacy</a></li>
-
-        </ul>
-
-      </div>
-
-    <!-- Newsletter -->
-    <div class="col-lg-6 col-md-12 footer-newsletter">
-      <h4>Stay in the Loop</h4>
-      <p>Subscribe to get updates on new setups, rental offers, and workspace tips!</p>
-
-      <form id="subscribeForm">
-        <input type="email" name="email" placeholder="Your Email" required>
-        <button type="submit">Subscribe</button>
-      </form>
-
-      <div id="responseMessage" style="margin-top:10px;"></div>
-
-      <script>
-        document.getElementById("subscribeForm").addEventListener("submit", function(e) {
-          e.preventDefault(); // Prevent full page reload
-
-          const formData = new FormData(this);
-
-          fetch("https://formsubmit.co/ajax/sreekanth.chityala@gspaces.in", {
-            method: "POST",
-            headers: { 'Accept': 'application/json' },
-            body: formData
-          })
-          .then(response => {
-            if (response.ok) {
-              document.getElementById("responseMessage").innerText = "✅ Thank you for subscribing!";
-            } else {
-              document.getElementById("responseMessage").innerText = "❌ There was an error. Try again later.";
-            }
-          })
-          .catch(error => {
-            document.getElementById("responseMessage").innerText = "❌ Network error. Try again.";
-          });
-        });
-      </script>
-
-    </div>
-
-  <!-- Footer Bottom -->
-
-  <div class="container text-center mt-4">
-    <p>© <strong class="sitename">GSpaces</strong> — All Rights Reserved 2025</p>
-    <a href="/privacy">Privacy Policy</a>
-    <a href="/terms">Terms of Service</a>
-  </div>
-
-</footer>
 
   <!-- Scroll Top -->
 

@@ -29,14 +29,29 @@
     .product-info .description { font-size:1.05rem; line-height:1.6; color:#333; margin-bottom:30px;}
     .btn-add-cart { background-color:#ffa41c; border-color:#ffa41c; color:#111; font-weight:600;}
     .btn-add-cart:hover { background-color:#f8981d; border-color:#f8981d; color:#111;}
-    .trust-policies { background-color:#fff9f1; border:1px solid #ffe5b4; padding:20px; margin-top:20px;}
-    .trust-policies h3 { font-weight:600; color:#333;}
-    .trust-policies i { color:#f8981d;}
-    .trust-policies p { font-size:0.9rem; color:#555;}
+.trust-policies .policy {
+  padding: 20px;
+  border-radius: 10px;
+  background: #fff;
+  min-height: 160px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.trust-policies .policy:hover {
+  transform: translateY(-6px) scale(1.05);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+}
+
+.trust-policies .row > div {
+  margin-bottom: 20px; /* space between rows (mobile) */
+}
+
+
     @media (max-width:992px) { .gs-main-image { height:360px;} #zoomResult { display:none !important;} }
   </style>
 </head>
 <body>
+
   {% include 'navbar.html' %}
 
   <div class="container product-detail-container mt-5">
@@ -170,28 +185,108 @@
         <form action="{{ url_for('add_to_cart', product_id=product['id']) }}" method="post" class="mt-3">
           <button type="submit" class="btn btn-add-cart btn-lg w-100">Add to Cart</button>
         </form>
-        <div class="trust-policies">
-          <div class="row text-center">
-            <div class="col-md-4 mb-3">
-              <i class="bi bi-arrow-repeat fs-1"></i>
-              <h5 class="mt-2">7 Days Return</h5>
-              <p class="small text-muted">Hassle-free returns within 7 days.</p>
+        <!-- Promo Banner inside Product Detail -->
+        <div class="promo-banner text-center my-4 p-3 rounded" 
+            style="background:#1a1a1a; border:1px solid #f5d76e; color:#f5d76e; font-size:16px; font-weight:600;">
+          <strong>🔥 Limited Time Offer:</strong> Order in the next 
+          <span id="product-countdown" style="color:#ffffff; font-weight:700;">00:00:00</span> 
+          and get <strong style="color:#f5d76e;">5% OFF</strong>!
+        </div>
+
+        <script>
+        function startCountdownFromBackend(elementId, initialRemaining) {
+          const el = document.getElementById(elementId);
+          if (!el) return;
+
+          let remaining = initialRemaining || 0;
+
+          async function fetchStatus() {
+            try {
+              const res = await fetch("/countdown_status");
+              const data = await res.json();
+              if (data.active) remaining = data.remaining;
+              else remaining = 0;
+            } catch (err) {
+              console.error("Failed to fetch countdown:", err);
+            }
+          }
+
+          function render() {
+            if (remaining <= 0) {
+              el.textContent = "00:00:00";
+              return;
+            }
+            let hours = Math.floor((remaining / 3600) % 24);
+            let minutes = Math.floor((remaining / 60) % 60);
+            let seconds = Math.floor(remaining % 60);
+
+            el.textContent =
+              (hours < 10 ? "0" + hours : hours) + ":" +
+              (minutes < 10 ? "0" + minutes : minutes) + ":" +
+              (seconds < 10 ? "0" + seconds : seconds);
+
+            remaining--;
+          }
+
+          // keep backend synced every 30s
+          setInterval(fetchStatus, 30000);
+          setInterval(render, 1000);
+          render();
+        }
+
+        // Initialize product detail countdown
+        startCountdownFromBackend("product-countdown", {{ countdown_data.remaining|default(0) }});
+        </script>
+
+        <!-- Stock Info -->
+        <div class="stock-info text-center my-4 p-3 rounded" style="background:#e8f7ff; border:1px solid #b6e0fe;">
+          <strong>Only <span style="color:#007bff;">5 items</span> left in stock!</strong> Don’t miss out 🚀
+        </div>
+        <!-- Social Proof -->
+        <div class="social-proof text-center my-4 p-3 rounded" style="background:#f8f9fa; border:1px solid #ddd;">
+          ⭐️⭐️⭐️⭐️⭐️ <br>
+          <small>Trusted by <strong>5000+ Happy Customers</strong> across India</small>
+        </div>
+        <!-- Freebie -->
+        <div class="freebie text-center my-4 p-3 rounded" style="background:#e6ffed; border:1px solid #b3e6cc;">
+          🎁 <strong>Special Bonus:</strong> Free installation included with your order!
+        </div>
+
+        <!-- Trust Policies -->
+        <div class="trust-policies mt-5">
+          <div class="row text-center justify-content-between">
+            <div class="col-6 col-md-3">
+              <div class="policy">
+                <i class="bi bi-truck fs-1 text-warning"></i>
+                <h6 class="mt-3">Free Delivery</h6>
+                <p class="small text-muted">No extra charges on orders.</p>
+              </div>
             </div>
-            <div class="col-md-4 mb-3">
-              <i class="bi bi-clock-history fs-1"></i>
-              <h5 class="mt-2">Easy Refund</h5>
-              <p class="small text-muted">Refund in 7–10 business days.</p>
+            <div class="col-6 col-md-3">
+              <div class="policy">
+                <i class="bi bi-arrow-repeat fs-1 text-warning"></i>
+                <h6 class="mt-3">10 Days Replacement</h6>
+                <p class="small text-muted">Easy replacement within 10 days.</p>
+              </div>
             </div>
-            <div class="col-md-4 mb-3">
-              <i class="bi bi-shield-lock fs-1"></i>
-              <h5 class="mt-2">Secure Payment</h5>
-              <p class="small text-muted">100% secure payments.</p>
+            <div class="col-6 col-md-3">
+              <div class="policy">
+                <i class="bi bi-shield-lock fs-1 text-warning"></i>
+                <h6 class="mt-3">Secure Payment</h6>
+                <p class="small text-muted">100% secure via Razorpay.</p>
+              </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="policy">
+                <i class="bi bi-tools fs-1 text-warning"></i>
+                <h6 class="mt-3">Assembly Available</h6>
+                <p class="small text-muted">Expert help at your doorstep.</p>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
-
     <!-- Tabs (Specifications, Warranty, Reviews) -->
     <div class="row mt-5">
       <div class="col-12">
@@ -322,7 +417,7 @@
     </div>
   </div>
   {% endif %}
-
+{% include 'footer.html' %}
   <!-- JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>

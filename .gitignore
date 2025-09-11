@@ -1,2 +1,27 @@
-# Created by venv; see https://docs.python.org/3/library/venv.html
-*
+# --- Python cache ---
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# --- Virtual environments ---
+.venv/
+venv/
+env/
+ENV/
+.gspaces/    # if you use a local venv with that name
+
+# --- Environment / config secrets ---
+.env
+.env.*
+*.env
+
+# --- IDE / OS junk ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# --- Logs ---
+*.log
+

@@ -1,7 +1,8 @@
 <!-- Urgency Banner -->
-<div id="urgency-banner" 
-     style="background:#1a1a1a; color:#f5d76e; font-weight:600; font-size:16px; text-align:center; padding:12px; position:sticky; top:0; z-index:999; letter-spacing:0.5px; border-bottom:2px solid #f5d76e;">
-  ⏳ Exclusive Deal! Ends in <span id="countdown">00:00:00</span> – Enjoy <strong style="color:#ffffff;">5% OFF + Free Delivery</strong>
+<div id="urgency-banner">
+  <span id="banner-text">
+    ⏳ Exclusive Deal! Ends in <span id="countdown">00:00:00</span> – Enjoy <strong style="color:#ffffff;">5% OFF + Free Delivery</strong>
+  </span>
 </div>
 
 <!-- Admin Controls -->
@@ -14,23 +15,41 @@
   </form>
 </div>
 {% endif %}
+<style>
+#urgency-banner {
+  background:#1a1a1a;
+  color:#f5d76e;
+  font-weight:600;
+  font-size:16px;
+  text-align:center;
+  padding:12px;
+  position:sticky;
+  top:0;
+  z-index:999;
+  letter-spacing:0.5px;
+  border-bottom:2px solid #f5d76e;
+}
 
+#urgency-banner.deal-ended {
+  background: #ff4c4c;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+</style>
 <script>
 function startCountdown(elementId, duration) {
-  const el = document.getElementById(elementId);
-  const banner = document.getElementById("urgency-banner");
-  if (!el || !banner) return;
+  const countdownEl = document.getElementById(elementId);
+  const bannerTextEl = document.getElementById("banner-text");
+  if (!countdownEl || !bannerTextEl) return;
 
   let remaining = duration;
 
   function render() {
     if (remaining <= 0) {
-      el.textContent = "00:00:00";
-      banner.innerHTML = "🔥 Deal Ending Soon! Don’t Miss Out!";
-      banner.style.background = "#ff4c4c";
-      banner.style.color = "#fff";
-      banner.style.fontSize = "18px";
-      banner.style.fontWeight = "700";
+      countdownEl.textContent = "";
+      bannerTextEl.innerHTML = "🔥 Deal Ending Soon! Don’t Miss Out!";
       clearInterval(window.countdownInterval);
       return;
     }
@@ -39,7 +58,7 @@ function startCountdown(elementId, duration) {
     let minutes = Math.floor((remaining / 60) % 60);
     let seconds = Math.floor(remaining % 60);
 
-    el.textContent =
+    countdownEl.textContent =
       (hours < 10 ? "0" + hours : hours) + ":" +
       (minutes < 10 ? "0" + minutes : minutes) + ":" +
       (seconds < 10 ? "0" + seconds : seconds);
@@ -51,6 +70,7 @@ function startCountdown(elementId, duration) {
   window.countdownInterval = setInterval(render, 1000);
   render();
 }
+
 
 // Admin Start Button
 const startBtn = document.getElementById("startCountdownBtn");

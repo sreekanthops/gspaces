@@ -49,9 +49,6 @@ from datetime import datetime
 # or a proper configuration management system.
 from datetime import datetime, timedelta
 
-# Config
-COUNTDOWN_DURATION_MINUTES = None
-countdown_start_time = None  # in-memory (replace with DB if needed)
 
 
 # Flask App Configuration
@@ -107,7 +104,9 @@ razorpay_client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET))
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login' # The endpoint name for the login page
-
+# Config
+countdown_start_time = None
+countdown_duration_minutes = None  # in-memory (replace with DB if needed)
 
 @app.context_processor
 def inject_countdown_data():
@@ -120,6 +119,7 @@ def inject_countdown_data():
         return {"countdown_data": {"remaining": remaining}}
 
     return {"countdown_data": {"remaining": 0}}
+
 
 @app.route("/start_countdown_custom", methods=["POST"])
 def start_countdown_custom():
@@ -139,24 +139,27 @@ def start_countdown_custom():
 
 @app.route("/stop_countdown", methods=["POST"])
 def stop_countdown():
-    global countdown_start_time
+    global countdown_start_time, countdown_duration_minutes
     if not current_user.is_authenticated or not current_user.is_admin:
         return "Unauthorized", 403
-    countdown_start_time = None
-    return redirect(url_for("index"))
 
+    countdown_start_time = None
+    countdown_duration_minutes = None  # reset duration too
+    return redirect(url_for("index"))
 
 
 @app.route("/countdown_status")
 def countdown_status():
-    global countdown_start_time
-    if countdown_start_time:
-        end_time = countdown_start_time + timedelta(minutes=COUNTDOWN_DURATION_MINUTES)
+    global countdown_start_time, countdown_duration_minutes
+    if countdown_start_time and countdown_duration_minutes:
+        end_time = countdown_start_time + timedelta(minutes=countdown_duration_minutes)
         now = datetime.utcnow()
         remaining = max(0, int((end_time - now).total_seconds()))
-        return {"active": True, "remaining": remaining}
+        active = remaining > 0
+        return {"active": active, "remaining": remaining}
 
     return {"active": False, "remaining": 0}
+
 
 # User class for Flask-Login
 class User(UserMixin):

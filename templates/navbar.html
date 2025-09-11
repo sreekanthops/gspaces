@@ -1,42 +1,40 @@
 <!-- Urgency Banner -->
 <div id="urgency-banner" 
      style="background:#1a1a1a; color:#f5d76e; font-weight:600; font-size:16px; text-align:center; padding:12px; position:sticky; top:0; z-index:999; letter-spacing:0.5px; border-bottom:2px solid #f5d76e;">
-  ⏳ Exclusive Deal! Ends in 
-  <span id="countdown">00:00:00</span> – Enjoy <strong style="color:#ffffff;">5% OFF + Free Delivery</strong>
+  ⏳ Exclusive Deal! Ends in <span id="countdown">00:00:00</span> – Enjoy <strong style="color:#ffffff;">5% OFF + Free Delivery</strong>
 </div>
 
-<!-- Admin-only Start Countdown button -->
+<!-- Admin Controls -->
+{% if current_user.is_authenticated and current_user.is_admin %}
 <div style="text-align:center; margin:10px 0;">
-  <form action="{{ url_for('start_countdown') }}" method="post" style="display:inline;">
-    <input type="number" name="duration" placeholder="Minutes" min="1" style="width:80px; padding:2px;">
-    <button type="submit" class="btn btn-success btn-sm">▶️ Start Deal</button>
-  </form>
-  <form action="{{ url_for('stop_countdown') }}" method="post" style="display:inline; margin-left:5px;">
-    <button type="submit" class="btn btn-danger btn-sm">⏹ Stop Deal</button>
+  <input type="number" id="customMinutes" placeholder="Minutes" min="1" style="width:100px;"/>
+  <button id="startCountdownBtn" class="btn btn-warning btn-sm">Start Countdown</button>
+  <form action="{{ url_for('stop_countdown') }}" method="post" style="display:inline;">
+    <button type="submit" class="btn btn-danger btn-sm">Stop Countdown</button>
   </form>
 </div>
-
-
+{% endif %}
 
 <script>
-function startCountdownFromBackend(elementId, initialRemaining) {
+function startCountdown(elementId, duration) {
   const el = document.getElementById(elementId);
-  if (!el) return;
+  const banner = document.getElementById("urgency-banner");
+  if (!el || !banner) return;
 
-  let remaining = initialRemaining || 0;
-
-  async function fetchStatus() {
-    const res = await fetch("/countdown_status");
-    const data = await res.json();
-    if (data.active) remaining = data.remaining;
-    else remaining = 0;
-  }
+  let remaining = duration;
 
   function render() {
     if (remaining <= 0) {
       el.textContent = "00:00:00";
+      banner.innerHTML = "🔥 Deal Ending Soon! Don’t Miss Out!";
+      banner.style.background = "#ff4c4c";
+      banner.style.color = "#fff";
+      banner.style.fontSize = "18px";
+      banner.style.fontWeight = "700";
+      clearInterval(window.countdownInterval);
       return;
     }
+
     let hours = Math.floor((remaining / 3600) % 24);
     let minutes = Math.floor((remaining / 60) % 60);
     let seconds = Math.floor(remaining % 60);
@@ -49,14 +47,33 @@ function startCountdownFromBackend(elementId, initialRemaining) {
     remaining--;
   }
 
-  // keep refreshing from backend every 30s for sync
-  setInterval(fetchStatus, 30000);
-  setInterval(render, 1000);
+  clearInterval(window.countdownInterval);
+  window.countdownInterval = setInterval(render, 1000);
   render();
 }
 
-// bootstrap navbar countdown
-startCountdownFromBackend("countdown", {{ countdown_data.remaining|default(0) }});
+// Admin Start Button
+const startBtn = document.getElementById("startCountdownBtn");
+if (startBtn) {
+  startBtn.addEventListener("click", async () => {
+    const minutes = parseInt(document.getElementById("customMinutes").value);
+    if (!minutes || minutes <= 0) return alert("Enter a valid number of minutes.");
+
+    // Send request to backend
+    const res = await fetch("/start_countdown_custom", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ minutes })
+    });
+
+    if (res.ok) {
+      startCountdown("countdown", minutes * 60);
+    } else {
+      const msg = await res.text();
+      alert("Error: " + msg);
+    }
+  });
+}
 </script>
 
 <nav class="custom-navbar navbar navbar-expand-md" aria-label="GSpaces Navigation Bar">

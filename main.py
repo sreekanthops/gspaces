@@ -120,32 +120,30 @@ def inject_countdown_data():
 
     return {"countdown_data": {"remaining": 0}}
 
-@app.route("/start_countdown", methods=["POST"])
-def start_countdown():
+@app.route("/start_countdown_custom", methods=["POST"])
+def start_countdown_custom():
     global countdown_start_time, countdown_duration_minutes
-
-    if not current_user.is_authenticated or not getattr(current_user, "is_admin", False):
+    if not current_user.is_authenticated or not current_user.is_admin:
         return "Unauthorized", 403
 
-    try:
-        # read duration from form (minutes)
-        duration = int(request.form.get("duration", 120))  # default 120 if empty
-    except ValueError:
-        duration = 120
+    data = request.get_json()
+    minutes = data.get("minutes", 0)
+    if minutes <= 0:
+        return "Invalid duration", 400
 
     countdown_start_time = datetime.utcnow()
-    countdown_duration_minutes = duration
-    return redirect(url_for("index"))
+    countdown_duration_minutes = minutes
+    return jsonify({"success": True, "remaining": minutes*60})
 
 
 @app.route("/stop_countdown", methods=["POST"])
 def stop_countdown():
     global countdown_start_time
-    if not current_user.is_authenticated or not getattr(current_user, "is_admin", False):
+    if not current_user.is_authenticated or not current_user.is_admin:
         return "Unauthorized", 403
-
     countdown_start_time = None
     return redirect(url_for("index"))
+
 
 
 @app.route("/countdown_status")

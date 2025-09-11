@@ -185,6 +185,19 @@
         <form action="{{ url_for('add_to_cart', product_id=product['id']) }}" method="post" class="mt-3">
           <button type="submit" class="btn btn-add-cart btn-lg w-100">Add to Cart</button>
         </form>
+        <style>
+        /* Make it specific to override Bootstrap */
+        button.btn-add-cart {
+          background-color: #ffcc00 !important;  /* Bright yellow */
+          color: #111 !important;
+          font-weight: 600;
+          transition: all 0.2s ease;
+        }
+
+        button.btn-add-cart:hover {
+          background-color: #ffdb4d !important;  /* Lighter yellow on hover */
+        }
+        </style>
         <!-- Promo Banner inside Product Detail -->
         <div class="promo-banner text-center my-4 p-3 rounded" 
             style="background:#1a1a1a; border:1px solid #f5d76e; color:#f5d76e; font-size:16px; font-weight:600;">

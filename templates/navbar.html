@@ -6,16 +6,16 @@
 </div>
 
 <!-- Admin-only Start Countdown button -->
-{% if current_user.is_authenticated and current_user.is_admin %}
-  <div style="text-align:center; margin:10px 0;">
-    <form action="{{ url_for('start_countdown') }}" method="post" style="display:inline;">
-      <button type="submit" class="btn btn-success btn-sm">▶️ Start Deal</button>
-    </form>
-    <form action="{{ url_for('stop_countdown') }}" method="post" style="display:inline; margin-left:5px;">
-      <button type="submit" class="btn btn-danger btn-sm">⏹ Stop Deal</button>
-    </form>
-  </div>
-{% endif %}
+<div style="text-align:center; margin:10px 0;">
+  <form action="{{ url_for('start_countdown') }}" method="post" style="display:inline;">
+    <input type="number" name="duration" placeholder="Minutes" min="1" style="width:80px; padding:2px;">
+    <button type="submit" class="btn btn-success btn-sm">▶️ Start Deal</button>
+  </form>
+  <form action="{{ url_for('stop_countdown') }}" method="post" style="display:inline; margin-left:5px;">
+    <button type="submit" class="btn btn-danger btn-sm">⏹ Stop Deal</button>
+  </form>
+</div>
+
 
 
 <script>

@@ -49,7 +49,7 @@ from datetime import datetime
 from datetime import datetime, timedelta
 
 # Config
-COUNTDOWN_DURATION_MINUTES = 120
+COUNTDOWN_DURATION_MINUTES = None
 countdown_start_time = None  # in-memory (replace with DB if needed)
 
 
@@ -110,25 +110,33 @@ login_manager.login_view = 'login' # The endpoint name for the login page
 
 @app.context_processor
 def inject_countdown_data():
-    global countdown_start_time
+    global countdown_start_time, countdown_duration_minutes
 
-    if countdown_start_time:
-        end_time = countdown_start_time + timedelta(minutes=COUNTDOWN_DURATION_MINUTES)
+    if countdown_start_time and countdown_duration_minutes:
+        end_time = countdown_start_time + timedelta(minutes=countdown_duration_minutes)
         now = datetime.utcnow()
         remaining = max(0, int((end_time - now).total_seconds()))
         return {"countdown_data": {"remaining": remaining}}
 
-    # no countdown started
     return {"countdown_data": {"remaining": 0}}
 
 @app.route("/start_countdown", methods=["POST"])
 def start_countdown():
-    global countdown_start_time
+    global countdown_start_time, countdown_duration_minutes
+
     if not current_user.is_authenticated or not getattr(current_user, "is_admin", False):
         return "Unauthorized", 403
 
+    try:
+        # read duration from form (minutes)
+        duration = int(request.form.get("duration", 120))  # default 120 if empty
+    except ValueError:
+        duration = 120
+
     countdown_start_time = datetime.utcnow()
+    countdown_duration_minutes = duration
     return redirect(url_for("index"))
+
 
 @app.route("/stop_countdown", methods=["POST"])
 def stop_countdown():

@@ -9,6 +9,19 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet"/>
   <link href="{{ url_for('static', filename='css/main.css') }}" rel="stylesheet"/>
   <style>
+    .specifications-list .spec-item {
+      background-color: #fff;
+      padding: 15px;
+      margin-bottom: 15px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .specifications-list .spec-item:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+    }
     /* Gallery zoom and thumbnail */
     .gs-main-wrap { display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap; margin-bottom:16px; position: relative;}
     .gs-main-image { position: relative; width:460px; max-width:100%; height:460px; border:1px solid #e5e7eb; border-radius:10px; overflow:hidden; background:#fff; cursor: crosshair;}
@@ -231,58 +244,6 @@
           background-color: #ffdb4d !important;  /* Lighter yellow on hover */
         }
         </style>
-        <!-- Promo Banner inside Product Detail -->
-        <div class="promo-banner text-center my-4 p-3 rounded" 
-            style="background:#1a1a1a; border:1px solid #f5d76e; color:#f5d76e; font-size:16px; font-weight:600;">
-          <strong>🔥 Limited Time Offer:</strong> Order in the next 
-          <span id="product-countdown" style="color:#ffffff; font-weight:700;">00:00:00</span> 
-          and get <strong style="color:#f5d76e;">5% OFF</strong>!
-        </div>
-
-        <script>
-        function startCountdownFromBackend(elementId, initialRemaining) {
-          const el = document.getElementById(elementId);
-          if (!el) return;
-
-          let remaining = initialRemaining || 0;
-
-          async function fetchStatus() {
-            try {
-              const res = await fetch("/countdown_status");
-              const data = await res.json();
-              if (data.active) remaining = data.remaining;
-              else remaining = 0;
-            } catch (err) {
-              console.error("Failed to fetch countdown:", err);
-            }
-          }
-
-          function render() {
-            if (remaining <= 0) {
-              el.textContent = "00:00:00";
-              return;
-            }
-            let hours = Math.floor((remaining / 3600) % 24);
-            let minutes = Math.floor((remaining / 60) % 60);
-            let seconds = Math.floor(remaining % 60);
-
-            el.textContent =
-              (hours < 10 ? "0" + hours : hours) + ":" +
-              (minutes < 10 ? "0" + minutes : minutes) + ":" +
-              (seconds < 10 ? "0" + seconds : seconds);
-
-            remaining--;
-          }
-
-          // keep backend synced every 30s
-          setInterval(fetchStatus, 30000);
-          setInterval(render, 1000);
-          render();
-        }
-
-        // Initialize product detail countdown
-        startCountdownFromBackend("product-countdown", {{ countdown_data.remaining|default(0) }});
-        </script>
 
         <!-- Social Proof -->
         <div class="social-proof text-center my-4 p-3 rounded" style="background:#f8f9fa; border:1px solid #ddd;">
@@ -345,21 +306,26 @@
         </ul>
 
         <div class="tab-content p-3 border border-top-0 bg-white" id="productTabContent">
-          <!-- Specifications -->
-          <div class="tab-pane fade show active" id="spec">
-            {% if sub_images %}
-            <div class="specifications-list mt-3">
-              {% for sub_image in sub_images %}
-                <div class="d-flex align-items-center mb-3">
-                  <img src="{{ url_for('static', filename=sub_image['image_url']) }}" alt="Sub-image {{ loop.index }}" style="width:100px; height:100px; object-fit:cover; margin-right:15px; border:1px solid #ddd; border-radius:5px;">
-                  <div>{{ sub_image['description'] | replace('\n', '<br>') | safe }}</div>
-                </div>
-              {% endfor %}
-            </div>
-            {% else %}
-              <p>No specifications available.</p>
-            {% endif %}
+        <!-- Specifications -->
+        <div class="tab-pane fade show active" id="spec">
+          {% if sub_images %}
+          <div class="specifications-list mt-3">
+            {% for sub_image in sub_images %}
+              <div class="spec-item d-flex align-items-center mb-3 p-3 rounded" 
+                  style="background:#f9f9f9; border-bottom:2px solid #dfe0e2; box-shadow:0 4px 8px rgba(0,0,0,0.1);">
+                <img src="{{ url_for('static', filename=sub_image['image_url']) }}" 
+                    alt="Sub-image {{ loop.index }}" 
+                    style="width:100px; height:100px; object-fit:cover; margin-right:15px; border-radius:6px; border:1px solid #ccc;">
+                <div>{{ sub_image['description'] | replace('\n', '<br>') | safe }}</div>
+              </div>
+            {% endfor %}
           </div>
+          {% else %}
+            <p>No specifications available.</p>
+          {% endif %}
+        </div>
+
+
 
           <!-- Warranty -->
           <div class="tab-pane fade" id="warranty">

@@ -105,22 +105,29 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login' # The endpoint name for the login page
 # Config
+# In-memory countdown data (replace with DB if needed)
 countdown_start_time = None
-countdown_duration_minutes = None  # in-memory (replace with DB if needed)
+countdown_duration_minutes = None
 
+# -------------------------
+# Context processor for navbar countdown
+# -------------------------
 @app.context_processor
 def inject_countdown_data():
+    """Inject countdown remaining seconds for navbar."""
     global countdown_start_time, countdown_duration_minutes
 
+    remaining = 0
     if countdown_start_time and countdown_duration_minutes:
         end_time = countdown_start_time + timedelta(minutes=countdown_duration_minutes)
-        now = datetime.utcnow()
-        remaining = max(0, int((end_time - now).total_seconds()))
-        return {"countdown_data": {"remaining": remaining}}
+        remaining = max(0, int((end_time - datetime.utcnow()).total_seconds()))
 
-    return {"countdown_data": {"remaining": 0}}
+    return {"countdown_data": {"remaining": remaining}}
 
 
+# -------------------------
+# Admin API: Start Countdown
+# -------------------------
 @app.route("/start_countdown_custom", methods=["POST"])
 def start_countdown_custom():
     global countdown_start_time, countdown_duration_minutes
@@ -128,15 +135,19 @@ def start_countdown_custom():
         return "Unauthorized", 403
 
     data = request.get_json()
-    minutes = data.get("minutes", 0)
+    minutes = int(data.get("minutes", 0))
     if minutes <= 0:
         return "Invalid duration", 400
 
     countdown_start_time = datetime.utcnow()
     countdown_duration_minutes = minutes
-    return jsonify({"success": True, "remaining": minutes*60})
+
+    return jsonify({"success": True, "remaining": minutes * 60})
 
 
+# -------------------------
+# Admin API: Stop Countdown
+# -------------------------
 @app.route("/stop_countdown", methods=["POST"])
 def stop_countdown():
     global countdown_start_time, countdown_duration_minutes
@@ -144,23 +155,37 @@ def stop_countdown():
         return "Unauthorized", 403
 
     countdown_start_time = None
-    countdown_duration_minutes = None  # reset duration too
+    countdown_duration_minutes = None
     return redirect(url_for("index"))
 
 
+# -------------------------
+# Public API: Countdown Status
+# -------------------------
 @app.route("/countdown_status")
 def countdown_status():
     global countdown_start_time, countdown_duration_minutes
+    remaining = 0
+    active = False
+
     if countdown_start_time and countdown_duration_minutes:
         end_time = countdown_start_time + timedelta(minutes=countdown_duration_minutes)
-        now = datetime.utcnow()
-        remaining = max(0, int((end_time - now).total_seconds()))
+        remaining = max(0, int((end_time - datetime.utcnow()).total_seconds()))
         active = remaining > 0
-        return {"active": active, "remaining": remaining}
 
-    return {"active": False, "remaining": 0}
+    return {"active": active, "remaining": remaining}
 
 
+# -------------------------
+# Helper for template (optional)
+# -------------------------
+def get_countdown_remaining():
+    """Helper function to get countdown seconds (can be used in route if needed)."""
+    global countdown_start_time, countdown_duration_minutes
+    if countdown_start_time and countdown_duration_minutes:
+        end_time = countdown_start_time + timedelta(minutes=countdown_duration_minutes)
+        return max(0, int((end_time - datetime.utcnow()).total_seconds()))
+    return 0
 # User class for Flask-Login
 class User(UserMixin):
     def __init__(self, id, email, name, is_admin=False):

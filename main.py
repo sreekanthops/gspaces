@@ -1077,13 +1077,14 @@ def product_detail(product_id):
 
         # --- Fetch Product ---
         cur.execute("""
-            SELECT id, name, description, category, price, rating, image_url
-              FROM products
-             WHERE id = %s
+            SELECT id, name, description, detailed_description, category, price, rating, image_url
+            FROM products
+            WHERE id = %s
         """, (product_id,))
         product = cur.fetchone()
         if not product:
             return redirect(url_for('index'))
+
 
         # --- Handle Review Submission ---
         if request.method == 'POST':
@@ -1130,15 +1131,6 @@ def product_detail(product_id):
             r['created_at'] = r['created_at'].strftime('%Y-%m-%d %H:%M')
             reviews.append(r)
 
-        # --- Countdown Info ---
-        countdown_data = {"active": False, "remaining": 0}
-        if countdown_start_time:
-            end_time = countdown_start_time + timedelta(minutes=COUNTDOWN_DURATION_MINUTES)
-            now = datetime.utcnow()
-            countdown_data = {
-                "active": True,
-                "remaining": max(0, int((end_time - now).total_seconds()))
-            }
         # --- Check if Current User Already Reviewed ---
         if current_user.is_authenticated:
             cur.execute("""
@@ -1172,9 +1164,34 @@ def product_detail(product_id):
         product=product,
         reviews=reviews,
         user_review=user_review,
-        sub_images=sub_images,  # ✅ pass to template
-        countdown_data=countdown_data 
+        sub_images=sub_images
     )
+
+@app.route('/edit_detailed_description/<int:product_id>', methods=['POST'])
+@login_required
+def edit_detailed_description(product_id):
+    if not current_user.is_admin:
+        return redirect(url_for('index'))
+
+    detailed_description = request.form['detailed_description']
+
+    conn = connect_to_db()
+    if not conn:
+        return redirect(url_for('index'))
+
+    try:
+        cur = conn.cursor()
+        cur.execute("""
+            UPDATE products
+               SET detailed_description = %s
+             WHERE id = %s
+        """, (detailed_description, product_id))
+        conn.commit()
+    finally:
+        conn.close()
+
+    return redirect(url_for('product_detail', product_id=product_id))
+
 
 @app.route('/add_sub_image/<int:product_id>', methods=['POST'])
 @login_required

@@ -101,44 +101,57 @@
         </ul>
 
       </div>
+<!-- Newsletter -->
+<div class="col-lg-6 col-md-12 footer-newsletter p-4 rounded shadow-sm" style="background:#fff;">
+  <h4 class="mb-3" style="color:#111; font-weight:600;">Stay in the Loop</h4>
+  <p style="color:#555; margin-bottom:20px;">Subscribe to get updates on new setups, rental offers, and workspace tips!</p>
 
-    <!-- Newsletter -->
-    <div class="col-lg-6 col-md-12 footer-newsletter">
-      <h4>Stay in the Loop</h4>
-      <p>Subscribe to get updates on new setups, rental offers, and workspace tips!</p>
+  <form id="subscribeForm" class="d-flex gap-2">
+    <input 
+      type="email" 
+      name="email" 
+      placeholder="Your Email" 
+      required 
+      style="flex:1; padding:10px 15px; border:1px solid #ccc; border-radius:5px;"
+    >
+    <button 
+      type="submit" 
+      style="padding:10px 20px; border:none; background:#007bff; color:white; border-radius:5px; cursor:pointer; transition:0.3s;"
+      onmouseover="this.style.background='#0056b3'" 
+      onmouseout="this.style.background='#007bff'"
+    >Subscribe</button>
+  </form>
 
-      <form id="subscribeForm">
-        <input type="email" name="email" placeholder="Your Email" required>
-        <button type="submit">Subscribe</button>
-      </form>
+  <div id="responseMessage" style="margin-top:10px; font-weight:500;"></div>
 
-      <div id="responseMessage" style="margin-top:10px;"></div>
+  <script>
+    document.getElementById("subscribeForm").addEventListener("submit", function(e) {
+      e.preventDefault(); // Prevent full page reload
 
-      <script>
-        document.getElementById("subscribeForm").addEventListener("submit", function(e) {
-          e.preventDefault(); // Prevent full page reload
+      const form = this;
+      const formData = new FormData(form);
 
-          const formData = new FormData(this);
+      fetch("https://formsubmit.co/ajax/sreekanth.chityala@gspaces.in", {
+        method: "POST",
+        headers: { 'Accept': 'application/json' },
+        body: formData
+      })
+      .then(response => {
+        const responseDiv = document.getElementById("responseMessage");
+        if (response.ok) {
+          responseDiv.innerText = "✅ Thank you for subscribing!";
+          form.reset(); // Clear the input
+        } else {
+          responseDiv.innerText = "❌ There was an error. Try again later.";
+        }
+      })
+      .catch(error => {
+        document.getElementById("responseMessage").innerText = "❌ Network error. Try again.";
+      });
+    });
+  </script>
+</div>
 
-          fetch("https://formsubmit.co/ajax/sreekanth.chityala@gspaces.in", {
-            method: "POST",
-            headers: { 'Accept': 'application/json' },
-            body: formData
-          })
-          .then(response => {
-            if (response.ok) {
-              document.getElementById("responseMessage").innerText = "✅ Thank you for subscribing!";
-            } else {
-              document.getElementById("responseMessage").innerText = "❌ There was an error. Try again later.";
-            }
-          })
-          .catch(error => {
-            document.getElementById("responseMessage").innerText = "❌ Network error. Try again.";
-          });
-        });
-      </script>
-
-    </div>
 
   <!-- Footer Bottom -->
 

@@ -1,7 +1,10 @@
-<!-- Urgency Banner -->
 <div id="urgency-banner">
   <span id="banner-text">
-    ⏳ Exclusive Deal! Ends in <span id="countdown">00:00:00</span> – Enjoy <strong style="color:#ffffff;">5% OFF + Free Delivery</strong>
+    {% if countdown_data.remaining > 0 %}
+      Exclusive Deal! Ends in <span id="countdown">00:00:00</span> – Enjoy <strong style="color:#ffffff;">5% OFF + Free Delivery</strong>
+    {% else %}
+      🔥 Deal Ending Soon! Don’t Miss Out!
+    {% endif %}
   </span>
 </div>
 
@@ -39,61 +42,78 @@
 
 </style>
 <script>
-function startCountdown(elementId, duration) {
-  const countdownEl = document.getElementById(elementId);
+window.COUNTDOWN_REMAINING = {{ countdown_data.remaining }};
+
+window.addEventListener("DOMContentLoaded", () => {
+  const banner = document.getElementById("urgency-banner");
   const bannerTextEl = document.getElementById("banner-text");
-  if (!countdownEl || !bannerTextEl) return;
 
-  let remaining = duration;
+  const initialRemaining = parseInt(window.COUNTDOWN_REMAINING || "0");
 
-  function render() {
-    if (remaining <= 0) {
-      countdownEl.textContent = "";
-      bannerTextEl.innerHTML = "🔥 Deal Ending Soon! Don’t Miss Out!";
-      clearInterval(window.countdownInterval);
-      return;
-    }
-
-    let hours = Math.floor((remaining / 3600) % 24);
-    let minutes = Math.floor((remaining / 60) % 60);
-    let seconds = Math.floor(remaining % 60);
-
-    countdownEl.textContent =
-      (hours < 10 ? "0" + hours : hours) + ":" +
-      (minutes < 10 ? "0" + minutes : minutes) + ":" +
-      (seconds < 10 ? "0" + seconds : seconds);
-
-    remaining--;
+  if (initialRemaining > 0) {
+    startCountdown(initialRemaining);
+  } else {
+    showDealEnded();
   }
 
-  clearInterval(window.countdownInterval);
-  window.countdownInterval = setInterval(render, 1000);
-  render();
-}
+  function showDealEnded() {
+    banner.classList.add("deal-ended");
+    bannerTextEl.innerHTML = "🔥 Deal Ending Soon! Don’t Miss Out!";
+  }
 
+  function startCountdown(duration) {
+    let remaining = duration;
+    banner.classList.remove("deal-ended");
 
-// Admin Start Button
-const startBtn = document.getElementById("startCountdownBtn");
-if (startBtn) {
-  startBtn.addEventListener("click", async () => {
-    const minutes = parseInt(document.getElementById("customMinutes").value);
-    if (!minutes || minutes <= 0) return alert("Enter a valid number of minutes.");
+    function render() {
+      if (remaining <= 0) {
+        clearInterval(window.countdownInterval);
+        showDealEnded();
+        return;
+      }
 
-    // Send request to backend
-    const res = await fetch("/start_countdown_custom", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ minutes })
-    });
+      let hours = Math.floor((remaining / 3600) % 24);
+      let minutes = Math.floor((remaining / 60) % 60);
+      let seconds = Math.floor(remaining % 60);
 
-    if (res.ok) {
-      startCountdown("countdown", minutes * 60);
-    } else {
-      const msg = await res.text();
-      alert("Error: " + msg);
+      bannerTextEl.innerHTML = `
+        ⏳ Exclusive Deal! Ends in 
+        <span id="countdown">
+          ${(hours < 10 ? "0" + hours : hours)}:${(minutes < 10 ? "0" + minutes : minutes)}:${(seconds < 10 ? "0" + seconds : seconds)}
+        </span> – Enjoy <strong style="color:#ffffff;">5% OFF + Free Delivery</strong>
+      `;
+
+      remaining--;
     }
-  });
-}
+
+    clearInterval(window.countdownInterval);
+    window.countdownInterval = setInterval(render, 1000);
+    render();
+  }
+
+  const startBtn = document.getElementById("startCountdownBtn");
+  if (startBtn) {
+    startBtn.addEventListener("click", async () => {
+      const minutes = parseInt(document.getElementById("customMinutes").value);
+      if (!minutes || minutes <= 0) return alert("Enter a valid number of minutes.");
+
+      const res = await fetch("/start_countdown_custom", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ minutes })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        startCountdown(data.remaining);
+      } else {
+        const msg = await res.text();
+        alert("Error: " + msg);
+      }
+    });
+  }
+});
+
 </script>
 
 <nav class="custom-navbar navbar navbar-expand-md" aria-label="GSpaces Navigation Bar">

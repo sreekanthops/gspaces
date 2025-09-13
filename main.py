@@ -1443,13 +1443,16 @@ def inject_cart_count():
 @app.route('/payment/success', methods=['POST'])
 @login_required
 def payment_success():
-    conn = None
-    try:
-        payment_id = request.form.get('razorpay_payment_id')
-        order_id_from_razorpay = request.form.get('razorpay_order_id')
-        signature = request.form.get('razorpay_signature')
+    data = request.json or {}
+    payment_id = data.get('razorpay_payment_id')
+    order_id_from_razorpay = data.get('razorpay_order_id')
+    signature = data.get('razorpay_signature')
 
-        # ✅ Verify signature from Razorpay
+    if not all([payment_id, order_id_from_razorpay, signature]):
+        flash("❌ Payment failed: Missing payment details.", "error")
+        return jsonify({"status": "failed"}), 400
+
+    try:
         razorpay_client.utility.verify_payment_signature({
             'razorpay_order_id': order_id_from_razorpay,
             'razorpay_payment_id': payment_id,
@@ -1458,8 +1461,6 @@ def payment_success():
 
         conn = connect_to_db()
         cur = conn.cursor(cursor_factory=RealDictCursor)
-
-        # Fetch cart items
         cur.execute("""
             SELECT c.product_id, c.quantity, p.name, p.price, p.image_url
             FROM cart c
@@ -1467,90 +1468,36 @@ def payment_success():
             WHERE c.user_id = %s
         """, (current_user.id,))
         cart_items = cur.fetchall()
+
+        if not cart_items:
+            return jsonify({"status": "failed", "message": "Cart empty"}), 400
+
         total_amount = sum(item['price'] * item['quantity'] for item in cart_items)
 
-        # Insert order
         cur.execute("""
             INSERT INTO orders (user_id, user_email, razorpay_order_id, razorpay_payment_id, total_amount, status, order_date)
             VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id
         """, (current_user.id, current_user.email, order_id_from_razorpay, payment_id, total_amount, 'Completed', datetime.now()))
         new_order_id = cur.fetchone()['id']
 
-        # Insert order items
         for item in cart_items:
             cur.execute("""
                 INSERT INTO order_items (order_id, product_id, product_name, quantity, price_at_purchase, image_url)
                 VALUES (%s, %s, %s, %s, %s, %s)
             """, (new_order_id, item['product_id'], item['name'], item['quantity'], item['price'], item['image_url']))
 
-        # Clear cart
+        # Clear cart after successful order
         cur.execute("DELETE FROM cart WHERE user_id=%s", (current_user.id,))
         conn.commit()
 
-        # -----------------------------
-        # 📧 Build order confirmation email
-        # -----------------------------
-        sender = os.getenv("EMAIL_USER", "sri.chityala501@gmail.com")
-        receiver = current_user.email
-
-        msg = MIMEMultipart("alternative")
-        msg["Subject"] = f"Your GSpaces Order #{new_order_id} Confirmation"
-        msg["From"] = sender
-        msg["To"] = receiver
-
-        # Create HTML table of items
-        items_html = "".join([
-            f"""
-            <tr>
-                <td><img src='{url_for('static', filename=item['image_url'], _external=True)}' width='50'></td>
-                <td>{item['name']}</td>
-                <td>{item['quantity']}</td>
-                <td>{item['price']} INR</td>
-                <td>{item['price'] * item['quantity']} INR</td>
-            </tr>
-            """
-            for item in cart_items
-        ])
-
-        html_body = f"""
-        <html>
-        <body>
-            <h2>Thank you for your order, {current_user.email}!</h2>
-            <p>Your payment (<b>{payment_id}</b>) was successful. Here are your order details:</p>
-            <table border="1" cellspacing="0" cellpadding="6" style="border-collapse: collapse; width: 100%;">
-                <tr style="background-color:#f2f2f2;">
-                    <th>Image</th>
-                    <th>Product</th>
-                    <th>Qty</th>
-                    <th>Price</th>
-                    <th>Subtotal</th>
-                </tr>
-                {items_html}
-            </table>
-            <h3>Total: {total_amount} INR</h3>
-            <p>We will process your order shortly. You can track your order on your GSpaces account.</p>
-            <br>
-            <p>Best Regards,<br>Team GSpaces</p>
-        </body>
-        </html>
-        """
-
-        # Attach HTML with UTF-8 encoding
-        msg.attach(MIMEText(html_body, "html", "utf-8"))
-
-        # Send email via Gmail SMTP
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-            server.login(sender, os.getenv("EMAIL_PASS", "zupd zixc vvzp kptk"))
-            server.sendmail(sender, receiver, msg.as_string())
-
-        flash("✅ Payment successful! Your order has been placed. Confirmation email sent.", "success")
-        return redirect(url_for('thankyou'))
+        return jsonify({"status": "success"}), 200
 
     except Exception as e:
         if conn:
             conn.rollback()
-        flash(f"❌ Payment failed: {e}", "error")
-        return redirect(url_for('cart'))
+        print(f"Payment processing error: {e}")
+        return jsonify({"status": "failed", "error": str(e)}), 500
+
     finally:
         if conn:
             conn.close()

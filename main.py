@@ -1508,7 +1508,7 @@ def payment_success():
         msg.attach(MIMEText(html_body, "html", "utf-8"))
 
         with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-            server.login(sender, os.getenv("EMAIL_PASS"))
+            server.login(sender, os.getenv("EMAIL_PASS", "zupd zixc vvzp kptk"))
             server.sendmail(sender, receiver, msg.as_string())
 
         return jsonify({"status": "success", "message": "Payment successful, email sent"})

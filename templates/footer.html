@@ -88,7 +88,7 @@
 
         <ul>
 
-          <li><i class="bi bi-chevron-right"></i> <a href="#">Home</a></li>
+          <li><i class="bi bi-chevron-right"></i> <a href="#hero">Home</a></li>
 
           <li><i class="bi bi-chevron-right"></i> <a href="#about">About</a></li>
 
@@ -102,43 +102,58 @@
 
       </div>
 
-    <!-- Newsletter -->
-    <div class="col-lg-6 col-md-12 footer-newsletter">
-      <h4>Stay in the Loop</h4>
-      <p>Subscribe to get updates on new setups, rental offers, and workspace tips!</p>
+      <!-- Newsletter -->
+      <div class="col-lg-6 col-md-12 mb-4">
+        <div class="p-4 bg-white rounded-4 shadow-sm text-center">
+          <h4 class="mb-3" style="font-weight: 600; color: #111;">Stay in the Loop</h4>
+          <p class="mb-4" style="color: #555;">Subscribe to get updates on new setups, rental offers, and workspace tips!</p>
 
-      <form id="subscribeForm">
-        <input type="email" name="email" placeholder="Your Email" required>
-        <button type="submit">Subscribe</button>
-      </form>
+          <form id="subscribeForm" class="d-flex flex-column flex-sm-row justify-content-center gap-2">
+            <input type="email" name="email" placeholder="Your Email" required
+                  class="form-control rounded-pill px-3 py-2" style="max-width: 300px;">
+            <button type="submit" class="btn btn-primary rounded-pill px-4 py-2">Subscribe</button>
+          </form>
 
-      <div id="responseMessage" style="margin-top:10px;"></div>
+          <div id="responseMessage" class="mt-3 fw-medium" style="min-height: 24px;"></div>
 
-      <script>
-        document.getElementById("subscribeForm").addEventListener("submit", function(e) {
-          e.preventDefault(); // Prevent full page reload
+          <script>
+            const subscribeForm = document.getElementById("subscribeForm");
+            const responseMessage = document.getElementById("responseMessage");
+            const emailInput = subscribeForm.querySelector('input[name="email"]');
 
-          const formData = new FormData(this);
+            subscribeForm.addEventListener("submit", function(e) {
+              e.preventDefault(); // Prevent full page reload
 
-          fetch("https://formsubmit.co/ajax/sreekanth.chityala@gspaces.in", {
-            method: "POST",
-            headers: { 'Accept': 'application/json' },
-            body: formData
-          })
-          .then(response => {
-            if (response.ok) {
-              document.getElementById("responseMessage").innerText = "✅ Thank you for subscribing!";
-            } else {
-              document.getElementById("responseMessage").innerText = "❌ There was an error. Try again later.";
-            }
-          })
-          .catch(error => {
-            document.getElementById("responseMessage").innerText = "❌ Network error. Try again.";
-          });
-        });
-      </script>
+              const formData = new FormData(this);
 
-    </div>
+              fetch("https://formsubmit.co/ajax/sreekanth.chityala@gspaces.in", {
+                method: "POST",
+                headers: { 'Accept': 'application/json' },
+                body: formData
+              })
+              .then(response => {
+                if (response.ok) {
+                  responseMessage.innerText = "✅ Thank you for subscribing!";
+                  responseMessage.style.color = "green";
+                  // Reset email and message after 3 seconds
+                  setTimeout(() => {
+                    emailInput.value = "";
+                    responseMessage.innerText = "";
+                  }, 3000);
+                } else {
+                  responseMessage.innerText = "❌ There was an error. Try again later.";
+                  responseMessage.style.color = "red";
+                }
+              })
+              .catch(error => {
+                responseMessage.innerText = "❌ Network error. Try again.";
+                responseMessage.style.color = "red";
+              });
+            });
+          </script>
+        </div>
+      </div>
+
 
   <!-- Footer Bottom -->
 

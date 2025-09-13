@@ -159,33 +159,44 @@
 
                     <!-- My Orders Section -->
                     <div class="tab-pane fade" id="my-orders" role="tabpanel">
-                        <h3>My Orders</h3>
+                        <h3 class="mb-4">My Orders</h3>
+
                         {% if user_orders %}
                             {% for order in user_orders %}
-                                <div class="order-card">
-                                    <div class="order-header">
-                                        <div>
-                                            <strong>Order #{{ order.id }}</strong><br>
-                                            <small>Date: {{ order.order_date }}</small>
-                                        </div>
-                                        <span class="badge {% if order.status == 'Completed' %}bg-success{% elif order.status == 'Shipped' %}bg-info{% elif order.status == 'Pending' %}bg-warning{% else %}bg-secondary{% endif %}">
-                                            {{ order.status }}
-                                        </span>
+                            <div class="order-card shadow-sm p-3 mb-4 rounded-4 bg-white">
+                                <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+                                    <div>
+                                        <strong>Order #{{ order.id }}</strong><br>
+                                        <small class="text-muted">Date: {{ order.order_date }}</small>
                                     </div>
-                                    <div class="order-items">
-                                        {% for item in order['items'] %}
-                                            <div class="order-item">
-                                                <img src="{{ url_for('static', filename=item.image_url if item.image_url else 'img/placeholder.jpg') }}" alt="{{ item.product_name }}">
-                                                    {{ item.product_name }} (x{{ item.quantity }})<br>
-                                                    <small>Price: INR {{ item.price_at_purchase }} each</small>
-                                                </div>
-                                            </div>
-                                        {% endfor %}
-                                    </div>
-                                    <div class="order-total">
-                                        Total: ₹{{ order.total_amount|inr }}
-                                    </div>
+                                    <span class="badge 
+                                        {% if order.status == 'Completed' %}bg-success
+                                        {% elif order.status == 'Shipped' %}bg-info
+                                        {% elif order.status == 'Pending' %}bg-warning
+                                        {% else %}bg-secondary
+                                        {% endif %}">
+                                        {{ order.status }}
+                                    </span>
                                 </div>
+
+                                <div class="order-items mb-3">
+                                    {% for item in order['items'] %}
+                                    <div class="d-flex align-items-center mb-3 p-2 border rounded-3">
+                                        <img src="{{ url_for('static', filename=item.image_url if item.image_url else 'img/placeholder.jpg') }}" 
+                                            alt="{{ item.product_name }}" class="me-3" style="width: 70px; height: 70px; object-fit: cover; border-radius: 8px;">
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-1">{{ item.product_name }}</h6>
+                                            <small class="text-muted">Quantity: x{{ item.quantity }} | Price: ₹{{ item.price_at_purchase }}</small>
+                                        </div>
+                                        <div class="fw-semibold text-dark">₹{{ item.quantity * item.price_at_purchase }}</div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+
+                                <div class="text-end fw-bold border-top pt-2">
+                                    Total: ₹{{ order.total_amount|inr }}
+                                </div>
+                            </div>
                             {% endfor %}
                         {% else %}
                             <p>You have no previous orders.</p>
@@ -220,5 +231,6 @@
     </script>
 </body>
 </html>
+
 
 

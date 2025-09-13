@@ -191,29 +191,25 @@
         "order_id": "{{ razorpay_order_id }}", // Generated in backend
         "handler": function (response) {
             // On successful payment, send JSON to backend
-            fetch("/payment/success", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(response)
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.status === "success") {
-                    // Payment + order success
-                    window.location.href = "/thankyou";
-                } else {
-                    // Payment succeeded but order failed
-                    alert("Payment succeeded but order failed: " + data.error);
-                    window.location.href = "/cart";
-                }
-            })
-            .catch(err => {
-                // Network or unexpected error
-                alert("Payment processing error: " + err);
+        fetch("/payment/success", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(response)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === "success") {
+                alert("✅ Payment successful! Order details have been sent to your email.");
+                window.location.href = "/thankyou";
+            } else {
+                alert("❌ Payment succeeded but order failed: " + data.error);
                 window.location.href = "/cart";
-            });
+            }
+        })
+        .catch(err => {
+            alert("⚠ Payment processing error: " + err);
+            window.location.href = "/cart";
+        });
         },
         "prefill": {
             "name": "{{ current_user.name if current_user else '' }}",

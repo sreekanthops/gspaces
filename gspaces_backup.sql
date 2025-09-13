@@ -184,7 +184,8 @@ CREATE TABLE public.products (
     price numeric,
     rating numeric,
     image_url text,
-    created_by character varying(255)
+    created_by character varying(255),
+    detailed_description text
 );
 
 
@@ -344,7 +345,6 @@ ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_
 --
 
 COPY public.cart (id, user_id, product_id, quantity) FROM stdin;
-3	14	7	1
 9	12	7	1
 10	15	7	1
 11	16	7	1
@@ -363,6 +363,20 @@ COPY public.order_items (id, order_id, product_id, quantity, price_at_purchase, 
 5	8	7	1	1.00	Green Wall Desk	img/Products/Screenshot_2025-08-16_at_10.48.06_PM.png
 6	9	7	1	1.00	Green Wall Desk	img/Products/Screenshot_2025-08-16_at_10.48.06_PM.png
 7	10	7	1	1.00	Green Wall Desk	img/Products/Screenshot_2025-08-16_at_10.48.06_PM.png
+8	11	9	1	1.00	Scandi Minimal	img/Products/f996ebea3a130d8dd1bb5b2f1f938455.jpg
+9	12	9	1	1.00	Scandi Minimal	img/Products/f996ebea3a130d8dd1bb5b2f1f938455.jpg
+10	13	9	1	1.00	Scandi Minimal	img/Products/f996ebea3a130d8dd1bb5b2f1f938455.jpg
+11	14	9	1	1.00	Scandi Minimal	img/Products/f996ebea3a130d8dd1bb5b2f1f938455.jpg
+12	15	9	1	1.00	Scandi Minimal	img/Products/f996ebea3a130d8dd1bb5b2f1f938455.jpg
+13	16	9	1	1.00	Scandi Minimal	img/Products/f996ebea3a130d8dd1bb5b2f1f938455.jpg
+14	17	9	1	1.00	Scandi Minimal	img/Products/f996ebea3a130d8dd1bb5b2f1f938455.jpg
+15	18	9	1	1.00	Scandi Minimal	img/Products/f996ebea3a130d8dd1bb5b2f1f938455.jpg
+16	19	9	1	1.00	Scandi Minimal	img/Products/f996ebea3a130d8dd1bb5b2f1f938455.jpg
+17	20	9	1	1.00	Scandi Minimal	img/Products/f996ebea3a130d8dd1bb5b2f1f938455.jpg
+18	21	9	1	1.00	Scandi Minimal	img/Products/f996ebea3a130d8dd1bb5b2f1f938455.jpg
+19	22	9	1	1.00	Scandi Minimal	img/Products/f996ebea3a130d8dd1bb5b2f1f938455.jpg
+20	23	9	1	1.00	Scandi Minimal	img/Products/f996ebea3a130d8dd1bb5b2f1f938455.jpg
+21	24	9	1	1.00	Scandi Minimal	img/Products/f996ebea3a130d8dd1bb5b2f1f938455.jpg
 \.
 
 
@@ -378,6 +392,20 @@ COPY public.orders (id, user_id, order_date, total_amount, status, user_email, r
 8	12	2025-08-27 16:03:32.792834	1.00	Completed	sri.chityala504@gmail.com	order_RAPy5aWg435Vip	pay_RAPyG6CrMeU92b
 9	12	2025-08-27 16:09:56.675074	1.00	Completed	sri.chityala504@gmail.com	order_RAQ4nHTNhvkU6F	pay_RAQ50eT4ga4Lm2
 10	12	2025-08-27 17:50:39.700312	1.00	Completed	sri.chityala504@gmail.com	order_RARmqXBIle0Oj2	pay_RARnNlvgPS8l3f
+11	13	2025-09-13 17:58:17.805948	1.00	Completed	sri.chityala500@gmail.com	order_RHB0FCXTJuepdp	pay_RHB0WZgFEo6sMZ
+12	13	2025-09-13 18:00:52.751262	1.00	Completed	sri.chityala500@gmail.com	order_RHB2z53jj7MkiT	pay_RHB3FOaGWvxrnU
+13	13	2025-09-13 18:03:54.006192	1.00	Completed	sri.chityala500@gmail.com	order_RHB6A2oXHwXnad	pay_RHB6QwObtd7WSr
+14	13	2025-09-13 18:14:37.920677	1.00	Completed	sri.chityala500@gmail.com	order_RHBHXQuhP4XZaW	pay_RHBHmKvEDNleVt
+15	14	2025-09-13 18:54:27.450455	1.00	Completed	srichityala501@gmail.com	order_RHBxT8jCIONh3i	pay_RHBxr8U1eswvYR
+16	14	2025-09-13 18:56:50.10443	1.00	Completed	srichityala501@gmail.com	order_RHC07bRbskaQvO	pay_RHC0L379i1eJYC
+17	14	2025-09-13 19:06:05.344517	1.00	Completed	srichityala501@gmail.com	order_RHC9wHjoJJdjry	pay_RHCA8VUdLmO9V8
+18	14	2025-09-13 19:10:26.598195	1.00	Completed	srichityala501@gmail.com	order_RHCEXCaX8m2b5c	pay_RHCEiLFv9apHeN
+19	14	2025-09-13 19:17:17.245731	1.00	Completed	srichityala501@gmail.com	order_RHCLlQlFJetzwU	pay_RHCLy0dvBPuIKM
+20	14	2025-09-13 19:26:10.335474	1.00	Completed	srichityala501@gmail.com	order_RHCV3q1MNxZRKZ	pay_RHCVLU241SrqF3
+21	14	2025-09-13 19:27:31.1998	1.00	Completed	srichityala501@gmail.com	order_RHCWZ3pwAZWVIE	pay_RHCWlcr2EKARql
+22	14	2025-09-13 20:00:38.429989	1.00	Completed	srichityala501@gmail.com	order_RHD5UsyjWm30JS	pay_RHD5kmmFMczGqr
+23	14	2025-09-13 20:02:18.112725	1.00	Completed	srichityala501@gmail.com	order_RHD7K9BmbuO9cP	pay_RHD7USgozHDpT6
+24	14	2025-09-13 20:09:01.077548	1.00	Completed	srichityala501@gmail.com	order_RHDESCQHUm7OZr	pay_RHDEcQVsb8jcgm
 \.
 
 
@@ -386,7 +414,22 @@ COPY public.orders (id, user_id, order_date, total_amount, status, user_email, r
 --
 
 COPY public.product_sub_images (id, product_id, image_url, description, created_at) FROM stdin;
-1	10	img/Products/desk1.jpg	desk2	2025-09-07 12:19:08.040216
+3	7	img/Products/Screenshot_2025-09-07_at_7.42.48_PM.png	Brand & Model: Vergo Transform Prime\r\n\r\nColor: White Grey\r\n\r\nMaterial: Premium breathable mesh seat; nylon frame\r\n\r\nDimensions: 50D x 50W x 119H cm\r\n\r\nWeight: 20 kg | Max Load: 120 kg\r\n\r\nBack Style: High back, S-shaped ergonomic mesh\r\n\r\nFeatures:\r\n\r\nAdjustable height, lumbar, headrest, and 2D armrests\r\n\r\n2:1 multi-lock synchro tilt (90°–135°)\r\n\r\n360° swivel with 60mm dual wheels\r\n\r\nHigh-density molded foam seat for thigh support\r\n\r\nStyle: Transform Prime\r\n\r\nCare: Wipe clean\r\n\r\nAssembly & Warranty: DIY (10–20 mins) | 3-year warranty\r\n\r\nExtras: Breathable mesh keeps you cool; ergonomic design improves posture and reduces back pain	2025-09-07 14:14:41.650622
+4	7	img/Products/Screenshot_2025-09-08_at_12.07.38_AM.png	Framed Wall Posters/Paintings with Frame (11 x 14 inch, Multi) Set of 3 (Modern Wall Decor, 3)	2025-09-07 18:38:49.601879
+5	7	img/Products/Screenshot_2025-09-08_at_12.07.19_AM.png	Cord Organizer (160mm*80mm, Silver)	2025-09-07 18:39:35.747058
+6	7	img/Products/Screenshot_2025-09-08_at_12.07.13_AM.png	Artificial Wall Grass for Home Decoration | 50 x 50 CM | Grass Mat Panel for Vertical Garden	2025-09-07 18:40:06.893591
+7	7	img/Products/Screenshot_2025-09-08_at_12.07.00_AM.png	Plastic Artificial Plants With Pot Leaves Hanging Ivy Garlands Plant Greenery Vine Creeper Home Decor Door Wall Balcony Decoration Party - 50 Cm (2 Pcs Money Plants)	2025-09-07 18:40:33.187298
+8	7	img/Products/Screenshot_2025-09-08_at_12.06.48_AM.png	Paris World Famous Building Small Metal Eiffel Tower Antique Vintage Statue for Gifting, Wedding,Room,Office,Decorative Showpeice for Home Decor, Desk Decor, Table Stand (15 cm)	2025-09-07 18:41:01.171151
+9	7	img/Products/Screenshot_2025-09-08_at_12.06.24_AM.png	Harry Potter 3pc Set with pet Action Figure Special Edition Action Figure for Car Dashboard, Decoration, Cake, Office Desk & Study Table (Pack of 3) (Height-8 cm)	2025-09-07 18:41:24.773594
+10	7	img/Products/Screenshot_2025-09-08_at_12.06.13_AM.png	Astronaut Spaceman Statue Ornament Home Office Desktop Figurine Decors Set of 3 - Golden (Golden)	2025-09-07 18:42:01.644386
+11	7	img/Products/Screenshot_2025-09-08_at_12.06.00_AM.png	Portronics Power Plate 6 with 4 USB Port + 5 Power Sockets Extension Board, 2500W Power Converter, Cord Length 3Mtr (Black)	2025-09-07 18:42:22.352762
+12	7	img/Products/Screenshot_2025-09-08_at_12.05.52_AM.png	3 Magnetic Cable Organizer Clips - Desk Wire Management Clip with 3M Adhesive Foam - Cord Holder for Desktop USB Charging Cables, Office, Home (Black)	2025-09-07 18:42:48.06152
+13	7	img/Products/Screenshot_2025-09-08_at_12.05.39_AM.png	Digital Alarm Clock Table Clock for Students, Home, Office, Bedside Smart Timepiece for Heavy Sleepers, Automatic Sensor,Time,Date &Temperature, Alarm Clock for Bedroom 5 (MIROR Clock)	2025-09-07 18:43:11.505191
+14	7	img/Products/Screenshot_2025-09-08_at_12.05.25_AM.png	Desk Lamp Black\r\nModern Minimalist Adjustable Reading Lamp Nordic Style Solid Natural Wood Metal	2025-09-07 18:43:36.134141
+15	7	img/Products/Screenshot_2025-09-08_at_12.05.17_AM.png	Laptop Stand, Height-Adjustable, Foldable, Portable, Ventilated, Fits Up to 15.6-Inch Laptops (Aluminium Alloy, Silver) Tabletop	2025-09-07 18:43:53.697108
+16	7	img/Products/Screenshot_2025-09-08_at_12.03.49_AM.png	Vanilla Reed Diffuser Set 50ml Smoke Less Room Freshener for Home Bedroom Living Room Office\r\nVanilla & Musk Blend of Toasted Coconut 5 Rattan Reed Sticks	2025-09-07 18:44:21.410627
+17	7	img/Products/Screenshot_2025-09-10_at_1.29.49_AM.png	eather Dual Color Desk Mat 75X40cm 1.8mm Thick| Laptop Mat/Extended Large Mouse Pad, Reversible Deskspread	2025-09-09 20:00:34.508496
+18	10	img/Products/ChatGPT_Image_Sep_10_2025_01_36_05_AM.png	table	2025-09-09 20:16:50.632696
 \.
 
 
@@ -394,15 +437,11 @@ COPY public.product_sub_images (id, product_id, image_url, description, created_
 -- Data for Name: products; Type: TABLE DATA; Schema: public; Owner: sri
 --
 
-COPY public.products (id, name, description, category, price, rating, image_url, created_by) FROM stdin;
-8	GlowSpace	A sleek minimalist desk with warm ambient lighting – where work meets inspiration	executive	55000.0	4.0	img/Products/Screenshot_2025-08-16_at_10.53.22_PM.png	sri@gmail.com
-9	Scandi Minimal	Balanced simplicity with warm wood, neutral tones, and clutter-free design for a calming work vibe.	minimalist	35000.0	5.0	img/Products/f996ebea3a130d8dd1bb5b2f1f938455.jpg	sri@gmail.com
-11	Dual Harmony	A stylish side-by-side desk setup designed for couples who work, create, or study together. This shared workspace balances productivity with harmony.	couple	99000.0	5.0	img/Products/dualdesks_1.jpg	sri@gmail.com
-12	Neon Dreamscape	The vibrant blue illumination and geometric wall panels create a dynamic and stylish space, ideal for both high-energy gaming and creative endeavors.	gaming	75000.0	4.0	img/Products/Screenshot_2025-08-19_at_4.35.56_AM.png	srichityala501@gmail.com
-13	Serene Balcony Nook	Designed for tranquility and concentration, this balcony workspace combines natural light and simple decor to offer a peaceful retreat for daily tasks	balcony	38000.0	5.0	img/Products/balcony.jpg	srichityala501@gmail.com
-14	Minimalist Balcony	Featuring clean lines, neutral tones, and essential elements, this design maximizes a compact balcony to create an efficient and aesthetically pleasing remote work	balcony	32000.0	5.0	img/Products/972b8295b1e88af3a3389a606f900d78.jpg	srichityala501@gmail.com
-10	Neo Ergonomic Desk	Clean, modern workspace with an ergonomic chair, sleek desk, and fresh greenery for comfort and focus.	executive	58000.0	5.0	img/Products/grey_magic.JPG	sri@gmail.com
-7	Green Wall Desk	A modern desk setup blending greenery with minimal design — perfect for focus and calergonomic	65000	4.0	img/Products/Screenshot_2025-08-16_at_10.48.06_PM.png	sri@gmail.com
+COPY public.products (id, name, description, category, price, rating, image_url, created_by, detailed_description) FROM stdin;
+9	Scandi Minimal	Balanced simplicity with warm wood, neutral tones, and clutter-free design for a calming work vibe.	minimalist	1	5.0	img/Products/f996ebea3a130d8dd1bb5b2f1f938455.jpg	sri@gmail.com	\N
+7	Green Wall Desk 	This desk provides the perfect balance of style and functionality.	ergonomic	65000	5.0	img/Products/1000397805.jpg	sri@gmail.com	Nature
+11	Dual Harmony	A stylish side-by-side desk setup designed for couples who work, create, or study together. This shared workspace balances productivity with harmony.	couple	99000.0	5.0	img/Products/dualdesks_1.jpg	sri@gmail.com	\N
+10	Neo Ergonomic Desk	Clean, modern workspace with an ergonomic chair, sleek desk, and fresh greenery for comfort and focus.	executive	58000.0	5.0	img/Products/grey_magic.JPG	sri@gmail.com	\N
 \.
 
 
@@ -426,9 +465,9 @@ COPY public.users (id, name, email, password, address, phone) FROM stdin;
 11	syed	syed@gmail.com	syed	\N	\N
 12	Home	sri.chityala504@gmail.com		\N	\N
 13	Sri ch	sri.chityala500@gmail.com	hello	\N	\N
-14	chityala srikanth	srichityala501@gmail.com		\N	\N
 15	Sreekanth Devops	sreekanththetechie@gmail.com	oauth_user_no_password_6lUorcIT7qfGlC3V	\N	\N
 16	yamini chityala	chityalayamini@gmail.com	oauth_user_no_password_d69XXaVVlKg5aIG2	\N	\N
+14	chityala srikanth	srichityala501@gmail.com			7075077384
 \.
 
 
@@ -436,28 +475,28 @@ COPY public.users (id, name, email, password, address, phone) FROM stdin;
 -- Name: cart_id_seq; Type: SEQUENCE SET; Schema: public; Owner: sri
 --
 
-SELECT pg_catalog.setval('public.cart_id_seq', 12, true);
+SELECT pg_catalog.setval('public.cart_id_seq', 28, true);
 
 
 --
 -- Name: order_items_id_seq; Type: SEQUENCE SET; Schema: public; Owner: sri
 --
 
-SELECT pg_catalog.setval('public.order_items_id_seq', 7, true);
+SELECT pg_catalog.setval('public.order_items_id_seq', 21, true);
 
 
 --
 -- Name: orders_id_seq; Type: SEQUENCE SET; Schema: public; Owner: sri
 --
 
-SELECT pg_catalog.setval('public.orders_id_seq', 10, true);
+SELECT pg_catalog.setval('public.orders_id_seq', 24, true);
 
 
 --
 -- Name: product_sub_images_id_seq; Type: SEQUENCE SET; Schema: public; Owner: sri
 --
 
-SELECT pg_catalog.setval('public.product_sub_images_id_seq', 1, true);
+SELECT pg_catalog.setval('public.product_sub_images_id_seq', 18, true);
 
 
 --

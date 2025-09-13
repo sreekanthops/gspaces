@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 
 <html lang="en">
@@ -12,7 +11,8 @@
 
   <!-- Favicon -->
   <link href="{{ url_for('static', filename='img/favicon.png') }}" rel="icon">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="{{ url_for('static', filename='img/apple-touch-icon.png') }}" rel="apple-touch-icon">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -397,7 +397,7 @@
 
                   <i class="bi bi-quote quote-icon-left"></i>
 
-                  <span>"GSpaces transformed my home office! The ergonomic chair and spacious desk have significantly boosted my productivity. It's an investment in comfort and efficiency."</span>
+                  <span>\"GSpaces transformed my home office! The ergonomic chair and spacious desk have significantly boosted my productivity. It's an investment in comfort and efficiency.\"</span>
 
                   <i class="bi bi-quote quote-icon-right"></i>
 
@@ -427,7 +427,7 @@
 
                   <i class="bi bi-quote quote-icon-left"></i>
 
-                  <span>"As a designer, aesthetics are key. GSpaces didn't disappoint! My new desk setup is not only beautiful but incredibly functional, with ample space for all my tools."</span>
+                  <span>\"As a designer, aesthetics are key. GSpaces didn't disappoint! My new desk setup is not only beautiful but incredibly functional, with ample space for all my tools.\"</span>
 
                   <i class="bi bi-quote quote-icon-right"></i>
 
@@ -457,7 +457,7 @@
 
                   <i class="bi bi-quote quote-icon-left"></i>
 
-                  <span>"The quality of my GSpaces desk setup is truly premium. It's stable, well-designed, and has made my long hours at the computer much more comfortable and focused. Highly recommended for any professional."</span>
+                  <span>\"The quality of my GSpaces desk setup is truly premium. It's stable, well-designed, and has made my long hours at the computer much more comfortable and focused. Highly recommended for any professional.\"</span>
 
                   <i class="bi bi-quote quote-icon-right"></i>
 
@@ -573,61 +573,147 @@
         <li data-filter=".filter-couple">Couple</li>
         <li data-filter=".filter-balcony">Balcony</li>
       </ul><!-- End Product Filters -->
+<div class="row gy-4 isotope-container" data-aos="fade-up" data-aos-delay="200">
 
-      <div class="row gy-4 isotope-container" data-aos="fade-up" data-aos-delay="200">
+  {% for product in products %}
+  <div class="col-lg-3 col-md-6 products-item isotope-item filter-{{ product.category | lower }}">
+    
+    <div class="hover-animate product-block" onclick="location.href='{{ url_for('product_detail', product_id=product.id) }}'">
+      
+      <div class="products-content">
+        <a href="{{ url_for('product_detail', product_id=product.id) }}">
+          <img src="{{ url_for('static', filename=product.image_url) }}" class="product-img img-fluid" alt="{{ product.name }}">
+        </a>
+      </div>
 
-        {% for product in products %}
-        <div class="col-lg-3 col-md-6 products-item isotope-item filter-{{ product.category | lower }}">
-          <!-- Image block -->
-          <div class="products-content">
-            <!-- Add <a> tag around the image -->
-            <a href="{{ url_for('product_detail', product_id=product.id) }}">
-              <img src="{{ url_for('static', filename=product.image_url) }}" class="img-fluid" alt="{{ product.name }}">
-            </a>
-          </div>
-          <!-- Text block below image -->
-          <div class="product-meta text-center mt-3">
-            <!-- Add <a> tag around the product name -->
-            <h5 class="fw-bold mb-1">
-                <a href="{{ url_for('product_detail', product_id=product.id) }}" class="text-decoration-none text-dark">
-                    {{ product.name }}
-                </a>
-            </h5>
+      <div class="product-meta text-center mt-3">
+        <h5 class="fw-bold mb-1">
+          <a href="{{ url_for('product_detail', product_id=product.id) }}" class="text-decoration-none text-dark">
+              {{ product.name }}
+          </a>
+        </h5>
 
-            {% if product.description %}
-            <p class="text-muted small mb-2">{{ product.description }}</p>
-            {% endif %}
+        {% if product.description %}
+        <p class="text-muted small mb-2">{{ product.description }}</p>
+        {% endif %}
 
-            <p class="text-warning mb-1">
-              {% for i in range(product.rating|default(0)|int) %}
-                <i class="bi bi-star-fill"></i>
-              {% endfor %}
-            </p>
-            <p class="text-dark fw-semibold mb-1">₹ {{ product.price | inr }}</p>
-            <p class="text-secondary small">Category: {{ product.category }}</p>
+        <p class="text-warning mb-1">
+          {% for i in range(product.rating|default(0)|int) %}
+            <i class="bi bi-star-fill"></i>
+          {% endfor %}
+        </p>
+        <p class="text-dark fw-semibold mb-1">₹ {{ product.price | inr }}</p>
+        <p class="text-secondary small">Category: {{ product.category }}</p>
 
-            <!-- Original Add to Cart link -->
-            <a href="{{ url_for('add_to_cart', product_id=product.id) }}" class="details-link" title="Add to Cart"><i class="bi bi-cart-plus"></i> Add to Cart</a>
+        <a href="{{ url_for('add_to_cart', product_id=product.id) }}" class="details-link" title="Add to Cart">
+          <i class="bi bi-cart-plus"></i> Add to Cart
+        </a>
 
-            <!-- Edit and Delete Buttons (only visible to Sreekanth) -->
-            {% if is_admin %} {# CHANGE THIS LINE #}
-              <div class="d-flex justify-content-center gap-2 mt-2">
-                <form action="/delete_product/{{ product.id }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this product?');">
-                  <button type="submit" class="btn btn-outline-danger btn-sm">
-                    <i class="bi bi-trash"></i> Delete
-                  </button>
-                </form>
-                <a href="{{ url_for('edit_product', product_id=product.id) }}" class="btn btn-outline-primary btn-sm">
-                  <i class="bi bi-pencil-square"></i> Edit
-                </a>
-              </div>
-            {% endif %}
+        {% if is_admin %}
+        <div class="d-flex justify-content-center gap-2 mt-2">
+          <form action="/delete_product/{{ product.id }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this product?');">
+            <button type="submit" class="btn btn-outline-danger btn-sm">
+              <i class="bi bi-trash"></i> Delete
+            </button>
+          </form>
+          <a href="{{ url_for('edit_product', product_id=product.id) }}" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-pencil-square"></i> Edit
+          </a>
+        </div>
+        {% endif %}
+      </div>
 
-          </div>
-        </div><!-- End Product Item -->
-        {% endfor %}
+    </div>
+  </div><!-- End Product Item -->
+  {% endfor %}
 
-      </div><!-- End Row -->
+</div><!-- End Row -->
+
+<style>
+.product-block {
+  background: #fff;
+  border-radius: 15px;
+  border: 5px solid white;
+  padding: 15px;
+  text-align: center;
+  cursor: pointer;
+  overflow: hidden;
+  will-change: transform;
+}
+
+.product-block:hover {
+  box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+}
+
+.product-img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+
+.product-name {
+  font-size: 18px;
+  font-weight: bold;
+  color: #333;
+}
+
+.product-description {
+  font-size: 14px;
+  color: #666;
+  height: 40px;
+  overflow: hidden;
+}
+
+.product-price {
+  font-weight: bold;
+  font-size: 16px;
+  margin: 5px 0;
+}
+
+.product-category {
+  font-size: 12px;
+  color: #555;
+}
+
+.product-rating i {
+  color: #ffc107;
+}
+
+.hover-animate {
+  display: block;
+}
+
+.hover-animate:hover {
+  box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+}
+
+</style>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+<script>
+document.querySelectorAll('.hover-animate').forEach(block => {
+  block.addEventListener('mouseenter', (e) => {
+    gsap.to(block, {
+      scale: 1.05,
+      ease: 'power2.out',
+      duration: 0.4
+    });
+    block.style.zIndex = 10;
+  });
+
+  block.addEventListener('mouseleave', (e) => {
+    gsap.to(block, {
+      scale: 1,
+      ease: 'elastic.out(1.2, 0.4)',
+      duration: 0.7
+    });
+    block.style.zIndex = 1;
+  });
+});
+</script>
 
     </div><!-- End Isotope -->
 
@@ -812,9 +898,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (modal) {
                         modal.hide(); // Hide the modal
                     }
-                    // --- ADD THIS LINE TO REDIRECT TO THE HOMEPAGE ---
+                    // --- ADD THIS LINE TO REDIRECT TO THE HOMEPAGE ---\
                     window.location.href = '/'; // Redirects to the root URL (your homepage)
-                    // ----------------------------------------------------
+                    // ----------------------------------------------------\
                 } else {
                     alert('Error: ' + data.message);
                 }

@@ -1,7 +1,8 @@
 <!-- Urgency Banner -->
 <div id="urgency-banner" 
-     style="background:#1a1a1a; color:#f5d76e; font-weight:600; font-size:16px; text-align:center; padding:12px; position:sticky; top:0; z-index:999; letter-spacing:0.5px; border-bottom:2px solid #f5d76e;">
-  ⏳ Exclusive Deal! Ends in <span id="countdown">00:00:00</span> – Enjoy <strong style="color:#ffffff;">5% OFF + Free Delivery</strong>
+     style="background:#ff4c4c; color:#fff; font-weight:700; font-size:16px; text-align:center; padding:12px; position:sticky; top:0; z-index:999; letter-spacing:0.5px; border-bottom:2px solid #f5d76e;">
+  🔥 Deal Ending Soon! Don’t Miss Out!
+  <span id="countdown" style="display:none;"></span>
 </div>
 
 <!-- Admin Controls -->
@@ -22,10 +23,14 @@ function startCountdown(elementId, duration) {
   if (!el || !banner) return;
 
   let remaining = duration;
+  el.style.display = "inline"; // show countdown
+  banner.innerHTML = `⏳ Exclusive Deal! Ends in <span id="countdown"></span> – Enjoy <strong style="color:#ffffff;">5% OFF + Free Delivery</strong>`;
+
+  const countdownSpan = document.getElementById("countdown");
 
   function render() {
     if (remaining <= 0) {
-      el.textContent = "00:00:00";
+      countdownSpan.textContent = "00:00:00";
       banner.innerHTML = "🔥 Deal Ending Soon! Don’t Miss Out!";
       banner.style.background = "#ff4c4c";
       banner.style.color = "#fff";
@@ -39,7 +44,7 @@ function startCountdown(elementId, duration) {
     let minutes = Math.floor((remaining / 60) % 60);
     let seconds = Math.floor(remaining % 60);
 
-    el.textContent =
+    countdownSpan.textContent =
       (hours < 10 ? "0" + hours : hours) + ":" +
       (minutes < 10 ? "0" + minutes : minutes) + ":" +
       (seconds < 10 ? "0" + seconds : seconds);

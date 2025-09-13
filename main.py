@@ -1486,7 +1486,7 @@ def payment_success():
         html_body = f"""
         <html>
         <body>
-            <h2>Thank you for your order, {current_user.email}!</h2>
+            <h2>Thank you for your order, {current_user.user}!</h2>
             <p>Your payment (<b>{payment_id}</b>) was successful. Here are your order details:</p>
             <table border="1" cellspacing="0" cellpadding="6" style="border-collapse: collapse; width: 100%;">
                 <tr style="background-color:#f2f2f2;">

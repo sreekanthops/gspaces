@@ -1416,11 +1416,12 @@ def inject_cart_count():
 def payment_success():
     conn = None
     try:
-        payment_id = request.form.get('razorpay_payment_id')
-        order_id_from_razorpay = request.form.get('razorpay_order_id')
-        signature = request.form.get('razorpay_signature')
+        data = request.get_json()  # get JSON from fetch
+        payment_id = data.get('razorpay_payment_id')
+        order_id_from_razorpay = data.get('razorpay_order_id')
+        signature = data.get('razorpay_signature')
 
-        # ✅ Verify signature from Razorpay
+        # Verify Razorpay signature
         razorpay_client.utility.verify_payment_signature({
             'razorpay_order_id': order_id_from_razorpay,
             'razorpay_payment_id': payment_id,
@@ -1438,6 +1439,9 @@ def payment_success():
             WHERE c.user_id = %s
         """, (current_user.id,))
         cart_items = cur.fetchall()
+        if not cart_items:
+            return jsonify({"status": "error", "error": "Cart is empty"})
+
         total_amount = sum(item['price'] * item['quantity'] for item in cart_items)
 
         # Insert order
@@ -1458,9 +1462,7 @@ def payment_success():
         cur.execute("DELETE FROM cart WHERE user_id=%s", (current_user.id,))
         conn.commit()
 
-        # -----------------------------
-        # 📧 Build order confirmation email
-        # -----------------------------
+        # --- Build HTML email like old code ---
         sender = os.getenv("EMAIL_USER", "sri.chityala501@gmail.com")
         receiver = current_user.email
 
@@ -1469,7 +1471,6 @@ def payment_success():
         msg["From"] = sender
         msg["To"] = receiver
 
-        # Create HTML table of items
         items_html = "".join([
             f"""
             <tr>
@@ -1479,8 +1480,7 @@ def payment_success():
                 <td>{item['price']} INR</td>
                 <td>{item['price'] * item['quantity']} INR</td>
             </tr>
-            """
-            for item in cart_items
+            """ for item in cart_items
         ])
 
         html_body = f"""
@@ -1505,23 +1505,18 @@ def payment_success():
         </body>
         </html>
         """
-
-        # Attach HTML with UTF-8 encoding
         msg.attach(MIMEText(html_body, "html", "utf-8"))
 
-        # Send email via Gmail SMTP
         with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-            server.login(sender, os.getenv("EMAIL_PASS", "zupd zixc vvzp kptk"))
+            server.login(sender, os.getenv("EMAIL_PASS"))
             server.sendmail(sender, receiver, msg.as_string())
 
-        flash("✅ Payment successful! Your order has been placed. Confirmation email sent.", "success")
-        return redirect(url_for('thankyou'))
+        return jsonify({"status": "success", "message": "Payment successful, email sent"})
 
     except Exception as e:
         if conn:
             conn.rollback()
-        flash(f"❌ Payment failed: {e}", "error")
-        return redirect(url_for('cart'))
+        return jsonify({"status": "error", "error": str(e)})
     finally:
         if conn:
             conn.close()

@@ -414,22 +414,55 @@ COPY public.orders (id, user_id, order_date, total_amount, status, user_email, r
 --
 
 COPY public.product_sub_images (id, product_id, image_url, description, created_at) FROM stdin;
+22	17	img/Products/ChatGPT_Image_Sep_14_2025_10_22_06_PM.png	<b>Wooden Study Table with Spacious Worktop & Metal Legs Work</b>\r\n<li> <b>Material</b>: Plywood+ iron\r\n<li><b>Size</b>: 4x2ft\r\n\r\n	2025-09-14 16:54:42.45878
+14	7	img/Products/Screenshot_2025-09-08_at_12.05.25_AM.png	Desk Lamp Black\r\nModern Minimalist Adjustable Reading Lamp Nordic Style Solid Natural Wood Metal	2025-09-07 18:43:36.134141
 3	7	img/Products/Screenshot_2025-09-07_at_7.42.48_PM.png	Brand & Model: Vergo Transform Prime\r\n\r\nColor: White Grey\r\n\r\nMaterial: Premium breathable mesh seat; nylon frame\r\n\r\nDimensions: 50D x 50W x 119H cm\r\n\r\nWeight: 20 kg | Max Load: 120 kg\r\n\r\nBack Style: High back, S-shaped ergonomic mesh\r\n\r\nFeatures:\r\n\r\nAdjustable height, lumbar, headrest, and 2D armrests\r\n\r\n2:1 multi-lock synchro tilt (90°–135°)\r\n\r\n360° swivel with 60mm dual wheels\r\n\r\nHigh-density molded foam seat for thigh support\r\n\r\nStyle: Transform Prime\r\n\r\nCare: Wipe clean\r\n\r\nAssembly & Warranty: DIY (10–20 mins) | 3-year warranty\r\n\r\nExtras: Breathable mesh keeps you cool; ergonomic design improves posture and reduces back pain	2025-09-07 14:14:41.650622
 4	7	img/Products/Screenshot_2025-09-08_at_12.07.38_AM.png	Framed Wall Posters/Paintings with Frame (11 x 14 inch, Multi) Set of 3 (Modern Wall Decor, 3)	2025-09-07 18:38:49.601879
+17	7	img/Products/Screenshot_2025-09-14_at_12.09.11_PM.png	eather Dual Color Desk Mat 75X40cm 1.8mm Thick| Laptop Mat/Extended Large Mouse Pad, Reversible Deskspread	2025-09-09 20:00:34.508496
+15	7	img/Products/Screenshot_2025-09-08_at_12.05.17_AM.png	Laptop Stand, Height-Adjustable, Foldable, Portable, Ventilated, Fits Up to 15.6-Inch Laptops (Aluminium Alloy, Silver) Tabletop	2025-09-07 18:43:53.697108
 5	7	img/Products/Screenshot_2025-09-08_at_12.07.19_AM.png	Cord Organizer (160mm*80mm, Silver)	2025-09-07 18:39:35.747058
-6	7	img/Products/Screenshot_2025-09-08_at_12.07.13_AM.png	Artificial Wall Grass for Home Decoration | 50 x 50 CM | Grass Mat Panel for Vertical Garden	2025-09-07 18:40:06.893591
 7	7	img/Products/Screenshot_2025-09-08_at_12.07.00_AM.png	Plastic Artificial Plants With Pot Leaves Hanging Ivy Garlands Plant Greenery Vine Creeper Home Decor Door Wall Balcony Decoration Party - 50 Cm (2 Pcs Money Plants)	2025-09-07 18:40:33.187298
+6	7	img/Products/Screenshot_2025-09-08_at_12.07.13_AM.png	Artificial Wall Grass for Home Decoration | 50 x 50 CM | Grass Mat Panel for Vertical Garden(3 Pieces)	2025-09-07 18:40:06.893591
 8	7	img/Products/Screenshot_2025-09-08_at_12.06.48_AM.png	Paris World Famous Building Small Metal Eiffel Tower Antique Vintage Statue for Gifting, Wedding,Room,Office,Decorative Showpeice for Home Decor, Desk Decor, Table Stand (15 cm)	2025-09-07 18:41:01.171151
 9	7	img/Products/Screenshot_2025-09-08_at_12.06.24_AM.png	Harry Potter 3pc Set with pet Action Figure Special Edition Action Figure for Car Dashboard, Decoration, Cake, Office Desk & Study Table (Pack of 3) (Height-8 cm)	2025-09-07 18:41:24.773594
 10	7	img/Products/Screenshot_2025-09-08_at_12.06.13_AM.png	Astronaut Spaceman Statue Ornament Home Office Desktop Figurine Decors Set of 3 - Golden (Golden)	2025-09-07 18:42:01.644386
-11	7	img/Products/Screenshot_2025-09-08_at_12.06.00_AM.png	Portronics Power Plate 6 with 4 USB Port + 5 Power Sockets Extension Board, 2500W Power Converter, Cord Length 3Mtr (Black)	2025-09-07 18:42:22.352762
-12	7	img/Products/Screenshot_2025-09-08_at_12.05.52_AM.png	3 Magnetic Cable Organizer Clips - Desk Wire Management Clip with 3M Adhesive Foam - Cord Holder for Desktop USB Charging Cables, Office, Home (Black)	2025-09-07 18:42:48.06152
-13	7	img/Products/Screenshot_2025-09-08_at_12.05.39_AM.png	Digital Alarm Clock Table Clock for Students, Home, Office, Bedside Smart Timepiece for Heavy Sleepers, Automatic Sensor,Time,Date &Temperature, Alarm Clock for Bedroom 5 (MIROR Clock)	2025-09-07 18:43:11.505191
-14	7	img/Products/Screenshot_2025-09-08_at_12.05.25_AM.png	Desk Lamp Black\r\nModern Minimalist Adjustable Reading Lamp Nordic Style Solid Natural Wood Metal	2025-09-07 18:43:36.134141
-15	7	img/Products/Screenshot_2025-09-08_at_12.05.17_AM.png	Laptop Stand, Height-Adjustable, Foldable, Portable, Ventilated, Fits Up to 15.6-Inch Laptops (Aluminium Alloy, Silver) Tabletop	2025-09-07 18:43:53.697108
 16	7	img/Products/Screenshot_2025-09-08_at_12.03.49_AM.png	Vanilla Reed Diffuser Set 50ml Smoke Less Room Freshener for Home Bedroom Living Room Office\r\nVanilla & Musk Blend of Toasted Coconut 5 Rattan Reed Sticks	2025-09-07 18:44:21.410627
-17	7	img/Products/Screenshot_2025-09-10_at_1.29.49_AM.png	eather Dual Color Desk Mat 75X40cm 1.8mm Thick| Laptop Mat/Extended Large Mouse Pad, Reversible Deskspread	2025-09-09 20:00:34.508496
-18	10	img/Products/ChatGPT_Image_Sep_10_2025_01_36_05_AM.png	table	2025-09-09 20:16:50.632696
+23	17	img/Products/Screenshot_2025-09-14_at_10.25.41_PM.png	<b>Black Round Mesh Pen Stand</b>\r\n<b>count</b>: 1 	2025-09-14 16:56:40.83064
+13	7	img/Products/Screenshot_2025-09-14_at_12.09.11_PM.png	Digital Alarm Clock Table Clock for Students, Home, Office, Bedside Smart Timepiece for Heavy Sleepers, Automatic Sensor,Time,Date &Temperature, Alarm Clock for Bedroom 5 (MIROR Clock)	2025-09-07 18:43:11.505191
+11	7	img/Products/Screenshot_2025-09-14_at_12.19.35_PM.png	Portronics Power Plate 6 with 4 USB Port + 5 Power Sockets Extension Board, 2500W Power Converter, Cord Length 3Mtr (Black)	2025-09-07 18:42:22.352762
+25	17	img/Products/ChatGPT_Image_Sep_14_2025_10_38_08_PM.png	Wooden rafter\r\n<b>size</b>: 4x0.5ft(18mm)\r\n<b>count</b>: 3	2025-09-14 17:09:41.879254
+26	17	img/Products/Screenshot_2025-09-15_at_12.26.03_AM.png	Natural plants with white pot\r\n<b>count: 4	2025-09-14 18:57:05.133432
+21	17	img/Products/Screenshot_2025-09-14_at_10.04.16_PM.png	<b>Umi LED Desk Lamp – 360° Adjustable</b>\r\n<li>3 Brightness Levels\r\n<li>Eye-Caring Touch Control\r\n<li>Wireless Rechargeable	2025-09-14 16:35:12.92153
+20	17	img/Products/Screenshot_2025-09-14_at_9.54.56_PM.png	<b>Fabric Study Arm Chair</b>\r\n<b>Highlights</b>\r\n<li>Adjustable Seat Height, Armrest, Wheels, Swivel\r\n<li>W x H: 75.6 cm x 98.5 cm (2 ft 5 in x 3 ft 2 in)\r\n<li>Frame Material: Plastic\r\n\r\n 	2025-09-14 16:31:05.026251
+36	16	img/Products/Screenshot_2025-09-15_at_1.42.51_AM.png	<b>Rechargeable Desk Lamp with 3 Color Light Modes</b>\r\n<li>Dual LED Touch Sensor\r\n<b>Product Dimensions</b>:\t9.5D x 12.5W x 40H cms	2025-09-14 20:15:05.49618
+24	17	img/Products/Screenshot_2025-09-14_at_10.29.12_PM.png	<b>PVC Wooden Panel</b>\r\nSize: 1x9ft\r\n	2025-09-14 17:00:16.386098
+27	17	img/Products/Screenshot_2025-09-15_at_12.28.06_AM.png	Leather Dual Color Desk Mat 60X35cm 1.8mm Thick	2025-09-14 18:58:41.900519
+28	17	img/Products/Screenshot_2025-09-14_at_12.19.35_PM.png	Portronics Power Plate 7 with 6 USB Port + 8 Power Sockets Power Strip Extension Board with 2500W, 3Mtr Cord Length, 2.1A USB Output(Black), 250 Volts	2025-09-14 19:02:42.792785
+29	17	img/Products/Screenshot_2025-09-15_at_12.34.51_AM.png	Aluminum Alloy Desk Grommet – Round Metal Cable Wire Hole Cover with Flip Dust-Proof Lid	2025-09-14 19:05:17.386867
+30	9	img/Products/ChatGPT_Image_Sep_15_2025_12_46_24_AM.png	Modern Wooden Table\r\n<b>Table Size</b>: 4x2ft and 29inches\r\n<b>Iron Frame Thickness</b>: 25 mm x 25 mm square tubing	2025-09-14 19:20:58.207657
+31	9	img/Products/Screenshot_2025-09-15_at_12.58.59_AM.png	Premium Leatherette Executive Chair | High Back Ergonomic Office Chair	2025-09-14 19:29:42.982312
+32	9	img/Products/Screenshot_2025-09-15_at_1.03.10_AM.png	<b>Abstract line art black & white Wall painting </b>\r\n<b>Size</b>: 13x 19inch, set of 2	2025-09-14 19:35:01.269835
+33	9	img/Products/Screenshot_2025-09-15_at_1.06.21_AM.png	<b>Gold Luxurious Table Lamp	2025-09-14 19:37:01.923779
+34	9	img/Products/Screenshot_2025-09-15_at_1.08.47_AM.png	<b> Pen Holder	2025-09-14 19:39:19.46351
+35	16	img/Products/Screenshot_2025-09-15_at_1.39.00_AM.png	Premium Digital Painting With Frame For Home Decor - Pack Of 3\r\n<b>Product Dimensions</b>:\t10L x 13W Cms	2025-09-14 20:10:59.507771
+37	16	img/Products/Screenshot_2025-09-15_at_1.47.15_AM.png	<b>High Back Office Chair (Black)</b>	2025-09-14 20:18:58.072174
+38	16	img/Products/Screenshot_2025-09-15_at_1.51.32_AM.png	<b>Wood Floating Wall Shelf</b>	2025-09-14 20:23:00.129345
+39	16	img/Products/Screenshot_2025-09-15_at_1.58.39_AM.png	<b>Plants</b>\r\n<b>Units</b>: 3	2025-09-14 20:29:49.607746
+40	16	img/Products/ChatGPT_Image_Sep_15_2025_01_59_52_AM.png	<b>Wooden Work Desk</b>\r\n<b>Size</b>: 5x2.25ft 29inches Height\r\n	2025-09-14 20:32:23.188493
+41	10	img/Products/Screenshot_2025-09-14_at_12.08.40_PM.png	<b>Leather Dual Color Desk Mat 60X35cm 1.8mm Thick</b>	2025-09-14 20:42:13.380173
+42	10	img/Products/Screenshot_2025-09-14_at_12.19.35_PM.png	<b>Portronics Power Plate 6 with 4 USB Port + 5 Power Sockets Extension Board, 2500W Power Converter, Cord Length 3Mtr (Black)	2025-09-14 20:45:21.217541
+43	10	img/Products/Screenshot_2025-09-15_at_2.16.13_AM.png	<b>EBCO Cable Organizer - ZINC(60MM)	2025-09-14 20:46:33.11741
+44	10	img/Products/Screenshot_2025-09-15_at_2.16.46_AM.png	<b>Vanilla Reed Diffuser Set 50ml Smoke Less Room Freshener	2025-09-14 20:47:16.419606
+45	10	img/Products/Screenshot_2025-09-15_at_2.17.32_AM.png	<b>Foldable & Portable Laptop Riser Stand Made with Aluminum Alloy	2025-09-14 20:47:56.927053
+46	10	img/Products/Screenshot_2025-09-15_at_2.18.10_AM.png	<b>Desk Lamp Black	2025-09-14 20:48:36.256188
+47	10	img/Products/Screenshot_2025-09-15_at_2.19.05_AM.png	<b>Digital Alarm Clock Table Clock	2025-09-14 20:49:19.127837
+48	10	img/Products/Screenshot_2025-09-15_at_2.19.35_AM.png	<b>Desk Organizer Desk Accessories Stand for Home/Office, White	2025-09-14 20:50:13.513154
+49	10	img/Products/Screenshot_2025-09-15_at_2.20.25_AM.png	<b>Harry Potter 3pc Set with pet Action Figure Special Edition-Height-8 cm	2025-09-14 20:50:51.323341
+50	10	img/Products/Screenshot_2025-09-15_at_2.12.31_AM.png	<b>Quotes Frames - Motivational Quotes Rectangular Wall Frames For Office - (14 X 11 Inches), Black	2025-09-14 20:52:00.763804
+51	10	img/Products/Screenshot_2025-09-15_at_2.23.32_AM.png	<b>High Back Ergonomic Chair, 3D Armrest, Aluminum Base, Home, Study, Premium Mesh, Fabric Office Adjustable Arm Chair 	2025-09-14 20:54:20.750823
+52	10	img/Products/Screenshot_2025-09-15_at_2.25.30_AM.png	<b> 4 Pcs Miniature Showpiece Set	2025-09-14 20:55:53.811052
+53	10	img/Products/Screenshot_2025-09-15_at_2.25.58_AM.png	<b>Astronaut Spaceman Statue Ornament Home Office Desktop Figurine Decors Set of 3 - Golden	2025-09-14 20:56:24.221345
+54	10	img/Products/Screenshot_2025-09-15_at_2.26.57_AM.png	<b>Palm Air Purifier Live Plant Natural Indoor and Outdoor Air Purifying Plant	2025-09-14 20:57:24.134627
 \.
 
 
@@ -438,10 +471,12 @@ COPY public.product_sub_images (id, product_id, image_url, description, created_
 --
 
 COPY public.products (id, name, description, category, price, rating, image_url, created_by, detailed_description) FROM stdin;
-9	Scandi Minimal	Balanced simplicity with warm wood, neutral tones, and clutter-free design for a calming work vibe.	minimalist	1	5.0	img/Products/f996ebea3a130d8dd1bb5b2f1f938455.jpg	sri@gmail.com	\N
-7	Green Wall Desk 	This desk provides the perfect balance of style and functionality.	ergonomic	65000	5.0	img/Products/1000397805.jpg	sri@gmail.com	Nature
-11	Dual Harmony	A stylish side-by-side desk setup designed for couples who work, create, or study together. This shared workspace balances productivity with harmony.	couple	99000.0	5.0	img/Products/dualdesks_1.jpg	sri@gmail.com	\N
-10	Neo Ergonomic Desk	Clean, modern workspace with an ergonomic chair, sleek desk, and fresh greenery for comfort and focus.	executive	58000.0	5.0	img/Products/grey_magic.JPG	sri@gmail.com	\N
+10	Neo Ergonomic Desk		executive	58000.0	5.0	img/Products/IMG_9230.JPG	sri@gmail.com	\N
+9	Scandi Minimal		minimalist	35000	5.0	img/Products/f996ebea3a130d8dd1bb5b2f1f938455.jpg	sri@gmail.com	\N
+7	Green Wall Desk 		ergonomic	65000	5.0	img/Products/1000397805.jpg	sri@gmail.com	Nature
+11	Dual Harmony		couple	99000.0	5.0	img/Products/dualdesks.jpg	sri@gmail.com	\N
+17	Elegant Corner		executive	50000.0	5.0	img/Products/17/17.jpg	srichityala501@gmail.com	\N
+16	Beige Minds		executive	48000.0	5.0	img/Products/Screenshot_2025-09-15_at_1.36.31_AM.png	srichityala501@gmail.com	\N
 \.
 
 
@@ -496,14 +531,14 @@ SELECT pg_catalog.setval('public.orders_id_seq', 24, true);
 -- Name: product_sub_images_id_seq; Type: SEQUENCE SET; Schema: public; Owner: sri
 --
 
-SELECT pg_catalog.setval('public.product_sub_images_id_seq', 18, true);
+SELECT pg_catalog.setval('public.product_sub_images_id_seq', 54, true);
 
 
 --
 -- Name: products_id_seq; Type: SEQUENCE SET; Schema: public; Owner: sri
 --
 
-SELECT pg_catalog.setval('public.products_id_seq', 14, true);
+SELECT pg_catalog.setval('public.products_id_seq', 17, true);
 
 
 --

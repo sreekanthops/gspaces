@@ -616,6 +616,18 @@
             <a href="{{ url_for('add_to_cart', product_id=product.id) }}" class="details-link" title="Add to Cart">
                 <i class="bi bi-cart-plus"></i> Add to Cart
             </a>
+            {% if is_admin %}
+            <div class="d-flex justify-content-center gap-2 mt-2">
+            <form action="/delete_product/{{ product.id }}" method="POST" onsubmit="return confirm('Are you sure?');">
+              <button type="submit" class="btn btn-outline-danger btn-sm" onclick="event.stopPropagation();">
+                <i class="bi bi-trash"></i> Delete
+              </button>
+            </form>
+              <a href="{{ url_for('edit_product', product_id=product.id) }}" class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-pencil-square"></i> Edit
+              </a>
+            </div>
+            {% endif %}
         </div>
     </div>
 </div>

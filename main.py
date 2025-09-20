@@ -1354,6 +1354,11 @@ def update_quantity(product_id, action):
             conn.close()
     return redirect(url_for('cart'))
 
+cart_items = []
+total_price = 0
+gst_amount = 0
+total_with_gst = 0
+
 @app.route('/cart')
 @login_required
 def cart():

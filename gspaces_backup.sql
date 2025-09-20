@@ -57,6 +57,113 @@ ALTER SEQUENCE public.cart_id_seq OWNED BY public.cart.id;
 
 
 --
+-- Name: coupon_usage; Type: TABLE; Schema: public; Owner: sri
+--
+
+CREATE TABLE public.coupon_usage (
+    id integer NOT NULL,
+    user_id integer NOT NULL,
+    coupon_code character varying(50) NOT NULL,
+    used_at timestamp without time zone DEFAULT now()
+);
+
+
+ALTER TABLE public.coupon_usage OWNER TO sri;
+
+--
+-- Name: coupon_usage_id_seq; Type: SEQUENCE; Schema: public; Owner: sri
+--
+
+CREATE SEQUENCE public.coupon_usage_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.coupon_usage_id_seq OWNER TO sri;
+
+--
+-- Name: coupon_usage_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: sri
+--
+
+ALTER SEQUENCE public.coupon_usage_id_seq OWNED BY public.coupon_usage.id;
+
+
+--
+-- Name: coupons; Type: TABLE; Schema: public; Owner: sri
+--
+
+CREATE TABLE public.coupons (
+    id integer NOT NULL,
+    code character varying(50) NOT NULL,
+    discount_percent numeric(5,2) NOT NULL,
+    active boolean DEFAULT true,
+    expiry_date timestamp without time zone
+);
+
+
+ALTER TABLE public.coupons OWNER TO sri;
+
+--
+-- Name: coupons_id_seq; Type: SEQUENCE; Schema: public; Owner: sri
+--
+
+CREATE SEQUENCE public.coupons_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.coupons_id_seq OWNER TO sri;
+
+--
+-- Name: coupons_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: sri
+--
+
+ALTER SEQUENCE public.coupons_id_seq OWNED BY public.coupons.id;
+
+
+--
+-- Name: discount; Type: TABLE; Schema: public; Owner: sri
+--
+
+CREATE TABLE public.discount (
+    id integer NOT NULL,
+    discount_percent numeric(5,2) NOT NULL
+);
+
+
+ALTER TABLE public.discount OWNER TO sri;
+
+--
+-- Name: discount_id_seq; Type: SEQUENCE; Schema: public; Owner: sri
+--
+
+CREATE SEQUENCE public.discount_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.discount_id_seq OWNER TO sri;
+
+--
+-- Name: discount_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: sri
+--
+
+ALTER SEQUENCE public.discount_id_seq OWNED BY public.discount.id;
+
+
+--
 -- Name: order_items; Type: TABLE; Schema: public; Owner: sri
 --
 
@@ -107,7 +214,9 @@ CREATE TABLE public.orders (
     status character varying(50) DEFAULT 'Pending'::character varying,
     user_email character varying(255),
     razorpay_order_id character varying(255) NOT NULL,
-    razorpay_payment_id character varying(255) NOT NULL
+    razorpay_payment_id character varying(255) NOT NULL,
+    coupon_code character varying(50),
+    discount_amount numeric(10,2) DEFAULT 0
 );
 
 
@@ -299,6 +408,27 @@ ALTER TABLE ONLY public.cart ALTER COLUMN id SET DEFAULT nextval('public.cart_id
 
 
 --
+-- Name: coupon_usage id; Type: DEFAULT; Schema: public; Owner: sri
+--
+
+ALTER TABLE ONLY public.coupon_usage ALTER COLUMN id SET DEFAULT nextval('public.coupon_usage_id_seq'::regclass);
+
+
+--
+-- Name: coupons id; Type: DEFAULT; Schema: public; Owner: sri
+--
+
+ALTER TABLE ONLY public.coupons ALTER COLUMN id SET DEFAULT nextval('public.coupons_id_seq'::regclass);
+
+
+--
+-- Name: discount id; Type: DEFAULT; Schema: public; Owner: sri
+--
+
+ALTER TABLE ONLY public.discount ALTER COLUMN id SET DEFAULT nextval('public.discount_id_seq'::regclass);
+
+
+--
 -- Name: order_items id; Type: DEFAULT; Schema: public; Owner: sri
 --
 
@@ -348,6 +478,34 @@ COPY public.cart (id, user_id, product_id, quantity) FROM stdin;
 9	12	7	1
 10	15	7	1
 11	16	7	1
+35	17	9	1
+\.
+
+
+--
+-- Data for Name: coupon_usage; Type: TABLE DATA; Schema: public; Owner: sri
+--
+
+COPY public.coupon_usage (id, user_id, coupon_code, used_at) FROM stdin;
+1	14	NEWDESK	2025-09-20 22:08:06.758153
+\.
+
+
+--
+-- Data for Name: coupons; Type: TABLE DATA; Schema: public; Owner: sri
+--
+
+COPY public.coupons (id, code, discount_percent, active, expiry_date) FROM stdin;
+1	NEWDESK	15.00	t	2025-12-31 00:00:00
+\.
+
+
+--
+-- Data for Name: discount; Type: TABLE DATA; Schema: public; Owner: sri
+--
+
+COPY public.discount (id, discount_percent) FROM stdin;
+6	6.00
 \.
 
 
@@ -377,6 +535,16 @@ COPY public.order_items (id, order_id, product_id, quantity, price_at_purchase, 
 19	22	9	1	1.00	Scandi Minimal	img/Products/f996ebea3a130d8dd1bb5b2f1f938455.jpg
 20	23	9	1	1.00	Scandi Minimal	img/Products/f996ebea3a130d8dd1bb5b2f1f938455.jpg
 21	24	9	1	1.00	Scandi Minimal	img/Products/f996ebea3a130d8dd1bb5b2f1f938455.jpg
+22	25	9	1	1.00	Scandi Minimal	img/Products/f996ebea3a130d8dd1bb5b2f1f938455.jpg
+23	26	9	1	1.00	Scandi Minimal	img/Products/f996ebea3a130d8dd1bb5b2f1f938455.jpg
+24	27	19	1	1.00	test	img/Products/19/19.jpg
+25	28	19	1	1.00	test	img/Products/19/19.jpg
+26	29	19	1	1.00	test	img/Products/19/19.jpg
+27	30	19	1	1.00	test	img/Products/19/19.jpg
+28	31	19	1	1.00	test	img/Products/19/19.jpg
+29	32	19	1	1.00	test	img/Products/19/19.jpg
+30	33	19	1	1.00	test	img/Products/19/19.jpg
+31	34	19	1	1.00	test	img/Products/19/19.jpg
 \.
 
 
@@ -384,28 +552,38 @@ COPY public.order_items (id, order_id, product_id, quantity, price_at_purchase, 
 -- Data for Name: orders; Type: TABLE DATA; Schema: public; Owner: sri
 --
 
-COPY public.orders (id, user_id, order_date, total_amount, status, user_email, razorpay_order_id, razorpay_payment_id) FROM stdin;
-4	9	2025-08-23 18:57:13.961535	1.00	Completed	sri@gmail.com	order_R8sn2pwhlyf26d	pay_R8snF3eP1pNFcA
-5	14	2025-08-23 20:16:01.177902	1.00	Completed	srichityala501@gmail.com	order_R8u83hCdEGGxiW	pay_R8u8ThGoiLNCSQ
-6	12	2025-08-27 15:53:56.139289	1.00	Completed	sri.chityala504@gmail.com	order_RAPnsahBFM5obN	pay_RAPo5nJs2jYAUa
-7	12	2025-08-27 15:58:14.752533	1.00	Completed	sri.chityala504@gmail.com	order_RAPsPEz2y2RmSf	pay_RAPsfzu7rI5c0a
-8	12	2025-08-27 16:03:32.792834	1.00	Completed	sri.chityala504@gmail.com	order_RAPy5aWg435Vip	pay_RAPyG6CrMeU92b
-9	12	2025-08-27 16:09:56.675074	1.00	Completed	sri.chityala504@gmail.com	order_RAQ4nHTNhvkU6F	pay_RAQ50eT4ga4Lm2
-10	12	2025-08-27 17:50:39.700312	1.00	Completed	sri.chityala504@gmail.com	order_RARmqXBIle0Oj2	pay_RARnNlvgPS8l3f
-11	13	2025-09-13 17:58:17.805948	1.00	Completed	sri.chityala500@gmail.com	order_RHB0FCXTJuepdp	pay_RHB0WZgFEo6sMZ
-12	13	2025-09-13 18:00:52.751262	1.00	Completed	sri.chityala500@gmail.com	order_RHB2z53jj7MkiT	pay_RHB3FOaGWvxrnU
-13	13	2025-09-13 18:03:54.006192	1.00	Completed	sri.chityala500@gmail.com	order_RHB6A2oXHwXnad	pay_RHB6QwObtd7WSr
-14	13	2025-09-13 18:14:37.920677	1.00	Completed	sri.chityala500@gmail.com	order_RHBHXQuhP4XZaW	pay_RHBHmKvEDNleVt
-15	14	2025-09-13 18:54:27.450455	1.00	Completed	srichityala501@gmail.com	order_RHBxT8jCIONh3i	pay_RHBxr8U1eswvYR
-16	14	2025-09-13 18:56:50.10443	1.00	Completed	srichityala501@gmail.com	order_RHC07bRbskaQvO	pay_RHC0L379i1eJYC
-17	14	2025-09-13 19:06:05.344517	1.00	Completed	srichityala501@gmail.com	order_RHC9wHjoJJdjry	pay_RHCA8VUdLmO9V8
-18	14	2025-09-13 19:10:26.598195	1.00	Completed	srichityala501@gmail.com	order_RHCEXCaX8m2b5c	pay_RHCEiLFv9apHeN
-19	14	2025-09-13 19:17:17.245731	1.00	Completed	srichityala501@gmail.com	order_RHCLlQlFJetzwU	pay_RHCLy0dvBPuIKM
-20	14	2025-09-13 19:26:10.335474	1.00	Completed	srichityala501@gmail.com	order_RHCV3q1MNxZRKZ	pay_RHCVLU241SrqF3
-21	14	2025-09-13 19:27:31.1998	1.00	Completed	srichityala501@gmail.com	order_RHCWZ3pwAZWVIE	pay_RHCWlcr2EKARql
-22	14	2025-09-13 20:00:38.429989	1.00	Completed	srichityala501@gmail.com	order_RHD5UsyjWm30JS	pay_RHD5kmmFMczGqr
-23	14	2025-09-13 20:02:18.112725	1.00	Completed	srichityala501@gmail.com	order_RHD7K9BmbuO9cP	pay_RHD7USgozHDpT6
-24	14	2025-09-13 20:09:01.077548	1.00	Completed	srichityala501@gmail.com	order_RHDESCQHUm7OZr	pay_RHDEcQVsb8jcgm
+COPY public.orders (id, user_id, order_date, total_amount, status, user_email, razorpay_order_id, razorpay_payment_id, coupon_code, discount_amount) FROM stdin;
+4	9	2025-08-23 18:57:13.961535	1.00	Completed	sri@gmail.com	order_R8sn2pwhlyf26d	pay_R8snF3eP1pNFcA	\N	0.00
+5	14	2025-08-23 20:16:01.177902	1.00	Completed	srichityala501@gmail.com	order_R8u83hCdEGGxiW	pay_R8u8ThGoiLNCSQ	\N	0.00
+6	12	2025-08-27 15:53:56.139289	1.00	Completed	sri.chityala504@gmail.com	order_RAPnsahBFM5obN	pay_RAPo5nJs2jYAUa	\N	0.00
+7	12	2025-08-27 15:58:14.752533	1.00	Completed	sri.chityala504@gmail.com	order_RAPsPEz2y2RmSf	pay_RAPsfzu7rI5c0a	\N	0.00
+8	12	2025-08-27 16:03:32.792834	1.00	Completed	sri.chityala504@gmail.com	order_RAPy5aWg435Vip	pay_RAPyG6CrMeU92b	\N	0.00
+9	12	2025-08-27 16:09:56.675074	1.00	Completed	sri.chityala504@gmail.com	order_RAQ4nHTNhvkU6F	pay_RAQ50eT4ga4Lm2	\N	0.00
+10	12	2025-08-27 17:50:39.700312	1.00	Completed	sri.chityala504@gmail.com	order_RARmqXBIle0Oj2	pay_RARnNlvgPS8l3f	\N	0.00
+11	13	2025-09-13 17:58:17.805948	1.00	Completed	sri.chityala500@gmail.com	order_RHB0FCXTJuepdp	pay_RHB0WZgFEo6sMZ	\N	0.00
+12	13	2025-09-13 18:00:52.751262	1.00	Completed	sri.chityala500@gmail.com	order_RHB2z53jj7MkiT	pay_RHB3FOaGWvxrnU	\N	0.00
+13	13	2025-09-13 18:03:54.006192	1.00	Completed	sri.chityala500@gmail.com	order_RHB6A2oXHwXnad	pay_RHB6QwObtd7WSr	\N	0.00
+14	13	2025-09-13 18:14:37.920677	1.00	Completed	sri.chityala500@gmail.com	order_RHBHXQuhP4XZaW	pay_RHBHmKvEDNleVt	\N	0.00
+15	14	2025-09-13 18:54:27.450455	1.00	Completed	srichityala501@gmail.com	order_RHBxT8jCIONh3i	pay_RHBxr8U1eswvYR	\N	0.00
+16	14	2025-09-13 18:56:50.10443	1.00	Completed	srichityala501@gmail.com	order_RHC07bRbskaQvO	pay_RHC0L379i1eJYC	\N	0.00
+17	14	2025-09-13 19:06:05.344517	1.00	Completed	srichityala501@gmail.com	order_RHC9wHjoJJdjry	pay_RHCA8VUdLmO9V8	\N	0.00
+18	14	2025-09-13 19:10:26.598195	1.00	Completed	srichityala501@gmail.com	order_RHCEXCaX8m2b5c	pay_RHCEiLFv9apHeN	\N	0.00
+19	14	2025-09-13 19:17:17.245731	1.00	Completed	srichityala501@gmail.com	order_RHCLlQlFJetzwU	pay_RHCLy0dvBPuIKM	\N	0.00
+20	14	2025-09-13 19:26:10.335474	1.00	Completed	srichityala501@gmail.com	order_RHCV3q1MNxZRKZ	pay_RHCVLU241SrqF3	\N	0.00
+21	14	2025-09-13 19:27:31.1998	1.00	Completed	srichityala501@gmail.com	order_RHCWZ3pwAZWVIE	pay_RHCWlcr2EKARql	\N	0.00
+22	14	2025-09-13 20:00:38.429989	1.00	Completed	srichityala501@gmail.com	order_RHD5UsyjWm30JS	pay_RHD5kmmFMczGqr	\N	0.00
+23	14	2025-09-13 20:02:18.112725	1.00	Completed	srichityala501@gmail.com	order_RHD7K9BmbuO9cP	pay_RHD7USgozHDpT6	\N	0.00
+24	14	2025-09-13 20:09:01.077548	1.00	Completed	srichityala501@gmail.com	order_RHDESCQHUm7OZr	pay_RHDEcQVsb8jcgm	\N	0.00
+25	14	2025-09-20 15:49:29.600576	1.18	Completed	srichityala501@gmail.com	order_RJuY4dXif8w5I5	pay_RJuYJhkb54cnFo	\N	0.00
+26	14	2025-09-20 15:56:40.969307	1.18	Completed	srichityala501@gmail.com	order_RJufdLmlBvc3Ju	pay_RJufsy9MhV9v2Q	\N	0.00
+27	14	2025-09-20 21:44:30.015326	1.18	Completed	srichityala501@gmail.com	order_RK0b1S3qtTNas9	pay_RK0bII0mDzvvMc	\N	0.00
+28	14	2025-09-20 21:49:23.097919	1.18	Completed	srichityala501@gmail.com	order_RK0gCeIuR98nHr	pay_RK0gSR3gD5tqMx	\N	0.00
+29	14	2025-09-20 21:55:14.750662	1.18	Completed	srichityala501@gmail.com	order_RK0mT1oKWB8RLT	pay_RK0meyoBKGyLrW	\N	0.00
+30	14	2025-09-20 22:08:06.760943	1.00	Completed	srichityala501@gmail.com	order_RK0zz1uilbQHvj	pay_RK10GHnI7ZCyP7	\N	0.15
+31	14	2025-09-20 22:10:36.104491	1.18	Completed	srichityala501@gmail.com	order_RK12hVyoQu8hSv	pay_RK12raFnZxKU84	\N	0.00
+32	14	2025-09-20 22:13:44.465179	1.18	Completed	srichityala501@gmail.com	order_RK163re8qx5JA7	pay_RK16BovwJLIOrW	\N	0.00
+33	14	2025-09-20 22:15:36.872055	1.18	Completed	srichityala501@gmail.com	order_RK17xDUYkH1IKq	pay_RK187buEqFtdUv	\N	0.00
+34	14	2025-09-20 22:18:00.334563	1.18	Completed	srichityala501@gmail.com	order_RK1AZ2a3G75qwz	pay_RK1AhFe1mMj2so	\N	0.00
 \.
 
 
@@ -463,6 +641,7 @@ COPY public.product_sub_images (id, product_id, image_url, description, created_
 52	10	img/Products/Screenshot_2025-09-15_at_2.25.30_AM.png	<b> 4 Pcs Miniature Showpiece Set	2025-09-14 20:55:53.811052
 53	10	img/Products/Screenshot_2025-09-15_at_2.25.58_AM.png	<b>Astronaut Spaceman Statue Ornament Home Office Desktop Figurine Decors Set of 3 - Golden	2025-09-14 20:56:24.221345
 54	10	img/Products/Screenshot_2025-09-15_at_2.26.57_AM.png	<b>Palm Air Purifier Live Plant Natural Indoor and Outdoor Air Purifying Plant	2025-09-14 20:57:24.134627
+57	19	img/Products/19/19_sub1.jpg		2025-09-20 21:36:10.999214
 \.
 
 
@@ -471,12 +650,13 @@ COPY public.product_sub_images (id, product_id, image_url, description, created_
 --
 
 COPY public.products (id, name, description, category, price, rating, image_url, created_by, detailed_description) FROM stdin;
-10	Neo Ergonomic Desk		executive	58000.0	5.0	img/Products/IMG_9230.JPG	sri@gmail.com	\N
-9	Scandi Minimal		minimalist	35000	5.0	img/Products/f996ebea3a130d8dd1bb5b2f1f938455.jpg	sri@gmail.com	\N
-7	Green Wall Desk 		ergonomic	65000	5.0	img/Products/1000397805.jpg	sri@gmail.com	Nature
-11	Dual Harmony		couple	99000.0	5.0	img/Products/dualdesks.jpg	sri@gmail.com	\N
-17	Elegant Corner		executive	50000.0	5.0	img/Products/17/17.jpg	srichityala501@gmail.com	\N
-16	Beige Minds		executive	48000.0	5.0	img/Products/Screenshot_2025-09-15_at_1.36.31_AM.png	srichityala501@gmail.com	\N
+10	Neo Ergonomic Desk		executive	38000	5.0	img/Products/IMG_9230.JPG	sri@gmail.com	\N
+17	Elegant Corner		executive	34000.0	5.0	img/Products/17/17.jpg	srichityala501@gmail.com	\N
+16	Beige Minds		executive	32000.0	5.0	img/Products/Screenshot_2025-09-15_at_1.36.31_AM.png	srichityala501@gmail.com	\N
+11	Dual Harmony-Coming Soon		couple	99000.0	5.0	img/Products/dualdesks.jpg	sri@gmail.com	\N
+7	Green Wall Desk 		ergonomic	44000	5.0	img/Products/1000397805.jpg	sri@gmail.com	Nature
+9	Scandi Minimal		minimalist	20000	5.0	img/Products/f996ebea3a130d8dd1bb5b2f1f938455.jpg	sri@gmail.com	\N
+19	test	test	executive	1	4.0	img/Products/19/19.jpg	srichityala501@gmail.com	\N
 \.
 
 
@@ -503,6 +683,7 @@ COPY public.users (id, name, email, password, address, phone) FROM stdin;
 15	Sreekanth Devops	sreekanththetechie@gmail.com	oauth_user_no_password_6lUorcIT7qfGlC3V	\N	\N
 16	yamini chityala	chityalayamini@gmail.com	oauth_user_no_password_d69XXaVVlKg5aIG2	\N	\N
 14	chityala srikanth	srichityala501@gmail.com			7075077384
+17	Vijay Kumar	sri.vijaychittiyala@gmail.com	D@rk#0rse	\N	7416542354
 \.
 
 
@@ -510,35 +691,56 @@ COPY public.users (id, name, email, password, address, phone) FROM stdin;
 -- Name: cart_id_seq; Type: SEQUENCE SET; Schema: public; Owner: sri
 --
 
-SELECT pg_catalog.setval('public.cart_id_seq', 28, true);
+SELECT pg_catalog.setval('public.cart_id_seq', 46, true);
+
+
+--
+-- Name: coupon_usage_id_seq; Type: SEQUENCE SET; Schema: public; Owner: sri
+--
+
+SELECT pg_catalog.setval('public.coupon_usage_id_seq', 1, true);
+
+
+--
+-- Name: coupons_id_seq; Type: SEQUENCE SET; Schema: public; Owner: sri
+--
+
+SELECT pg_catalog.setval('public.coupons_id_seq', 1, true);
+
+
+--
+-- Name: discount_id_seq; Type: SEQUENCE SET; Schema: public; Owner: sri
+--
+
+SELECT pg_catalog.setval('public.discount_id_seq', 6, true);
 
 
 --
 -- Name: order_items_id_seq; Type: SEQUENCE SET; Schema: public; Owner: sri
 --
 
-SELECT pg_catalog.setval('public.order_items_id_seq', 21, true);
+SELECT pg_catalog.setval('public.order_items_id_seq', 31, true);
 
 
 --
 -- Name: orders_id_seq; Type: SEQUENCE SET; Schema: public; Owner: sri
 --
 
-SELECT pg_catalog.setval('public.orders_id_seq', 24, true);
+SELECT pg_catalog.setval('public.orders_id_seq', 34, true);
 
 
 --
 -- Name: product_sub_images_id_seq; Type: SEQUENCE SET; Schema: public; Owner: sri
 --
 
-SELECT pg_catalog.setval('public.product_sub_images_id_seq', 54, true);
+SELECT pg_catalog.setval('public.product_sub_images_id_seq', 57, true);
 
 
 --
 -- Name: products_id_seq; Type: SEQUENCE SET; Schema: public; Owner: sri
 --
 
-SELECT pg_catalog.setval('public.products_id_seq', 17, true);
+SELECT pg_catalog.setval('public.products_id_seq', 19, true);
 
 
 --
@@ -552,7 +754,7 @@ SELECT pg_catalog.setval('public.reviews_id_seq', 2, true);
 -- Name: users_id_seq; Type: SEQUENCE SET; Schema: public; Owner: sri
 --
 
-SELECT pg_catalog.setval('public.users_id_seq', 16, true);
+SELECT pg_catalog.setval('public.users_id_seq', 17, true);
 
 
 --
@@ -569,6 +771,46 @@ ALTER TABLE ONLY public.cart
 
 ALTER TABLE ONLY public.cart
     ADD CONSTRAINT cart_user_product_unique UNIQUE (user_id, product_id);
+
+
+--
+-- Name: coupon_usage coupon_usage_pkey; Type: CONSTRAINT; Schema: public; Owner: sri
+--
+
+ALTER TABLE ONLY public.coupon_usage
+    ADD CONSTRAINT coupon_usage_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: coupon_usage coupon_usage_user_id_coupon_code_key; Type: CONSTRAINT; Schema: public; Owner: sri
+--
+
+ALTER TABLE ONLY public.coupon_usage
+    ADD CONSTRAINT coupon_usage_user_id_coupon_code_key UNIQUE (user_id, coupon_code);
+
+
+--
+-- Name: coupons coupons_code_key; Type: CONSTRAINT; Schema: public; Owner: sri
+--
+
+ALTER TABLE ONLY public.coupons
+    ADD CONSTRAINT coupons_code_key UNIQUE (code);
+
+
+--
+-- Name: coupons coupons_pkey; Type: CONSTRAINT; Schema: public; Owner: sri
+--
+
+ALTER TABLE ONLY public.coupons
+    ADD CONSTRAINT coupons_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: discount discount_pkey; Type: CONSTRAINT; Schema: public; Owner: sri
+--
+
+ALTER TABLE ONLY public.discount
+    ADD CONSTRAINT discount_pkey PRIMARY KEY (id);
 
 
 --
@@ -657,6 +899,14 @@ ALTER TABLE ONLY public.cart
 
 ALTER TABLE ONLY public.cart
     ADD CONSTRAINT cart_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+--
+-- Name: coupon_usage coupon_usage_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: sri
+--
+
+ALTER TABLE ONLY public.coupon_usage
+    ADD CONSTRAINT coupon_usage_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id);
 
 
 --

@@ -1420,22 +1420,30 @@ def cart():
             conn.close()
 
     # Calculate total with GST
+
     from decimal import Decimal
 
+    # Calculate totals using Decimal only
     gst_rate = Decimal('0.18')
-    gst_amount = total_price * gst_rate
-    total_with_gst = total_price + gst_amount
+    total_price = sum(Decimal(item['price']) * item['quantity'] for item in cart_items)
+    gst_amount = (total_price * gst_rate).quantize(Decimal('0.01'))
+    total_with_gst = (total_price + gst_amount).quantize(Decimal('0.01'))
 
     # Razorpay order creation
     razorpay_order_id = None
     if total_with_gst > 0:
         try:
-            order_data = {"amount": int(total_with_gst * 100), "currency": "INR", "payment_capture": 1}
+            order_data = {
+                "amount": int(total_with_gst * 100),  # Convert Decimal to int (paise)
+                "currency": "INR",
+                "payment_capture": 1
+            }
             order = razorpay_client.order.create(order_data)
             razorpay_order_id = order['id']
         except Exception as e:
             print(f"Error creating Razorpay order: {e}")
             flash("Error processing payment.", "error")
+
 
     return render_template(
         "cart.html",
@@ -1463,7 +1471,7 @@ def inject_cart_count():
             finally:
                 conn.close()
     return dict(cart_count=cart_count)
-
+from decimal import Decimal
 @app.route('/payment/success', methods=['POST'])
 @login_required
 def payment_success():
@@ -1495,9 +1503,9 @@ def payment_success():
         if not cart_items:
             return jsonify({"status": "error", "error": "Cart is empty"})
 
-        subtotal = sum(item['price'] * item['quantity'] for item in cart_items)
-        gst_amount = round(subtotal * 0.18, 2)
-        total_amount = round(subtotal + gst_amount, 2)
+        subtotal = sum(Decimal(item['price']) * item['quantity'] for item in cart_items)
+        gst_amount = (subtotal * Decimal('0.18')).quantize(Decimal('0.01'))
+        total_amount = (subtotal + gst_amount).quantize(Decimal('0.01'))
 
 
         # Insert order
@@ -1542,7 +1550,7 @@ def payment_success():
         html_body = f"""
         <html>
         <body>
-            <h2>Thank you for your order, {current_user.user}!</h2>
+            <h2>Thank you for your order, {current_user.name}!</h2>
             <p>Your payment (<b>{payment_id}</b>) was successful. Here are your order details:</p>
             <table border="1" cellspacing="0" cellpadding="6" style="border-collapse: collapse; width: 100%;">
                 <tr style="background-color:#f2f2f2;">
@@ -1610,3 +1618,4 @@ if __name__ == '__main__':
         app.run(host='0.0.0.0', port=5000, debug=True)
     else:
         print("Failed to connect to the database. Exiting.")
+

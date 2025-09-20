@@ -142,18 +142,25 @@
                         <i class="bi bi-box-seam text-primary me-2"></i> Total Items
                         <span class="badge bg-primary rounded-pill">{{ cart_items|length }}</span>
                     </li>
+                    <div class="input-group mb-3">
+                    <input type="text" id="coupon-code" class="form-control" placeholder="Enter Coupon Code">
+                    <button class="btn btn-outline-primary" type="button" id="apply-coupon">Apply</button>
+                    </div>
+                    <div id="coupon-feedback" class="text-success fw-bold"></div>
+
                     <li class="list-group-item">
                         <i class="bi bi-currency-rupee text-success me-2"></i> Subtotal
-                        <strong>₹{{ subtotal|inr }}</strong>
+                        <strong id="subtotal">₹{{ subtotal|inr }}</strong>
                     </li>
                     <li class="list-group-item">
                         <i class="bi bi-currency-rupee text-warning me-2"></i> GST (18%)
-                        <strong>₹{{ gst_amount|inr }}</strong>
+                        <strong id="gst">₹{{ gst_amount|inr }}</strong>
                     </li>
                     <li class="list-group-item">
                         <i class="bi bi-currency-rupee text-success me-2"></i> Total Amount
-                        <strong>₹{{ total_with_gst|inr }}</strong>
+                        <strong id="total">₹{{ total_with_gst|inr }}</strong>
                     </li>
+
 
 
                 </ul>
@@ -204,11 +211,58 @@
 </div>
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script>
-    // Ensure phone string
     var user_phone = "{{ user_details.phone if user_details and user_details.phone != 'Not provided' else '' }}";
+    var total_amount = parseFloat("{{ total_with_gst }}") * 100; // paise
+    var razorpay_order_id = null;
+    var appliedCoupon = null; // track applied coupon
 
-    // Convert Decimal to float to avoid Razorpay issues
-    var total_amount = parseFloat("{{ total_with_gst }}") * 100; // in paise
+    // Apply coupon
+    document.getElementById("apply-coupon").addEventListener("click", async () => {
+        const code = document.getElementById("coupon-code").value.trim();
+        if (!code) return alert("Please enter a coupon code.");
+
+        try {
+            const res = await fetch("/apply_coupon", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ code })
+            });
+            const data = await res.json();
+
+            if (data.status === "success") {
+                appliedCoupon = code; // ✅ store coupon globally
+
+                document.getElementById("coupon-feedback").textContent =
+                    `🎉 Coupon applied: ${data.discount_percent}% OFF (You saved ₹${data.discount_amount.toFixed(2)})`;
+
+                // Update displayed totals
+                document.querySelector("#subtotal").textContent = `₹${data.subtotal.toFixed(2)}`;
+                document.querySelector("#gst").textContent = `₹${data.gst.toFixed(2)}`;
+                document.querySelector("#total").textContent = `₹${data.total.toFixed(2)}`;
+
+                // Update total
+                total_amount = data.total * 100;
+
+                // Request backend to create new Razorpay order with discounted total
+                const orderRes = await fetch("/create_order", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ coupon: appliedCoupon })  // ✅ send coupon
+                });
+                const orderData = await orderRes.json();
+                if (orderData.status === "success") {
+                    razorpay_order_id = orderData.order_id;
+                } else {
+                    alert("❌ Failed to create Razorpay order: " + orderData.error);
+                }
+
+            } else {
+                document.getElementById("coupon-feedback").textContent = "❌ " + data.error;
+            }
+        } catch (err) {
+            alert("Error applying coupon: " + err);
+        }
+    });
 
     async function ensurePhone() {
         if (!user_phone || user_phone === 'Not provided') {
@@ -241,12 +295,30 @@
         const ready = await ensurePhone();
         if (!ready) return;
 
-        if (!total_amount || !"{{ razorpay_order_id }}") {
-            alert("Cart is empty or order not ready.");
-            return;
+        // If order not created yet, create now
+        if (!razorpay_order_id) {
+            try {
+                const orderRes = await fetch("/create_order", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        coupon: appliedCoupon   // ✅ include coupon here too
+                    })
+                });
+                const orderData = await orderRes.json();
+                if (orderData.status === "success") {
+                    razorpay_order_id = orderData.order_id;
+                    total_amount = orderData.total * 100; // ✅ sync discounted total
+                } else {
+                    alert("❌ Failed to create Razorpay order: " + orderData.error);
+                    return;
+                }
+            } catch (err) {
+                alert("Error creating Razorpay order: " + err);
+                return;
+            }
         }
 
-        // Initialize Razorpay with updated phone
         var options = {
             "key": "{{ razorpay_key }}",
             "amount": total_amount,
@@ -254,7 +326,7 @@
             "name": "GSpaces",
             "description": "Purchase from GSpaces",
             "image": "{{ url_for('static', filename='img/logo.png') }}",
-            "order_id": "{{ razorpay_order_id }}",
+            "order_id": razorpay_order_id,
             "handler": function (response) {
                 fetch("/payment/success", {
                     method: "POST",
@@ -290,6 +362,7 @@
 
     document.getElementById('rzp-button1').addEventListener('click', openRazorpay);
 </script>
+
 
 
 {% include 'footer.html' %}

@@ -10,6 +10,7 @@ from flask import jsonify
 import smtplib
 import pymysql
 import requests
+from decimal import Decimal
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from flask import Flask, render_template_string
@@ -47,10 +48,6 @@ from datetime import datetime
 # Use environment variables (e.g., FLASK_APP_SECRET_KEY, DB_PASSWORD, RAZORPAY_KEY_ID)
 # or a proper configuration management system.
 from datetime import datetime, timedelta
-
-# Config
-COUNTDOWN_DURATION_MINUTES = None
-countdown_start_time = None  # in-memory (replace with DB if needed)
 
 
 # Flask App Configuration
@@ -107,55 +104,6 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login' # The endpoint name for the login page
 
-
-@app.context_processor
-def inject_countdown_data():
-    global countdown_start_time, countdown_duration_minutes
-
-    if countdown_start_time and countdown_duration_minutes:
-        end_time = countdown_start_time + timedelta(minutes=countdown_duration_minutes)
-        now = datetime.utcnow()
-        remaining = max(0, int((end_time - now).total_seconds()))
-        return {"countdown_data": {"remaining": remaining}}
-
-    return {"countdown_data": {"remaining": 0}}
-
-@app.route("/start_countdown_custom", methods=["POST"])
-def start_countdown_custom():
-    global countdown_start_time, countdown_duration_minutes
-    if not current_user.is_authenticated or not current_user.is_admin:
-        return "Unauthorized", 403
-
-    data = request.get_json()
-    minutes = data.get("minutes", 0)
-    if minutes <= 0:
-        return "Invalid duration", 400
-
-    countdown_start_time = datetime.utcnow()
-    countdown_duration_minutes = minutes
-    return jsonify({"success": True, "remaining": minutes*60})
-
-
-@app.route("/stop_countdown", methods=["POST"])
-def stop_countdown():
-    global countdown_start_time
-    if not current_user.is_authenticated or not current_user.is_admin:
-        return "Unauthorized", 403
-    countdown_start_time = None
-    return redirect(url_for("index"))
-
-
-
-@app.route("/countdown_status")
-def countdown_status():
-    global countdown_start_time
-    if countdown_start_time:
-        end_time = countdown_start_time + timedelta(minutes=COUNTDOWN_DURATION_MINUTES)
-        now = datetime.utcnow()
-        remaining = max(0, int((end_time - now).total_seconds()))
-        return {"active": True, "remaining": remaining}
-
-    return {"active": False, "remaining": 0}
 
 # User class for Flask-Login
 class User(UserMixin):
@@ -1377,76 +1325,101 @@ def update_quantity(product_id, action):
             conn.close()
     return redirect(url_for('cart'))
 
-cart_items = []
-total_price = 0
-gst_amount = 0
-total_with_gst = 0
 
-@app.route('/cart')
-@login_required
-def cart():
-    conn = connect_to_db()
-    cart_items = []
-    total_price = 0
-    user_details = {'phone': ''}  # default if DB not available
+@app.template_filter()
+def inr(value):
+    """
+    Format a Decimal or float as Indian Rupee string with 2 decimals.
+    """
+    if not isinstance(value, Decimal):
+        value = Decimal(str(value))
+    return "{:,.2f}".format(value)
 
-    if conn:
-        try:
-            cur = conn.cursor(cursor_factory=RealDictCursor)
+# --- Config ---
+DISCOUNT_PERCENT = Decimal("10")  # <-- Change this for dynamic discount
+DISCOUNT_RATE = (Decimal("100") - DISCOUNT_PERCENT) / Decimal("100")  # 0.95 for 5%
 
-            # Fetch cart items
-            cur.execute("""
-                SELECT c.product_id AS id, c.quantity, p.name, p.price, p.image_url
-                FROM cart c
-                JOIN products p ON c.product_id = p.id
-                WHERE c.user_id = %s
-            """, (current_user.id,))
-            cart_items = cur.fetchall()
+COUNTDOWN_DURATION_MINUTES = None
+countdown_start_time = None  # in-memory (replace with DB if needed)
+def get_discount_rate():
+    return (Decimal("100") - DISCOUNT_PERCENT) / Decimal("100")
 
-            # Ensure Decimal * float works
-            from decimal import Decimal
-            total_price = sum(Decimal(item['price']) * item['quantity'] for item in cart_items)
+@app.route("/update_discount", methods=["POST"])
+def update_discount():
+    global DISCOUNT_PERCENT
+    if not current_user.is_authenticated or not current_user.is_admin:
+        return "Unauthorized", 403
 
-            # Fetch user phone
-            cur.execute("SELECT phone FROM users WHERE id=%s", (current_user.id,))
-            rec = cur.fetchone()
-            if rec and rec.get('phone'):
-                user_details['phone'] = rec['phone']
+    data = request.get_json()
+    try:
+        new_discount = Decimal(data.get("discount_percent"))
+        if new_discount < 0 or new_discount > 100:
+            return "Invalid discount", 400
+        DISCOUNT_PERCENT = new_discount
+        return jsonify({"success": True, "discount_percent": str(DISCOUNT_PERCENT)})
+    except Exception as e:
+        return str(e), 400
 
-        except Exception as e:
-            print(f"Error fetching cart: {e}")
-            flash("Error loading cart.", "error")
-        finally:
-            conn.close()
+@app.context_processor
+def inject_discount():
+    return dict(discount_percent=DISCOUNT_PERCENT, discount_rate=get_discount_rate())
 
-    # Calculate total with GST
-    from decimal import Decimal
+def is_deal_active():
+    global countdown_start_time, countdown_duration_minutes
+    if countdown_start_time and countdown_duration_minutes:
+        end_time = countdown_start_time + timedelta(minutes=countdown_duration_minutes)
+        return datetime.utcnow() < end_time
+    return False
+
+def calculate_cart_totals(cart_items):
+    deal_active = is_deal_active()
+    subtotal = Decimal("0.00")
+    original_subtotal = Decimal("0.00")
+
+    for item in cart_items:
+        price = Decimal(item['price'])
+        original_subtotal += price * item['quantity']
+
+        if deal_active:
+            discounted_price = (price * DISCOUNT_RATE).quantize(Decimal('0.01'))
+            item['display_price'] = discounted_price
+            subtotal += discounted_price * item['quantity']
+        else:
+            item['display_price'] = price
+            subtotal += price * item['quantity']
 
     gst_rate = Decimal('0.18')
-    gst_amount = total_price * gst_rate
-    total_with_gst = total_price + gst_amount
+    gst_amount = (subtotal * gst_rate).quantize(Decimal('0.01'))
+    total_with_gst = (subtotal + gst_amount).quantize(Decimal('0.01'))
 
-    # Razorpay order creation
-    razorpay_order_id = None
-    if total_with_gst > 0:
-        try:
-            order_data = {"amount": int(total_with_gst * 100), "currency": "INR", "payment_capture": 1}
-            order = razorpay_client.order.create(order_data)
-            razorpay_order_id = order['id']
-        except Exception as e:
-            print(f"Error creating Razorpay order: {e}")
-            flash("Error processing payment.", "error")
+    return {
+        "deal_active": deal_active,
+        "subtotal": subtotal,
+        "original_subtotal": original_subtotal,
+        "gst_amount": gst_amount,
+        "total_with_gst": total_with_gst
+    }
 
-    return render_template(
-        "cart.html",
-        cart_items=cart_items,
-        total_price=total_price,
-        gst_amount=gst_amount,
-        total_with_gst=total_with_gst,
-        user_details=user_details,
-        razorpay_order_id=razorpay_order_id,
-        razorpay_key=RAZORPAY_KEY_ID
+# --- Context processors for templates ---
+@app.context_processor
+def inject_discount():
+    return dict(
+        discount_percent=DISCOUNT_PERCENT,
+        discount_rate=DISCOUNT_RATE,
+        deal_active=is_deal_active()
     )
+
+@app.context_processor
+def inject_countdown_data():
+    global countdown_start_time, countdown_duration_minutes
+
+    if countdown_start_time and countdown_duration_minutes:
+        end_time = countdown_start_time + timedelta(minutes=countdown_duration_minutes)
+        now = datetime.utcnow()
+        remaining = max(0, int((end_time - now).total_seconds()))
+        return {"countdown_data": {"remaining": remaining}}
+
+    return {"countdown_data": {"remaining": 0}}
 
 @app.context_processor
 def inject_cart_count():
@@ -1463,13 +1436,117 @@ def inject_cart_count():
             finally:
                 conn.close()
     return dict(cart_count=cart_count)
+# --- Countdown management routes ---
+@app.route("/start_countdown_custom", methods=["POST"])
+def start_countdown_custom():
+    global countdown_start_time, countdown_duration_minutes
+    if not current_user.is_authenticated or not current_user.is_admin:
+        return "Unauthorized", 403
 
+    data = request.get_json()
+    minutes = data.get("minutes", 0)
+    if minutes <= 0:
+        return "Invalid duration", 400
+
+    countdown_start_time = datetime.utcnow()
+    countdown_duration_minutes = minutes
+    return jsonify({"success": True, "remaining": minutes * 60})
+
+
+@app.route("/stop_countdown", methods=["POST"])
+def stop_countdown():
+    global countdown_start_time
+    if not current_user.is_authenticated or not current_user.is_admin:
+        return "Unauthorized", 403
+    countdown_start_time = None
+    return redirect(url_for("index"))
+
+
+@app.route("/countdown_status")
+def countdown_status():
+    global countdown_start_time, countdown_duration_minutes
+    if countdown_start_time and countdown_duration_minutes:
+        end_time = countdown_start_time + timedelta(minutes=countdown_duration_minutes)
+        now = datetime.utcnow()
+        remaining = max(0, int((end_time - now).total_seconds()))
+        return {"active": True, "remaining": remaining}
+    return {"active": False, "remaining": 0}
+
+
+cart_items = []
+total_price = 0
+gst_amount = 0
+total_with_gst = 0
+# --- Cart route ---
+@app.route('/cart')
+@login_required
+def cart():
+    conn = connect_to_db()
+    cart_items = []
+    user_details = {'phone': ''}  # default if DB not available
+
+    if conn:
+        try:
+            cur = conn.cursor(cursor_factory=RealDictCursor)
+            # Fetch cart items
+            cur.execute("""
+                SELECT c.product_id AS id, c.quantity, p.name, p.price, p.image_url
+                FROM cart c
+                JOIN products p ON c.product_id = p.id
+                WHERE c.user_id = %s
+            """, (current_user.id,))
+            cart_items = cur.fetchall()
+
+            # Fetch user phone
+            cur.execute("SELECT phone FROM users WHERE id=%s", (current_user.id,))
+            rec = cur.fetchone()
+            if rec and rec.get('phone'):
+                user_details['phone'] = rec['phone']
+
+        except Exception as e:
+            print(f"Error fetching cart: {e}")
+            flash("Error loading cart.", "error")
+        finally:
+            conn.close()
+
+    totals = calculate_cart_totals(cart_items)
+
+    # Razorpay order creation
+    razorpay_order_id = None
+    if totals["total_with_gst"] > 0:
+        try:
+            order_data = {
+                "amount": int(totals["total_with_gst"] * 100),  # paise
+                "currency": "INR",
+                "payment_capture": 1
+            }
+            order = razorpay_client.order.create(order_data)
+            razorpay_order_id = order['id']
+        except Exception as e:
+            print(f"Error creating Razorpay order: {e}")
+            flash("Error processing payment.", "error")
+
+    return render_template(
+        "cart.html",
+        cart_items=cart_items,
+        subtotal=totals["subtotal"],
+        original_subtotal=totals["original_subtotal"],
+        gst_amount=totals["gst_amount"],
+        total_with_gst=totals["total_with_gst"],
+        user_details=user_details,
+        deal_active=totals["deal_active"],
+        razorpay_order_id=razorpay_order_id,
+        razorpay_key=RAZORPAY_KEY_ID
+    )
+
+
+# --- Payment success route ---
 @app.route('/payment/success', methods=['POST'])
 @login_required
 def payment_success():
     conn = None
     try:
-        data = request.get_json()  # get JSON from fetch
+        data = request.get_json()
         payment_id = data.get('razorpay_payment_id')
         order_id_from_razorpay = data.get('razorpay_order_id')
         signature = data.get('razorpay_signature')
@@ -1495,16 +1572,14 @@ def payment_success():
         if not cart_items:
             return jsonify({"status": "error", "error": "Cart is empty"})
 
-        subtotal = sum(item['price'] * item['quantity'] for item in cart_items)
-        gst_amount = round(subtotal * 0.18, 2)
-        total_amount = round(subtotal + gst_amount, 2)
-
+        totals = calculate_cart_totals(cart_items)
 
         # Insert order
         cur.execute("""
             INSERT INTO orders (user_id, user_email, razorpay_order_id, razorpay_payment_id, total_amount, status, order_date)
             VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id
-        """, (current_user.id, current_user.email, order_id_from_razorpay, payment_id, total_amount, 'Completed', datetime.now()))
+        """, (current_user.id, current_user.email, order_id_from_razorpay, payment_id,
+              totals["total_with_gst"], 'Completed', datetime.now()))
         new_order_id = cur.fetchone()['id']
 
         # Insert order items
@@ -1512,13 +1587,13 @@ def payment_success():
             cur.execute("""
                 INSERT INTO order_items (order_id, product_id, product_name, quantity, price_at_purchase, image_url)
                 VALUES (%s, %s, %s, %s, %s, %s)
-            """, (new_order_id, item['product_id'], item['name'], item['quantity'], item['price'], item['image_url']))
+            """, (new_order_id, item['id'], item['name'], item['quantity'], item['display_price'], item['image_url']))
 
         # Clear cart
         cur.execute("DELETE FROM cart WHERE user_id=%s", (current_user.id,))
         conn.commit()
 
-        # --- Build HTML email like old code ---
+        # Send email
         sender = os.getenv("EMAIL_USER", "sri.chityala501@gmail.com")
         receiver = current_user.email
 
@@ -1533,8 +1608,8 @@ def payment_success():
                 <td><img src='{url_for('static', filename=item['image_url'], _external=True)}' width='50'></td>
                 <td>{item['name']}</td>
                 <td>{item['quantity']}</td>
-                <td>{item['price']} INR</td>
-                <td>{item['price'] * item['quantity']} INR</td>
+                <td>{item['display_price']} INR</td>
+                <td>{item['display_price'] * item['quantity']} INR</td>
             </tr>
             """ for item in cart_items
         ])
@@ -1542,7 +1617,7 @@ def payment_success():
         html_body = f"""
         <html>
         <body>
-            <h2>Thank you for your order, {current_user.user}!</h2>
+            <h2>Thank you for your order, {current_user.name}!</h2>
             <p>Your payment (<b>{payment_id}</b>) was successful. Here are your order details:</p>
             <table border="1" cellspacing="0" cellpadding="6" style="border-collapse: collapse; width: 100%;">
                 <tr style="background-color:#f2f2f2;">
@@ -1554,9 +1629,10 @@ def payment_success():
                 </tr>
                 {items_html}
             </table>
-            <h3>Subtotal: {subtotal} INR</h3>
-            <h3>GST (18%): {gst_amount} INR</h3>
-            <h2>Total: {total_amount} INR</h2>
+            <h3>Original Subtotal: {totals['original_subtotal']} INR</h3>
+            <h3>Discounted Subtotal: {totals['subtotal']} INR</h3>
+            <h3>GST (18%): {totals['gst_amount']} INR</h3>
+            <h2>Total: {totals['total_with_gst']} INR</h2>
             <p>We will process your order shortly. You can track your order on your GSpaces account.</p>
             <br>
             <p>Best Regards,<br>Team GSpaces</p>
@@ -1566,7 +1642,7 @@ def payment_success():
         msg.attach(MIMEText(html_body, "html", "utf-8"))
 
         with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-            server.login(sender, os.getenv("EMAIL_PASS", "zupd zixc vvzp kptk"))
+            server.login(sender, os.getenv("EMAIL_PASS"))
             server.sendmail(sender, receiver, msg.as_string())
 
         return jsonify({"status": "success", "message": "Payment successful, email sent"})

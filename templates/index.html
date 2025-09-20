@@ -574,58 +574,53 @@
         <li data-filter=".filter-balcony">Balcony</li>
       </ul><!-- End Product Filters -->
 <div class="row gy-4 isotope-container" data-aos="fade-up" data-aos-delay="200">
-
-  {% for product in products %}
-  <div class="col-lg-3 col-md-6 products-item isotope-item filter-{{ product.category | lower }}">
-    
+{% for product in products %}
+<div class="col-lg-3 col-md-6 products-item isotope-item filter-{{ product.category | lower }}">
     <div class="hover-animate product-block" onclick="location.href='{{ url_for('product_detail', product_id=product.id) }}'">
-      
-      <div class="products-content">
-        <a href="{{ url_for('product_detail', product_id=product.id) }}">
-          <img src="{{ url_for('static', filename=product.image_url) }}" class="product-img img-fluid" alt="{{ product.name }}">
-        </a>
-      </div>
-
-      <div class="product-meta text-center mt-3">
-        <h5 class="fw-bold mb-1">
-          <a href="{{ url_for('product_detail', product_id=product.id) }}" class="text-decoration-none text-dark">
-              {{ product.name }}
-          </a>
-        </h5>
-
-        {% if product.description %}
-        <p class="text-muted small mb-2">{{ product.description }}</p>
-        {% endif %}
-
-        <p class="text-warning mb-1">
-          {% for i in range(product.rating|default(0)|int) %}
-            <i class="bi bi-star-fill"></i>
-          {% endfor %}
-        </p>
-        <p class="text-dark fw-semibold mb-1">₹ {{ product.price | inr }}</p>
-        <p class="text-secondary small">Category: {{ product.category }}</p>
-
-        <a href="{{ url_for('add_to_cart', product_id=product.id) }}" class="details-link" title="Add to Cart">
-          <i class="bi bi-cart-plus"></i> Add to Cart
-        </a>
-
-        {% if is_admin %}
-        <div class="d-flex justify-content-center gap-2 mt-2">
-        <form action="/delete_product/{{ product.id }}" method="POST" onsubmit="return confirm('Are you sure?');">
-          <button type="submit" class="btn btn-outline-danger btn-sm" onclick="event.stopPropagation();">
-            <i class="bi bi-trash"></i> Delete
-          </button>
-        </form>
-          <a href="{{ url_for('edit_product', product_id=product.id) }}" class="btn btn-outline-primary btn-sm">
-            <i class="bi bi-pencil-square"></i> Edit
-          </a>
+        <div class="products-content">
+            <a href="{{ url_for('product_detail', product_id=product.id) }}">
+                <img src="{{ url_for('static', filename=product.image_url) }}" class="product-img img-fluid" alt="{{ product.name }}">
+            </a>
         </div>
-        {% endif %}
-      </div>
 
+        <div class="product-meta text-center mt-3">
+            <h5 class="fw-bold mb-1">
+                <a href="{{ url_for('product_detail', product_id=product.id) }}" class="text-decoration-none text-dark">
+                    {{ product.name }}
+                </a>
+            </h5>
+
+            {% if product.description %}
+            <p class="text-muted small mb-2">{{ product.description }}</p>
+            {% endif %}
+
+            <p class="text-warning mb-1">
+                {% for i in range(product.rating|default(0)|int) %}
+                    <i class="bi bi-star-fill"></i>
+                {% endfor %}
+            </p>
+
+<p class="text-dark fw-semibold mb-1">
+    {% if deal_active %}
+        <span class="text-decoration-line-through text-muted me-2">₹ {{ product.price|inr }}</span>
+        <span class="text-success">₹ {{ (product.price * discount_rate)|round(2)|inr }}</span>
+        <span class="badge bg-danger ms-2">{{ discount_percent }}% OFF</span>
+    {% else %}
+        <span>₹ {{ product.price|inr }}</span>
+    {% endif %}
+</p>
+
+
+            <p class="text-secondary small">Category: {{ product.category }}</p>
+
+            <a href="{{ url_for('add_to_cart', product_id=product.id) }}" class="details-link" title="Add to Cart">
+                <i class="bi bi-cart-plus"></i> Add to Cart
+            </a>
+        </div>
     </div>
-  </div><!-- End Product Item -->
-  {% endfor %}
+</div>
+{% endfor %}
+
 
 </div><!-- End Row -->
 

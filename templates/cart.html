@@ -106,7 +106,22 @@
                             {{ item.name }}
                         </a>
                     </h5>
-                    <p class="mb-1">Price: ₹{{ item.price|inr }}</p>
+                    <p class="mb-1">
+                        {% if deal_active %}
+                            <!-- Original price struck through -->
+                            <span class="text-decoration-line-through text-muted me-2">
+                                ₹ {{ item.price | float | round(2) }}
+                            </span>
+                            <!-- Discounted price -->
+                            <span class="text-success">
+                                ₹ {{ item.display_price | float | round(2) }}
+                            </span>
+                            <!-- Dynamic discount badge -->
+                            <span class="badge bg-danger ms-2">{{ discount_percent }}% OFF</span>
+                        {% else %}
+                            <span>₹ {{ item.price | float | round(2) }}</span>
+                        {% endif %}
+                    </p>
                     <p class="mb-0">Quantity: {{ item.quantity }}</p>
                 </div>
 
@@ -128,6 +143,10 @@
                         <span class="badge bg-primary rounded-pill">{{ cart_items|length }}</span>
                     </li>
                     <li class="list-group-item">
+                        <i class="bi bi-currency-rupee text-success me-2"></i> Subtotal
+                        <strong>₹{{ subtotal|inr }}</strong>
+                    </li>
+                    <li class="list-group-item">
                         <i class="bi bi-currency-rupee text-warning me-2"></i> GST (18%)
                         <strong>₹{{ gst_amount|inr }}</strong>
                     </li>
@@ -135,6 +154,7 @@
                         <i class="bi bi-currency-rupee text-success me-2"></i> Total Amount
                         <strong>₹{{ total_with_gst|inr }}</strong>
                     </li>
+
 
                 </ul>
                 <hr>

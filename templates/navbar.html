@@ -7,16 +7,24 @@
 
 <!-- Admin Controls -->
 {% if current_user.is_authenticated and current_user.is_admin %}
-<div style="text-align:center; margin:10px 0;">
+<div style="text-align:center; margin:10px 0; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+
+  <!-- Countdown Controls -->
   <input type="number" id="customMinutes" placeholder="Minutes" min="1" style="width:100px;"/>
   <button id="startCountdownBtn" class="btn btn-warning btn-sm">Start Countdown</button>
   <form action="{{ url_for('stop_countdown') }}" method="post" style="display:inline;">
     <button type="submit" class="btn btn-danger btn-sm">Stop Countdown</button>
   </form>
+
+  <!-- Discount Controls -->
+  <input type="number" id="customDiscount" placeholder="Discount %" min="0" max="100" style="width:100px;"/>
+  <button id="updateDiscountBtn" class="btn btn-success btn-sm">Update Discount</button>
+
 </div>
 {% endif %}
-
 <script>
+let currentDiscount = 5; // default discount %
+
 function startCountdown(elementId, duration) {
   const el = document.getElementById(elementId);
   const banner = document.getElementById("urgency-banner");
@@ -24,7 +32,7 @@ function startCountdown(elementId, duration) {
 
   let remaining = duration;
   el.style.display = "inline"; // show countdown
-  banner.innerHTML = `⏳ Exclusive Deal! Ends in <span id="countdown"></span> – Enjoy <strong style="color:#ffffff;">5% OFF + Free Delivery</strong>`;
+  banner.innerHTML = `⏳ Exclusive Deal! Ends in <span id="countdown"></span> – Enjoy <strong style="color:#ffffff;">${currentDiscount}% OFF + Free Delivery</strong>`;
 
   const countdownSpan = document.getElementById("countdown");
 
@@ -57,6 +65,21 @@ function startCountdown(elementId, duration) {
   render();
 }
 
+// 🔄 Sync countdown on page load
+async function initCountdownFromServer() {
+  try {
+    const res = await fetch("/countdown_status");
+    const data = await res.json();
+
+    if (data.active && data.remaining > 0) {
+      currentDiscount = data.discount_percent || currentDiscount;
+      startCountdown("countdown", data.remaining);
+    }
+  } catch (err) {
+    console.error("Error fetching countdown status:", err);
+  }
+}
+
 // Admin Start Button
 const startBtn = document.getElementById("startCountdownBtn");
 if (startBtn) {
@@ -72,14 +95,56 @@ if (startBtn) {
     });
 
     if (res.ok) {
-      startCountdown("countdown", minutes * 60);
+      const data = await res.json();
+      currentDiscount = data.discount_percent || currentDiscount;
+      startCountdown("countdown", data.remaining);
     } else {
       const msg = await res.text();
       alert("Error: " + msg);
     }
   });
 }
+
+// Admin Update Discount
+const updateDiscountBtn = document.getElementById("updateDiscountBtn");
+if (updateDiscountBtn) {
+  updateDiscountBtn.addEventListener("click", async () => {
+    const newDiscount = parseFloat(document.getElementById("customDiscount").value);
+    if (isNaN(newDiscount) || newDiscount < 0 || newDiscount > 100)
+      return alert("Enter valid % (0-100)");
+
+    try {
+      const res = await fetch("/update_discount", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ discount_percent: newDiscount })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        currentDiscount = data.discount_percent;
+
+        // Update banner immediately
+        const banner = document.getElementById("urgency-banner");
+        const countdownSpan = document.getElementById("countdown");
+        if (countdownSpan.style.display !== "none") {
+          banner.innerHTML = `⏳ Exclusive Deal! Ends in <span id="countdown"></span> – Enjoy <strong style="color:#ffffff;">${currentDiscount}% OFF + Free Delivery</strong>`;
+        }
+
+        alert("Discount updated to " + currentDiscount + "% ✅");
+      } else {
+        const text = await res.text();
+        alert("Error: " + text);
+      }
+    } catch (err) {
+      alert("Error: " + err);
+    }
+  });
+}
+
+// Run sync on page load
+document.addEventListener("DOMContentLoaded", initCountdownFromServer);
 </script>
+
 
 <nav class="custom-navbar navbar navbar-expand-md" aria-label="GSpaces Navigation Bar">
     <div class="container">

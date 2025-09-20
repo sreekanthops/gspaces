@@ -23,15 +23,31 @@
 </div>
 {% endif %}
 <script>
-let currentDiscount = 5; // default discount %
+let currentDiscount = 5; // default
 
+// Fetch persisted discount from DB
+async function fetchDiscount() {
+  try {
+    const res = await fetch("/get_discount");
+    const data = await res.json();
+    if (data.discount_percent) {
+      currentDiscount = data.discount_percent;
+      const discountInput = document.getElementById("customDiscount");
+      if (discountInput) discountInput.value = currentDiscount;
+    }
+  } catch (err) {
+    console.error("Error fetching discount:", err);
+  }
+}
+
+// Countdown function
 function startCountdown(elementId, duration) {
   const el = document.getElementById(elementId);
   const banner = document.getElementById("urgency-banner");
   if (!el || !banner) return;
 
   let remaining = duration;
-  el.style.display = "inline"; // show countdown
+  el.style.display = "inline";
   banner.innerHTML = `⏳ Exclusive Deal! Ends in <span id="countdown"></span> – Enjoy <strong style="color:#ffffff;">${currentDiscount}% OFF + Free Delivery</strong>`;
 
   const countdownSpan = document.getElementById("countdown");
@@ -40,23 +56,16 @@ function startCountdown(elementId, duration) {
     if (remaining <= 0) {
       countdownSpan.textContent = "00:00:00";
       banner.innerHTML = "🔥 Deal Ending Soon! Don’t Miss Out!";
-      banner.style.background = "#ff4c4c";
-      banner.style.color = "#fff";
-      banner.style.fontSize = "18px";
-      banner.style.fontWeight = "700";
       clearInterval(window.countdownInterval);
       return;
     }
-
     let hours = Math.floor((remaining / 3600) % 24);
     let minutes = Math.floor((remaining / 60) % 60);
     let seconds = Math.floor(remaining % 60);
-
     countdownSpan.textContent =
       (hours < 10 ? "0" + hours : hours) + ":" +
       (minutes < 10 ? "0" + minutes : minutes) + ":" +
       (seconds < 10 ? "0" + seconds : seconds);
-
     remaining--;
   }
 
@@ -65,14 +74,13 @@ function startCountdown(elementId, duration) {
   render();
 }
 
-// 🔄 Sync countdown on page load
+// Sync countdown on load
 async function initCountdownFromServer() {
   try {
+    await fetchDiscount(); // fetch persisted discount first
     const res = await fetch("/countdown_status");
     const data = await res.json();
-
     if (data.active && data.remaining > 0) {
-      currentDiscount = data.discount_percent || currentDiscount;
       startCountdown("countdown", data.remaining);
     }
   } catch (err) {
@@ -80,69 +88,53 @@ async function initCountdownFromServer() {
   }
 }
 
-// Admin Start Button
-const startBtn = document.getElementById("startCountdownBtn");
-if (startBtn) {
-  startBtn.addEventListener("click", async () => {
-    const minutes = parseInt(document.getElementById("customMinutes").value);
-    if (!minutes || minutes <= 0) return alert("Enter a valid number of minutes.");
+// Admin: start countdown
+document.getElementById("startCountdownBtn")?.addEventListener("click", async () => {
+  const minutes = parseInt(document.getElementById("customMinutes").value);
+  if (!minutes || minutes <= 0) return alert("Enter a valid number of minutes.");
 
-    // Send request to backend
-    const res = await fetch("/start_countdown_custom", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ minutes })
-    });
-
-    if (res.ok) {
-      const data = await res.json();
-      currentDiscount = data.discount_percent || currentDiscount;
-      startCountdown("countdown", data.remaining);
-    } else {
-      const msg = await res.text();
-      alert("Error: " + msg);
-    }
+  const res = await fetch("/start_countdown_custom", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ minutes })
   });
-}
 
-// Admin Update Discount
-const updateDiscountBtn = document.getElementById("updateDiscountBtn");
-if (updateDiscountBtn) {
-  updateDiscountBtn.addEventListener("click", async () => {
-    const newDiscount = parseFloat(document.getElementById("customDiscount").value);
-    if (isNaN(newDiscount) || newDiscount < 0 || newDiscount > 100)
-      return alert("Enter valid % (0-100)");
+  if (res.ok) {
+    const data = await res.json();
+    startCountdown("countdown", data.remaining);
+  } else {
+    alert(await res.text());
+  }
+});
 
-    try {
-      const res = await fetch("/update_discount", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ discount_percent: newDiscount })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        currentDiscount = data.discount_percent;
+// Admin: update discount
+document.getElementById("updateDiscountBtn")?.addEventListener("click", async () => {
+  const newDiscount = parseFloat(document.getElementById("customDiscount").value);
+  if (isNaN(newDiscount) || newDiscount < 0 || newDiscount > 100) return alert("Enter valid % (0-100)");
 
-        // Update banner immediately
-        const banner = document.getElementById("urgency-banner");
-        const countdownSpan = document.getElementById("countdown");
-        if (countdownSpan.style.display !== "none") {
-          banner.innerHTML = `⏳ Exclusive Deal! Ends in <span id="countdown"></span> – Enjoy <strong style="color:#ffffff;">${currentDiscount}% OFF + Free Delivery</strong>`;
-        }
-
-        alert("Discount updated to " + currentDiscount + "% ✅");
-      } else {
-        const text = await res.text();
-        alert("Error: " + text);
-      }
-    } catch (err) {
-      alert("Error: " + err);
-    }
+  const res = await fetch("/update_discount", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ discount_percent: newDiscount })
   });
-}
 
-// Run sync on page load
+  if (res.ok) {
+    const data = await res.json();
+    currentDiscount = data.discount_percent;
+    const banner = document.getElementById("urgency-banner");
+    const countdownSpan = document.getElementById("countdown");
+    if (countdownSpan.style.display !== "none") {
+      banner.innerHTML = `⏳ Exclusive Deal! Ends in <span id="countdown"></span> – Enjoy <strong style="color:#ffffff;">${currentDiscount}% OFF + Free Delivery</strong>`;
+    }
+    alert("Discount updated to " + currentDiscount + "% ✅");
+  } else {
+    alert(await res.text());
+  }
+});
+
+// Initialize on page load
 document.addEventListener("DOMContentLoaded", initCountdownFromServer);
+
 </script>
 
 

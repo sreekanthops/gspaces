@@ -1335,18 +1335,14 @@ def inr(value):
         value = Decimal(str(value))
     return "{:,.2f}".format(value)
 
-# --- Config ---
-DISCOUNT_PERCENT = Decimal("10")  # <-- Change this for dynamic discount
-DISCOUNT_RATE = (Decimal("100") - DISCOUNT_PERCENT) / Decimal("100")  # 0.95 for 5%
 
 COUNTDOWN_DURATION_MINUTES = None
 countdown_start_time = None  # in-memory (replace with DB if needed)
-def get_discount_rate():
-    return (Decimal("100") - DISCOUNT_PERCENT) / Decimal("100")
+
 
 @app.route("/update_discount", methods=["POST"])
 def update_discount():
-    global DISCOUNT_PERCENT
+    global DISCOUNT_PERCENT, DISCOUNT_RATE
     if not current_user.is_authenticated or not current_user.is_admin:
         return "Unauthorized", 403
 
@@ -1355,14 +1351,23 @@ def update_discount():
         new_discount = Decimal(data.get("discount_percent"))
         if new_discount < 0 or new_discount > 100:
             return "Invalid discount", 400
+
+        # Save to DB
+        save_discount_to_db(new_discount)
+
+        # Update globals
         DISCOUNT_PERCENT = new_discount
+        DISCOUNT_RATE = (Decimal("100") - DISCOUNT_PERCENT) / Decimal("100")
+
         return jsonify({"success": True, "discount_percent": str(DISCOUNT_PERCENT)})
     except Exception as e:
         return str(e), 400
 
-@app.context_processor
-def inject_discount():
-    return dict(discount_percent=DISCOUNT_PERCENT, discount_rate=get_discount_rate())
+
+@app.route("/get_discount")
+def get_discount():
+    return jsonify({"discount_percent": str(get_discount_from_db())})
+
 
 def is_deal_active():
     global countdown_start_time, countdown_duration_minutes
@@ -1471,6 +1476,42 @@ def countdown_status():
         remaining = max(0, int((end_time - now).total_seconds()))
         return {"active": True, "remaining": remaining}
     return {"active": False, "remaining": 0}
+
+def get_discount_from_db():
+    conn = connect_to_db()
+    discount = Decimal("5")  # default
+    if conn:
+        try:
+            cur = conn.cursor()
+            cur.execute("SELECT discount_percent FROM discount ORDER BY id DESC LIMIT 1")
+            row = cur.fetchone()
+            if row:
+                discount = Decimal(row[0])
+        except Exception as e:
+            print(f"Error fetching discount from DB: {e}")
+        finally:
+            conn.close()
+    return discount
+
+def save_discount_to_db(discount):
+    conn = connect_to_db()
+    if conn:
+        try:
+            cur = conn.cursor()
+            # Clear old rows
+            cur.execute("DELETE FROM discount")
+            # Insert new discount
+            cur.execute("INSERT INTO discount(discount_percent) VALUES (%s)", (str(discount),))
+            conn.commit()
+        except Exception as e:
+            print(f"Error saving discount to DB: {e}")
+        finally:
+            conn.close()
+
+# --- Config ---
+DISCOUNT_PERCENT = get_discount_from_db()
+DISCOUNT_RATE = (Decimal("100") - DISCOUNT_PERCENT) / Decimal("100")
+
 
 
 cart_items = []

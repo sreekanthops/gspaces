@@ -11,6 +11,7 @@ import smtplib
 import pymysql
 import requests
 from decimal import Decimal
+from email.header import Header
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from flask import Flask, render_template_string
@@ -1701,20 +1702,19 @@ def create_order():
         if conn:
             conn.close()
 
-
-# --- Payment success route ---
 @app.route('/payment/success', methods=['POST'])
 @login_required
 def payment_success():
     conn = None
     try:
+        # Parse JSON from frontend
         data = request.get_json()
-        payment_id = data.get('razorpay_payment_id')
-        order_id_from_razorpay = data.get('razorpay_order_id')
-        signature = data.get('razorpay_signature')
-        applied_coupon = data.get("coupon")  # frontend sends appliedCoupon
+        payment_id = data.get("razorpay_payment_id")
+        order_id_from_razorpay = data.get("razorpay_order_id")
+        signature = data.get("razorpay_signature")
+        coupon_code = data.get("coupon_code")
 
-        # Verify Razorpay signature
+        # ✅ Verify Razorpay signature
         razorpay_client.utility.verify_payment_signature({
             'razorpay_order_id': order_id_from_razorpay,
             'razorpay_payment_id': payment_id,
@@ -1726,71 +1726,70 @@ def payment_success():
 
         # Fetch cart items
         cur.execute("""
-            SELECT c.product_id AS id, c.quantity, p.name, p.price, p.image_url
+            SELECT c.product_id, c.quantity, p.name, p.price, p.image_url
             FROM cart c
             JOIN products p ON c.product_id = p.id
             WHERE c.user_id = %s
         """, (current_user.id,))
         cart_items = cur.fetchall()
         if not cart_items:
-            return jsonify({"status": "error", "error": "Cart is empty"})
+            return jsonify({"status": "error", "error": "Cart empty"})
 
-        # Calculate totals
-        totals = calculate_cart_totals(cart_items)
+        subtotal = sum(item['price'] * item['quantity'] for item in cart_items)
+        discount_amount = Decimal("0.00")
 
-        # Apply coupon if present
-        if applied_coupon:
+        # ✅ Apply coupon if passed and valid
+        if coupon_code:
             cur.execute("""
                 SELECT * FROM coupons
                 WHERE code=%s AND active=TRUE AND expiry_date > NOW()
-            """, (applied_coupon,))
+            """, (coupon_code,))
             coupon = cur.fetchone()
             if coupon:
-                discount_percent = Decimal(coupon["discount_percent"]) / Decimal("100")
-                discount_amount = totals["subtotal"] * discount_percent
-                totals["subtotal"] -= discount_amount
-                totals["discount_amount"] = discount_amount
+                # Ensure not used already
+                cur.execute("SELECT 1 FROM coupon_usage WHERE user_id=%s AND coupon_code=%s",
+                            (current_user.id, coupon_code))
+                if not cur.fetchone():
+                    discount_percent = Decimal(coupon["discount_percent"]) / Decimal("100")
+                    discount_amount = subtotal * discount_percent
+                    subtotal -= discount_amount
 
-        # Recalculate GST + final total
-        gst_amount = totals["subtotal"] * Decimal("0.18")
-        totals["gst_amount"] = gst_amount
-        totals["total_with_gst"] = totals["subtotal"] + gst_amount
+                    # Save coupon usage
+                    cur.execute("""
+                        INSERT INTO coupon_usage (user_id, coupon_code, used_at)
+                        VALUES (%s, %s, NOW())
+                    """, (current_user.id, coupon_code))
+
+        gst_amount = subtotal * Decimal("0.18")
+        final_total = subtotal + gst_amount
 
         # Insert order
         cur.execute("""
-            INSERT INTO orders (user_id, user_email, razorpay_order_id, razorpay_payment_id, total_amount, status, order_date, coupon_code, discount_amount)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id
+            INSERT INTO orders (user_id, user_email, razorpay_order_id, razorpay_payment_id,
+                                total_amount, discount_amount, status, order_date)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING id
         """, (current_user.id, current_user.email, order_id_from_razorpay, payment_id,
-              totals["total_with_gst"], 'Completed', datetime.now(), applied_coupon, totals.get("discount_amount", 0)))
+              final_total, discount_amount, 'Completed', datetime.now()))
         new_order_id = cur.fetchone()['id']
 
         # Insert order items
         for item in cart_items:
             cur.execute("""
-                INSERT INTO order_items (order_id, product_id, product_name, quantity, price_at_purchase, image_url)
+                INSERT INTO order_items (order_id, product_id, product_name,
+                                         quantity, price_at_purchase, image_url)
                 VALUES (%s, %s, %s, %s, %s, %s)
-            """, (new_order_id, item['id'], item['name'], item['quantity'], item['price'], item['image_url']))
-
-        # Mark coupon as used (if applied)
-        if applied_coupon:
-            cur.execute("""
-                INSERT INTO coupon_usage (user_id, coupon_code)
-                VALUES (%s, %s)
-                ON CONFLICT (user_id, coupon_code) DO NOTHING
-            """, (current_user.id, applied_coupon))
+            """, (new_order_id, item['product_id'], item['name'], item['quantity'],
+                  item['price'], item['image_url']))
 
         # Clear cart
         cur.execute("DELETE FROM cart WHERE user_id=%s", (current_user.id,))
         conn.commit()
 
-        # --- Send email confirmation ---
+        # -----------------------------
+        # 📧 Build confirmation email
+        # -----------------------------
         sender = os.getenv("EMAIL_USER", "sri.chityala501@gmail.com")
         receiver = current_user.email
-
-        msg = MIMEMultipart("alternative")
-        msg["Subject"] = f"Your GSpaces Order #{new_order_id} Confirmation"
-        msg["From"] = sender
-        msg["To"] = receiver
 
         items_html = "".join([
             f"""
@@ -1798,17 +1797,18 @@ def payment_success():
                 <td><img src='{url_for('static', filename=item['image_url'], _external=True)}' width='50'></td>
                 <td>{item['name']}</td>
                 <td>{item['quantity']}</td>
-                <td>{item['price']} INR</td>
-                <td>{item['price'] * item['quantity']} INR</td>
+                <td>₹{item['price']}</td>
+                <td>₹{item['price'] * item['quantity']}</td>
             </tr>
-            """ for item in cart_items
+            """
+            for item in cart_items
         ])
 
         html_body = f"""
         <html>
         <body>
-            <h2>Thank you for your order, {current_user.name}!</h2>
-            <p>Your payment (<b>{payment_id}</b>) was successful. Here are your order details:</p>
+            <h2>Thank you for your order, {current_user.name or current_user.email}!</h2>
+            <p>Your payment (<b>{payment_id}</b>) was successful.</p>
             <table border="1" cellspacing="0" cellpadding="6" style="border-collapse: collapse; width: 100%;">
                 <tr style="background-color:#f2f2f2;">
                     <th>Image</th>
@@ -1819,26 +1819,34 @@ def payment_success():
                 </tr>
                 {items_html}
             </table>
-            <h3>Original Subtotal: {totals['original_subtotal']} INR</h3>
-            <h3>Discount Applied: {totals.get('discount_amount', 0)} INR</h3>
-            <h3>Discounted Subtotal: {totals['subtotal']} INR</h3>
-            <h3>GST (18%): {totals['gst_amount']} INR</h3>
-            <h2>Total Paid: {totals['total_with_gst']} INR</h2>
-            <p>Coupon Code: {applied_coupon if applied_coupon else 'None'}</p>
             <br>
-            <p>We will process your order shortly. You can track your order on your GSpaces account.</p>
+            <p><b>Subtotal:</b> ₹{subtotal + discount_amount:.2f}</p>
+            <p><b>Discount:</b> -₹{discount_amount:.2f}</p>
+            <p><b>GST (18%):</b> ₹{gst_amount:.2f}</p>
+            <h3>Total Paid: ₹{final_total:.2f}</h3>
             <br>
+            <p>We’ll process your order shortly. You can track it in your GSpaces account.</p>
             <p>Best Regards,<br>Team GSpaces</p>
         </body>
         </html>
         """
+
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = Header(f"Your GSpaces Order #{new_order_id} Confirmation", 'utf-8')
+        msg["From"] = sender
+        msg["To"] = receiver
         msg.attach(MIMEText(html_body, "html", "utf-8"))
 
         with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-            server.login(sender, os.getenv("EMAIL_PASS"))
-            server.sendmail(sender, receiver, msg.as_string())
+            server.login(sender, os.getenv("EMAIL_PASS", "zupd zixc vvzp kptk"))
+            server.sendmail(sender, receiver, msg.as_bytes())
 
-        return jsonify({"status": "success", "message": "Payment successful, email sent"})
+        return jsonify({
+            "status": "success",
+            "order_id": new_order_id,
+            "message": "Payment successful! Order placed. Confirmation email sent.",
+            "redirect": url_for("thankyou")
+        })
 
     except Exception as e:
         if conn:
@@ -1880,4 +1888,5 @@ if __name__ == '__main__':
         app.run(host='0.0.0.0', port=5000, debug=True)
     else:
         print("Failed to connect to the database. Exiting.")
+
 

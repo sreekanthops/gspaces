@@ -212,11 +212,13 @@
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script>
     var user_phone = "{{ user_details.phone if user_details and user_details.phone != 'Not provided' else '' }}";
-    var total_amount = parseFloat("{{ total_with_gst }}") * 100; // paise
+    var total_amount = parseFloat("{{ total_with_gst }}") * 100; // in paise
     var razorpay_order_id = null;
     var appliedCoupon = null; // track applied coupon
 
+    // ------------------------
     // Apply coupon
+    // ------------------------
     document.getElementById("apply-coupon").addEventListener("click", async () => {
         const code = document.getElementById("coupon-code").value.trim();
         if (!code) return alert("Please enter a coupon code.");
@@ -243,11 +245,11 @@
                 // Update total
                 total_amount = data.total * 100;
 
-                // Request backend to create new Razorpay order with discounted total
+                // Create Razorpay order with discounted total
                 const orderRes = await fetch("/create_order", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ coupon: appliedCoupon })  // ✅ send coupon
+                    body: JSON.stringify({ coupon: appliedCoupon })
                 });
                 const orderData = await orderRes.json();
                 if (orderData.status === "success") {
@@ -264,6 +266,9 @@
         }
     });
 
+    // ------------------------
+    // Ensure phone number
+    // ------------------------
     async function ensurePhone() {
         if (!user_phone || user_phone === 'Not provided') {
             user_phone = prompt("Please enter your phone number for payment:");
@@ -291,6 +296,9 @@
         return true;
     }
 
+    // ------------------------
+    // Open Razorpay Checkout
+    // ------------------------
     async function openRazorpay() {
         const ready = await ensurePhone();
         if (!ready) return;
@@ -328,6 +336,9 @@
             "image": "{{ url_for('static', filename='img/logo.png') }}",
             "order_id": razorpay_order_id,
             "handler": function (response) {
+                // ✅ also send coupon info to backend
+                response.coupon_code = appliedCoupon;
+
                 fetch("/payment/success", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -336,8 +347,8 @@
                 .then(res => res.json())
                 .then(data => {
                     if (data.status === "success") {
-                        alert("✅ Payment successful!");
-                        window.location.href = "/thankyou";
+                        alert("✅ " + data.message);
+                        window.location.href = data.redirect;
                     } else {
                         alert("❌ Payment succeeded but order failed: " + data.error);
                         window.location.href = "/cart";
@@ -365,7 +376,9 @@
 
 
 
+
 {% include 'footer.html' %}
 </body>
 </html>
+
 

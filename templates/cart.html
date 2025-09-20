@@ -128,8 +128,12 @@
                         <span class="badge bg-primary rounded-pill">{{ cart_items|length }}</span>
                     </li>
                     <li class="list-group-item">
-                        <i class="bi bi-currency-rupee text-success me-2"></i> Total Price
-                        <strong>₹{{ total_price|inr }}</strong>
+                        <i class="bi bi-currency-rupee text-warning me-2"></i> GST (18%)
+                        <strong>₹{{ (total_price * 0.18)|inr }}</strong>
+                    </li>
+                    <li class="list-group-item">
+                        <i class="bi bi-currency-rupee text-success me-2"></i> Total Amount
+                        <strong>₹{{ total_with_gst|inr }}</strong>
                     </li>
                 </ul>
                 <hr>

@@ -773,6 +773,29 @@ def update_profile():
 
     return redirect(url_for('profile'))
 
+@app.route('/update_profile_phone', methods=['POST'])
+@login_required
+def update_profile_phone():
+    data = request.get_json()
+    phone = data.get('phone')
+    if not phone:
+        return jsonify({"status": "error", "error": "Phone number missing"})
+
+    conn = connect_to_db()
+    if not conn:
+        return jsonify({"status": "error", "error": "DB connection failed"})
+
+    try:
+        cur = conn.cursor()
+        cur.execute("UPDATE users SET phone=%s WHERE id=%s", (phone, current_user.id))
+        conn.commit()
+        return jsonify({"status": "success"})
+    except Exception as e:
+        print(f"Error updating phone: {e}")
+        return jsonify({"status": "error", "error": str(e)})
+    finally:
+        conn.close()
+
 @app.route('/add_product', methods=['POST'])
 @login_required
 def add_product():
@@ -1365,12 +1388,13 @@ def cart():
     conn = connect_to_db()
     cart_items = []
     total_price = 0
-    gst_amount = 0
-    total_with_gst = 0
+    user_details = {'phone': ''}  # default if DB not available
 
     if conn:
         try:
             cur = conn.cursor(cursor_factory=RealDictCursor)
+
+            # Fetch cart items
             cur.execute("""
                 SELECT c.product_id AS id, c.quantity, p.name, p.price, p.image_url
                 FROM cart c
@@ -1379,10 +1403,15 @@ def cart():
             """, (current_user.id,))
             cart_items = cur.fetchall()
 
-            if cart_items:
-                total_price = sum(float(item['price']) * item['quantity'] for item in cart_items)
-                gst_amount = round(total_price * 0.18, 2)
-                total_with_gst = round(total_price + gst_amount, 2)
+            # Ensure Decimal * float works
+            from decimal import Decimal
+            total_price = sum(Decimal(item['price']) * item['quantity'] for item in cart_items)
+
+            # Fetch user phone
+            cur.execute("SELECT phone FROM users WHERE id=%s", (current_user.id,))
+            rec = cur.fetchone()
+            if rec and rec.get('phone'):
+                user_details['phone'] = rec['phone']
 
         except Exception as e:
             print(f"Error fetching cart: {e}")
@@ -1390,29 +1419,34 @@ def cart():
         finally:
             conn.close()
 
+    # Calculate total with GST
+    from decimal import Decimal
+
+    gst_rate = Decimal('0.18')
+    gst_amount = total_price * gst_rate
+    total_with_gst = total_price + gst_amount
+
+    # Razorpay order creation
     razorpay_order_id = None
     if total_with_gst > 0:
         try:
-            order_data = {
-                "amount": int(total_with_gst * 100),
-                "currency": "INR",
-                "payment_capture": 1
-            }
+            order_data = {"amount": int(total_with_gst * 100), "currency": "INR", "payment_capture": 1}
             order = razorpay_client.order.create(order_data)
             razorpay_order_id = order['id']
         except Exception as e:
             print(f"Error creating Razorpay order: {e}")
             flash("Error processing payment.", "error")
 
-    return render_template("cart.html",
+    return render_template(
+        "cart.html",
         cart_items=cart_items,
         total_price=total_price,
         gst_amount=gst_amount,
         total_with_gst=total_with_gst,
+        user_details=user_details,
         razorpay_order_id=razorpay_order_id,
         razorpay_key=RAZORPAY_KEY_ID
     )
-
 
 @app.context_processor
 def inject_cart_count():

@@ -1354,12 +1354,20 @@ def update_quantity(product_id, action):
             conn.close()
     return redirect(url_for('cart'))
 
+cart_items = []
+total_price = 0
+gst_amount = 0
+total_with_gst = 0
+
 @app.route('/cart')
 @login_required
 def cart():
     conn = connect_to_db()
     cart_items = []
     total_price = 0
+    gst_amount = 0
+    total_with_gst = 0
+
     if conn:
         try:
             cur = conn.cursor(cursor_factory=RealDictCursor)
@@ -1370,18 +1378,26 @@ def cart():
                 WHERE c.user_id = %s
             """, (current_user.id,))
             cart_items = cur.fetchall()
-            total_price = sum(item['price'] * item['quantity'] for item in cart_items)
+
+            if cart_items:
+                total_price = sum(float(item['price']) * item['quantity'] for item in cart_items)
+                gst_amount = round(total_price * 0.18, 2)
+                total_with_gst = round(total_price + gst_amount, 2)
+
         except Exception as e:
             print(f"Error fetching cart: {e}")
             flash("Error loading cart.", "error")
         finally:
             conn.close()
 
-    # Razorpay integration unchanged
     razorpay_order_id = None
-    if total_price > 0:
+    if total_with_gst > 0:
         try:
-            order_data = {"amount": int(total_price * 100), "currency": "INR", "payment_capture": 1}
+            order_data = {
+                "amount": int(total_with_gst * 100),
+                "currency": "INR",
+                "payment_capture": 1
+            }
             order = razorpay_client.order.create(order_data)
             razorpay_order_id = order['id']
         except Exception as e:
@@ -1391,9 +1407,12 @@ def cart():
     return render_template("cart.html",
         cart_items=cart_items,
         total_price=total_price,
+        gst_amount=gst_amount,
+        total_with_gst=total_with_gst,
         razorpay_order_id=razorpay_order_id,
         razorpay_key=RAZORPAY_KEY_ID
     )
+
 
 @app.context_processor
 def inject_cart_count():
@@ -1442,7 +1461,9 @@ def payment_success():
         if not cart_items:
             return jsonify({"status": "error", "error": "Cart is empty"})
 
-        total_amount = sum(item['price'] * item['quantity'] for item in cart_items)
+        subtotal = sum(item['price'] * item['quantity'] for item in cart_items)
+        gst_amount = round(subtotal * 0.18, 2)
+        total_amount = round(subtotal + gst_amount, 2)
 
         # Insert order
         cur.execute("""
@@ -1498,7 +1519,9 @@ def payment_success():
                 </tr>
                 {items_html}
             </table>
-            <h3>Total: {total_amount} INR</h3>
+            <h3>Subtotal: {subtotal} INR</h3>
+            <h3>GST (18%): {gst_amount} INR</h3>
+            <h2>Total: {total_amount} INR</h2>
             <p>We will process your order shortly. You can track your order on your GSpaces account.</p>
             <br>
             <p>Best Regards,<br>Team GSpaces</p>

@@ -475,7 +475,7 @@ ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_
 --
 
 COPY public.cart (id, user_id, product_id, quantity) FROM stdin;
-9	12	7	1
+56	14	19	1
 10	15	7	1
 11	16	7	1
 35	17	9	1
@@ -545,6 +545,13 @@ COPY public.order_items (id, order_id, product_id, quantity, price_at_purchase, 
 29	32	19	1	1.00	test	img/Products/19/19.jpg
 30	33	19	1	1.00	test	img/Products/19/19.jpg
 31	34	19	1	1.00	test	img/Products/19/19.jpg
+32	35	19	1	1.00	test	img/Products/19/19.jpg
+33	36	19	1	1.00	test	img/Products/19/19.jpg
+34	37	19	1	1.00	test	img/Products/19/19.jpg
+35	38	19	1	1.00	test	img/Products/19/19.jpg
+36	39	19	1	1.00	test	img/Products/19/19.jpg
+37	40	19	1	1.00	test	img/Products/19/19.jpg
+38	41	19	1	1.00	test	img/Products/19/19.jpg
 \.
 
 
@@ -584,6 +591,13 @@ COPY public.orders (id, user_id, order_date, total_amount, status, user_email, r
 32	14	2025-09-20 22:13:44.465179	1.18	Completed	srichityala501@gmail.com	order_RK163re8qx5JA7	pay_RK16BovwJLIOrW	\N	0.00
 33	14	2025-09-20 22:15:36.872055	1.18	Completed	srichityala501@gmail.com	order_RK17xDUYkH1IKq	pay_RK187buEqFtdUv	\N	0.00
 34	14	2025-09-20 22:18:00.334563	1.18	Completed	srichityala501@gmail.com	order_RK1AZ2a3G75qwz	pay_RK1AhFe1mMj2so	\N	0.00
+35	12	2025-09-20 22:25:29.49738	1.18	Completed	sri.chityala504@gmail.com	order_RK1IKnNGtXFcu1	pay_RK1IbzlhTASqMU	\N	0.00
+36	12	2025-09-21 07:26:50.713964	1.18	Completed	sri.chityala504@gmail.com	order_RKAWCD2wlJUDZ7	pay_RKAWTB4m0jYocZ	\N	0.00
+37	12	2025-09-21 07:31:15.296914	1.18	Completed	sri.chityala504@gmail.com	order_RKAaubx1p1ItXJ	pay_RKAb6xwZluq5mE	\N	0.00
+38	12	2025-09-21 07:32:05.502801	1.18	Completed	sri.chityala504@gmail.com	order_RKAbgu3CDEb3qm	pay_RKAc02XD6IiAwH	\N	0.00
+39	12	2025-09-21 07:35:01.223395	1.18	Completed	sri.chityala504@gmail.com	order_RKAer4beH9tcxD	pay_RKAf4kWFuyEC6U	\N	0.00
+40	12	2025-09-21 07:39:39.645275	1.18	Completed	sri.chityala504@gmail.com	order_RKAjeVX4aADdtR	pay_RKAjzrA8rNsmji	\N	0.00
+41	14	2025-09-21 07:45:21.288893	1.18	Completed	srichityala501@gmail.com	order_RKApjUNjEhP6S0	pay_RKAq02mcEsKuti	\N	0.00
 \.
 
 
@@ -678,12 +692,12 @@ COPY public.users (id, name, email, password, address, phone) FROM stdin;
 9	sri	sri@gmail.com	sri	\N	\N
 10	Syed Ahmed	syed.ahmed8801302@gmail.com	aTNkZUoq	\N	\N
 11	syed	syed@gmail.com	syed	\N	\N
-12	Home	sri.chityala504@gmail.com		\N	\N
 13	Sri ch	sri.chityala500@gmail.com	hello	\N	\N
 15	Sreekanth Devops	sreekanththetechie@gmail.com	oauth_user_no_password_6lUorcIT7qfGlC3V	\N	\N
 16	yamini chityala	chityalayamini@gmail.com	oauth_user_no_password_d69XXaVVlKg5aIG2	\N	\N
 14	chityala srikanth	srichityala501@gmail.com			7075077384
 17	Vijay Kumar	sri.vijaychittiyala@gmail.com	D@rk#0rse	\N	7416542354
+12	Home	sri.chityala504@gmail.com		\N	7075077384
 \.
 
 
@@ -691,7 +705,7 @@ COPY public.users (id, name, email, password, address, phone) FROM stdin;
 -- Name: cart_id_seq; Type: SEQUENCE SET; Schema: public; Owner: sri
 --
 
-SELECT pg_catalog.setval('public.cart_id_seq', 46, true);
+SELECT pg_catalog.setval('public.cart_id_seq', 56, true);
 
 
 --
@@ -719,14 +733,14 @@ SELECT pg_catalog.setval('public.discount_id_seq', 6, true);
 -- Name: order_items_id_seq; Type: SEQUENCE SET; Schema: public; Owner: sri
 --
 
-SELECT pg_catalog.setval('public.order_items_id_seq', 31, true);
+SELECT pg_catalog.setval('public.order_items_id_seq', 38, true);
 
 
 --
 -- Name: orders_id_seq; Type: SEQUENCE SET; Schema: public; Owner: sri
 --
 
-SELECT pg_catalog.setval('public.orders_id_seq', 34, true);
+SELECT pg_catalog.setval('public.orders_id_seq', 41, true);
 
 
 --

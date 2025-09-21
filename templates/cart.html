@@ -211,10 +211,28 @@
 </div>
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script>
-    var user_phone = "{{ user_details.phone if user_details and user_details.phone != 'Not provided' else '' }}";
-    var total_amount = parseFloat("{{ total_with_gst }}") * 100; // in paise
-    var razorpay_order_id = null;
-    var appliedCoupon = null; // track applied coupon
+    let user_phone = "{{ user_details.phone if user_details and user_details.phone != 'Not provided' else '' }}";
+    let total_amount = parseFloat("{{ total_with_gst }}") * 100; // in paise
+    let razorpay_order_id = null;
+    let appliedCoupon = null; // track applied coupon
+
+    // ------------------------
+    // Check if coupon is already used
+    // ------------------------
+    async function isCouponUsed(code) {
+        try {
+            const res = await fetch("/check_coupon_used", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ code })
+            });
+            const data = await res.json();
+            return data.status === "used";
+        } catch (err) {
+            console.error("Coupon check error:", err);
+            return true; // block by default on error
+        }
+    }
 
     // ------------------------
     // Apply coupon
@@ -222,6 +240,13 @@
     document.getElementById("apply-coupon").addEventListener("click", async () => {
         const code = document.getElementById("coupon-code").value.trim();
         if (!code) return alert("Please enter a coupon code.");
+
+        // Check if coupon already used
+        if (await isCouponUsed(code)) {
+            document.getElementById("coupon-feedback").textContent = "❌ Coupon already used!";
+            appliedCoupon = null;
+            return;
+        }
 
         try {
             const res = await fetch("/apply_coupon", {
@@ -232,8 +257,7 @@
             const data = await res.json();
 
             if (data.status === "success") {
-                appliedCoupon = code; // ✅ store coupon globally
-
+                appliedCoupon = code; // store applied coupon
                 document.getElementById("coupon-feedback").textContent =
                     `🎉 Coupon applied: ${data.discount_percent}% OFF (You saved ₹${data.discount_amount.toFixed(2)})`;
 
@@ -241,8 +265,6 @@
                 document.querySelector("#subtotal").textContent = `₹${data.subtotal.toFixed(2)}`;
                 document.querySelector("#gst").textContent = `₹${data.gst.toFixed(2)}`;
                 document.querySelector("#total").textContent = `₹${data.total.toFixed(2)}`;
-
-                // Update total
                 total_amount = data.total * 100;
 
                 // Create Razorpay order with discounted total
@@ -260,6 +282,7 @@
 
             } else {
                 document.getElementById("coupon-feedback").textContent = "❌ " + data.error;
+                appliedCoupon = null;
             }
         } catch (err) {
             alert("Error applying coupon: " + err);
@@ -309,14 +332,12 @@
                 const orderRes = await fetch("/create_order", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        coupon: appliedCoupon   // ✅ include coupon here too
-                    })
+                    body: JSON.stringify({ coupon: appliedCoupon })
                 });
                 const orderData = await orderRes.json();
                 if (orderData.status === "success") {
                     razorpay_order_id = orderData.order_id;
-                    total_amount = orderData.total * 100; // ✅ sync discounted total
+                    total_amount = orderData.total * 100; // sync discounted total
                 } else {
                     alert("❌ Failed to create Razorpay order: " + orderData.error);
                     return;
@@ -336,7 +357,6 @@
             "image": "{{ url_for('static', filename='img/logo.png') }}",
             "order_id": razorpay_order_id,
             "handler": function (response) {
-                // ✅ also send coupon info to backend
                 response.coupon_code = appliedCoupon;
 
                 fetch("/payment/success", {
@@ -373,8 +393,6 @@
 
     document.getElementById('rzp-button1').addEventListener('click', openRazorpay);
 </script>
-
-
 
 
 {% include 'footer.html' %}

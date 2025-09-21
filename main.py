@@ -1580,7 +1580,9 @@ def cart():
         razorpay_order_id=razorpay_order_id,
         razorpay_key=RAZORPAY_KEY_ID
     )
-
+# ------------------------
+# Apply Coupon (frontend only for display)
+# ------------------------
 @app.route('/apply_coupon', methods=['POST'])
 @login_required
 def apply_coupon():
@@ -1594,16 +1596,12 @@ def apply_coupon():
     try:
         cur = conn.cursor(cursor_factory=RealDictCursor)
 
-        # Check if already used by this user
-        cur.execute("SELECT 1 FROM coupon_usage WHERE user_id=%s AND coupon_code=%s",
-                    (current_user.id, code))
-        if cur.fetchone():
-            return jsonify({"status": "error", "error": "Coupon already used"})
-
-        # Validate coupon
-        cur.execute("SELECT * FROM coupons WHERE code=%s AND active=TRUE AND expiry_date > NOW()", (code,))
+        # Only check if coupon is active and not expired
+        cur.execute("""
+            SELECT * FROM coupons 
+            WHERE code=%s AND active=TRUE AND expiry_date > NOW()
+        """, (code,))
         coupon = cur.fetchone()
-
         if not coupon:
             return jsonify({"status": "error", "error": "Invalid or expired coupon"})
 
@@ -1618,7 +1616,7 @@ def apply_coupon():
 
         totals = calculate_cart_totals(cart_items)
 
-        # Apply discount
+        # Calculate discount
         discount_percent = Decimal(coupon["discount_percent"]) / Decimal("100")
         discount_amount = totals["subtotal"] * discount_percent
         new_subtotal = totals["subtotal"] - discount_amount
@@ -1641,6 +1639,9 @@ def apply_coupon():
             conn.close()
 
 
+# ------------------------
+# Create Razorpay Order
+# ------------------------
 @app.route('/create_order', methods=['POST'])
 @login_required
 def create_order():
@@ -1663,23 +1664,25 @@ def create_order():
         if not cart_items:
             return jsonify({"status": "error", "error": "Cart empty"})
 
+        # Calculate totals
         totals = calculate_cart_totals(cart_items)
+        subtotal = totals["subtotal"]
+        discount_amount = Decimal("0.00")
 
-        # Apply coupon if present
+        # Apply coupon if provided (for order total calculation)
         if coupon_code:
             cur.execute("""
-                SELECT * FROM coupons
+                SELECT * FROM coupons 
                 WHERE code=%s AND active=TRUE AND expiry_date > NOW()
             """, (coupon_code,))
             coupon = cur.fetchone()
             if coupon:
                 discount_percent = Decimal(coupon["discount_percent"]) / Decimal("100")
-                discount_amount = totals["subtotal"] * discount_percent
-                totals["subtotal"] -= discount_amount
+                discount_amount = subtotal * discount_percent
+                subtotal -= discount_amount
 
-        # Add GST after discount
-        gst_amount = totals["subtotal"] * Decimal("0.18")
-        final_total = totals["subtotal"] + gst_amount
+        gst_amount = subtotal * Decimal("0.18")
+        final_total = subtotal + gst_amount
 
         # Create Razorpay order
         order_data = {
@@ -1692,8 +1695,10 @@ def create_order():
         return jsonify({
             "status": "success",
             "order_id": order['id'],
-            "total": float(final_total),
-            "gst": float(gst_amount)
+            "subtotal": float(totals["subtotal"]),
+            "discount": float(discount_amount),
+            "gst": float(gst_amount),
+            "total": float(final_total)
         })
 
     except Exception as e:
@@ -1702,6 +1707,10 @@ def create_order():
         if conn:
             conn.close()
 
+
+# ------------------------
+# Payment Success
+# ------------------------
 @app.route('/payment/success', methods=['POST'])
 @login_required
 def payment_success():
@@ -1738,27 +1747,33 @@ def payment_success():
         subtotal = sum(item['price'] * item['quantity'] for item in cart_items)
         discount_amount = Decimal("0.00")
 
-        # ✅ Apply coupon if passed and valid
+        # Apply coupon if passed and valid
         if coupon_code:
             cur.execute("""
-                SELECT * FROM coupons
+                SELECT * FROM coupons 
                 WHERE code=%s AND active=TRUE AND expiry_date > NOW()
             """, (coupon_code,))
             coupon = cur.fetchone()
             if coupon:
-                # Ensure not used already
-                cur.execute("SELECT 1 FROM coupon_usage WHERE user_id=%s AND coupon_code=%s",
-                            (current_user.id, coupon_code))
-                if not cur.fetchone():
-                    discount_percent = Decimal(coupon["discount_percent"]) / Decimal("100")
-                    discount_amount = subtotal * discount_percent
-                    subtotal -= discount_amount
+                # Check if already used
+                cur.execute("""
+                    SELECT 1 FROM coupon_usage 
+                    WHERE user_id=%s AND coupon_code=%s
+                    LIMIT 1
+                """, (current_user.id, coupon_code))
+                if cur.fetchone():
+                    return jsonify({"status": "error", "error": "Coupon already used"})
+                
+                # Apply discount
+                discount_percent = Decimal(coupon["discount_percent"]) / Decimal("100")
+                discount_amount = subtotal * discount_percent
+                subtotal -= discount_amount
 
-                    # Save coupon usage
-                    cur.execute("""
-                        INSERT INTO coupon_usage (user_id, coupon_code, used_at)
-                        VALUES (%s, %s, NOW())
-                    """, (current_user.id, coupon_code))
+                # Mark coupon as used
+                cur.execute("""
+                    INSERT INTO coupon_usage (user_id, coupon_code, used_at)
+                    VALUES (%s, %s, NOW())
+                """, (current_user.id, coupon_code))
 
         gst_amount = subtotal * Decimal("0.18")
         final_total = subtotal + gst_amount
@@ -1888,4 +1903,5 @@ if __name__ == '__main__':
         app.run(host='0.0.0.0', port=5000, debug=True)
     else:
         print("Failed to connect to the database. Exiting.")
+
 

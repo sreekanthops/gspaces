@@ -600,17 +600,15 @@
                 {% endfor %}
             </p>
 
-<p class="text-dark fw-semibold mb-1">
-    {% if deal_active %}
-        <span class="text-decoration-line-through text-muted me-2">₹ {{ product.price|inr }}</span>
-        <span class="text-success">₹ {{ (product.price * discount_rate)|round(2)|inr }}</span>
-        <span class="badge bg-danger ms-2">{{ discount_percent }}% OFF</span>
-    {% else %}
-        <span>₹ {{ product.price|inr }}</span>
-    {% endif %}
-</p>
-
-
+            <p class="text-dark fw-semibold mb-1">
+                {% if deal_active %}
+                    <span class="text-decoration-line-through text-muted me-2" data-original-price="{{ product.price }}">₹ {{ product.price|inr }}</span>
+                    <span class="text-success" data-original-price="{{ product.price }}">₹ {{ (product.price * discount_rate)|round(2)|inr }}</span>
+                    <span class="badge bg-danger ms-2">{{ discount_percent }}% OFF</span>
+                {% else %}
+                    <span data-original-price="{{ product.price }}">₹ {{ product.price|inr }}</span>
+                {% endif %}
+            </p>
             <p class="text-secondary small">Category: {{ product.category }}</p>
 
             <a href="{{ url_for('add_to_cart', product_id=product.id) }}" class="details-link" title="Add to Cart">
@@ -940,4 +938,5 @@ document.getElementById('addSubImageBtn').addEventListener('click', function() {
 </body>
 
 </html>
+
 

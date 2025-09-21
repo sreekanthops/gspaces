@@ -1596,7 +1596,7 @@ def apply_coupon():
     try:
         cur = conn.cursor(cursor_factory=RealDictCursor)
 
-        # Only check if coupon is active and not expired
+        # Check if coupon exists, active, and not expired
         cur.execute("""
             SELECT * FROM coupons 
             WHERE code=%s AND active=TRUE AND expiry_date > NOW()
@@ -1604,6 +1604,15 @@ def apply_coupon():
         coupon = cur.fetchone()
         if not coupon:
             return jsonify({"status": "error", "error": "Invalid or expired coupon"})
+
+        # Check if this user has already used this coupon
+        cur.execute("""
+            SELECT 1 FROM coupon_usage
+            WHERE user_id=%s AND coupon_code=%s
+            LIMIT 1
+        """, (current_user.id, code))
+        if cur.fetchone():
+            return jsonify({"status": "error", "error": "Coupon already used"})
 
         # Fetch cart items
         cur.execute("""
@@ -1637,7 +1646,6 @@ def apply_coupon():
     finally:
         if conn:
             conn.close()
-
 
 # ------------------------
 # Create Razorpay Order
@@ -1716,7 +1724,9 @@ def create_order():
 def payment_success():
     conn = None
     try:
-        # Parse JSON from frontend
+        # --------------------------
+        # Parse frontend data
+        # --------------------------
         data = request.get_json()
         payment_id = data.get("razorpay_payment_id")
         order_id_from_razorpay = data.get("razorpay_order_id")
@@ -1730,12 +1740,17 @@ def payment_success():
             'razorpay_signature': signature
         })
 
+        # --------------------------
+        # DB connection
+        # --------------------------
         conn = connect_to_db()
         cur = conn.cursor(cursor_factory=RealDictCursor)
 
+        # --------------------------
         # Fetch cart items
+        # --------------------------
         cur.execute("""
-            SELECT c.product_id, c.quantity, p.name, p.price, p.image_url
+            SELECT c.product_id, c.quantity, p.name, p.price, p.image_url, p.deal_percent
             FROM cart c
             JOIN products p ON c.product_id = p.id
             WHERE c.user_id = %s
@@ -1744,10 +1759,28 @@ def payment_success():
         if not cart_items:
             return jsonify({"status": "error", "error": "Cart empty"})
 
-        subtotal = sum(item['price'] * item['quantity'] for item in cart_items)
-        discount_amount = Decimal("0.00")
+        # --------------------------
+        # Calculate totals
+        # --------------------------
+        subtotal = Decimal("0.00")
+        deal_discount_amount = Decimal("0.00")
 
-        # Apply coupon if passed and valid
+        for item in cart_items:
+            price = Decimal(item['price'])
+            quantity = item['quantity']
+
+            # Apply deal discount if exists
+            deal_percent = Decimal(item.get('deal_percent', 0)) / Decimal("100")
+            deal_discount = price * deal_percent
+            price_after_deal = price - deal_discount
+
+            subtotal += price_after_deal * quantity
+            deal_discount_amount += deal_discount * quantity
+
+        # --------------------------
+        # Apply coupon if valid
+        # --------------------------
+        coupon_discount_amount = Decimal("0.00")
         if coupon_code:
             cur.execute("""
                 SELECT * FROM coupons 
@@ -1764,10 +1797,10 @@ def payment_success():
                 if cur.fetchone():
                     return jsonify({"status": "error", "error": "Coupon already used"})
                 
-                # Apply discount
-                discount_percent = Decimal(coupon["discount_percent"]) / Decimal("100")
-                discount_amount = subtotal * discount_percent
-                subtotal -= discount_amount
+                # Apply coupon discount
+                coupon_percent = Decimal(coupon["discount_percent"]) / Decimal("100")
+                coupon_discount_amount = subtotal * coupon_percent
+                subtotal -= coupon_discount_amount
 
                 # Mark coupon as used
                 cur.execute("""
@@ -1775,34 +1808,50 @@ def payment_success():
                     VALUES (%s, %s, NOW())
                 """, (current_user.id, coupon_code))
 
+        # --------------------------
+        # GST and final total
+        # --------------------------
         gst_amount = subtotal * Decimal("0.18")
         final_total = subtotal + gst_amount
+        total_discount = deal_discount_amount + coupon_discount_amount
 
+        # --------------------------
         # Insert order
+        # --------------------------
         cur.execute("""
             INSERT INTO orders (user_id, user_email, razorpay_order_id, razorpay_payment_id,
-                                total_amount, discount_amount, status, order_date)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING id
+                                total_amount, deal_discount, coupon_discount, status, order_date)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id
         """, (current_user.id, current_user.email, order_id_from_razorpay, payment_id,
-              final_total, discount_amount, 'Completed', datetime.now()))
+              final_total, deal_discount_amount, coupon_discount_amount, 'Completed', datetime.now()))
         new_order_id = cur.fetchone()['id']
 
+        # --------------------------
         # Insert order items
+        # --------------------------
         for item in cart_items:
+            price = Decimal(item['price'])
+            quantity = item['quantity']
+            deal_percent = Decimal(item.get('deal_percent', 0)) / Decimal("100")
+            deal_discount = price * deal_percent
+            price_after_deal = price - deal_discount
+
             cur.execute("""
                 INSERT INTO order_items (order_id, product_id, product_name,
-                                         quantity, price_at_purchase, image_url)
-                VALUES (%s, %s, %s, %s, %s, %s)
-            """, (new_order_id, item['product_id'], item['name'], item['quantity'],
-                  item['price'], item['image_url']))
+                                         quantity, price_at_purchase, deal_discount, image_url)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+            """, (new_order_id, item['product_id'], item['name'], quantity,
+                  price_after_deal, deal_discount, item['image_url']))
 
+        # --------------------------
         # Clear cart
+        # --------------------------
         cur.execute("DELETE FROM cart WHERE user_id=%s", (current_user.id,))
         conn.commit()
 
-        # -----------------------------
-        # 📧 Build confirmation email
-        # -----------------------------
+        # --------------------------
+        # Build confirmation email
+        # --------------------------
         sender = os.getenv("EMAIL_USER", "sri.chityala501@gmail.com")
         receiver = current_user.email
 
@@ -1812,8 +1861,8 @@ def payment_success():
                 <td><img src='{url_for('static', filename=item['image_url'], _external=True)}' width='50'></td>
                 <td>{item['name']}</td>
                 <td>{item['quantity']}</td>
-                <td>₹{item['price']}</td>
-                <td>₹{item['price'] * item['quantity']}</td>
+                <td>₹{Decimal(item['price'])}</td>
+                <td>₹{(Decimal(item['price']) - Decimal(item.get('deal_percent',0)/100*Decimal(item['price']))) * item['quantity']}</td>
             </tr>
             """
             for item in cart_items
@@ -1835,8 +1884,9 @@ def payment_success():
                 {items_html}
             </table>
             <br>
-            <p><b>Subtotal:</b> ₹{subtotal + discount_amount:.2f}</p>
-            <p><b>Discount:</b> -₹{discount_amount:.2f}</p>
+            <p><b>Subtotal:</b> ₹{subtotal + total_discount:.2f}</p>
+            <p><b>Deal Discount:</b> -₹{deal_discount_amount:.2f}</p>
+            <p><b>Coupon Discount:</b> -₹{coupon_discount_amount:.2f}</p>
             <p><b>GST (18%):</b> ₹{gst_amount:.2f}</p>
             <h3>Total Paid: ₹{final_total:.2f}</h3>
             <br>
@@ -1872,6 +1922,7 @@ def payment_success():
             conn.close()
 
 
+
 @app.route('/thankyou')
 def thankyou():
     """
@@ -1903,5 +1954,6 @@ if __name__ == '__main__':
         app.run(host='0.0.0.0', port=5000, debug=True)
     else:
         print("Failed to connect to the database. Exiting.")
+
 
 

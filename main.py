@@ -1339,7 +1339,6 @@ def inr(value):
 COUNTDOWN_DURATION_MINUTES = None
 countdown_start_time = None  # in-memory (replace with DB if needed)
 
-
 @app.route("/update_discount", methods=["POST"])
 def update_discount():
     global DISCOUNT_PERCENT, DISCOUNT_RATE
@@ -1378,32 +1377,39 @@ def is_deal_active():
 
 def calculate_cart_totals(cart_items):
     deal_active = is_deal_active()
-    subtotal = Decimal("0.00")
+    subtotal_after_discount = Decimal("0.00")
     original_subtotal = Decimal("0.00")
+    coupon_discount = Decimal("0.00")
 
     for item in cart_items:
+        # Ensure price is a Decimal for math
         price = Decimal(item['price'])
         original_subtotal += price * item['quantity']
 
-        if deal_active:
+        if deal_active and DISCOUNT_RATE is not None:
             discounted_price = (price * DISCOUNT_RATE).quantize(Decimal('0.01'))
+            # Add price difference to discount total
+            coupon_discount += (price - discounted_price) * item['quantity']
+            
             item['display_price'] = discounted_price
-            subtotal += discounted_price * item['quantity']
+            subtotal_after_discount += discounted_price * item['quantity']
         else:
             item['display_price'] = price
-            subtotal += price * item['quantity']
+            subtotal_after_discount += price * item['quantity']
 
     gst_rate = Decimal('0.18')
-    gst_amount = (subtotal * gst_rate).quantize(Decimal('0.01'))
-    total_with_gst = (subtotal + gst_amount).quantize(Decimal('0.01'))
+    gst_amount = (subtotal_after_discount * gst_rate).quantize(Decimal('0.01'))
+    total_with_gst = (subtotal_after_discount + gst_amount).quantize(Decimal('0.01'))
 
     return {
         "deal_active": deal_active,
-        "subtotal": subtotal,
-        "original_subtotal": original_subtotal,
+        "subtotal": subtotal_after_discount, # Subtotal AFTER applied discount
+        "original_subtotal": original_subtotal, # Subtotal BEFORE any discount
+        "coupon_discount": coupon_discount.quantize(Decimal('0.01')), # NEW: Explicit discount amount
         "gst_amount": gst_amount,
         "total_with_gst": total_with_gst
     }
+
 
 # --- Context processors for templates ---
 @app.context_processor
@@ -1524,7 +1530,7 @@ total_with_gst = 0
 def cart():
     conn = connect_to_db()
     cart_items = []
-    user_details = {'phone': ''}  # default if DB not available
+    user_details = {'phone': ''}
 
     if conn:
         try:
@@ -1580,7 +1586,6 @@ def cart():
         razorpay_key=RAZORPAY_KEY_ID
     )
 
-
 # --- Payment success route ---
 @app.route('/payment/success', methods=['POST'])
 @login_required
@@ -1603,6 +1608,7 @@ def payment_success():
         cur = conn.cursor(cursor_factory=RealDictCursor)
 
         # Fetch cart items
+        # FINAL FIX: Removed non-existent column reference. We rely on calculate_cart_totals to inject 'display_price'.
         cur.execute("""
             SELECT c.product_id, c.quantity, p.name, p.price, p.image_url
             FROM cart c
@@ -1613,30 +1619,59 @@ def payment_success():
         if not cart_items:
             return jsonify({"status": "error", "error": "Cart is empty"})
 
-        totals = calculate_cart_totals(cart_items)
+        # Calculate totals and inject 'display_price' into cart_items
+        totals = calculate_cart_totals(cart_items) 
+        
+        final_total = totals.get("total_with_gst")
+        if final_total is None:
+             raise Exception("Total calculation failed.")
+
 
         # Insert order
         cur.execute("""
             INSERT INTO orders (user_id, user_email, razorpay_order_id, razorpay_payment_id, total_amount, status, order_date)
             VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id
-        """, (current_user.id, current_user.email, order_id_from_razorpay, payment_id,
-              totals["total_with_gst"], 'Completed', datetime.now()))
-        new_order_id = cur.fetchone()['id']
+        """, (current_user.id, current_user.email, order_id_from_razorpay, payment_id, 
+              final_total, 'Completed', datetime.now())) 
+
+        # --- ROBUST FIX for Order ID retrieval (handles RealDictRow) ---
+        order_record = cur.fetchone()
+        new_order_id = None
+        
+        if order_record is not None:
+            # Convert RealDictRow to dict and safely get the ID
+            new_order_id = dict(order_record).get('id') 
+        
+        if not new_order_id:
+            raise Exception("Order insertion failed to return the ID.")
+        # --- END ROBUST FIX ---
+
 
         # Insert order items
         for item in cart_items:
+            # item['display_price'] is guaranteed to exist now, added by calculate_cart_totals()
+            price_to_save = item['display_price']
+            
             cur.execute("""
                 INSERT INTO order_items (order_id, product_id, product_name, quantity, price_at_purchase, image_url)
                 VALUES (%s, %s, %s, %s, %s, %s)
-            """, (new_order_id, item['id'], item['name'], item['quantity'], item['display_price'], item['image_url']))
+            """, (new_order_id, item['product_id'], item['name'], item['quantity'], price_to_save, item['image_url']))
 
         # Clear cart
         cur.execute("DELETE FROM cart WHERE user_id=%s", (current_user.id,))
         conn.commit()
 
-        # Send email
+        # --- Email Sending Logic ---
         sender = os.getenv("EMAIL_USER", "sri.chityala501@gmail.com")
         receiver = current_user.email
+        
+        # Prepare Discount line for email (using the new 'coupon_discount' key)
+        discount_amount = totals.get('coupon_discount', Decimal('0.00'))
+        discount_html = ""
+        if discount_amount > Decimal('0.00'):
+            discount_html = f"""
+            <h3 style="color: #d9534f; font-weight: 600;">Deal Discount Applied: -{discount_amount} INR</h3>
+            """
 
         msg = MIMEMultipart("alternative")
         msg["Subject"] = f"Your GSpaces Order #{new_order_id} Confirmation"
@@ -1657,10 +1692,10 @@ def payment_success():
 
         html_body = f"""
         <html>
-        <body>
+        <body style="font-family: Arial, sans-serif; color: #333;">
             <h2>Thank you for your order, {current_user.name}!</h2>
             <p>Your payment (<b>{payment_id}</b>) was successful. Here are your order details:</p>
-            <table border="1" cellspacing="0" cellpadding="6" style="border-collapse: collapse; width: 100%;">
+            <table border="1" cellspacing="0" cellpadding="10" style="border-collapse: collapse; width: 100%;">
                 <tr style="background-color:#f2f2f2;">
                     <th>Image</th>
                     <th>Product</th>
@@ -1670,10 +1705,15 @@ def payment_success():
                 </tr>
                 {items_html}
             </table>
-            <h3>Original Subtotal: {totals['original_subtotal']} INR</h3>
-            <h3>Discounted Subtotal: {totals['subtotal']} INR</h3>
-            <h3>GST (18%): {totals['gst_amount']} INR</h3>
-            <h2>Total: {totals['total_with_gst']} INR</h2>
+            
+            <div style="margin-top: 20px; border-top: 2px solid #eee; padding-top: 10px;">
+                <h3 style="margin: 5px 0;">Subtotal (Before Discount): {totals.get('original_subtotal', 0)} INR</h3>
+                {discount_html}
+                <h3 style="margin: 5px 0;">Subtotal (After Discount): {totals.get('subtotal', 0)} INR</h3>
+                <h3 style="margin: 5px 0;">GST (18%): {totals.get('gst_amount', 0)} INR</h3>
+                <h2 style="color: #28a745; margin: 10px 0;">Total Paid: {totals.get('total_with_gst', 0)} INR</h2>
+            </div>
+            
             <p>We will process your order shortly. You can track your order on your GSpaces account.</p>
             <br>
             <p>Best Regards,<br>Team GSpaces</p>
@@ -1683,7 +1723,7 @@ def payment_success():
         msg.attach(MIMEText(html_body, "html", "utf-8"))
 
         with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-            server.login(sender, os.getenv("EMAIL_PASS"))
+            server.login(sender, os.getenv("EMAIL_PASS")) 
             server.sendmail(sender, receiver, msg.as_string())
 
         return jsonify({"status": "success", "message": "Payment successful, email sent"})
@@ -1727,4 +1767,5 @@ if __name__ == '__main__':
         app.run(host='0.0.0.0', port=5000, debug=True)
     else:
         print("Failed to connect to the database. Exiting.")
+
 

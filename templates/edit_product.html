@@ -76,7 +76,7 @@
     <div class="mb-3">
       <label class="form-label">Category</label>
       <select name="category" class="form-select" required>
-        {% for cat in ['executive', 'minimalist', 'luxury', 'gaming', 'balcony', 'couple', 'ergonomic'] %}
+        {% for cat in ['Executive', 'Minimalist', 'Luxury', 'Greenary', 'Studio', 'Couple', 'Ergonomic'] %}
         <option value="{{ cat }}" {% if product.category == cat %}selected{% endif %}>{{ cat.capitalize() }}</option>
         {% endfor %}
       </select>

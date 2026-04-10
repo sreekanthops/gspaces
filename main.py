@@ -1268,7 +1268,9 @@ def send_order():
 
         with smtplib.SMTP("smtp.gmail.com", 587) as server:
             server.starttls()
-            server.login(os.getenv("EMAIL_USER"), os.getenv("EMAIL_PASS"))
+            # FIX: Use MAIL_USERNAME and MAIL_PASSWORD for consistency
+            server.login(os.getenv("MAIL_USERNAME", "sri.chityala501@gmail.com"),
+                        os.getenv("MAIL_PASSWORD", "zupd zixc vvzp kptk"))
             server.sendmail(msg["From"], [msg["To"]], msg.as_string())
 
         # ------------------ RESPONSE ------------------ #
@@ -1662,7 +1664,8 @@ def payment_success():
         conn.commit()
 
         # --- Email Sending Logic ---
-        sender = os.getenv("EMAIL_USER", "sri.chityala501@gmail.com")
+        # FIX: Use consistent environment variable names (MAIL_USERNAME and MAIL_PASSWORD)
+        sender = os.getenv("MAIL_USERNAME", "sri.chityala501@gmail.com")
         receiver = current_user.email
         
         # Prepare Discount line for email (using the new 'coupon_discount' key)
@@ -1723,7 +1726,8 @@ def payment_success():
         msg.attach(MIMEText(html_body, "html", "utf-8"))
 
         with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-            server.login(sender, os.getenv("EMAIL_PASS")) 
+            # FIX: Use MAIL_PASSWORD instead of EMAIL_PASS for consistency
+            server.login(sender, os.getenv("MAIL_PASSWORD", "zupd zixc vvzp kptk"))
             server.sendmail(sender, receiver, msg.as_string())
 
         return jsonify({"status": "success", "message": "Payment successful, email sent"})

@@ -263,6 +263,29 @@ def inr_format(value):
     except:
         return value
 
+def get_catalogue_files():
+    """Get list of files from the catalogue directory"""
+    catalogue_dir = os.path.join(os.path.dirname(__file__), 'catalogue')
+    files = []
+    try:
+        if os.path.exists(catalogue_dir):
+            for filename in os.listdir(catalogue_dir):
+                filepath = os.path.join(catalogue_dir, filename)
+                # Only include actual files, not directories
+                if os.path.isfile(filepath) and not filename.startswith('.'):
+                    # Create a user-friendly display name
+                    display_name = filename.rsplit('.', 1)[0]  # Remove extension
+                    display_name = display_name.replace('_', ' ').replace('-', ' ')
+                    files.append({
+                        'name': filename,
+                        'display_name': display_name
+                    })
+            # Sort files alphabetically by display name
+            files.sort(key=lambda x: x['display_name'])
+    except Exception as e:
+        print(f"Error reading catalogue directory: {e}")
+    return files
+
 def upsert_user_from_google(google_sub, name, email):
     """Insert user if missing; return (id, name, email)."""
     conn = connect_to_db()
@@ -588,12 +611,28 @@ def index():
     else:
         flash("Error connecting to database to fetch products.", "error")
 
+    # Get catalogue files
+    catalogue_files = get_catalogue_files()
+
     # current_user is now available via Flask-Login
     user_display = current_user.name if current_user.is_authenticated else None
     return render_template('index.html',
                            products=product_list,
                            user=user_display,
+                           catalogue_files=catalogue_files,
                            is_admin=current_user.is_authenticated and current_user.is_admin)
+
+# --- CATALOGUE DOWNLOAD ROUTE ---
+@app.route('/download_catalogue/<filename>')
+def download_catalogue(filename):
+    """Serve catalogue files for download"""
+    try:
+        catalogue_dir = os.path.join(os.path.dirname(__file__), 'catalogue')
+        return send_from_directory(catalogue_dir, filename, as_attachment=True)
+    except Exception as e:
+        print(f"Error downloading catalogue file: {e}")
+        flash("File not found.", "error")
+        return redirect(url_for('index'))
 
 # --- USER PROFILE ROUTES ---
 @app.route('/profile')

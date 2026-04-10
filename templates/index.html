@@ -630,6 +630,27 @@ Services Section END -->
         <li data-filter=".filter-couple">Couple</li>
         <li data-filter=".filter-studio">Studio</li>
       </ul><!-- End Product Filters -->
+
+      <!-- Catalogue Download Dropdown -->
+      <div class="text-end mb-3" data-aos="fade-up" data-aos-delay="150">
+        {% if catalogue_files and catalogue_files|length > 0 %}
+        <div class="dropdown d-inline-block">
+          <button class="btn btn-primary dropdown-toggle" type="button" id="catalogueDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-file-earmark-pdf"></i> Download Catalogue
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="catalogueDropdown">
+            {% for file in catalogue_files %}
+            <li>
+              <a class="dropdown-item" href="{{ url_for('download_catalogue', filename=file.name) }}" download>
+                <i class="bi bi-download"></i> {{ file.display_name }}
+              </a>
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% endif %}
+      </div>
+      <!-- End Catalogue Download -->
 <div class="row gy-4 isotope-container" data-aos="fade-up" data-aos-delay="200">
 
   {% for product in products %}
@@ -744,6 +765,45 @@ Services Section END -->
 
 .hover-animate:hover {
   box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+}
+
+/* Catalogue Dropdown Styles */
+#catalogueDropdown {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  padding: 10px 20px;
+  font-weight: 600;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  transition: all 0.3s ease;
+}
+
+#catalogueDropdown:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+}
+
+.dropdown-menu {
+  border: none;
+  box-shadow: 0 5px 25px rgba(0,0,0,0.15);
+  border-radius: 10px;
+  padding: 10px 0;
+  min-width: 250px;
+}
+
+.dropdown-item {
+  padding: 12px 20px;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.dropdown-item:hover {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  transform: translateX(5px);
+}
+
+.dropdown-item i {
+  margin-right: 8px;
 }
 
 </style>

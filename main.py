@@ -87,6 +87,9 @@ DB_PASSWORD = os.getenv("DB_PASSWORD", "gspaces2025")
 DB_HOST = os.getenv("DB_HOST", "localhost")
 DB_PORT = os.getenv("DB_PORT", "5432")
 
+# Application Base URL (for email links)
+APP_BASE_URL = os.getenv("APP_BASE_URL", "http://13.51.205.239")
+
 
 
 # File Uploads Configuration

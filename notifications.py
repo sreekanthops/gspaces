@@ -13,6 +13,7 @@ from datetime import datetime
 # Configuration from environment variables
 ADMIN_EMAIL = os.getenv('ADMIN_EMAIL', 'sri.chityala501@gmail.com')
 ADMIN_PHONE = os.getenv('ADMIN_PHONE', '+917075077384')  # WhatsApp number with country code
+APP_BASE_URL = os.getenv('APP_BASE_URL', 'http://13.51.205.239')  # Base URL for links in emails
 
 # Email Configuration (using existing MAIL_ variables from main.py)
 SMTP_SERVER = os.getenv('MAIL_SERVER', 'smtp.gmail.com')
@@ -173,7 +174,7 @@ def notify_new_order(order_id, customer_name, customer_email, total_amount, item
             </div>
             
             <p style="margin-top: 20px;">
-                <a href="https://gspaces.in/admin/orders/view/{order_id}" 
+                <a href="{APP_BASE_URL}/admin/orders/view/{order_id}"
                    style="display: inline-block; padding: 12px 24px; background-color: #3498db; color: white; 
                           text-decoration: none; border-radius: 5px; font-weight: bold;">
                     View Order Details
@@ -198,7 +199,7 @@ def notify_new_order(order_id, customer_name, customer_email, total_amount, item
     Total Amount: ₹{total_amount}
     Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
     
-    View order: https://gspaces.in/admin/orders/view/{order_id}
+    View order: {APP_BASE_URL}/admin/orders/view/{order_id}
     """
     
     # Send email
@@ -212,7 +213,7 @@ def notify_new_order(order_id, customer_name, customer_email, total_amount, item
 📦 Items: {items_count}
 💰 Amount: ₹{total_amount}
 
-View: https://gspaces.in/admin/orders/view/{order_id}"""
+View: {APP_BASE_URL}/admin/orders/view/{order_id}"""
     
     if ADMIN_PHONE:
         send_whatsapp_notification(ADMIN_PHONE, whatsapp_message)
@@ -384,7 +385,7 @@ def notify_order_status_update(order_id, customer_name, customer_email, customer
                 
                 <!-- Action Buttons -->
                 <div style="text-align: center; margin: 30px 0;">
-                    <a href="https://gspaces.in/order_details/{order_id}"
+                    <a href="{APP_BASE_URL}/order_details/{order_id}"
                        class="button"
                        style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
                               color: white; text-decoration: none; border-radius: 25px; font-weight: 600; font-size: 16px;
@@ -433,7 +434,7 @@ def notify_order_status_update(order_id, customer_name, customer_email, customer
     Your order #{order_id} status has been updated to: {status_label}
     Updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
     
-    Track your order: https://gspaces.in/order_details/{order_id}
+    Track your order: {APP_BASE_URL}/order_details/{order_id}
     
     Thank you for shopping with GSpaces!
     """
@@ -448,7 +449,7 @@ def notify_order_status_update(order_id, customer_name, customer_email, customer
 Order #{order_id}
 Status: {status_label}
 
-Track: https://gspaces.in/order_details/{order_id}
+Track: {APP_BASE_URL}/order_details/{order_id}
 
 Thank you for shopping with GSpaces! 🛍️"""
         
@@ -518,7 +519,7 @@ def send_custom_email_to_customer(customer_email, customer_name, order_id, subje
                 
                 <!-- Order Link -->
                 <div style="text-align: center; margin: 30px 0;">
-                    <a href="https://gspaces.in/order_details/{order_id}"
+                    <a href="{APP_BASE_URL}/order_details/{order_id}"
                        style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
                               color: white; text-decoration: none; border-radius: 25px; font-weight: 600; font-size: 16px;
                               box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);">
@@ -562,7 +563,7 @@ def send_custom_email_to_customer(customer_email, customer_name, order_id, subje
     
     {message}
     
-    View your order: https://gspaces.in/order_details/{order_id}
+    View your order: {APP_BASE_URL}/order_details/{order_id}
     
     For assistance, contact us at support@gspaces.in or +91 707 507 7384
     

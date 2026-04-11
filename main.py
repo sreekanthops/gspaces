@@ -1829,6 +1829,85 @@ def toggle_coupon(coupon_id):
     
     return redirect(url_for('admin_coupons'))
 
+@app.route('/admin/coupons/edit/<int:coupon_id>', methods=['POST'])
+@login_required
+def edit_coupon(coupon_id):
+    """Edit an existing coupon"""
+    if current_user.email not in ADMIN_EMAILS:
+        return jsonify({"status": "error", "message": "Access denied"}), 403
+    
+    try:
+        code = request.form.get('code', '').strip().upper()
+        discount_type = request.form.get('discount_type')
+        discount_value = Decimal(request.form.get('discount_value', 0))
+        description = request.form.get('description', '').strip()
+        min_order_amount = Decimal(request.form.get('min_order_amount', 0))
+        max_discount_amount = request.form.get('max_discount_amount')
+        usage_limit = request.form.get('usage_limit')
+        valid_until = request.form.get('valid_until')
+        
+        if not code or not discount_type or discount_value <= 0:
+            flash("Invalid coupon data. Code, type, and value are required.", "danger")
+            return redirect(url_for('admin_coupons'))
+        
+        conn = connect_to_db()
+        if conn:
+            try:
+                cur = conn.cursor()
+                cur.execute("""
+                    UPDATE coupons 
+                    SET code = %s, discount_type = %s, discount_value = %s, 
+                        description = %s, min_order_amount = %s, 
+                        max_discount_amount = %s, usage_limit = %s, valid_until = %s
+                    WHERE id = %s
+                """, (code, discount_type, discount_value, description, min_order_amount,
+                      max_discount_amount if max_discount_amount else None,
+                      usage_limit if usage_limit else None,
+                      valid_until if valid_until else None,
+                      coupon_id))
+                conn.commit()
+                flash(f"Coupon '{code}' updated successfully!", "success")
+            except Exception as e:
+                print(f"Error updating coupon: {e}")
+                flash(f"Error updating coupon: {str(e)}", "danger")
+            finally:
+                conn.close()
+    except Exception as e:
+        flash(f"Error: {str(e)}", "danger")
+    
+    return redirect(url_for('admin_coupons'))
+
+@app.route('/admin/coupons/get/<int:coupon_id>')
+@login_required
+def get_coupon(coupon_id):
+    """Get coupon details for editing"""
+    if current_user.email not in ADMIN_EMAILS:
+        return jsonify({"status": "error", "message": "Access denied"}), 403
+    
+    conn = connect_to_db()
+    if conn:
+        try:
+            cur = conn.cursor(cursor_factory=RealDictCursor)
+            cur.execute("""
+                SELECT id, code, discount_type, discount_value, description,
+                       min_order_amount, max_discount_amount, usage_limit, 
+                       valid_until
+                FROM coupons WHERE id = %s
+            """, (coupon_id,))
+            coupon = cur.fetchone()
+            if coupon:
+                # Convert date to string for JSON
+                if coupon['valid_until']:
+                    coupon['valid_until'] = coupon['valid_until'].strftime('%Y-%m-%d')
+                return jsonify({"status": "success", "coupon": dict(coupon)})
+            return jsonify({"status": "error", "message": "Coupon not found"})
+        except Exception as e:
+            print(f"Error fetching coupon: {e}")
+            return jsonify({"status": "error", "message": str(e)})
+        finally:
+            conn.close()
+    return jsonify({"status": "error", "message": "Database connection error"})
+
 @app.route('/admin/coupons/delete/<int:coupon_id>', methods=['POST'])
 @login_required
 def delete_coupon(coupon_id):

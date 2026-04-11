@@ -218,10 +218,10 @@
                                         <small class="text-muted">{{ order.user_email }}</small>
                                     </td>
                                     <td>
-                                        {% if order.items %}
-                                            {{ order.items|length }} item(s)
+                                        {% if order.items_count %}
+                                            {{ order.items_count }} item(s)
                                         {% else %}
-                                            - item(s)
+                                            0 item(s)
                                         {% endif %}
                                     </td>
                                     <td><strong>₹{{ order.total_amount }}</strong></td>

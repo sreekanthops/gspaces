@@ -1930,7 +1930,7 @@ def admin_orders():
             
             # Build query based on filters
             query = """
-                SELECT 
+                SELECT
                     o.id,
                     o.user_id,
                     o.user_email,
@@ -1944,13 +1944,7 @@ def admin_orders():
                     o.shipping_phone,
                     o.coupon_code,
                     o.coupon_discount,
-                    json_agg(
-                        json_build_object(
-                            'product_name', oi.product_name,
-                            'quantity', oi.quantity,
-                            'price', oi.price_at_purchase
-                        )
-                    ) AS items
+                    COUNT(oi.id) AS items_count
                 FROM orders o
                 LEFT JOIN order_items oi ON oi.order_id = o.id
                 WHERE 1=1

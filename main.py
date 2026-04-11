@@ -88,8 +88,11 @@ DB_PORT = os.getenv("DB_PORT", "5432")
 
 # File Uploads Configuration
 UPLOAD_FOLDER = os.path.join('static', 'img', 'Products')
+PROFILE_UPLOAD_FOLDER = os.path.join('static', 'img', 'profiles')
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+os.makedirs(PROFILE_UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['PROFILE_UPLOAD_FOLDER'] = PROFILE_UPLOAD_FOLDER
 
 # Razorpay Configuration
 RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID", "rzp_live_R6wg6buSedSnTV") # Test Key ID
@@ -176,6 +179,16 @@ def create_users_table(conn):
                 phone VARCHAR(50)
             );
         """)
+        cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_photo VARCHAR(255)")
+        cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS address_line_2 VARCHAR(255)")
+        cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS city VARCHAR(120)")
+        cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS state VARCHAR(120)")
+        cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS pincode VARCHAR(20)")
+        cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS country VARCHAR(120)")
+        cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS landmark VARCHAR(255)")
+        cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS alternate_phone VARCHAR(50)")
+        cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS company_name VARCHAR(255)")
+        cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS gstin VARCHAR(30)")
         conn.commit()
     except Error as e:
         print(f"Error creating users table: {e}")
@@ -232,6 +245,21 @@ def create_orders_table(conn):
                 order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
         """)
+        cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS status_code VARCHAR(50)")
+        cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS status_updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+        cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_name VARCHAR(255)")
+        cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_phone VARCHAR(50)")
+        cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_address_line_1 VARCHAR(255)")
+        cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_address_line_2 VARCHAR(255)")
+        cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_city VARCHAR(120)")
+        cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_state VARCHAR(120)")
+        cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_pincode VARCHAR(20)")
+        cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_country VARCHAR(120)")
+        cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS delivery_instructions TEXT")
+        cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS company_name VARCHAR(255)")
+        cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS gstin VARCHAR(30)")
+        cur.execute("UPDATE orders SET status_code = COALESCE(status_code, LOWER(REPLACE(status, ' ', '_')))")
+        cur.execute("UPDATE orders SET status_updated_at = COALESCE(status_updated_at, order_date)")
         conn.commit()
     except Error as e:
         print(f"Error creating orders table: {e}")
@@ -250,6 +278,7 @@ def create_order_items_table(conn):
                 image_url VARCHAR(255)
             );
         """)
+        cur.execute("ALTER TABLE order_items ADD COLUMN IF NOT EXISTS product_link VARCHAR(255)")
         conn.commit()
     except Error as e:
         print(f"Error creating order_items table: {e}")
@@ -634,86 +663,164 @@ def download_catalogue(filename):
         flash("File not found.", "error")
         return redirect(url_for('index'))
 
+ORDER_STATUS_LABELS = {
+    'placed': 'Order placed',
+    'confirmed': 'Confirmed',
+    'packed': 'Packed',
+    'shipped': 'Shipped',
+    'out_for_delivery': 'Out for delivery',
+    'delivered': 'Delivered',
+    'cancelled': 'Cancelled',
+}
+
+ORDER_STATUS_FLOW = ['placed', 'confirmed', 'packed', 'shipped', 'out_for_delivery', 'delivered']
+
+
+def normalize_order_status(status_code, legacy_status=None):
+    normalized = (status_code or '').strip().lower().replace(' ', '_')
+    if normalized in ORDER_STATUS_LABELS:
+        return normalized
+
+    legacy = (legacy_status or '').strip().lower()
+    legacy_map = {
+        'completed': 'confirmed',
+        'pending': 'placed',
+        'shipped': 'shipped',
+        'delivered': 'delivered',
+        'cancelled': 'cancelled'
+    }
+    return legacy_map.get(legacy, 'placed')
+
+
+def build_tracking_timeline(status_code):
+    if status_code == 'cancelled':
+        return [{
+            'label': ORDER_STATUS_LABELS['cancelled'],
+            'state': 'current'
+        }]
+
+    current_index = ORDER_STATUS_FLOW.index(status_code) if status_code in ORDER_STATUS_FLOW else 0
+    timeline = []
+    for index, code in enumerate(ORDER_STATUS_FLOW):
+        state = 'upcoming'
+        if index < current_index:
+            state = 'complete'
+        elif index == current_index:
+            state = 'current'
+        timeline.append({
+            'code': code,
+            'label': ORDER_STATUS_LABELS[code],
+            'state': state
+        })
+    return timeline
+
+
 # --- USER PROFILE ROUTES ---
 @app.route('/profile')
 @login_required
 def profile():
-    # Obtain current user's ID and email via Flask-Login
     user_email = current_user.email
     user_id = current_user.id
-    # Default user details in case DB fields are null
     user_details = {
         'name': current_user.name,
         'email': user_email,
-        'address': 'Not provided',
-        'phone': 'Not provided'
+        'address': '',
+        'phone': '',
+        'profile_photo': '',
+        'address_line_2': '',
+        'city': '',
+        'state': '',
+        'pincode': '',
+        'country': 'India',
+        'landmark': '',
+        'alternate_phone': '',
+        'company_name': '',
+        'gstin': ''
     }
     user_orders = []
     conn = connect_to_db()
     if conn:
         try:
             cursor = conn.cursor(cursor_factory=RealDictCursor)
-            # 1. Fetch user details
             cursor.execute(
-                "SELECT name, email, address, phone FROM users WHERE id = %s",
+                """
+                SELECT
+                    name, email, address, phone, profile_photo, address_line_2,
+                    city, state, pincode, country, landmark,
+                    alternate_phone, company_name, gstin
+                FROM users
+                WHERE id = %s
+                """,
                 (user_id,)
             )
             rec = cursor.fetchone()
             if rec:
-                user_details['name']    = rec['name']
-                user_details['email']   = rec['email']
-                user_details['address'] = rec['address'] or 'Not provided'
-                user_details['phone']   = rec['phone']   or 'Not provided'
-            # 2. Fetch orders with JSON aggregation of items, using a new alias 'order_products'
+                user_details.update({
+                    'name': rec.get('name') or current_user.name,
+                    'email': rec.get('email') or user_email,
+                    'address': rec.get('address') or '',
+                    'phone': rec.get('phone') or '',
+                    'profile_photo': rec.get('profile_photo') or '',
+                    'address_line_2': rec.get('address_line_2') or '',
+                    'city': rec.get('city') or '',
+                    'state': rec.get('state') or '',
+                    'pincode': rec.get('pincode') or '',
+                    'country': rec.get('country') or 'India',
+                    'landmark': rec.get('landmark') or '',
+                    'alternate_phone': rec.get('alternate_phone') or '',
+                    'company_name': rec.get('company_name') or '',
+                    'gstin': rec.get('gstin') or ''
+                })
+
             cursor.execute("""
                 SELECT
                     o.id,
                     o.razorpay_order_id,
                     o.total_amount,
                     o.status,
+                    o.status_code,
+                    o.status_updated_at,
                     o.order_date,
                     json_agg(
                         json_build_object(
-                            'product_id',      oi.product_id,
-                            'product_name',    oi.product_name,
-                            'quantity',        oi.quantity,
+                            'product_id', oi.product_id,
+                            'product_name', oi.product_name,
+                            'quantity', oi.quantity,
                             'price_at_purchase', oi.price_at_purchase,
-                            'image_url',       oi.image_url
+                            'image_url', oi.image_url,
+                            'product_link', oi.product_link
                         )
-                    ) AS order_products -- CHANGED ALIAS HERE from 'items' to 'order_products'
+                        ORDER BY oi.id
+                    ) AS order_products
                 FROM orders o
                 JOIN order_items oi ON o.id = oi.order_id
                 WHERE o.user_id = %s
                 GROUP BY
-                    o.id, o.razorpay_order_id, o.total_amount, o.status, o.order_date
+                    o.id, o.razorpay_order_id, o.total_amount, o.status, o.status_code, o.status_updated_at, o.order_date
                 ORDER BY o.order_date DESC;
             """, (user_id,))
             orders_data = cursor.fetchall()
-            # 3. Format each order’s date and collect into list
             for order_row in orders_data:
                 order_row['order_date'] = order_row['order_date'].strftime('%Y-%m-%d %H:%M:%S')
-                
-                # IMPORTANT: Take the data from 'order_products' and assign it to 'items'
-                # This ensures the template still uses 'order.items' as expected.
-                if 'order_products' in order_row:
-                    order_row['items'] = order_row['order_products']
-                else:
-                    # Fallback in case 'order_products' is missing (shouldn't happen with correct SQL)
-                    order_row['items'] = [] 
-                    print(f"Warning: 'order_products' key missing in order_row: {order_row}")
+                order_status_code = normalize_order_status(order_row.get('status_code'), order_row.get('status'))
+                order_row['status_code'] = order_status_code
+                order_row['status_label'] = ORDER_STATUS_LABELS.get(order_status_code, 'Order placed')
+                order_row['tracking_timeline'] = build_tracking_timeline(order_status_code)
+                order_row['items'] = order_row.get('order_products') or []
                 user_orders.append(order_row)
         except Exception as e:
             print(f"Error fetching profile data or orders: {e}")
-            flash("Error loading profile data or orders.", "error")
+            flash("We couldn't load your profile details right now.", "danger")
         finally:
-            if conn: # Ensure conn exists before closing
+            if conn:
                 conn.close()
-    # Render the profile page with gathered data
+
     return render_template(
         'profile.html',
         user=user_details['name'],
         user_details=user_details,
-        user_orders=user_orders
+        user_orders=user_orders,
+        order_status_labels=ORDER_STATUS_LABELS
     )
 def get_next_product_id():
     # Example: Generate sequential ID or use DB auto-increment
@@ -733,32 +840,79 @@ def save_sub_image_record(product_id, filename, description):
 @login_required
 def update_profile():
     user_id = current_user.id
-    name = request.form.get('name')
-    phone = request.form.get('phone')
-    address = request.form.get('address')
+    name = (request.form.get('name') or '').strip()
+    phone = (request.form.get('phone') or '').strip()
+    address = (request.form.get('address') or '').strip()
+    address_line_2 = (request.form.get('address_line_2') or '').strip()
+    city = (request.form.get('city') or '').strip()
+    state = (request.form.get('state') or '').strip()
+    pincode = (request.form.get('pincode') or '').strip()
+    country = (request.form.get('country') or 'India').strip()
+    landmark = (request.form.get('landmark') or '').strip()
+    alternate_phone = (request.form.get('alternate_phone') or '').strip()
+    company_name = (request.form.get('company_name') or '').strip()
+    gstin = (request.form.get('gstin') or '').strip()
+    profile_photo = request.files.get('profile_photo')
+
+    if not name or not phone or not address or not city or not state or not pincode:
+        flash("Please complete all required profile fields before saving.", "warning")
+        return redirect(url_for('profile', _anchor='personal-details'))
 
     conn = connect_to_db()
     if not conn:
-        flash("Database connection failed.", "error")
-        return redirect(url_for('profile'))
+        flash("We couldn't save your profile right now. Please try again.", "danger")
+        return redirect(url_for('profile', _anchor='personal-details'))
 
     try:
-        cur = conn.cursor()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute("SELECT profile_photo FROM users WHERE id=%s", (user_id,))
+        existing_user = cur.fetchone()
+        profile_photo_path = existing_user.get('profile_photo') if existing_user else None
+
+        if profile_photo and profile_photo.filename:
+            filename = secure_filename(profile_photo.filename)
+            ext = os.path.splitext(filename)[1].lower()
+            allowed_exts = {'.png', '.jpg', '.jpeg', '.webp'}
+            if ext not in allowed_exts:
+                flash("Profile photo must be a PNG, JPG, JPEG, or WEBP image.", "warning")
+                return redirect(url_for('profile', _anchor='personal-details'))
+
+            profile_filename = f"user_{user_id}_{int(datetime.utcnow().timestamp())}{ext}"
+            saved_path = os.path.join(app.config['PROFILE_UPLOAD_FOLDER'], profile_filename)
+            profile_photo.save(saved_path)
+            profile_photo_path = f"img/profiles/{profile_filename}"
+
         cur.execute("""
             UPDATE users
-            SET name=%s, phone=%s, address=%s
+            SET
+                name=%s,
+                phone=%s,
+                address=%s,
+                profile_photo=%s,
+                address_line_2=%s,
+                city=%s,
+                state=%s,
+                pincode=%s,
+                country=%s,
+                landmark=%s,
+                alternate_phone=%s,
+                company_name=%s,
+                gstin=%s
             WHERE id=%s
-        """, (name, phone, address, user_id))
+        """, (
+            name, phone, address, profile_photo_path, address_line_2, city, state,
+            pincode, country, landmark, alternate_phone, company_name, gstin, user_id
+        ))
         conn.commit()
         cur.close()
         flash("Profile updated successfully.", "success")
     except Exception as e:
         print(f"Error updating profile: {e}")
-        flash("Failed to update profile.", "error")
+        flash("We couldn't update your profile. Please try again.", "danger")
     finally:
         conn.close()
 
-    return redirect(url_for('profile'))
+    return redirect(url_for('profile', _anchor='personal-details'))
 
 @app.route('/update_profile_phone', methods=['POST'])
 @login_required
@@ -1270,8 +1424,11 @@ def add_to_cart(product_id):
         cur.close()
         conn.close()
     except Exception as e:
-        flash(f"Error adding product to cart: {str(e)}")
+        print(f"Error adding product to cart: {e}")
+        flash("We couldn't add that item to your cart. Please try again.", "danger")
+        return redirect(url_for("product_detail", product_id=product_id))
 
+    flash("Added to cart.", "success")
     return redirect(url_for("cart"))
 
 # ------------------ PAYMENT ROUTE ------------------ #
@@ -1331,7 +1488,7 @@ def remove_from_cart(product_id):
             flash("Item removed from cart.", "info")
         except Exception as e:
             print(f"Error removing from cart: {e}")
-            flash("Error removing product from cart.", "error")
+            flash("We couldn't remove that item from your cart.", "danger")
         finally:
             conn.close()
     return redirect(url_for('cart'))
@@ -1361,7 +1518,7 @@ def update_quantity(product_id, action):
             conn.commit()
         except Exception as e:
             print(f"Error updating quantity: {e}")
-            flash("Error updating quantity.", "error")
+            flash("We couldn't update your cart right now.", "danger")
         finally:
             conn.close()
     return redirect(url_for('cart'))
@@ -1593,7 +1750,7 @@ def cart():
 
         except Exception as e:
             print(f"Error fetching cart: {e}")
-            flash("Error loading cart.", "error")
+            flash("We couldn't load your cart right now.", "danger")
         finally:
             conn.close()
 
@@ -1612,7 +1769,7 @@ def cart():
             razorpay_order_id = order['id']
         except Exception as e:
             print(f"Error creating Razorpay order: {e}")
-            flash("Error processing payment.", "error")
+            flash("We couldn't initialize payment right now. Please try again.", "danger")
 
     return render_template(
         "cart.html",
@@ -1638,7 +1795,6 @@ def payment_success():
         order_id_from_razorpay = data.get('razorpay_order_id')
         signature = data.get('razorpay_signature')
 
-        # Verify Razorpay signature
         razorpay_client.utility.verify_payment_signature({
             'razorpay_order_id': order_id_from_razorpay,
             'razorpay_payment_id': payment_id,
@@ -1648,128 +1804,224 @@ def payment_success():
         conn = connect_to_db()
         cur = conn.cursor(cursor_factory=RealDictCursor)
 
-        # Fetch cart items
-        # FINAL FIX: Removed non-existent column reference. We rely on calculate_cart_totals to inject 'display_price'.
         cur.execute("""
-            SELECT c.product_id, c.quantity, p.name, p.price, p.image_url
+            SELECT
+                c.product_id,
+                c.quantity,
+                p.name,
+                p.price,
+                p.image_url
             FROM cart c
             JOIN products p ON c.product_id = p.id
             WHERE c.user_id = %s
         """, (current_user.id,))
         cart_items = cur.fetchall()
         if not cart_items:
-            return jsonify({"status": "error", "error": "Cart is empty"})
+            return jsonify({"status": "error", "error": "Your cart is empty."})
 
-        # Calculate totals and inject 'display_price' into cart_items
-        totals = calculate_cart_totals(cart_items) 
-        
+        totals = calculate_cart_totals(cart_items)
         final_total = totals.get("total_with_gst")
         if final_total is None:
-             raise Exception("Total calculation failed.")
+            raise Exception("Total calculation failed.")
 
-
-        # Insert order
         cur.execute("""
-            INSERT INTO orders (user_id, user_email, razorpay_order_id, razorpay_payment_id, total_amount, status, order_date)
-            VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id
-        """, (current_user.id, current_user.email, order_id_from_razorpay, payment_id, 
-              final_total, 'Completed', datetime.now())) 
+            SELECT
+                name, email, phone, address, address_line_2,
+                city, state, pincode, country, landmark,
+                company_name, gstin
+            FROM users
+            WHERE id = %s
+        """, (current_user.id,))
+        user_profile = cur.fetchone() or {}
 
-        # --- ROBUST FIX for Order ID retrieval (handles RealDictRow) ---
+        shipping_name = user_profile.get('name') or current_user.name
+        shipping_phone = user_profile.get('phone') or ''
+        shipping_address_line_1 = user_profile.get('address') or ''
+        shipping_address_line_2 = user_profile.get('address_line_2') or ''
+        shipping_city = user_profile.get('city') or ''
+        shipping_state = user_profile.get('state') or ''
+        shipping_pincode = user_profile.get('pincode') or ''
+        shipping_country = user_profile.get('country') or 'India'
+        delivery_instructions = user_profile.get('landmark') or ''
+        company_name = user_profile.get('company_name') or ''
+        gstin = user_profile.get('gstin') or ''
+
+        cur.execute("""
+            INSERT INTO orders (
+                user_id, user_email, razorpay_order_id, razorpay_payment_id,
+                total_amount, status, status_code, status_updated_at, order_date,
+                shipping_name, shipping_phone, shipping_address_line_1, shipping_address_line_2,
+                shipping_city, shipping_state, shipping_pincode, shipping_country,
+                delivery_instructions, company_name, gstin
+            )
+            VALUES (
+                %s, %s, %s, %s,
+                %s, %s, %s, %s, %s,
+                %s, %s, %s, %s,
+                %s, %s, %s, %s,
+                %s, %s, %s
+            ) RETURNING id
+        """, (
+            current_user.id, current_user.email, order_id_from_razorpay, payment_id,
+            final_total, 'Confirmed', 'confirmed', datetime.now(), datetime.now(),
+            shipping_name, shipping_phone, shipping_address_line_1, shipping_address_line_2,
+            shipping_city, shipping_state, shipping_pincode, shipping_country,
+            delivery_instructions, company_name, gstin
+        ))
+
         order_record = cur.fetchone()
-        new_order_id = None
-        
-        if order_record is not None:
-            # Convert RealDictRow to dict and safely get the ID
-            new_order_id = dict(order_record).get('id') 
-        
+        new_order_id = dict(order_record).get('id') if order_record else None
         if not new_order_id:
             raise Exception("Order insertion failed to return the ID.")
-        # --- END ROBUST FIX ---
 
-
-        # Insert order items
         for item in cart_items:
-            # item['display_price'] is guaranteed to exist now, added by calculate_cart_totals()
             price_to_save = item['display_price']
-            
-            cur.execute("""
-                INSERT INTO order_items (order_id, product_id, product_name, quantity, price_at_purchase, image_url)
-                VALUES (%s, %s, %s, %s, %s, %s)
-            """, (new_order_id, item['product_id'], item['name'], item['quantity'], price_to_save, item['image_url']))
+            product_link = url_for('product_detail', product_id=item['product_id'])
 
-        # Clear cart
+            cur.execute("""
+                INSERT INTO order_items (
+                    order_id, product_id, product_name, quantity,
+                    price_at_purchase, image_url, product_link
+                )
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+            """, (
+                new_order_id, item['product_id'], item['name'],
+                item['quantity'], price_to_save, item['image_url'], product_link
+            ))
+
         cur.execute("DELETE FROM cart WHERE user_id=%s", (current_user.id,))
         conn.commit()
 
-        # --- Email Sending Logic ---
-        # FIX: Use consistent environment variable names (MAIL_USERNAME and MAIL_PASSWORD)
         sender = os.getenv("MAIL_USERNAME", "sri.chityala501@gmail.com")
         receiver = current_user.email
-        
-        # Prepare Discount line for email (using the new 'coupon_discount' key)
         discount_amount = totals.get('coupon_discount', Decimal('0.00'))
-        discount_html = ""
-        if discount_amount > Decimal('0.00'):
-            discount_html = f"""
-            <h3 style="color: #d9534f; font-weight: 600;">Deal Discount Applied: -{discount_amount} INR</h3>
-            """
-
-        msg = MIMEMultipart("alternative")
-        msg["Subject"] = f"Your GSpaces Order #{new_order_id} Confirmation"
-        msg["From"] = sender
-        msg["To"] = receiver
+        order_status_label = ORDER_STATUS_LABELS['confirmed']
 
         items_html = "".join([
             f"""
             <tr>
-                <td><img src='{url_for('static', filename=item['image_url'], _external=True)}' width='50'></td>
-                <td>{item['name']}</td>
-                <td>{item['quantity']}</td>
-                <td>{item['display_price']} INR</td>
-                <td>{item['display_price'] * item['quantity']} INR</td>
+                <td style='padding:12px;border-bottom:1px solid #e5e7eb;'>
+                    <img src='{url_for('static', filename=item['image_url'], _external=True)}' width='56' style='border-radius:8px;object-fit:cover;'>
+                </td>
+                <td style='padding:12px;border-bottom:1px solid #e5e7eb;'>
+                    <a href='{url_for('product_detail', product_id=item['product_id'], _external=True)}' style='color:#111827;text-decoration:none;font-weight:600;'>
+                        {item['name']}
+                    </a>
+                </td>
+                <td style='padding:12px;border-bottom:1px solid #e5e7eb;'>{item['quantity']}</td>
+                <td style='padding:12px;border-bottom:1px solid #e5e7eb;'>INR {item['display_price']}</td>
+                <td style='padding:12px;border-bottom:1px solid #e5e7eb;'>INR {item['display_price'] * item['quantity']}</td>
             </tr>
             """ for item in cart_items
         ])
 
+        discount_row = ""
+        if discount_amount > Decimal('0.00'):
+            discount_row = f"""
+            <tr>
+                <td style="padding:8px 0;color:#b91c1c;">Deal discount</td>
+                <td style="padding:8px 0;text-align:right;color:#b91c1c;">- INR {discount_amount}</td>
+            </tr>
+            """
+
+        shipping_lines = [
+            shipping_name,
+            shipping_address_line_1,
+            shipping_address_line_2,
+            f"{shipping_city}, {shipping_state} - {shipping_pincode}" if shipping_city or shipping_state or shipping_pincode else "",
+            shipping_country,
+            f"Phone: {shipping_phone}" if shipping_phone else "",
+        ]
+        shipping_html = "<br>".join([line for line in shipping_lines if line])
+
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = f"Order Confirmed - Invoice for Order #{new_order_id}"
+        msg["From"] = sender
+        msg["To"] = receiver
+
         html_body = f"""
         <html>
-        <body style="font-family: Arial, sans-serif; color: #333;">
-            <h2>Thank you for your order, {current_user.name}!</h2>
-            <p>Your payment (<b>{payment_id}</b>) was successful. Here are your order details:</p>
-            <table border="1" cellspacing="0" cellpadding="10" style="border-collapse: collapse; width: 100%;">
-                <tr style="background-color:#f2f2f2;">
-                    <th>Image</th>
-                    <th>Product</th>
-                    <th>Qty</th>
-                    <th>Price</th>
-                    <th>Subtotal</th>
-                </tr>
-                {items_html}
-            </table>
-            
-            <div style="margin-top: 20px; border-top: 2px solid #eee; padding-top: 10px;">
-                <h3 style="margin: 5px 0;">Subtotal (Before Discount): {totals.get('original_subtotal', 0)} INR</h3>
-                {discount_html}
-                <h3 style="margin: 5px 0;">Subtotal (After Discount): {totals.get('subtotal', 0)} INR</h3>
-                <h3 style="margin: 5px 0;">GST (18%): {totals.get('gst_amount', 0)} INR</h3>
-                <h2 style="color: #28a745; margin: 10px 0;">Total Paid: {totals.get('total_with_gst', 0)} INR</h2>
+        <body style="margin:0;padding:0;background-color:#f5f5f5;font-family:Arial,sans-serif;color:#111827;">
+            <div style="max-width:760px;margin:0 auto;padding:24px;">
+                <div style="background:#111827;color:#fff;padding:24px 28px;border-radius:16px 16px 0 0;">
+                    <h1 style="margin:0;font-size:28px;">GSpaces Invoice / Order Summary</h1>
+                    <p style="margin:8px 0 0;color:#d1d5db;">Order #{new_order_id} · Payment ID {payment_id}</p>
+                </div>
+                <div style="background:#ffffff;padding:28px;border-radius:0 0 16px 16px;">
+                    <p style="font-size:16px;margin-top:0;">Hello {current_user.name},</p>
+                    <p style="line-height:1.7;color:#4b5563;">Your payment was successful and your order is now <strong>{order_status_label}</strong>. You can review status updates from your profile dashboard.</p>
+
+                    <table style="width:100%;margin:24px 0;border-collapse:collapse;">
+                        <tr>
+                            <td style="width:50%;vertical-align:top;padding-right:16px;">
+                                <h3 style="margin:0 0 8px;font-size:16px;">Shipping details</h3>
+                                <p style="margin:0;color:#4b5563;line-height:1.7;">{shipping_html}</p>
+                            </td>
+                            <td style="width:50%;vertical-align:top;padding-left:16px;">
+                                <h3 style="margin:0 0 8px;font-size:16px;">Invoice details</h3>
+                                <p style="margin:0;color:#4b5563;line-height:1.7;">
+                                    Order date: {datetime.now().strftime('%d %b %Y, %I:%M %p')}<br>
+                                    Status: {order_status_label}<br>
+                                    GSTIN: 36AORPG7724G1ZN
+                                </p>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <table style="width:100%;border-collapse:collapse;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;">
+                        <thead>
+                            <tr style="background:#f9fafb;text-align:left;">
+                                <th style="padding:14px 12px;">Item</th>
+                                <th style="padding:14px 12px;">Product</th>
+                                <th style="padding:14px 12px;">Qty</th>
+                                <th style="padding:14px 12px;">Unit price</th>
+                                <th style="padding:14px 12px;">Line total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {items_html}
+                        </tbody>
+                    </table>
+
+                    <table style="width:320px;margin:24px 0 0 auto;border-collapse:collapse;">
+                        <tr>
+                            <td style="padding:8px 0;color:#4b5563;">Subtotal</td>
+                            <td style="padding:8px 0;text-align:right;">INR {totals.get('original_subtotal', 0)}</td>
+                        </tr>
+                        {discount_row}
+                        <tr>
+                            <td style="padding:8px 0;color:#4b5563;">Taxable subtotal</td>
+                            <td style="padding:8px 0;text-align:right;">INR {totals.get('subtotal', 0)}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding:8px 0;color:#4b5563;">GST (18%)</td>
+                            <td style="padding:8px 0;text-align:right;">INR {totals.get('gst_amount', 0)}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding:12px 0;font-weight:700;border-top:1px solid #e5e7eb;">Total paid</td>
+                            <td style="padding:12px 0;text-align:right;font-weight:700;border-top:1px solid #e5e7eb;">INR {totals.get('total_with_gst', 0)}</td>
+                        </tr>
+                    </table>
+
+                    <p style="margin-top:32px;color:#4b5563;line-height:1.7;">
+                        Need help with your order? Reply to this email or contact the GSpaces team. Product links above remain available from your profile order history as well.
+                    </p>
+                </div>
             </div>
-            
-            <p>We will process your order shortly. You can track your order on your GSpaces account.</p>
-            <br>
-            <p>Best Regards,<br>Team GSpaces</p>
         </body>
         </html>
         """
         msg.attach(MIMEText(html_body, "html", "utf-8"))
 
         with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-            # FIX: Use MAIL_PASSWORD instead of EMAIL_PASS for consistency
             server.login(sender, os.getenv("MAIL_PASSWORD", "zupd zixc vvzp kptk"))
             server.sendmail(sender, receiver, msg.as_string())
 
-        return jsonify({"status": "success", "message": "Payment successful, email sent"})
+        return jsonify({
+            "status": "success",
+            "message": "Payment received. Your order has been placed.",
+            "order_id": new_order_id
+        })
 
     except Exception as e:
         if conn:
@@ -1780,11 +2032,51 @@ def payment_success():
             conn.close()
 
 @app.route('/thankyou')
+@login_required
 def thankyou():
-    """
-    Renders the thank you page after a successful payment.
-    """
-    return render_template('thankyou.html')
+    order_id = request.args.get('order_id', type=int)
+    order = None
+
+    if order_id:
+        conn = connect_to_db()
+        if conn:
+            try:
+                cur = conn.cursor(cursor_factory=RealDictCursor)
+                cur.execute("""
+                    SELECT
+                        o.id,
+                        o.user_id,
+                        o.total_amount,
+                        o.status,
+                        o.status_code,
+                        o.order_date,
+                        json_agg(
+                            json_build_object(
+                                'product_id', oi.product_id,
+                                'product_name', oi.product_name,
+                                'quantity', oi.quantity,
+                                'price_at_purchase', oi.price_at_purchase,
+                                'image_url', oi.image_url,
+                                'product_link', oi.product_link
+                            )
+                            ORDER BY oi.id
+                        ) AS items
+                    FROM orders o
+                    JOIN order_items oi ON oi.order_id = o.id
+                    WHERE o.id = %s AND o.user_id = %s
+                    GROUP BY o.id, o.user_id, o.total_amount, o.status, o.status_code, o.order_date
+                """, (order_id, current_user.id))
+                order = cur.fetchone()
+                if order:
+                    order['status_code'] = normalize_order_status(order.get('status_code'), order.get('status'))
+                    order['status_label'] = ORDER_STATUS_LABELS.get(order['status_code'], 'Order placed')
+                    order['tracking_timeline'] = build_tracking_timeline(order['status_code'])
+            except Exception as e:
+                print(f"Error loading thank you order: {e}")
+            finally:
+                conn.close()
+
+    return render_template('thankyou.html', order_id=order_id, order=order)
 
 # --- SITEMAP (for local testing, typically served by web server in prod) ---
 @app.route('/sitemap.xml')

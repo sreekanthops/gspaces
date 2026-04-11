@@ -43,7 +43,7 @@ import razorpay
 from datetime import datetime
 
 # Notification system import
-from notifications import notify_new_order, notify_order_status_update
+from notifications import notify_new_order, notify_order_status_update, send_custom_email_to_customer
 
 # --- CONFIGURATION ---
 # Read from environment variables if available; fallback to development defaults.
@@ -2125,6 +2125,56 @@ def admin_view_order(order_id):
         order_statuses=ORDER_STATUS_LABELS,
         order_status_flow=ORDER_STATUS_FLOW
     )
+
+@app.route('/admin/orders/send_custom_email/<int:order_id>', methods=['POST'])
+@login_required
+def send_custom_order_email(order_id):
+    """Send custom email to customer about their order"""
+    if current_user.email not in ADMIN_EMAILS:
+        return jsonify({"status": "error", "message": "Access denied"}), 403
+    
+    subject = request.form.get('subject', '').strip()
+    message = request.form.get('message', '').strip()
+    
+    if not subject or not message:
+        flash("Subject and message are required.", "danger")
+        return redirect(url_for('admin_view_order', order_id=order_id))
+    
+    conn = connect_to_db()
+    if conn:
+        try:
+            cur = conn.cursor(cursor_factory=RealDictCursor)
+            cur.execute("""
+                SELECT user_email, shipping_name
+                FROM orders
+                WHERE id = %s
+            """, (order_id,))
+            order_data = cur.fetchone()
+            
+            if order_data:
+                success = send_custom_email_to_customer(
+                    customer_email=order_data['user_email'],
+                    customer_name=order_data['shipping_name'],
+                    order_id=order_id,
+                    subject=subject,
+                    message=message
+                )
+                
+                if success:
+                    flash(f"Custom email sent successfully to {order_data['user_email']}", "success")
+                else:
+                    flash("Failed to send email. Please check email configuration.", "danger")
+            else:
+                flash("Order not found.", "danger")
+                
+        except Exception as e:
+            print(f"Error sending custom email: {e}")
+            flash("Error sending custom email.", "danger")
+        finally:
+            conn.close()
+    
+    return redirect(url_for('admin_view_order', order_id=order_id))
+
 
 
 @app.route('/admin/coupons/delete/<int:coupon_id>', methods=['POST'])

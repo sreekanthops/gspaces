@@ -473,6 +473,105 @@ Thank you for shopping with GSpaces! 🛍️"""
     send_email_notification(ADMIN_EMAIL, admin_subject, admin_html)
 
 
+def send_custom_email_to_customer(customer_email, customer_name, order_id, subject, message):
+    """
+    Send custom email to customer from admin
+    
+    Args:
+        customer_email: Customer email address
+        customer_name: Customer name
+        order_id: Order ID
+        subject: Email subject
+        message: Custom message from admin
+    
+    Returns:
+        bool: True if sent successfully, False otherwise
+    """
+    html_body = f"""
+    <html>
+    <head>
+        <style>
+            @media only screen and (max-width: 600px) {{
+                .container {{ padding: 10px !important; }}
+            }}
+        </style>
+    </head>
+    <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f5f5f5;">
+        <div style="max-width: 600px; margin: 20px auto; background-color: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <!-- Header -->
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px 20px; text-align: center;">
+                <h1 style="color: white; margin: 0; font-size: 28px; font-weight: 600;">
+                    📧 Message from GSpaces
+                </h1>
+                <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 16px;">
+                    Regarding Order #{order_id}
+                </p>
+            </div>
+            
+            <!-- Content -->
+            <div class="container" style="padding: 30px 20px;">
+                <p style="font-size: 16px; color: #333; margin: 0 0 20px 0;">Hi <strong>{customer_name}</strong>,</p>
+                
+                <div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px; border-left: 4px solid #667eea; margin: 20px 0;">
+                    <p style="margin: 0; color: #333; line-height: 1.6; white-space: pre-wrap;">{message}</p>
+                </div>
+                
+                <!-- Order Link -->
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="https://gspaces.in/order_details/{order_id}"
+                       style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                              color: white; text-decoration: none; border-radius: 25px; font-weight: 600; font-size: 16px;
+                              box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);">
+                        View Order Details
+                    </a>
+                </div>
+                
+                <!-- Support Section -->
+                <div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px; margin-top: 30px; text-align: center;">
+                    <p style="margin: 0 0 10px 0; color: #666; font-size: 14px;">Need further assistance?</p>
+                    <p style="margin: 0;">
+                        <a href="mailto:support@gspaces.in" style="color: #667eea; text-decoration: none; font-weight: 600;">
+                            📧 support@gspaces.in
+                        </a>
+                        <span style="color: #ccc; margin: 0 10px;">|</span>
+                        <a href="tel:+917075077384" style="color: #667eea; text-decoration: none; font-weight: 600;">
+                            📞 +91 707 507 7384
+                        </a>
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Footer -->
+            <div style="background-color: #2c3e50; padding: 20px; text-align: center;">
+                <p style="color: rgba(255,255,255,0.8); margin: 0 0 10px 0; font-size: 14px;">
+                    Thank you for choosing GSpaces!
+                </p>
+                <p style="color: rgba(255,255,255,0.6); margin: 0; font-size: 12px;">
+                    © 2026 GSpaces. Premium Office Furniture Solutions.
+                </p>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+    
+    text_body = f"""
+    Message from GSpaces - Order #{order_id}
+    
+    Hi {customer_name},
+    
+    {message}
+    
+    View your order: https://gspaces.in/order_details/{order_id}
+    
+    For assistance, contact us at support@gspaces.in or +91 707 507 7384
+    
+    Thank you for choosing GSpaces!
+    """
+    
+    return send_email_notification(customer_email, subject, html_body, text_body)
+
+
 def test_notifications():
     """
     Test notification system

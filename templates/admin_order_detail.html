@@ -180,6 +180,104 @@
                     </select>
                     <button type="submit" class="btn btn-primary">Update Status</button>
                 </form>
+
+            <!-- Send Custom Email Section -->
+            <div class="mt-4 p-4 bg-light rounded">
+                <h5 class="mb-3">
+                    <i class="bi bi-envelope"></i> Send Custom Email to Customer
+                </h5>
+                <p class="text-muted small mb-3">Send a personalized message to the customer about this order (e.g., delay notification, special instructions, etc.)</p>
+                <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#customEmailModal">
+                    <i class="bi bi-send"></i> Compose Email
+                </button>
+            </div>
+
+            <!-- Custom Email Modal -->
+            <div class="modal fade" id="customEmailModal" tabindex="-1" aria-labelledby="customEmailModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header bg-primary text-white">
+                            <h5 class="modal-title" id="customEmailModalLabel">
+                                <i class="bi bi-envelope-fill"></i> Send Custom Email
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <form action="{{ url_for('send_custom_order_email', order_id=order.id) }}" method="POST">
+                            <div class="modal-body">
+                                <div class="alert alert-info">
+                                    <strong>Recipient:</strong> {{ order.shipping_name }} ({{ order.user_email }})<br>
+                                    <strong>Order:</strong> #{{ order.id }}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="emailSubject" class="form-label">Email Subject *</label>
+                                    <input type="text" class="form-control" id="emailSubject" name="subject" 
+                                           placeholder="e.g., Update on Your Order #{{ order.id }}" required>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="emailMessage" class="form-label">Message *</label>
+                                    <textarea class="form-control" id="emailMessage" name="message" rows="8" 
+                                              placeholder="Write your message here..." required></textarea>
+                                    <div class="form-text">
+                                        <strong>Quick Templates:</strong>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary ms-2" onclick="fillTemplate('delay')">Delay Notice</button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="fillTemplate('ready')">Ready for Pickup</button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="fillTemplate('custom')">Custom Update</button>
+                                    </div>
+                                </div>
+                                
+                                <div class="alert alert-warning">
+                                    <i class="bi bi-info-circle"></i> This email will be sent immediately. Please review before sending.
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-send"></i> Send Email
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <script>
+                function fillTemplate(type) {
+                    const messageBox = document.getElementById('emailMessage');
+                    const subjectBox = document.getElementById('emailSubject');
+                    const orderNum = '{{ order.id }}';
+                    
+                    if (type === 'delay') {
+                        subjectBox.value = `Important Update: Slight Delay in Order #${orderNum}`;
+                        messageBox.value = `We wanted to inform you that your order is experiencing a slight delay due to [reason - e.g., high demand, logistics].
+
+We sincerely apologize for any inconvenience this may cause. Your order is our priority, and we're working diligently to get it to you as soon as possible.
+
+Expected new delivery date: [Date]
+
+Thank you for your patience and understanding.`;
+                    } else if (type === 'ready') {
+                        subjectBox.value = `Great News! Your Order #${orderNum} is Ready`;
+                        messageBox.value = `Good news! Your order is now ready for pickup/delivery.
+
+Please ensure someone is available to receive the delivery at the address provided.
+
+If you have any questions or need to reschedule, please don't hesitate to contact us.
+
+Thank you for choosing GSpaces!`;
+                    } else if (type === 'custom') {
+                        subjectBox.value = `Update on Your Order #${orderNum}`;
+                        messageBox.value = `We wanted to reach out regarding your recent order.
+
+[Your custom message here]
+
+If you have any questions, please feel free to contact us.
+
+Thank you for your business!`;
+                    }
+                }
+            </script>
             </div>
 
             <!-- Tracking Timeline -->

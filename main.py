@@ -2147,12 +2147,29 @@ def send_custom_order_email(order_id):
     if conn:
         try:
             cur = conn.cursor(cursor_factory=RealDictCursor)
+            # Get order details
             cur.execute("""
-                SELECT user_email, shipping_name
+                SELECT user_email, shipping_name, total_amount
                 FROM orders
                 WHERE id = %s
             """, (order_id,))
             order_data = cur.fetchone()
+            
+            # Get order items with product details
+            cur.execute("""
+                SELECT
+                    oi.product_id,
+                    oi.product_name,
+                    oi.quantity,
+                    oi.price_at_purchase,
+                    oi.image_url,
+                    p.id as current_product_id
+                FROM order_items oi
+                LEFT JOIN products p ON oi.product_id = p.id
+                WHERE oi.order_id = %s
+                ORDER BY oi.id
+            """, (order_id,))
+            order_items = cur.fetchall()
             
             if order_data:
                 success = send_custom_email_to_customer(
@@ -2160,7 +2177,9 @@ def send_custom_order_email(order_id):
                     customer_name=order_data['shipping_name'],
                     order_id=order_id,
                     subject=subject,
-                    message=message
+                    message=message,
+                    order_items=order_items,
+                    total_amount=order_data['total_amount']
                 )
                 
                 if success:

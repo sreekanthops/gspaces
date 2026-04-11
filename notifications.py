@@ -474,9 +474,10 @@ Thank you for shopping with GSpaces! 🛍️"""
     send_email_notification(ADMIN_EMAIL, admin_subject, admin_html)
 
 
-def send_custom_email_to_customer(customer_email, customer_name, order_id, subject, message):
+def send_custom_email_to_customer(customer_email, customer_name, order_id, subject, message,
+                                  order_items=None, total_amount=None):
     """
-    Send custom email to customer from admin
+    Send custom email to customer from admin with order details
     
     Args:
         customer_email: Customer email address
@@ -484,10 +485,69 @@ def send_custom_email_to_customer(customer_email, customer_name, order_id, subje
         order_id: Order ID
         subject: Email subject
         message: Custom message from admin
+        order_items: List of order items with product details (optional)
+        total_amount: Total order amount (optional)
     
     Returns:
         bool: True if sent successfully, False otherwise
     """
+    # Build order items HTML with product images and links
+    items_html = ""
+    if order_items and len(order_items) > 0:
+        items_rows = ""
+        for item in order_items:
+            product_link = f"{APP_BASE_URL}/product/{item.get('product_id', '')}"
+            image_url = f"{APP_BASE_URL}/static/{item.get('image_url', 'img/placeholder.jpg')}"
+            
+            items_rows += f"""
+            <tr style="border-bottom: 1px solid #e5e7eb;">
+                <td style="padding: 12px 8px;">
+                    <img src="{image_url}" alt="{item.get('product_name', 'Product')}"
+                         style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px;">
+                </td>
+                <td style="padding: 12px 8px;">
+                    <a href="{product_link}" style="color: #667eea; text-decoration: none; font-weight: 600;">
+                        {item.get('product_name', 'Product')}
+                    </a>
+                </td>
+                <td style="padding: 12px 8px; text-align: center;">{item.get('quantity', 1)}</td>
+                <td style="padding: 12px 8px; text-align: right;">₹{item.get('price_at_purchase', 0)}</td>
+                <td style="padding: 12px 8px; text-align: right; font-weight: 600;">
+                    ₹{float(item.get('price_at_purchase', 0)) * int(item.get('quantity', 1))}
+                </td>
+            </tr>
+            """
+        
+        items_html = f"""
+        <div style="margin: 25px 0;">
+            <h3 style="color: #2c3e50; margin-bottom: 15px; font-size: 18px;">📦 Your Order Items</h3>
+            <table style="width: 100%; border-collapse: collapse; background: white; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden;">
+                <thead>
+                    <tr style="background-color: #f8f9fa; border-bottom: 2px solid #e5e7eb;">
+                        <th style="padding: 12px 8px; text-align: left;">Image</th>
+                        <th style="padding: 12px 8px; text-align: left;">Product</th>
+                        <th style="padding: 12px 8px; text-align: center;">Qty</th>
+                        <th style="padding: 12px 8px; text-align: right;">Price</th>
+                        <th style="padding: 12px 8px; text-align: right;">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {items_rows}
+                </tbody>
+            </table>
+        </div>
+        """
+    
+    # Build total amount section
+    total_html = ""
+    if total_amount:
+        total_html = f"""
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 12px; margin: 25px 0; text-align: right; color: white;">
+            <div style="font-size: 16px; margin-bottom: 5px;">Order Total</div>
+            <div style="font-size: 32px; font-weight: bold;">₹{total_amount}</div>
+        </div>
+        """
+    
     html_body = f"""
     <html>
     <head>
@@ -516,6 +576,10 @@ def send_custom_email_to_customer(customer_email, customer_name, order_id, subje
                 <div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px; border-left: 4px solid #667eea; margin: 20px 0;">
                     <p style="margin: 0; color: #333; line-height: 1.6; white-space: pre-wrap;">{message}</p>
                 </div>
+                
+                {items_html}
+                
+                {total_html}
                 
                 <!-- Order Link -->
                 <div style="text-align: center; margin: 30px 0;">

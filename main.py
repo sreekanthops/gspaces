@@ -1908,6 +1908,188 @@ def get_coupon(coupon_id):
             conn.close()
     return jsonify({"status": "error", "message": "Database connection error"})
 
+# --- ADMIN ORDER MANAGEMENT ROUTES ---
+@app.route('/admin/orders')
+@login_required
+def admin_orders():
+    """Admin page to manage all orders"""
+    if current_user.email not in ADMIN_EMAILS:
+        flash("Access denied. Admin privileges required.", "danger")
+        return redirect(url_for('index'))
+    
+    conn = connect_to_db()
+    orders = []
+    
+    # Get filter parameters
+    status_filter = request.args.get('status', 'all')
+    search_query = request.args.get('search', '').strip()
+    
+    if conn:
+        try:
+            cur = conn.cursor(cursor_factory=RealDictCursor)
+            
+            # Build query based on filters
+            query = """
+                SELECT 
+                    o.id,
+                    o.user_id,
+                    o.user_email,
+                    o.razorpay_order_id,
+                    o.total_amount,
+                    o.status,
+                    o.status_code,
+                    o.status_updated_at,
+                    o.order_date,
+                    o.shipping_name,
+                    o.shipping_phone,
+                    o.coupon_code,
+                    o.coupon_discount,
+                    json_agg(
+                        json_build_object(
+                            'product_name', oi.product_name,
+                            'quantity', oi.quantity,
+                            'price', oi.price_at_purchase
+                        )
+                    ) AS items
+                FROM orders o
+                LEFT JOIN order_items oi ON oi.order_id = o.id
+                WHERE 1=1
+            """
+            params = []
+            
+            # Add status filter
+            if status_filter != 'all':
+                query += " AND o.status_code = %s"
+                params.append(status_filter)
+            
+            # Add search filter
+            if search_query:
+                query += " AND (CAST(o.id AS TEXT) LIKE %s OR o.user_email LIKE %s OR o.shipping_name LIKE %s)"
+                search_pattern = f"%{search_query}%"
+                params.extend([search_pattern, search_pattern, search_pattern])
+            
+            query += """
+                GROUP BY o.id, o.user_id, o.user_email, o.razorpay_order_id, 
+                         o.total_amount, o.status, o.status_code, o.status_updated_at, 
+                         o.order_date, o.shipping_name, o.shipping_phone, 
+                         o.coupon_code, o.coupon_discount
+                ORDER BY o.order_date DESC
+                LIMIT 100
+            """
+            
+            cur.execute(query, params)
+            orders = cur.fetchall()
+            
+            # Normalize status codes
+            for order in orders:
+                order['status_code'] = normalize_order_status(order.get('status_code'), order.get('status'))
+                order['status_label'] = ORDER_STATUS_LABELS.get(order['status_code'], 'Order placed')
+                
+        except Exception as e:
+            print(f"Error fetching orders: {e}")
+            flash("Error loading orders.", "danger")
+        finally:
+            conn.close()
+    
+    return render_template(
+        'admin_orders.html',
+        orders=orders,
+        status_filter=status_filter,
+        search_query=search_query,
+        order_statuses=ORDER_STATUS_LABELS,
+        order_status_flow=ORDER_STATUS_FLOW
+    )
+
+@app.route('/admin/orders/update_status/<int:order_id>', methods=['POST'])
+@login_required
+def update_order_status(order_id):
+    """Update order status"""
+    if current_user.email not in ADMIN_EMAILS:
+        return jsonify({"status": "error", "message": "Access denied"}), 403
+    
+    new_status = request.form.get('status')
+    
+    if not new_status or new_status not in ORDER_STATUS_LABELS:
+        flash("Invalid status selected.", "danger")
+        return redirect(url_for('admin_orders'))
+    
+    conn = connect_to_db()
+    if conn:
+        try:
+            cur = conn.cursor()
+            cur.execute("""
+                UPDATE orders 
+                SET status_code = %s, 
+                    status = %s,
+                    status_updated_at = NOW()
+                WHERE id = %s
+            """, (new_status, ORDER_STATUS_LABELS[new_status], order_id))
+            conn.commit()
+            flash(f"Order #{order_id} status updated to '{ORDER_STATUS_LABELS[new_status]}'", "success")
+        except Exception as e:
+            print(f"Error updating order status: {e}")
+            flash("Error updating order status.", "danger")
+        finally:
+            conn.close()
+    
+    return redirect(url_for('admin_orders'))
+
+@app.route('/admin/orders/view/<int:order_id>')
+@login_required
+def admin_view_order(order_id):
+    """View detailed order information"""
+    if current_user.email not in ADMIN_EMAILS:
+        flash("Access denied. Admin privileges required.", "danger")
+        return redirect(url_for('index'))
+    
+    conn = connect_to_db()
+    order = None
+    
+    if conn:
+        try:
+            cur = conn.cursor(cursor_factory=RealDictCursor)
+            cur.execute("""
+                SELECT
+                    o.*,
+                    json_agg(
+                        json_build_object(
+                            'product_id', oi.product_id,
+                            'product_name', oi.product_name,
+                            'quantity', oi.quantity,
+                            'price_at_purchase', oi.price_at_purchase,
+                            'image_url', oi.image_url
+                        )
+                        ORDER BY oi.id
+                    ) AS items
+                FROM orders o
+                LEFT JOIN order_items oi ON oi.order_id = o.id
+                WHERE o.id = %s
+                GROUP BY o.id
+            """, (order_id,))
+            order = cur.fetchone()
+            
+            if order:
+                order['status_code'] = normalize_order_status(order.get('status_code'), order.get('status'))
+                order['status_label'] = ORDER_STATUS_LABELS.get(order['status_code'], 'Order placed')
+                order['tracking_timeline'] = build_tracking_timeline(order['status_code'])
+        except Exception as e:
+            print(f"Error fetching order details: {e}")
+            flash("Error loading order details.", "danger")
+        finally:
+            conn.close()
+    
+    if not order:
+        flash("Order not found.", "danger")
+        return redirect(url_for('admin_orders'))
+    
+    return render_template(
+        'admin_order_detail.html',
+        order=order,
+        order_statuses=ORDER_STATUS_LABELS,
+        order_status_flow=ORDER_STATUS_FLOW
+    )
+
+
 @app.route('/admin/coupons/delete/<int:coupon_id>', methods=['POST'])
 @login_required
 def delete_coupon(coupon_id):

@@ -381,7 +381,7 @@ def login():
             user_data = cur.fetchone()
 
             if user_data and user_data['password'] == password:  
-                # ✅ Create a User object for Flask-Login
+                #  Create a User object for Flask-Login
                 user_obj = User(
                     id=user_data['id'],
                     email=user_data['email'],
@@ -389,10 +389,10 @@ def login():
                     is_admin=(user_data['email'] in ADMIN_EMAILS)
                 )
 
-                # ✅ Tell Flask-Login this user is logged in
+                #  Tell Flask-Login this user is logged in
                 login_user(user_obj, remember=True)  # 'remember=True' keeps session active
 
-                # ✅ Store email in session (optional, for easier access)
+                #  Store email in session (optional, for easier access)
                 session['user_email'] = user_data['email']
 
                 return redirect(url_for('index'))
@@ -450,7 +450,7 @@ def signup():
                 return render_template('login.html')
 
         except Exception as e:
-            print(f"❌ Signup error: {e}")
+            print(f"ERROR: Signup error: {e}")
             flash("Signup failed due to a server error. Please try again.", "error")
             return render_template('login.html')
         finally:
@@ -565,7 +565,7 @@ def forgot_password():
                 reset_url = url_for('reset_password', token=token, _external=True)
 
                 msg = Message('Password Reset Request for GSpaces', recipients=[email])
-                msg.body = f'''Hi,\n\nTo reset your password, click the link below:\n{reset_url}\n\nIf you didn’t request this, please ignore.\n\nRegards,\nGSpaces Team\n'''
+                msg.body = f'''Hi,\n\nTo reset your password, click the link below:\n{reset_url}\n\nIf you didn't request this, please ignore.\n\nRegards,\nGSpaces Team\n'''
                 mail.send(msg)
                 flash('A password reset link has been sent to your email.', 'success')
             else:
@@ -1408,13 +1408,13 @@ def add_to_cart(product_id):
         row = cur.fetchone()
 
         if row:
-            # If exists → increment quantity
+            # If exists - increment quantity
             cur.execute(
                 "UPDATE cart SET quantity = quantity + 1 WHERE user_id = %s AND product_id = %s",
                 (current_user.id, product_id)
             )
         else:
-            # If not exists → insert new row
+            # If not exists - insert new row
             cur.execute(
                 "INSERT INTO cart (user_id, product_id, quantity) VALUES (%s, %s, %s)",
                 (current_user.id, product_id, 1)
@@ -1442,11 +1442,11 @@ def send_order():
         order_id = data.get("order_id", "N/A")
         total_amount = data.get("amount", 0)
 
-        # Use plain text INR instead of ₹ symbol
+        # Use plain text INR instead of INR symbol
         message_body = f"""
         Hello {current_user.name},
 
-        Your order has been placed successfully ✅
+        Your order has been placed successfully 
         Order ID: {order_id}
         Total Amount: INR {total_amount}
 
@@ -1945,7 +1945,7 @@ def payment_success():
             <div style="max-width:760px;margin:0 auto;padding:24px;">
                 <div style="background:#111827;color:#fff;padding:24px 28px;border-radius:16px 16px 0 0;">
                     <h1 style="margin:0;font-size:28px;">GSpaces Invoice / Order Summary</h1>
-                    <p style="margin:8px 0 0;color:#d1d5db;">Order #{new_order_id} · Payment ID {payment_id}</p>
+                    <p style="margin:8px 0 0;color:#d1d5db;">Order #{new_order_id} - Payment ID {payment_id}</p>
                 </div>
                 <div style="background:#ffffff;padding:28px;border-radius:0 0 16px 16px;">
                     <p style="font-size:16px;margin-top:0;">Hello {current_user.name},</p>

@@ -2042,33 +2042,29 @@ def admin_view_order(order_id):
     if conn:
         try:
             cur = conn.cursor(cursor_factory=RealDictCursor)
-            cur.execute("""
-                SELECT
-                    o.*,
-                    json_agg(
-                        json_build_object(
-                            'product_id', oi.product_id,
-                            'product_name', oi.product_name,
-                            'quantity', oi.quantity,
-                            'price_at_purchase', oi.price_at_purchase,
-                            'image_url', oi.image_url
-                        )
-                        ORDER BY oi.id
-                    ) AS items
-                FROM orders o
-                LEFT JOIN order_items oi ON oi.order_id = o.id
-                WHERE o.id = %s
-                GROUP BY o.id
-            """, (order_id,))
+            
+            # Fetch order details
+            cur.execute("SELECT * FROM orders WHERE id = %s", (order_id,))
             order = cur.fetchone()
             
             if order:
-                # Parse JSON items array
-                import json
-                if order.get('items'):
-                    order['items'] = json.loads(order['items']) if isinstance(order['items'], str) else order['items']
-                else:
-                    order['items'] = []
+                # Fetch order items separately
+                cur.execute("""
+                    SELECT
+                        product_id,
+                        product_name,
+                        quantity,
+                        price_at_purchase,
+                        image_url
+                    FROM order_items
+                    WHERE order_id = %s
+                    ORDER BY id
+                """, (order_id,))
+                order_items = cur.fetchall()
+                
+                # Convert to dict and add items
+                order = dict(order)
+                order['order_items'] = order_items
                 
                 order['status_code'] = normalize_order_status(order.get('status_code'), order.get('status'))
                 order['status_label'] = ORDER_STATUS_LABELS.get(order['status_code'], 'Order placed')

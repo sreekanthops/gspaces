@@ -2015,14 +2015,22 @@ def update_order_status(order_id):
         try:
             cur = conn.cursor(cursor_factory=RealDictCursor)
             
-            # Get old status and customer details before update
+            # Get old status, customer details, and order items before update
             cur.execute("""
-                SELECT status_code, user_email, shipping_name, shipping_phone
-                FROM orders
-                WHERE id = %s
+                SELECT o.status_code, o.user_email, o.shipping_name, o.shipping_phone, o.total_amount
+                FROM orders o
+                WHERE o.id = %s
             """, (order_id,))
             order_data = cur.fetchone()
             old_status = order_data['status_code'] if order_data else None
+            
+            # Get order items
+            cur.execute("""
+                SELECT product_name, quantity, price_at_purchase
+                FROM order_items
+                WHERE order_id = %s
+            """, (order_id,))
+            order_items = cur.fetchall()
             
             # Update order status
             cur.execute("""
@@ -2044,7 +2052,9 @@ def update_order_status(order_id):
                         customer_phone=order_data['shipping_phone'],
                         old_status=old_status,
                         new_status=new_status,
-                        status_label=ORDER_STATUS_LABELS[new_status]
+                        status_label=ORDER_STATUS_LABELS[new_status],
+                        order_items=order_items,
+                        total_amount=order_data['total_amount']
                     )
                 except Exception as e:
                     print(f"Error sending status update notification: {e}")

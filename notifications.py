@@ -218,8 +218,35 @@ View: https://gspaces.in/admin/orders/view/{order_id}"""
         send_whatsapp_notification(ADMIN_PHONE, whatsapp_message)
 
 
-def notify_order_status_update(order_id, customer_name, customer_email, customer_phone, 
-                               old_status, new_status, status_label):
+def _get_delivery_timeline_html(status):
+    """Generate delivery timeline HTML based on status"""
+    if status in ['shipped', 'out_for_delivery']:
+        return """
+        <div style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <p style="margin: 0; color: #856404; font-weight: 600;">
+                🚚 Your order is on its way!
+            </p>
+            <p style="margin: 10px 0 0 0; color: #856404; font-size: 14px;">
+                Expected delivery within 2-3 business days.
+            </p>
+        </div>
+        """
+    elif status == 'delivered':
+        return """
+        <div style="background-color: #d4edda; border-left: 4px solid #28a745; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <p style="margin: 0; color: #155724; font-weight: 600;">
+                🎉 Your order has been delivered!
+            </p>
+            <p style="margin: 10px 0 0 0; color: #155724; font-size: 14px;">
+                We hope you enjoy your purchase. Please rate your experience!
+            </p>
+        </div>
+        """
+    return ""
+
+
+def notify_order_status_update(order_id, customer_name, customer_email, customer_phone,
+                               old_status, new_status, status_label, order_items=None, total_amount=None):
     """
     Notify customer about order status update
     
@@ -231,6 +258,8 @@ def notify_order_status_update(order_id, customer_name, customer_email, customer
         old_status: Previous status code
         new_status: New status code
         status_label: Human-readable status label
+        order_items: List of order items (optional)
+        total_amount: Total order amount (optional)
     """
     # Status emojis
     status_emojis = {
@@ -245,52 +274,152 @@ def notify_order_status_update(order_id, customer_name, customer_email, customer
     
     emoji = status_emojis.get(new_status, '📋')
     
+    # Build order items HTML if provided
+    items_html = ""
+    if order_items and len(order_items) > 0:
+        items_rows = ""
+        for item in order_items:
+            items_rows += f"""
+            <tr style="border-bottom: 1px solid #e5e7eb;">
+                <td style="padding: 12px 8px;">
+                    <strong>{item.get('product_name', 'Product')}</strong>
+                </td>
+                <td style="padding: 12px 8px; text-align: center;">{item.get('quantity', 1)}</td>
+                <td style="padding: 12px 8px; text-align: right;">₹{item.get('price_at_purchase', 0)}</td>
+            </tr>
+            """
+        
+        items_html = f"""
+        <div style="margin: 20px 0;">
+            <h3 style="color: #2c3e50; margin-bottom: 15px;">Order Items</h3>
+            <table style="width: 100%; border-collapse: collapse; background: white; border: 1px solid #e5e7eb; border-radius: 8px;">
+                <thead>
+                    <tr style="background-color: #f8f9fa; border-bottom: 2px solid #e5e7eb;">
+                        <th style="padding: 12px 8px; text-align: left;">Product</th>
+                        <th style="padding: 12px 8px; text-align: center;">Qty</th>
+                        <th style="padding: 12px 8px; text-align: right;">Price</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {items_rows}
+                </tbody>
+            </table>
+        </div>
+        """
+    
+    # Build total amount section if provided
+    total_html = ""
+    if total_amount:
+        total_html = f"""
+        <div style="background-color: #e8f5e9; padding: 15px; border-radius: 8px; margin: 20px 0; text-align: right;">
+            <span style="font-size: 18px; font-weight: bold; color: #2c3e50;">Total Amount: </span>
+            <span style="font-size: 24px; font-weight: bold; color: #27ae60;">₹{total_amount}</span>
+        </div>
+        """
+    
     # Email notification to customer
     subject = f"{emoji} Order #{order_id} - {status_label}"
     
     html_body = f"""
     <html>
-    <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-        <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
-            <h2 style="color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px;">
-                {emoji} Order Status Updated
-            </h2>
-            
-            <p>Hi {customer_name},</p>
-            
-            <p>Your order status has been updated:</p>
-            
-            <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
-                <table style="width: 100%; border-collapse: collapse;">
-                    <tr>
-                        <td style="padding: 8px 0; font-weight: bold;">Order ID:</td>
-                        <td style="padding: 8px 0;">#{order_id}</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 8px 0; font-weight: bold;">Status:</td>
-                        <td style="padding: 8px 0; color: #27ae60; font-size: 16px; font-weight: bold;">
-                            {emoji} {status_label}
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 8px 0; font-weight: bold;">Updated:</td>
-                        <td style="padding: 8px 0;">{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</td>
-                    </tr>
-                </table>
+    <head>
+        <style>
+            @media only screen and (max-width: 600px) {{
+                .container {{ padding: 10px !important; }}
+                .button {{ width: 100% !important; }}
+            }}
+        </style>
+    </head>
+    <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f5f5f5;">
+        <div style="max-width: 600px; margin: 20px auto; background-color: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <!-- Header -->
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px 20px; text-align: center;">
+                <h1 style="color: white; margin: 0; font-size: 28px; font-weight: 600;">
+                    {emoji} Order Status Update
+                </h1>
+                <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 16px;">
+                    GSpaces - Premium Office Furniture
+                </p>
             </div>
             
-            <p style="margin-top: 20px;">
-                <a href="https://gspaces.in/order_details/{order_id}" 
-                   style="display: inline-block; padding: 12px 24px; background-color: #3498db; color: white; 
-                          text-decoration: none; border-radius: 5px; font-weight: bold;">
-                    Track Your Order
-                </a>
-            </p>
+            <!-- Content -->
+            <div class="container" style="padding: 30px 20px;">
+                <p style="font-size: 16px; color: #333; margin: 0 0 20px 0;">Hi <strong>{customer_name}</strong>,</p>
+                
+                <p style="font-size: 15px; color: #666; line-height: 1.6; margin: 0 0 25px 0;">
+                    Great news! Your order status has been updated. Here are the details:
+                </p>
+                
+                <!-- Status Card -->
+                <div style="background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); padding: 20px; border-radius: 10px; margin: 20px 0;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr>
+                            <td style="padding: 10px 0; font-weight: 600; color: #555; font-size: 14px;">Order ID:</td>
+                            <td style="padding: 10px 0; text-align: right; color: #333; font-size: 16px; font-weight: 600;">
+                                #{order_id}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px 0; font-weight: 600; color: #555; font-size: 14px;">Current Status:</td>
+                            <td style="padding: 10px 0; text-align: right;">
+                                <span style="background-color: #27ae60; color: white; padding: 6px 16px; border-radius: 20px; font-size: 14px; font-weight: 600; display: inline-block;">
+                                    {emoji} {status_label}
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px 0; font-weight: 600; color: #555; font-size: 14px;">Updated At:</td>
+                            <td style="padding: 10px 0; text-align: right; color: #666; font-size: 14px;">
+                                {datetime.now().strftime('%d %b %Y, %I:%M %p')}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <!-- Order Items -->
+                {items_html}
+                
+                <!-- Total Amount -->
+                {total_html}
+                
+                <!-- Action Buttons -->
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="https://gspaces.in/order_details/{order_id}"
+                       class="button"
+                       style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                              color: white; text-decoration: none; border-radius: 25px; font-weight: 600; font-size: 16px;
+                              box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4); transition: all 0.3s ease;">
+                        📦 Track Your Order
+                    </a>
+                </div>
+                
+                <!-- Delivery Timeline (for certain statuses) -->
+                {_get_delivery_timeline_html(new_status)}
+                
+                <!-- Support Section -->
+                <div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px; margin-top: 30px; text-align: center;">
+                    <p style="margin: 0 0 10px 0; color: #666; font-size: 14px;">Need help with your order?</p>
+                    <p style="margin: 0;">
+                        <a href="mailto:support@gspaces.in" style="color: #667eea; text-decoration: none; font-weight: 600;">
+                            📧 support@gspaces.in
+                        </a>
+                        <span style="color: #ccc; margin: 0 10px;">|</span>
+                        <a href="tel:+917075077384" style="color: #667eea; text-decoration: none; font-weight: 600;">
+                            📞 +91 707 507 7384
+                        </a>
+                    </p>
+                </div>
+            </div>
             
-            <p style="color: #7f8c8d; font-size: 12px; margin-top: 30px; border-top: 1px solid #ddd; padding-top: 15px;">
-                Thank you for shopping with GSpaces!<br>
-                For any queries, contact us at support@gspaces.in
-            </p>
+            <!-- Footer -->
+            <div style="background-color: #2c3e50; padding: 20px; text-align: center;">
+                <p style="color: rgba(255,255,255,0.8); margin: 0 0 10px 0; font-size: 14px;">
+                    Thank you for choosing GSpaces!
+                </p>
+                <p style="color: rgba(255,255,255,0.6); margin: 0; font-size: 12px;">
+                    © 2026 GSpaces. Premium Office Furniture Solutions.
+                </p>
+            </div>
         </div>
     </body>
     </html>

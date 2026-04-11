@@ -217,7 +217,13 @@
                                         <div><strong>{{ order.shipping_name or order.user_email }}</strong></div>
                                         <small class="text-muted">{{ order.user_email }}</small>
                                     </td>
-                                    <td>{{ order.items|length }} item(s)</td>
+                                    <td>
+                                        {% if order.items %}
+                                            {{ order.items|length }} item(s)
+                                        {% else %}
+                                            - item(s)
+                                        {% endif %}
+                                    </td>
                                     <td><strong>₹{{ order.total_amount }}</strong></td>
                                     <td>
                                         <span class="status-badge status-{{ order.status_code }}">

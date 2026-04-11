@@ -339,7 +339,7 @@ def notify_order_status_update(order_id, customer_name, customer_email, customer
                     {emoji} Order Status Update
                 </h1>
                 <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 16px;">
-                    GSpaces - Premium Office Furniture
+                    GSpaces - Home Office Setup
                 </p>
             </div>
             
@@ -418,7 +418,7 @@ def notify_order_status_update(order_id, customer_name, customer_email, customer
                     Thank you for choosing GSpaces!
                 </p>
                 <p style="color: rgba(255,255,255,0.6); margin: 0; font-size: 12px;">
-                    © 2026 GSpaces. Premium Office Furniture Solutions.
+                    © 2026 GSpaces. Home Office Setup Solutions.
                 </p>
             </div>
         </div>
@@ -612,7 +612,7 @@ def send_custom_email_to_customer(customer_email, customer_name, order_id, subje
                     Thank you for choosing GSpaces!
                 </p>
                 <p style="color: rgba(255,255,255,0.6); margin: 0; font-size: 12px;">
-                    © 2026 GSpaces. Premium Office Furniture Solutions.
+                    © 2026 GSpaces. Home Office Setup Solutions.
                 </p>
             </div>
         </div>

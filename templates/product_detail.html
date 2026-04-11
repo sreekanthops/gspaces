@@ -10,68 +10,530 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet"/>
   <link href="{{ url_for('static', filename='css/main.css') }}" rel="stylesheet"/>
   <style>
-    .specifications-list .spec-item {
+    :root {
+      --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      --accent-color: #667eea;
+      --text-dark: #2c3e50;
+      --text-muted: #6c757d;
+      --border-color: #e5e7eb;
+      --shadow-sm: 0 2px 8px rgba(0,0,0,0.08);
+      --shadow-md: 0 4px 16px rgba(0,0,0,0.12);
+      --shadow-lg: 0 8px 24px rgba(0,0,0,0.15);
+    }
+
+    body {
+      background: #f8f9fa;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .product-detail-container {
+      background: white;
+      border-radius: 16px;
+      padding: 40px;
+      margin-top: 30px;
+      margin-bottom: 40px;
+      box-shadow: var(--shadow-md);
+    }
+
+    /* Breadcrumb */
+    .breadcrumb-custom {
+      background: transparent;
+      padding: 0;
+      margin-bottom: 30px;
+      font-size: 0.9rem;
+    }
+    .breadcrumb-custom a {
+      color: var(--accent-color);
+      text-decoration: none;
+    }
+    .breadcrumb-custom a:hover {
+      text-decoration: underline;
+    }
+
+    /* Gallery Section */
+    .gallery-section {
+      position: sticky;
+      top: 100px;
+    }
+
+    .gs-main-wrap {
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+      position: relative;
+    }
+
+    .gs-main-image {
+      position: relative;
+      width: 100%;
+      max-width: 500px;
+      height: 500px;
+      border: 2px solid var(--border-color);
+      border-radius: 16px;
+      overflow: hidden;
+      background: #fff;
+      cursor: crosshair;
+      box-shadow: var(--shadow-sm);
+      transition: box-shadow 0.3s ease;
+    }
+
+    .gs-main-image:hover {
+      box-shadow: var(--shadow-md);
+    }
+
+    .gs-main-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      transition: transform 0.3s ease;
+    }
+
+    #zoomResult {
+      position: absolute;
+      left: 105%;
+      top: 0;
+      width: 520px;
+      height: 500px;
+      border: 2px solid var(--border-color);
+      border-radius: 16px;
+      background-repeat: no-repeat;
+      display: none;
+      z-index: 1000;
+      box-shadow: var(--shadow-lg);
       background-color: #fff;
-      padding: 15px;
-      margin-bottom: 15px;
+    }
+
+    /* Thumbnails */
+    .gs-thumb-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .gs-thumb-strip {
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      scroll-behavior: smooth;
+      padding: 8px 0;
+      max-width: 100%;
+    }
+
+    .gs-thumb-container {
+      display: inline-block;
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .gs-thumb {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      border: 3px solid transparent;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .gs-thumb:hover {
+      border-color: var(--accent-color);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .gs-thumb.active {
+      border-color: var(--accent-color);
+      box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+    }
+
+    .thumb-actions {
+      display: none;
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      gap: 4px;
+    }
+
+    .gs-thumb-container:hover .thumb-actions {
+      display: flex !important;
+    }
+
+    .gs-thumb-nav {
+      background: white;
+      border: 2px solid var(--border-color);
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .gs-thumb-nav:hover {
+      background: var(--accent-color);
+      color: white;
+      border-color: var(--accent-color);
+    }
+
+    /* Product Info Section */
+    .product-info {
+      padding-left: 40px;
+    }
+
+    .product-info h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: var(--text-dark);
+      line-height: 1.2;
+    }
+
+    .category-badge {
+      display: inline-block;
+      background: var(--primary-gradient);
+      color: white;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+
+    .rating-section {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .rating-stars {
+      color: #ffa41c;
+      font-size: 1.3rem;
+    }
+
+    .rating-text {
+      font-size: 1rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .price-section {
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      padding: 24px;
+      border-radius: 12px;
+      margin: 24px 0;
+      border: 2px solid var(--border-color);
+    }
+
+    .price-label {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .price {
+      font-size: 2.8rem;
+      font-weight: 800;
+      color: #B12704;
+      margin: 0;
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+
+    .price-currency {
+      font-size: 1.8rem;
+    }
+
+    .description {
+      font-size: 1.1rem;
+      line-height: 1.8;
+      color: #555;
+      margin: 24px 0;
+      padding: 20px;
+      background: #f8f9fa;
+      border-left: 4px solid var(--accent-color);
       border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    /* Detailed Description */
+    .detailed-description {
+      background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+      padding: 24px;
+      margin: 24px 0;
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .detailed-description h5 {
+      color: var(--text-dark);
+      font-weight: 700;
+      margin-bottom: 16px;
+      font-size: 1.3rem;
+    }
+
+    /* Add to Cart Button */
+    .btn-add-cart {
+      background: var(--primary-gradient) !important;
+      border: none !important;
+      color: white !important;
+      font-weight: 700;
+      font-size: 1.2rem;
+      padding: 16px 32px;
+      border-radius: 12px;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .btn-add-cart:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+    }
+
+    .btn-add-cart:active {
+      transform: translateY(0);
+    }
+
+    /* Social Proof & Freebie */
+    .social-proof, .freebie {
+      padding: 20px;
+      border-radius: 12px;
+      margin: 20px 0;
+      text-align: center;
+      font-weight: 600;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .social-proof {
+      background: linear-gradient(135deg, #fff5e6 0%, #ffe6cc 100%);
+      border: 2px solid #ffa41c;
+    }
+
+    .freebie {
+      background: linear-gradient(135deg, #e6ffed 0%, #ccffe0 100%);
+      border: 2px solid #28a745;
+    }
+
+    /* Trust Policies */
+    .trust-policies {
+      margin-top: 40px;
+      padding-top: 40px;
+      border-top: 2px solid var(--border-color);
+    }
+
+    .trust-policies .policy {
+      padding: 24px;
+      border-radius: 16px;
+      background: white;
+      border: 2px solid var(--border-color);
+      min-height: 180px;
+      transition: all 0.3s ease;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .trust-policies .policy:hover {
+      transform: translateY(-8px);
+      box-shadow: var(--shadow-lg);
+      border-color: var(--accent-color);
+    }
+
+    .trust-policies .policy i {
+      font-size: 3rem;
+      background: var(--primary-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .trust-policies h6 {
+      font-weight: 700;
+      color: var(--text-dark);
+      margin-top: 16px;
+      font-size: 1.1rem;
+    }
+
+    /* Tabs */
+    .nav-tabs {
+      border-bottom: 3px solid var(--border-color);
+      margin-top: 50px;
+    }
+
+    .nav-tabs .nav-link {
+      border: none;
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 1.1rem;
+      padding: 16px 24px;
+      transition: all 0.3s ease;
+    }
+
+    .nav-tabs .nav-link:hover {
+      color: var(--accent-color);
+      background: transparent;
+    }
+
+    .nav-tabs .nav-link.active {
+      color: var(--accent-color);
+      background: transparent;
+      border-bottom: 3px solid var(--accent-color);
+      margin-bottom: -3px;
+    }
+
+    .tab-content {
+      padding: 32px;
+      background: white;
+      border: 2px solid var(--border-color);
+      border-top: none;
+      border-radius: 0 0 12px 12px;
+      min-height: 300px;
+    }
+
+    /* Specifications */
+    .specifications-list .spec-item {
+      background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+      padding: 20px;
+      margin-bottom: 16px;
+      border-radius: 12px;
+      border: 2px solid var(--border-color);
+      box-shadow: var(--shadow-sm);
+      transition: all 0.3s ease;
     }
 
     .specifications-list .spec-item:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+      transform: translateX(8px);
+      box-shadow: var(--shadow-md);
+      border-color: var(--accent-color);
     }
-    /* Gallery zoom and thumbnail */
-    .gs-main-wrap { display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap; margin-bottom:16px; position: relative;}
-    .gs-main-image { position: relative; width:460px; max-width:100%; height:460px; border:1px solid #e5e7eb; border-radius:10px; overflow:hidden; background:#fff; cursor: crosshair;}
-    .gs-main-image img { width:100%; height:100%; object-fit:contain; transition: transform 0.2s ease;}
-    #zoomResult { position:absolute; left:75%; top:0; width:520px; height:460px; border:1px solid #ccc; border-radius:8px; background-repeat:no-repeat; display:none; z-index:10; box-shadow:0 4px 12px rgba(0,0,0,0.15); background-color:#fff;}
-    .gs-thumb-row { display:flex; align-items:center; gap:10px; margin-top:10px; }
-    .gs-thumb-strip { display:flex; gap:10px; overflow-x:auto; scroll-behavior:smooth; padding-bottom:6px; max-width:100%; }
-    .gs-thumb-container { display:inline-block; position:relative; }
-    .gs-thumb { width:70px; height:70px; object-fit:cover; border:2px solid transparent; border-radius:6px; cursor:pointer; transition:border-color 0.2s;}
-    .gs-thumb:hover, .gs-thumb.active { border-color:#007bff; }
-    .thumb-actions { display:none; position:absolute; top:2px; right:2px; gap:4px; }
-    .gs-thumb-container:hover .thumb-actions { display:flex !important; }
-    .product-info h1 { font-size:2.2rem; font-weight:600; margin-bottom:10px; color:#111;}
-    .product-info .category { font-size:1rem; margin-bottom:10px; color:#666;}
-    .rating-stars { color:#ffa41c; font-size:1.2rem; }
-    .rating-text { font-size:0.95rem; color:#565959; }
-    .product-info .price { font-size:1.9rem; font-weight:700; color:#B12704; margin-top:10px; margin-bottom:20px; }
-    .product-info .description { font-size:1.05rem; line-height:1.6; color:#333; margin-bottom:30px;}
-    .btn-add-cart { background-color:#ffa41c; border-color:#ffa41c; color:#111; font-weight:600;}
-    .btn-add-cart:hover { background-color:#f8981d; border-color:#f8981d; color:#111;}
-.trust-policies .policy {
-  padding: 20px;
-  border-radius: 10px;
-  background: #fff;
-  min-height: 160px;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
 
-.trust-policies .policy:hover {
-  transform: translateY(-6px) scale(1.05);
-  box-shadow: 0 6px 18px rgba(0,0,0,0.12);
-}
+    .specifications-list .spec-item img {
+      width: 120px;
+      height: 120px;
+      object-fit: cover;
+      border-radius: 12px;
+      border: 2px solid var(--border-color);
+      margin-right: 20px;
+    }
 
-.trust-policies .row > div {
-  margin-bottom: 20px; /* space between rows (mobile) */
-}
+    /* Reviews */
+    .review-card {
+      background: white;
+      padding: 24px;
+      margin-bottom: 20px;
+      border-radius: 12px;
+      border: 2px solid var(--border-color);
+      box-shadow: var(--shadow-sm);
+      transition: all 0.3s ease;
+    }
 
+    .review-card:hover {
+      box-shadow: var(--shadow-md);
+      border-color: var(--accent-color);
+    }
 
-    @media (max-width:992px) { .gs-main-image { height:360px;} #zoomResult { display:none !important;} }
+    .review-header {
+      margin-bottom: 12px;
+    }
+
+    .review-author {
+      font-weight: 700;
+      color: var(--text-dark);
+      font-size: 1.1rem;
+    }
+
+    .review-date {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 992px) {
+      .product-detail-container {
+        padding: 24px;
+      }
+
+      .product-info {
+        padding-left: 0;
+        margin-top: 30px;
+      }
+
+      .gs-main-image {
+        height: 400px;
+      }
+
+      #zoomResult {
+        display: none !important;
+      }
+
+      .product-info h1 {
+        font-size: 2rem;
+      }
+
+      .price {
+        font-size: 2.2rem;
+      }
+
+      .gallery-section {
+        position: relative;
+        top: 0;
+      }
+    }
+
+    @media (max-width: 576px) {
+      .product-detail-container {
+        padding: 16px;
+        border-radius: 8px;
+      }
+
+      .gs-main-image {
+        height: 300px;
+      }
+
+      .product-info h1 {
+        font-size: 1.6rem;
+      }
+
+      .price {
+        font-size: 1.8rem;
+      }
+
+      .btn-add-cart {
+        font-size: 1rem;
+        padding: 14px 24px;
+      }
+    }
   </style>
 </head>
 <body>
 
   {% include 'navbar.html' %}
 
-  <div class="container product-detail-container mt-5">
+  <div class="container product-detail-container">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb breadcrumb-custom">
+        <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Home</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('index') }}#products">Products</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ product.name }}</li>
+      </ol>
+    </nav>
+
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
-        <div class="alert-container mb-3">
+        <div class="alert-container mb-4">
           {% for category, message in messages %}
             <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
               {{ message }}
@@ -85,128 +547,148 @@
     {% if product %}
     <div class="row">
       <!-- Left Column: Gallery -->
-      <div class="col-md-6">
-        <div class="gs-main-wrap">
-          <div class="gs-main-image" id="mainImageBox">
-            <img id="mainImg" src="{{ url_for('static', filename=product['image_url']) }}" alt="{{ product['name'] }}">
+      <div class="col-lg-6">
+        <div class="gallery-section">
+          <div class="gs-main-wrap">
+            <div class="gs-main-image" id="mainImageBox">
+              <img id="mainImg" src="{{ url_for('static', filename=product['image_url']) }}" alt="{{ product['name'] }}">
+            </div>
+            <div id="zoomResult"></div>
           </div>
-          <div id="zoomResult"></div>
-        </div>
 
-        <div class="gs-thumb-row">
-          <button class="gs-thumb-nav" id="thumbPrev">&#10094;</button>
-          <div class="gs-thumb-strip" id="thumbStrip">
-            <!-- Main image -->
-            <div class="gs-thumb-container">
-              <img class="gs-thumb active" src="{{ url_for('static', filename=product['image_url']) }}" data-src="{{ url_for('static', filename=product['image_url']) }}" data-index="0" alt="{{ product['name'] }}">
-              {% if current_user.is_authenticated and current_user.is_admin %}
-              <div class="thumb-actions">
-                <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#editMainImageModal">E</button>
-                <form action="{{ url_for('delete_main_image', product_id=product['id']) }}" method="post" style="display:inline;">
-                  <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete main image?')">D</button>
-                </form>
+          <div class="gs-thumb-row">
+            <button class="gs-thumb-nav" id="thumbPrev">&#10094;</button>
+            <div class="gs-thumb-strip" id="thumbStrip">
+              <!-- Main image -->
+              <div class="gs-thumb-container">
+                <img class="gs-thumb active" src="{{ url_for('static', filename=product['image_url']) }}" data-src="{{ url_for('static', filename=product['image_url']) }}" data-index="0" alt="{{ product['name'] }}">
+                {% if current_user.is_authenticated and current_user.is_admin %}
+                <div class="thumb-actions">
+                  <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#editMainImageModal">E</button>
+                  <form action="{{ url_for('delete_main_image', product_id=product['id']) }}" method="post" style="display:inline;">
+                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete main image?')">D</button>
+                  </form>
+                </div>
+                {% endif %}
               </div>
-              {% endif %}
-            </div>
-            <!-- Sub-images -->
-            {% for sub_image in sub_images %}
-            <div class="gs-thumb-container">
-              <img class="gs-thumb" src="{{ url_for('static', filename=sub_image['image_url']) }}" data-src="{{ url_for('static', filename=sub_image['image_url']) }}" data-index="{{ loop.index }}" alt="Sub-image {{ loop.index }}">
-              {% if current_user.is_authenticated and current_user.is_admin %}
-              <div class="thumb-actions">
-                <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#editSubImageModal{{ sub_image['id'] }}">E</button>
-                <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteSubImageModal{{ sub_image['id'] }}">D</button>
+              <!-- Sub-images -->
+              {% for sub_image in sub_images %}
+              <div class="gs-thumb-container">
+                <img class="gs-thumb" src="{{ url_for('static', filename=sub_image['image_url']) }}" data-src="{{ url_for('static', filename=sub_image['image_url']) }}" data-index="{{ loop.index }}" alt="Sub-image {{ loop.index }}">
+                {% if current_user.is_authenticated and current_user.is_admin %}
+                <div class="thumb-actions">
+                  <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#editSubImageModal{{ sub_image['id'] }}">E</button>
+                  <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteSubImageModal{{ sub_image['id'] }}">D</button>
+                </div>
+                {% endif %}
               </div>
-              {% endif %}
-            </div>
 
-            <!-- Edit Sub-image Modal -->
-            <div class="modal fade" id="editSubImageModal{{ sub_image['id'] }}" tabindex="-1" aria-hidden="true">
-              <div class="modal-dialog">
-                <form action="{{ url_for('edit_sub_image', sub_image_id=sub_image['id']) }}" method="post" enctype="multipart/form-data" class="modal-content">
-                  <div class="modal-header">
-                    <h5 class="modal-title">E</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                  </div>
-                  <div class="modal-body">
-                    <div class="mb-3">
-                      <label class="form-label">Change Image (optional)</label>
-                      <input type="file" name="sub_image" class="form-control">
+              <!-- Edit Sub-image Modal -->
+              <div class="modal fade" id="editSubImageModal{{ sub_image['id'] }}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog">
+                  <form action="{{ url_for('edit_sub_image', sub_image_id=sub_image['id']) }}" method="post" enctype="multipart/form-data" class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title">Edit Sub-image</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
-                    <div class="mb-3">
-                      <label class="form-label">Description</label>
-                      <textarea name="sub_description" class="form-control" rows="2" required>{{ sub_image['description'] }}</textarea>
+                    <div class="modal-body">
+                      <div class="mb-3">
+                        <label class="form-label">Change Image (optional)</label>
+                        <input type="file" name="sub_image" class="form-control">
+                      </div>
+                      <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea name="sub_description" class="form-control" rows="2" required>{{ sub_image['description'] }}</textarea>
+                      </div>
                     </div>
-                  </div>
-                  <div class="modal-footer">
-                    <button type="submit" class="btn btn-success">Update</button>
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                  </div>
-                </form>
+                    <div class="modal-footer">
+                      <button type="submit" class="btn btn-success">Update</button>
+                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    </div>
+                  </form>
+                </div>
               </div>
-            </div>
 
-            <!-- Delete Sub-image Modal -->
-            <div class="modal fade" id="deleteSubImageModal{{ sub_image['id'] }}" tabindex="-1" aria-hidden="true">
-              <div class="modal-dialog">
-                <form action="{{ url_for('delete_sub_image', sub_image_id=sub_image['id']) }}" method="post" class="modal-content">
-                  <div class="modal-header">
-                    <h5 class="modal-title">Delete Sub-image?</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                  </div>
-                  <div class="modal-body">
-                    <p>Are you sure you want to delete this sub-image?</p>
-                    <p><strong>{{ sub_image['description'] }}</strong></p>
-                    <img src="{{ url_for('static', filename=sub_image['image_url']) }}" style="width:100%; max-height:200px; object-fit:cover; border:1px solid #ddd; border-radius:5px;">
-                  </div>
-                  <div class="modal-footer">
-                    <button type="submit" class="btn btn-danger">D</button>
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                  </div>
-                </form>
+              <!-- Delete Sub-image Modal -->
+              <div class="modal fade" id="deleteSubImageModal{{ sub_image['id'] }}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog">
+                  <form action="{{ url_for('delete_sub_image', sub_image_id=sub_image['id']) }}" method="post" class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title">Delete Sub-image?</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                      <p>Are you sure you want to delete this sub-image?</p>
+                      <p><strong>{{ sub_image['description'] }}</strong></p>
+                      <img src="{{ url_for('static', filename=sub_image['image_url']) }}" style="width:100%; max-height:200px; object-fit:cover; border:1px solid #ddd; border-radius:5px;">
+                    </div>
+                    <div class="modal-footer">
+                      <button type="submit" class="btn btn-danger">Delete</button>
+                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    </div>
+                  </form>
+                </div>
               </div>
-            </div>
 
-            {% endfor %}
+              {% endfor %}
+            </div>
+            <button class="gs-thumb-nav" id="thumbNext">&#10095;</button>
           </div>
-          <button class="gs-thumb-nav" id="thumbNext">&#10095;</button>
-        </div>
 
-        {% if current_user.is_authenticated and current_user.is_admin %}
-        <div class="mt-3">
-          <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#subImageModal">+ Add Sub-image</button>
+          {% if current_user.is_authenticated and current_user.is_admin %}
+          <div class="mt-3">
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#subImageModal">
+              <i class="bi bi-plus-circle"></i> Add Sub-image
+            </button>
+          </div>
+          {% endif %}
         </div>
-        {% endif %}
       </div>
 
       <!-- Right Column: Info -->
-      <div class="col-md-6 product-info">
+      <div class="col-lg-6 product-info">
         <h1>{{ product['name'] }}</h1>
-        <p class="category">{{ product['category'] }}</p>
-        <div class="rating mb-3">
+        <span class="category-badge">
+          <i class="bi bi-tag-fill"></i> {{ product['category'] }}
+        </span>
+
+        <div class="rating-section">
           {% if product['rating'] %}
             <span class="rating-stars">
               {% for i in range(product['rating']|int) %}<i class="bi bi-star-fill"></i>{% endfor %}
               {% for i in range(5-(product['rating']|int)) %}<i class="bi bi-star"></i>{% endfor %}
             </span>
-            <span class="rating-text ms-2">({{ product['rating'] }} out of 5)</span>
+            <span class="rating-text">{{ product['rating'] }} out of 5 stars</span>
           {% else %}
-            <span class="rating-text">No rating yet</span>
+            <span class="rating-text"><i class="bi bi-star"></i> No ratings yet</span>
           {% endif %}
         </div>
-        <p class="price">₹{{ product['price']|inr }}</p>
-        <p class="description">{{ product['description'] }}</p>
-        <!-- Detailed Description Block -->
-        {% if current_user.is_authenticated and current_user.is_admin %}
-        <div class="text-end mb-3">
-          <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#editDetailedDescModal">Edit Details</button>
+
+        <div class="price-section">
+          <div class="price-label">Price</div>
+          <div class="price">
+            <span class="price-currency">₹</span>{{ product['price']|inr }}
+          </div>
         </div>
+
+        <p class="description">
+          <i class="bi bi-info-circle"></i> {{ product['description'] }}
+        </p>
+
+        <!-- Detailed Description Block -->
         {% if product['detailed_description'] %}
-        <div class="detailed-description p-3 mb-4 bg-light rounded">
-          <h5>Product Details & Offers</h5>
+        <div class="detailed-description">
+          <h5><i class="bi bi-card-list"></i> Product Details & Offers</h5>
           <div>{{ product['detailed_description'] | safe }}</div>
         </div>
         {% endif %}
+
+        {% if current_user.is_authenticated and current_user.is_admin %}
+        <div class="text-end mb-3">
+          <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editDetailedDescModal">
+            <i class="bi bi-pencil"></i> Edit Details
+          </button>
+        </div>
 
         <!-- Edit Detailed Description Modal -->
         <div class="modal fade" id="editDetailedDescModal" tabindex="-1" aria-hidden="true">
@@ -227,125 +709,151 @@
           </div>
         </div>
         {% endif %}
-        <form action="{{ url_for('add_to_cart', product_id=product['id']) }}" method="post" class="mt-3">
-          <button type="submit" class="btn btn-add-cart btn-lg w-100">Add to Cart</button>
+
+        <form action="{{ url_for('add_to_cart', product_id=product['id']) }}" method="post" class="mt-4">
+          <button type="submit" class="btn btn-add-cart btn-lg w-100">
+            <i class="bi bi-cart-plus"></i> Add to Cart
+          </button>
         </form>
-        <style>
-        /* Make it specific to override Bootstrap */
-        button.btn-add-cart {
-          background-color: #ffcc00 !important;  /* Bright yellow */
-          color: #111 !important;
-          font-weight: 600;
-          transition: all 0.2s ease;
-        }
-
-        button.btn-add-cart:hover {
-          background-color: #ffdb4d !important;  /* Lighter yellow on hover */
-        }
-        </style>
-
 
         <!-- Social Proof -->
-        <div class="social-proof text-center my-4 p-3 rounded" style="background:#f8f9fa; border:1px solid #ddd;">
-          ⭐️⭐️⭐️⭐️⭐️ <br>
-          <small>Trusted by <strong>Happy Customers</strong></small>
+        <div class="social-proof">
+          <i class="bi bi-people-fill fs-4"></i>
+          <div class="mt-2">
+            ⭐️⭐️⭐️⭐️⭐️
+          </div>
+          <div class="mt-2">Trusted by <strong>1000+ Happy Customers</strong></div>
         </div>
+
         <!-- Freebie -->
-        <div class="freebie text-center my-4 p-3 rounded" style="background:#e6ffed; border:1px solid #b3e6cc;">
-          🎁 <strong>Special Bonus:</strong> Free installation included with your order!
+        <div class="freebie">
+          <i class="bi bi-gift-fill fs-4"></i>
+          <div class="mt-2">
+            <strong>Special Bonus:</strong> Free installation included with your order!
+          </div>
         </div>
 
         <!-- Trust Policies -->
-        <div class="trust-policies mt-5">
-          <div class="row text-center justify-content-between">
+        <div class="trust-policies">
+          <div class="row text-center g-3">
             <div class="col-6 col-md-3">
               <div class="policy">
-                <i class="bi bi-truck fs-1 text-warning"></i>
-                <h6 class="mt-3">Free Delivery</h6>
-                <p class="small text-muted">No extra charges on orders.</p>
+                <i class="bi bi-truck"></i>
+                <h6>Free Delivery</h6>
+                <p class="small text-muted mb-0">No extra charges</p>
               </div>
             </div>
             <div class="col-6 col-md-3">
               <div class="policy">
-                <i class="bi bi-arrow-repeat fs-1 text-warning"></i>
-                <h6 class="mt-3">10 Days Replacement</h6>
-                <p class="small text-muted">Easy replacement within 10 days.</p>
+                <i class="bi bi-arrow-repeat"></i>
+                <h6>10 Days Return</h6>
+                <p class="small text-muted mb-0">Easy replacement</p>
               </div>
             </div>
             <div class="col-6 col-md-3">
               <div class="policy">
-                <i class="bi bi-shield-lock fs-1 text-warning"></i>
-                <h6 class="mt-3">Secure Payment</h6>
-                <p class="small text-muted">100% secure via Razorpay.</p>
+                <i class="bi bi-shield-lock"></i>
+                <h6>Secure Payment</h6>
+                <p class="small text-muted mb-0">100% protected</p>
               </div>
             </div>
             <div class="col-6 col-md-3">
               <div class="policy">
-                <i class="bi bi-tools fs-1 text-warning"></i>
-                <h6 class="mt-3">Assembly Available</h6>
-                <p class="small text-muted">Expert help at your doorstep.</p>
+                <i class="bi bi-tools"></i>
+                <h6>Assembly Help</h6>
+                <p class="small text-muted mb-0">Expert support</p>
               </div>
             </div>
           </div>
         </div>
       </div>
     </div>
+
     <!-- Tabs (Specifications, Warranty, Reviews) -->
-    <div class="row mt-5">
+    <div class="row">
       <div class="col-12">
         <ul class="nav nav-tabs" id="productTab" role="tablist">
           <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="spec-tab" data-bs-toggle="tab" data-bs-target="#spec" type="button">Specifications</button>
+            <button class="nav-link active" id="spec-tab" data-bs-toggle="tab" data-bs-target="#spec" type="button">
+              <i class="bi bi-list-check"></i> Specifications
+            </button>
           </li>
           <li class="nav-item" role="presentation">
-            <button class="nav-link" id="warranty-tab" data-bs-toggle="tab" data-bs-target="#warranty" type="button">Warranty</button>
+            <button class="nav-link" id="warranty-tab" data-bs-toggle="tab" data-bs-target="#warranty" type="button">
+              <i class="bi bi-shield-check"></i> Warranty
+            </button>
           </li>
           <li class="nav-item" role="presentation">
-            <button class="nav-link" id="reviews-tab" data-bs-toggle="tab" data-bs-target="#reviews" type="button">Reviews</button>
+            <button class="nav-link" id="reviews-tab" data-bs-toggle="tab" data-bs-target="#reviews" type="button">
+              <i class="bi bi-star"></i> Reviews
+            </button>
           </li>
         </ul>
 
-        <div class="tab-content p-3 border border-top-0 bg-white" id="productTabContent">
-        <!-- Specifications -->
-        <div class="tab-pane fade show active" id="spec">
-          {% if sub_images %}
-          <div class="specifications-list mt-3">
-            {% for sub_image in sub_images %}
-              <div class="spec-item d-flex align-items-center mb-3 p-3 rounded" 
-                  style="background:#f9f9f9; border-bottom:2px solid #dfe0e2; box-shadow:0 4px 8px rgba(0,0,0,0.1);">
-                <img src="{{ url_for('static', filename=sub_image['image_url']) }}" 
-                    alt="Sub-image {{ loop.index }}" 
-                    style="width:100px; height:100px; object-fit:cover; margin-right:15px; border-radius:6px; border:1px solid #ccc;">
-                <div>{{ sub_image['description'] | replace('\n', '<br>') | safe }}</div>
+        <div class="tab-content" id="productTabContent">
+          <!-- Specifications -->
+          <div class="tab-pane fade show active" id="spec">
+            {% if sub_images %}
+            <div class="specifications-list">
+              {% for sub_image in sub_images %}
+                <div class="spec-item d-flex align-items-center">
+                  <img src="{{ url_for('static', filename=sub_image['image_url']) }}" 
+                      alt="Specification {{ loop.index }}">
+                  <div>{{ sub_image['description'] | replace('\n', '<br>') | safe }}</div>
+                </div>
+              {% endfor %}
+            </div>
+            {% else %}
+              <div class="text-center py-5">
+                <i class="bi bi-inbox fs-1 text-muted"></i>
+                <p class="text-muted mt-3">No specifications available yet.</p>
               </div>
-            {% endfor %}
+            {% endif %}
           </div>
-          {% else %}
-            <p>No specifications available.</p>
-          {% endif %}
-        </div>
 
           <!-- Warranty -->
           <div class="tab-pane fade" id="warranty">
-            <div class="mt-3">
-              <h5>Warranty Policies</h5>
-              <ul>
-                <li>Wood Related Products: 5yrs Warranty</li>
-                <li>Electronic Products: 6months Warranty</li>
-                <li>Chair: 2yrs on Base, Hydraulic, Wheels</li>
-              </ul>
-              <h5>Return Policies</h5>
-              <ul>
-                <li>7 Days Return: Hassle-free returns within 7 days of purchase.</li>
-                <li>Easy Cancellation & Refund: Refund in 7–10 business days.</li>
-                <li>Secure Payment: 100% secure payments powered by Razorpay.</li>
-              </ul>
+            <div class="row">
+              <div class="col-md-6">
+                <h5><i class="bi bi-shield-fill-check text-success"></i> Warranty Policies</h5>
+                <ul class="list-unstyled mt-3">
+                  <li class="mb-3">
+                    <i class="bi bi-check-circle-fill text-success"></i>
+                    <strong>Wood Products:</strong> 5 years warranty
+                  </li>
+                  <li class="mb-3">
+                    <i class="bi bi-check-circle-fill text-success"></i>
+                    <strong>Electronic Products:</strong> 6 months warranty
+                  </li>
+                  <li class="mb-3">
+                    <i class="bi bi-check-circle-fill text-success"></i>
+                    <strong>Chairs:</strong> 2 years on base, hydraulic, wheels
+                  </li>
+                </ul>
+              </div>
+              <div class="col-md-6">
+                <h5><i class="bi bi-arrow-return-left text-primary"></i> Return Policies</h5>
+                <ul class="list-unstyled mt-3">
+                  <li class="mb-3">
+                    <i class="bi bi-check-circle-fill text-primary"></i>
+                    <strong>7 Days Return:</strong> Hassle-free returns
+                  </li>
+                  <li class="mb-3">
+                    <i class="bi bi-check-circle-fill text-primary"></i>
+                    <strong>Easy Refund:</strong> 7-10 business days
+                  </li>
+                  <li class="mb-3">
+                    <i class="bi bi-check-circle-fill text-primary"></i>
+                    <strong>Secure Payment:</strong> 100% protected by Razorpay
+                  </li>
+                </ul>
+              </div>
             </div>
           </div>
 
           <!-- Reviews -->
           <div class="tab-pane fade" id="reviews">
-            <div class="reviews-section mt-3">
+            <div class="reviews-section">
               {% if current_user.is_authenticated %}
               <div class="review-form-section mb-4">
                 <h3>{% if user_review %}Edit Your Review{% else %}Write a Review{% endif %}</h3>
@@ -363,19 +871,27 @@
                     <label for="comment" class="form-label">Comment</label>
                     <textarea class="form-control" id="comment" name="comment" rows="4" required>{{ user_review['comment'] if user_review }}</textarea>
                   </div>
-                  <button type="submit" class="btn btn-success">{% if user_review %}Update Review{% else %}Submit Review{% endif %}</button>
+                  <button type="submit" class="btn btn-success">
+                    <i class="bi bi-send"></i> {% if user_review %}Update Review{% else %}Submit Review{% endif %}
+                  </button>
                 </form>
               </div>
               {% else %}
-              <p>Please <a href="{{ url_for('login') }}">log in</a> to write a review.</p>
+              <div class="alert alert-info">
+                <i class="bi bi-info-circle"></i> Please <a href="{{ url_for('login') }}" class="alert-link">log in</a> to write a review.
+              </div>
               {% endif %}
 
               {% if reviews %}
                 {% for review in reviews %}
                 <div class="review-card">
-                  <div class="review-header d-flex justify-content-between">
-                    <span class="review-author">{{ review['username'] }}</span>
-                    <span class="review-date">{{ review['created_at'] }}</span>
+                  <div class="review-header d-flex justify-content-between align-items-center">
+                    <span class="review-author">
+                      <i class="bi bi-person-circle"></i> {{ review['username'] }}
+                    </span>
+                    <span class="review-date">
+                      <i class="bi bi-calendar3"></i> {{ review['created_at'] }}
+                    </span>
                   </div>
                   <div class="rating-stars mb-2">
                     {% for i in range(review['rating']) %}
@@ -385,11 +901,14 @@
                       <i class="bi bi-star"></i>
                     {% endfor %}
                   </div>
-                  <p class="review-comment">{{ review['comment'] }}</p>
+                  <p class="review-comment mb-0">{{ review['comment'] }}</p>
                 </div>
                 {% endfor %}
               {% else %}
-                <p>No reviews yet. Be the first to review this product!</p>
+                <div class="text-center py-5">
+                  <i class="bi bi-chat-left-text fs-1 text-muted"></i>
+                  <p class="text-muted mt-3">No reviews yet. Be the first to review this product!</p>
+                </div>
               {% endif %}
             </div>
           </div>
@@ -398,7 +917,10 @@
     </div>
 
     {% else %}
-      <p class="text-center">Product details could not be loaded.</p>
+      <div class="text-center py-5">
+        <i class="bi bi-exclamation-triangle fs-1 text-warning"></i>
+        <p class="text-muted mt-3">Product details could not be loaded.</p>
+      </div>
     {% endif %}
   </div>
 
@@ -429,7 +951,9 @@
     </div>
   </div>
   {% endif %}
-{% include 'footer.html' %}
+
+  {% include 'footer.html' %}
+
   <!-- JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
@@ -451,7 +975,7 @@
 
     if (mainImg && thumbs.length) setMain(thumbs[0].getAttribute('data-src'));
 
-    let SCALE = 1.1, bgW = 0, bgH = 0;
+    let SCALE = 1.5, bgW = 0, bgH = 0;
     function initZoom() {
       if (!mainImg || !zoomResult) return;
       const natW = mainImg.naturalWidth || mainImg.width;

@@ -7,17 +7,26 @@
 
 <!-- Admin Controls -->
 {% if current_user.is_authenticated and current_user.is_admin %}
-<div style="text-align:center; margin:10px 0; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 15px; text-align:center; display:flex; gap:10px; justify-content:center; flex-wrap:wrap; align-items:center;">
+  
+  <!-- Admin Panel Link -->
+  <a href="{{ url_for('admin_orders') }}" class="btn btn-light btn-sm" style="font-weight:600; padding: 8px 20px;">
+    🎛️ Admin Panel
+  </a>
+  
+  <span style="color: white; font-weight: 600;">|</span>
 
   <!-- Countdown Controls -->
-  <input type="number" id="customMinutes" placeholder="Minutes" min="1" style="width:100px;"/>
+  <input type="number" id="customMinutes" placeholder="Minutes" min="1" style="width:100px; padding:6px;"/>
   <button id="startCountdownBtn" class="btn btn-warning btn-sm">Start Countdown</button>
   <form action="{{ url_for('stop_countdown') }}" method="post" style="display:inline;">
     <button type="submit" class="btn btn-danger btn-sm">Stop Countdown</button>
   </form>
 
+  <span style="color: white; font-weight: 600;">|</span>
+
   <!-- Discount Controls -->
-  <input type="number" id="customDiscount" placeholder="Discount %" min="0" max="100" style="width:100px;"/>
+  <input type="number" id="customDiscount" placeholder="Discount %" min="0" max="100" style="width:100px; padding:6px;"/>
   <button id="updateDiscountBtn" class="btn btn-success btn-sm">Update Discount</button>
 
 </div>

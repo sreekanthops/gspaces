@@ -119,72 +119,6 @@
             margin: 18px 0;
             color: #4b5563;
         }
-        .coupon-section {
-            background: #f9fafb;
-            border: 2px dashed #d1d5db;
-            border-radius: 16px;
-            padding: 16px;
-            margin: 18px 0;
-        }
-        .coupon-input-group {
-            display: flex;
-            gap: 8px;
-        }
-        .coupon-input {
-            flex: 1;
-            border: 1px solid #d1d5db;
-            border-radius: 8px;
-            padding: 10px 14px;
-            font-size: 14px;
-            text-transform: uppercase;
-        }
-        .apply-coupon-btn {
-            background: #111827;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            padding: 10px 20px;
-            font-weight: 600;
-            cursor: pointer;
-            white-space: nowrap;
-        }
-        .apply-coupon-btn:hover {
-            background: #374151;
-        }
-        .view-coupons-btn {
-            background: transparent;
-            color: #d4af37;
-            border: 1px solid #d4af37;
-            border-radius: 8px;
-            padding: 8px 16px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            margin-top: 8px;
-            width: 100%;
-        }
-        .view-coupons-btn:hover {
-            background: #d4af37;
-            color: #111827;
-        }
-        .coupon-applied {
-            background: #d1fae5;
-            border-color: #10b981;
-            padding: 12px;
-            border-radius: 12px;
-            margin-top: 12px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .remove-coupon-btn {
-            background: transparent;
-            border: none;
-            color: #ef4444;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 13px;
-        }
         .pay-btn {
             background: linear-gradient(90deg, #d4af37, #f7d774);
             border: none;
@@ -223,70 +157,6 @@
         .flash-stack .alert {
             border-radius: 16px;
         }
-        
-        /* Coupon Modal Styles */
-        .coupon-modal {
-            display: none;
-            position: fixed;
-            z-index: 1050;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            overflow-y: auto;
-        }
-        .coupon-modal-content {
-            background: white;
-            margin: 5% auto;
-            padding: 0;
-            border-radius: 20px;
-            max-width: 600px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-        }
-        .coupon-modal-header {
-            padding: 24px;
-            border-bottom: 1px solid #e5e7eb;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .coupon-modal-body {
-            padding: 24px;
-            max-height: 500px;
-            overflow-y: auto;
-        }
-        .coupon-card {
-            border: 2px solid #e5e7eb;
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 12px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .coupon-card:hover {
-            border-color: #d4af37;
-            background: #fffbf0;
-        }
-        .coupon-code {
-            font-size: 18px;
-            font-weight: 700;
-            color: #d4af37;
-            font-family: monospace;
-        }
-        .coupon-discount {
-            font-size: 24px;
-            font-weight: 700;
-            color: #111827;
-        }
-        .close-modal {
-            background: transparent;
-            border: none;
-            font-size: 28px;
-            cursor: pointer;
-            color: #6b7280;
-        }
-        
         @media (max-width: 991px) {
             .cart-summary {
                 position: static;
@@ -309,10 +179,6 @@
             }
             .trust-grid {
                 grid-template-columns: 1fr;
-            }
-            .coupon-modal-content {
-                margin: 10% 5%;
-                max-width: 90%;
             }
         }
     </style>
@@ -415,37 +281,15 @@
                         {% endif %}
                         <div class="summary-row">
                             <span>Taxable subtotal</span>
-                            <strong id="subtotal-amount">₹{{ subtotal|inr }}</strong>
+                            <strong>₹{{ subtotal|inr }}</strong>
                         </div>
-                        
-                        <!-- Coupon Section -->
-                        <div class="coupon-section">
-                            <div class="d-flex align-items-center justify-content-between mb-2">
-                                <strong style="font-size: 14px;">Have a coupon?</strong>
-                                <span style="font-size: 12px; color: #10b981;" id="coupon-savings" class="d-none">🎉 Saved!</span>
-                            </div>
-                            <div class="coupon-input-group">
-                                <input type="text" id="coupon-code-input" class="coupon-input" placeholder="Enter code" maxlength="20">
-                                <button class="apply-coupon-btn" onclick="applyCoupon()">Apply</button>
-                            </div>
-                            <button class="view-coupons-btn" onclick="showCouponsModal()">
-                                🎁 View Available Coupons
-                            </button>
-                            <div id="coupon-applied-msg" class="d-none"></div>
-                        </div>
-                        
-                        <div id="coupon-discount-row" class="summary-row text-success d-none">
-                            <span>Coupon discount</span>
-                            <strong id="coupon-discount-amount">- ₹0.00</strong>
-                        </div>
-                        
                         <div class="summary-row">
                             <span>GST (18%)</span>
-                            <strong id="gst-amount">₹{{ gst_amount|inr }}</strong>
+                            <strong>₹{{ gst_amount|inr }}</strong>
                         </div>
                         <div class="summary-row pt-3">
                             <span class="summary-total">Total payable</span>
-                            <span class="summary-total" id="total-amount">₹{{ total_with_gst|inr }}</span>
+                            <span class="summary-total">₹{{ total_with_gst|inr }}</span>
                         </div>
 
                         <div class="support-callout">
@@ -505,32 +349,11 @@
         {% endif %}
     </div>
 
-    <!-- Coupons Modal -->
-    <div id="couponsModal" class="coupon-modal">
-        <div class="coupon-modal-content">
-            <div class="coupon-modal-header">
-                <h5 class="mb-0">Available Coupons</h5>
-                <button class="close-modal" onclick="closeCouponsModal()">&times;</button>
-            </div>
-            <div class="coupon-modal-body" id="coupons-list">
-                <div class="text-center">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Loading...</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         var user_phone = "{{ user_details.phone if user_details and user_details.phone else '' }}";
         var total_amount = parseFloat("{{ total_with_gst }}") * 100;
-        var appliedCoupon = null;
-        var originalSubtotal = parseFloat("{{ subtotal }}");
-        var originalGST = parseFloat("{{ gst_amount }}");
-        var originalTotal = parseFloat("{{ total_with_gst }}");
 
         async function ensurePhone() {
             if (!user_phone) {
@@ -559,135 +382,6 @@
             return true;
         }
 
-        async function applyCoupon() {
-            const code = document.getElementById('coupon-code-input').value.trim().toUpperCase();
-            if (!code) {
-                alert('Please enter a coupon code');
-                return;
-            }
-
-            try {
-                const response = await fetch('/api/coupons/validate', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        code: code,
-                        cart_total: originalSubtotal
-                    })
-                });
-                
-                const data = await response.json();
-                
-                if (data.status === 'success') {
-                    appliedCoupon = data;
-                    updateCartWithCoupon(data.discount_amount);
-                    showCouponApplied(data);
-                } else {
-                    alert(data.message || 'Invalid coupon code');
-                }
-            } catch (error) {
-                console.error('Error applying coupon:', error);
-                alert('Error applying coupon. Please try again.');
-            }
-        }
-
-        function updateCartWithCoupon(discountAmount) {
-            const newSubtotal = originalSubtotal - discountAmount;
-            const newGST = newSubtotal * 0.18;
-            const newTotal = newSubtotal + newGST;
-            
-            document.getElementById('coupon-discount-row').classList.remove('d-none');
-            document.getElementById('coupon-discount-amount').textContent = `- ₹${discountAmount.toFixed(2)}`;
-            document.getElementById('gst-amount').textContent = `₹${newGST.toFixed(2)}`;
-            document.getElementById('total-amount').textContent = `₹${newTotal.toFixed(2)}`;
-            document.getElementById('coupon-savings').classList.remove('d-none');
-            
-            total_amount = newTotal * 100;
-        }
-
-        function showCouponApplied(data) {
-            const msg = document.getElementById('coupon-applied-msg');
-            msg.innerHTML = `
-                <div class="coupon-applied">
-                    <div>
-                        <strong>${data.coupon_code}</strong> applied!<br>
-                        <small>${data.message}</small>
-                    </div>
-                    <button class="remove-coupon-btn" onclick="removeCoupon()">Remove</button>
-                </div>
-            `;
-            msg.classList.remove('d-none');
-            document.getElementById('coupon-code-input').value = '';
-            document.getElementById('coupon-code-input').disabled = true;
-        }
-
-        function removeCoupon() {
-            appliedCoupon = null;
-            document.getElementById('coupon-discount-row').classList.add('d-none');
-            document.getElementById('gst-amount').textContent = `₹${originalGST.toFixed(2)}`;
-            document.getElementById('total-amount').textContent = `₹${originalTotal.toFixed(2)}`;
-            document.getElementById('coupon-applied-msg').classList.add('d-none');
-            document.getElementById('coupon-code-input').disabled = false;
-            document.getElementById('coupon-savings').classList.add('d-none');
-            total_amount = originalTotal * 100;
-        }
-
-        async function showCouponsModal() {
-            document.getElementById('couponsModal').style.display = 'block';
-            
-            try {
-                const response = await fetch('/api/coupons/available');
-                const data = await response.json();
-                
-                if (data.status === 'success' && data.coupons.length > 0) {
-                    const couponsHTML = data.coupons.map(coupon => {
-                        const discountText = coupon.discount_type === 'percentage' 
-                            ? `${coupon.discount_value}% OFF` 
-                            : `₹${coupon.discount_value} OFF`;
-                        const minOrder = coupon.min_order_amount > 0 
-                            ? `<small class="text-muted">Min order: ₹${coupon.min_order_amount}</small>` 
-                            : '';
-                        
-                        return `
-                            <div class="coupon-card" onclick="selectCoupon('${coupon.code}')">
-                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <div class="coupon-code">${coupon.code}</div>
-                                    <div class="coupon-discount">${discountText}</div>
-                                </div>
-                                <p class="mb-1">${coupon.description || ''}</p>
-                                ${minOrder}
-                            </div>
-                        `;
-                    }).join('');
-                    
-                    document.getElementById('coupons-list').innerHTML = couponsHTML;
-                } else {
-                    document.getElementById('coupons-list').innerHTML = '<p class="text-center text-muted">No coupons available at the moment.</p>';
-                }
-            } catch (error) {
-                console.error('Error loading coupons:', error);
-                document.getElementById('coupons-list').innerHTML = '<p class="text-center text-danger">Error loading coupons.</p>';
-            }
-        }
-
-        function selectCoupon(code) {
-            document.getElementById('coupon-code-input').value = code;
-            closeCouponsModal();
-            applyCoupon();
-        }
-
-        function closeCouponsModal() {
-            document.getElementById('couponsModal').style.display = 'none';
-        }
-
-        // Close modal when clicking outside
-        window.onclick = function(event) {
-            const modal = document.getElementById('couponsModal');
-            if (event.target == modal) {
-                closeCouponsModal();
-            }
-        }
-
         async function openRazorpay() {
             const ready = await ensurePhone();
             if (!ready) return;
@@ -706,16 +400,10 @@
                 "image": "{{ url_for('static', filename='img/logo.png') }}",
                 "order_id": "{{ razorpay_order_id }}",
                 "handler": function (response) {
-                    const paymentData = {
-                        ...response,
-                        coupon_code: appliedCoupon ? appliedCoupon.coupon_code : null,
-                        coupon_discount: appliedCoupon ? appliedCoupon.discount_amount : 0
-                    };
-                    
                     fetch("/payment/success", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify(paymentData)
+                        body: JSON.stringify(response)
                     })
                     .then(res => res.json())
                     .then(data => {

@@ -1573,11 +1573,11 @@ def is_deal_active():
         return datetime.utcnow() < end_time
     return False
 
-def calculate_cart_totals(cart_items):
+def calculate_cart_totals(cart_items, coupon_discount=Decimal("0.00")):
     deal_active = is_deal_active()
     subtotal_after_discount = Decimal("0.00")
     original_subtotal = Decimal("0.00")
-    coupon_discount = Decimal("0.00")
+    deal_discount = Decimal("0.00")
 
     for item in cart_items:
         # Ensure price is a Decimal for math
@@ -1587,7 +1587,7 @@ def calculate_cart_totals(cart_items):
         if deal_active and DISCOUNT_RATE is not None:
             discounted_price = (price * DISCOUNT_RATE).quantize(Decimal('0.01'))
             # Add price difference to discount total
-            coupon_discount += (price - discounted_price) * item['quantity']
+            deal_discount += (price - discounted_price) * item['quantity']
             
             item['display_price'] = discounted_price
             subtotal_after_discount += discounted_price * item['quantity']
@@ -1595,15 +1595,22 @@ def calculate_cart_totals(cart_items):
             item['display_price'] = price
             subtotal_after_discount += price * item['quantity']
 
+    # Apply coupon discount to subtotal
+    subtotal_after_coupon = (subtotal_after_discount - coupon_discount).quantize(Decimal('0.01'))
+    if subtotal_after_coupon < 0:
+        subtotal_after_coupon = Decimal("0.00")
+    
     gst_rate = Decimal('0.18')
-    gst_amount = (subtotal_after_discount * gst_rate).quantize(Decimal('0.01'))
-    total_with_gst = (subtotal_after_discount + gst_amount).quantize(Decimal('0.01'))
+    gst_amount = (subtotal_after_coupon * gst_rate).quantize(Decimal('0.01'))
+    total_with_gst = (subtotal_after_coupon + gst_amount).quantize(Decimal('0.01'))
 
     return {
         "deal_active": deal_active,
-        "subtotal": subtotal_after_discount, # Subtotal AFTER applied discount
+        "subtotal": subtotal_after_discount, # Subtotal AFTER deal discount but BEFORE coupon
         "original_subtotal": original_subtotal, # Subtotal BEFORE any discount
-        "coupon_discount": coupon_discount.quantize(Decimal('0.01')), # NEW: Explicit discount amount
+        "deal_discount": deal_discount.quantize(Decimal('0.01')),
+        "coupon_discount": coupon_discount.quantize(Decimal('0.01')),
+        "subtotal_after_coupon": subtotal_after_coupon,
         "gst_amount": gst_amount,
         "total_with_gst": total_with_gst
     }
@@ -1722,6 +1729,226 @@ cart_items = []
 total_price = 0
 gst_amount = 0
 total_with_gst = 0
+# --- COUPON MANAGEMENT ROUTES ---
+@app.route('/admin/coupons')
+@login_required
+def admin_coupons():
+    """Admin page to manage coupons"""
+    if current_user.email not in ADMIN_EMAILS:
+        flash("Access denied. Admin privileges required.", "danger")
+        return redirect(url_for('index'))
+    
+    conn = connect_to_db()
+    coupons = []
+    
+    if conn:
+        try:
+            cur = conn.cursor(cursor_factory=RealDictCursor)
+            cur.execute("""
+                SELECT id, code, discount_type, discount_value, description, 
+                       min_order_amount, max_discount_amount, is_active, 
+                       usage_limit, times_used, valid_from, valid_until, created_at
+                FROM coupons 
+                ORDER BY created_at DESC
+            """)
+            coupons = cur.fetchall()
+        except Exception as e:
+            print(f"Error fetching coupons: {e}")
+            flash("Error loading coupons.", "danger")
+        finally:
+            conn.close()
+    
+    return render_template('admin_coupons.html', coupons=coupons)
+
+@app.route('/admin/coupons/add', methods=['POST'])
+@login_required
+def add_coupon():
+    """Add a new coupon"""
+    if current_user.email not in ADMIN_EMAILS:
+        return jsonify({"status": "error", "message": "Access denied"}), 403
+    
+    try:
+        code = request.form.get('code', '').strip().upper()
+        discount_type = request.form.get('discount_type')
+        discount_value = Decimal(request.form.get('discount_value', 0))
+        description = request.form.get('description', '').strip()
+        min_order_amount = Decimal(request.form.get('min_order_amount', 0))
+        max_discount_amount = request.form.get('max_discount_amount')
+        usage_limit = request.form.get('usage_limit')
+        valid_until = request.form.get('valid_until')
+        
+        if not code or not discount_type or discount_value <= 0:
+            flash("Invalid coupon data. Code, type, and value are required.", "danger")
+            return redirect(url_for('admin_coupons'))
+        
+        conn = connect_to_db()
+        if conn:
+            try:
+                cur = conn.cursor()
+                cur.execute("""
+                    INSERT INTO coupons 
+                    (code, discount_type, discount_value, description, min_order_amount, 
+                     max_discount_amount, usage_limit, valid_until, created_by)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """, (code, discount_type, discount_value, description, min_order_amount,
+                      max_discount_amount if max_discount_amount else None,
+                      usage_limit if usage_limit else None,
+                      valid_until if valid_until else None,
+                      current_user.email))
+                conn.commit()
+                flash(f"Coupon '{code}' added successfully!", "success")
+            except Exception as e:
+                print(f"Error adding coupon: {e}")
+                flash(f"Error adding coupon: {str(e)}", "danger")
+            finally:
+                conn.close()
+    except Exception as e:
+        flash(f"Error: {str(e)}", "danger")
+    
+    return redirect(url_for('admin_coupons'))
+
+@app.route('/admin/coupons/toggle/<int:coupon_id>', methods=['POST'])
+@login_required
+def toggle_coupon(coupon_id):
+    """Toggle coupon active status"""
+    if current_user.email not in ADMIN_EMAILS:
+        return jsonify({"status": "error", "message": "Access denied"}), 403
+    
+    conn = connect_to_db()
+    if conn:
+        try:
+            cur = conn.cursor()
+            cur.execute("UPDATE coupons SET is_active = NOT is_active WHERE id = %s", (coupon_id,))
+            conn.commit()
+            flash("Coupon status updated.", "success")
+        except Exception as e:
+            print(f"Error toggling coupon: {e}")
+            flash("Error updating coupon.", "danger")
+        finally:
+            conn.close()
+    
+    return redirect(url_for('admin_coupons'))
+
+@app.route('/admin/coupons/delete/<int:coupon_id>', methods=['POST'])
+@login_required
+def delete_coupon(coupon_id):
+    """Delete a coupon"""
+    if current_user.email not in ADMIN_EMAILS:
+        return jsonify({"status": "error", "message": "Access denied"}), 403
+    
+    conn = connect_to_db()
+    if conn:
+        try:
+            cur = conn.cursor()
+            cur.execute("DELETE FROM coupons WHERE id = %s", (coupon_id,))
+            conn.commit()
+            flash("Coupon deleted successfully.", "success")
+        except Exception as e:
+            print(f"Error deleting coupon: {e}")
+            flash("Error deleting coupon.", "danger")
+        finally:
+            conn.close()
+    
+    return redirect(url_for('admin_coupons'))
+
+@app.route('/api/coupons/validate', methods=['POST'])
+@login_required
+def validate_coupon():
+    """Validate a coupon code and return discount info"""
+    data = request.get_json()
+    code = data.get('code', '').strip().upper()
+    cart_total = Decimal(str(data.get('cart_total', 0)))
+    
+    if not code:
+        return jsonify({"status": "error", "message": "Please enter a coupon code"})
+    
+    conn = connect_to_db()
+    if not conn:
+        return jsonify({"status": "error", "message": "Database connection error"})
+    
+    try:
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute("""
+            SELECT id, code, discount_type, discount_value, description,
+                   min_order_amount, max_discount_amount, is_active,
+                   usage_limit, times_used, valid_until
+            FROM coupons 
+            WHERE code = %s
+        """, (code,))
+        coupon = cur.fetchone()
+        
+        if not coupon:
+            return jsonify({"status": "error", "message": "Invalid coupon code"})
+        
+        if not coupon['is_active']:
+            return jsonify({"status": "error", "message": "This coupon is no longer active"})
+        
+        if coupon['valid_until'] and datetime.now() > coupon['valid_until']:
+            return jsonify({"status": "error", "message": "This coupon has expired"})
+        
+        if coupon['usage_limit'] and coupon['times_used'] >= coupon['usage_limit']:
+            return jsonify({"status": "error", "message": "This coupon has reached its usage limit"})
+        
+        if cart_total < Decimal(str(coupon['min_order_amount'])):
+            return jsonify({
+                "status": "error", 
+                "message": f"Minimum order amount of ₹{coupon['min_order_amount']} required"
+            })
+        
+        # Calculate discount
+        if coupon['discount_type'] == 'percentage':
+            discount_amount = (cart_total * Decimal(str(coupon['discount_value'])) / 100).quantize(Decimal('0.01'))
+            if coupon['max_discount_amount']:
+                discount_amount = min(discount_amount, Decimal(str(coupon['max_discount_amount'])))
+        else:  # fixed
+            discount_amount = Decimal(str(coupon['discount_value']))
+        
+        # Don't allow discount to exceed cart total
+        discount_amount = min(discount_amount, cart_total)
+        
+        return jsonify({
+            "status": "success",
+            "message": f"Coupon applied! You saved ₹{discount_amount}",
+            "coupon_code": coupon['code'],
+            "discount_amount": float(discount_amount),
+            "discount_type": coupon['discount_type'],
+            "discount_value": float(coupon['discount_value']),
+            "description": coupon['description']
+        })
+        
+    except Exception as e:
+        print(f"Error validating coupon: {e}")
+        return jsonify({"status": "error", "message": "Error validating coupon"})
+    finally:
+        conn.close()
+
+@app.route('/api/coupons/available')
+@login_required
+def get_available_coupons():
+    """Get list of active coupons for display"""
+    conn = connect_to_db()
+    coupons = []
+    
+    if conn:
+        try:
+            cur = conn.cursor(cursor_factory=RealDictCursor)
+            cur.execute("""
+                SELECT code, discount_type, discount_value, description, min_order_amount
+                FROM coupons 
+                WHERE is_active = TRUE 
+                  AND (valid_until IS NULL OR valid_until > NOW())
+                  AND (usage_limit IS NULL OR times_used < usage_limit)
+                ORDER BY discount_value DESC
+                LIMIT 10
+            """)
+            coupons = cur.fetchall()
+        except Exception as e:
+            print(f"Error fetching available coupons: {e}")
+        finally:
+            conn.close()
+    
+    return jsonify({"status": "success", "coupons": coupons})
+
 # --- Cart route ---
 @app.route('/cart')
 @login_required
@@ -1794,6 +2021,8 @@ def payment_success():
         payment_id = data.get('razorpay_payment_id')
         order_id_from_razorpay = data.get('razorpay_order_id')
         signature = data.get('razorpay_signature')
+        coupon_code = data.get('coupon_code')
+        coupon_discount = Decimal(str(data.get('coupon_discount', 0)))
 
         razorpay_client.utility.verify_payment_signature({
             'razorpay_order_id': order_id_from_razorpay,
@@ -1819,7 +2048,7 @@ def payment_success():
         if not cart_items:
             return jsonify({"status": "error", "error": "Your cart is empty."})
 
-        totals = calculate_cart_totals(cart_items)
+        totals = calculate_cart_totals(cart_items, coupon_discount)
         final_total = totals.get("total_with_gst")
         if final_total is None:
             raise Exception("Total calculation failed.")
@@ -1852,21 +2081,21 @@ def payment_success():
                 total_amount, status, status_code, status_updated_at, order_date,
                 shipping_name, shipping_phone, shipping_address_line_1, shipping_address_line_2,
                 shipping_city, shipping_state, shipping_pincode, shipping_country,
-                delivery_instructions, company_name, gstin
+                delivery_instructions, company_name, gstin, coupon_code, coupon_discount
             )
             VALUES (
                 %s, %s, %s, %s,
                 %s, %s, %s, %s, %s,
                 %s, %s, %s, %s,
                 %s, %s, %s, %s,
-                %s, %s, %s
+                %s, %s, %s, %s, %s
             ) RETURNING id
         """, (
             current_user.id, current_user.email, order_id_from_razorpay, payment_id,
             final_total, 'Confirmed', 'confirmed', datetime.now(), datetime.now(),
             shipping_name, shipping_phone, shipping_address_line_1, shipping_address_line_2,
             shipping_city, shipping_state, shipping_pincode, shipping_country,
-            delivery_instructions, company_name, gstin
+            delivery_instructions, company_name, gstin, coupon_code, coupon_discount
         ))
 
         order_record = cur.fetchone()

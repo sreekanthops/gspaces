@@ -2063,6 +2063,13 @@ def admin_view_order(order_id):
             order = cur.fetchone()
             
             if order:
+                # Parse JSON items array
+                import json
+                if order.get('items'):
+                    order['items'] = json.loads(order['items']) if isinstance(order['items'], str) else order['items']
+                else:
+                    order['items'] = []
+                
                 order['status_code'] = normalize_order_status(order.get('status_code'), order.get('status'))
                 order['status_label'] = ORDER_STATUS_LABELS.get(order['status_code'], 'Order placed')
                 order['tracking_timeline'] = build_tracking_timeline(order['status_code'])

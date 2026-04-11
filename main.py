@@ -42,6 +42,9 @@ import razorpay
 # Datetime import
 from datetime import datetime
 
+# Notification system import
+from notifications import notify_new_order, notify_order_status_update
+
 # --- CONFIGURATION ---
 # Read from environment variables if available; fallback to development defaults.
 # IMPORTANT: In production, NEVER hardcode sensitive information like this.
@@ -2010,15 +2013,42 @@ def update_order_status(order_id):
     conn = connect_to_db()
     if conn:
         try:
-            cur = conn.cursor()
+            cur = conn.cursor(cursor_factory=RealDictCursor)
+            
+            # Get old status and customer details before update
             cur.execute("""
-                UPDATE orders 
-                SET status_code = %s, 
+                SELECT status_code, user_email, shipping_name, shipping_phone
+                FROM orders
+                WHERE id = %s
+            """, (order_id,))
+            order_data = cur.fetchone()
+            old_status = order_data['status_code'] if order_data else None
+            
+            # Update order status
+            cur.execute("""
+                UPDATE orders
+                SET status_code = %s,
                     status = %s,
                     status_updated_at = NOW()
                 WHERE id = %s
             """, (new_status, ORDER_STATUS_LABELS[new_status], order_id))
             conn.commit()
+            
+            # Send notification to customer about status update
+            if order_data:
+                try:
+                    notify_order_status_update(
+                        order_id=order_id,
+                        customer_name=order_data['shipping_name'],
+                        customer_email=order_data['user_email'],
+                        customer_phone=order_data['shipping_phone'],
+                        old_status=old_status,
+                        new_status=new_status,
+                        status_label=ORDER_STATUS_LABELS[new_status]
+                    )
+                except Exception as e:
+                    print(f"Error sending status update notification: {e}")
+            
             flash(f"Order #{order_id} status updated to '{ORDER_STATUS_LABELS[new_status]}'", "success")
         except Exception as e:
             print(f"Error updating order status: {e}")
@@ -2378,6 +2408,18 @@ def payment_success():
 
         cur.execute("DELETE FROM cart WHERE user_id=%s", (current_user.id,))
         conn.commit()
+        
+        # Send notification to admin about new order
+        try:
+            notify_new_order(
+                order_id=new_order_id,
+                customer_name=shipping_name,
+                customer_email=current_user.email,
+                total_amount=final_total,
+                items_count=len(cart_items)
+            )
+        except Exception as e:
+            print(f"Error sending new order notification: {e}")
 
         sender = os.getenv("MAIL_USERNAME", "sri.chityala501@gmail.com")
         receiver = current_user.email

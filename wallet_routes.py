@@ -1,0 +1,278 @@
+"""
+Wallet System Routes
+Add these routes to main.py or import this module
+"""
+
+from flask import jsonify, request, render_template
+from flask_login import login_required, current_user
+from decimal import Decimal
+from wallet_system import WalletSystem
+from datetime import datetime, timedelta
+
+
+def add_wallet_routes(app, connect_to_db):
+    """Add wallet-related routes to the Flask app"""
+    
+    @app.route('/api/wallet/balance')
+    @login_required
+    def get_wallet_balance():
+        """Get current wallet balance"""
+        conn = connect_to_db()
+        if not conn:
+            return jsonify({'error': 'Database connection failed'}), 500
+        
+        try:
+            wallet = WalletSystem(conn)
+            balance = wallet.get_wallet_balance(current_user.id)
+            usage_info = wallet.calculate_wallet_usage(current_user.id, 100000)  # Max possible
+            
+            return jsonify({
+                'success': True,
+                'balance': float(balance),
+                'max_bonus_per_order': float(WalletSystem.MAX_BONUS_PER_ORDER)
+            })
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+        finally:
+            conn.close()
+    
+    @app.route('/api/wallet/transactions')
+    @login_required
+    def get_wallet_transactions():
+        """Get wallet transaction history"""
+        conn = connect_to_db()
+        if not conn:
+            return jsonify({'error': 'Database connection failed'}), 500
+        
+        try:
+            limit = request.args.get('limit', 50, type=int)
+            wallet = WalletSystem(conn)
+            transactions = wallet.get_transaction_history(current_user.id, limit)
+            
+            return jsonify({
+                'success': True,
+                'transactions': transactions
+            })
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+        finally:
+            conn.close()
+    
+    @app.route('/api/wallet/calculate-usage', methods=['POST'])
+    @login_required
+    def calculate_wallet_usage():
+        """Calculate how much wallet balance can be used for an order"""
+        data = request.get_json()
+        order_total = Decimal(str(data.get('order_total', 0)))
+        
+        conn = connect_to_db()
+        if not conn:
+            return jsonify({'error': 'Database connection failed'}), 500
+        
+        try:
+            wallet = WalletSystem(conn)
+            usage_info = wallet.calculate_wallet_usage(current_user.id, order_total)
+            
+            return jsonify({
+                'success': True,
+                **usage_info
+            })
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+        finally:
+            conn.close()
+    
+    @app.route('/api/referral/info')
+    @login_required
+    def get_referral_info():
+        """Get user's referral code and statistics"""
+        conn = connect_to_db()
+        if not conn:
+            return jsonify({'error': 'Database connection failed'}), 500
+        
+        try:
+            wallet = WalletSystem(conn)
+            stats = wallet.get_referral_stats(current_user.id)
+            
+            if not stats:
+                # Create referral coupon if doesn't exist
+                from psycopg2.extras import RealDictCursor
+                cur = conn.cursor(cursor_factory=RealDictCursor)
+                
+                # Get user's referral code
+                cur.execute("SELECT referral_code FROM users WHERE id = %s", (current_user.id,))
+                user_data = cur.fetchone()
+                
+                if user_data and user_data['referral_code']:
+                    # Create referral coupon
+                    cur.execute("""
+                        INSERT INTO referral_coupons (user_id, coupon_code, expires_at)
+                        VALUES (%s, %s, %s)
+                        ON CONFLICT (user_id) DO NOTHING
+                    """, (current_user.id, user_data['referral_code'], 
+                          datetime.now() + timedelta(days=30)))
+                    conn.commit()
+                    
+                    stats = wallet.get_referral_stats(current_user.id)
+            
+            return jsonify({
+                'success': True,
+                'referral_info': stats
+            })
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+        finally:
+            conn.close()
+    
+    @app.route('/api/referral/validate', methods=['POST'])
+    @login_required
+    def validate_referral_code():
+        """Validate a referral code"""
+        data = request.get_json()
+        coupon_code = data.get('code', '').strip().upper()
+        
+        if not coupon_code:
+            return jsonify({'valid': False, 'error': 'Please enter a referral code'})
+        
+        conn = connect_to_db()
+        if not conn:
+            return jsonify({'error': 'Database connection failed'}), 500
+        
+        try:
+            wallet = WalletSystem(conn)
+            result = wallet.validate_referral_coupon(coupon_code, current_user.id)
+            
+            return jsonify(result)
+        except Exception as e:
+            return jsonify({'valid': False, 'error': str(e)})
+        finally:
+            conn.close()
+    
+    @app.route('/wallet')
+    @login_required
+    def wallet_page():
+        """Wallet page showing balance and transactions"""
+        conn = connect_to_db()
+        if not conn:
+            return "Database connection failed", 500
+        
+        try:
+            wallet = WalletSystem(conn)
+            balance = wallet.get_wallet_balance(current_user.id)
+            transactions = wallet.get_transaction_history(current_user.id, 50)
+            referral_stats = wallet.get_referral_stats(current_user.id)
+            
+            return render_template('wallet.html',
+                                 balance=float(balance),
+                                 transactions=transactions,
+                                 referral_stats=referral_stats,
+                                 max_bonus_per_order=float(WalletSystem.MAX_BONUS_PER_ORDER))
+        except Exception as e:
+            return f"Error loading wallet: {e}", 500
+        finally:
+            conn.close()
+
+
+def integrate_wallet_with_signup(cursor, conn, user_id, user_name):
+    """
+    Call this function after user signup to credit signup bonus
+    Add this to the signup route after user creation
+    """
+    try:
+        wallet = WalletSystem(conn)
+        result = wallet.credit_signup_bonus(user_id, user_name)
+        
+        if result['success']:
+            print(f"Signup bonus credited to user {user_id}: ₹{WalletSystem.SIGNUP_BONUS}")
+        else:
+            print(f"Failed to credit signup bonus: {result.get('error')}")
+        
+        return result
+    except Exception as e:
+        print(f"Error in integrate_wallet_with_signup: {e}")
+        return {'success': False, 'error': str(e)}
+
+
+def integrate_wallet_with_order(conn, user_id, order_id, order_amount, 
+                                wallet_amount_used=0, referral_code_used=None):
+    """
+    Call this function after order is confirmed to:
+    1. Deduct wallet amount if used
+    2. Credit first order cashback (5%)
+    3. Process referral bonus if referral code was used
+    
+    Add this to the payment_success route after order creation
+    """
+    try:
+        from psycopg2.extras import RealDictCursor
+        wallet = WalletSystem(conn)
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        
+        # 1. Deduct wallet amount if used
+        if wallet_amount_used > 0:
+            deduct_result = wallet.deduct_from_wallet(
+                user_id, 
+                wallet_amount_used, 
+                order_id,
+                f"Payment for order #{order_id}"
+            )
+            if not deduct_result['success']:
+                print(f"Failed to deduct wallet amount: {deduct_result.get('error')}")
+        
+        # 2. Check if this is first order and credit cashback
+        cur.execute("""
+            SELECT first_order_completed FROM users WHERE id = %s
+        """, (user_id,))
+        user_data = cur.fetchone()
+        
+        if user_data and not user_data['first_order_completed']:
+            cashback_result = wallet.credit_first_order_cashback(user_id, order_id, order_amount)
+            if cashback_result['success']:
+                print(f"First order cashback credited: ₹{cashback_result.get('new_balance')}")
+        
+        # 3. Process referral bonus if referral code was used
+        if referral_code_used:
+            # Get referrer user ID
+            cur.execute("""
+                SELECT user_id FROM referral_coupons WHERE coupon_code = %s
+            """, (referral_code_used.upper(),))
+            referrer_data = cur.fetchone()
+            
+            if referrer_data:
+                referrer_id = referrer_data['user_id']
+                
+                # Check if this is the referred user's first order
+                if user_data and not user_data['first_order_completed']:
+                    bonus_result = wallet.process_referral_bonus(
+                        referrer_id, user_id, order_id, order_amount
+                    )
+                    if bonus_result['success']:
+                        print(f"Referral bonus processed: ₹{bonus_result.get('referrer_bonus')} each")
+                        
+                        # Update coupon usage
+                        discount_amount = (Decimal(str(order_amount)) * 
+                                         WalletSystem.REFERRAL_DISCOUNT_PERCENT / 100).quantize(Decimal('0.01'))
+                        
+                        cur.execute("""
+                            INSERT INTO coupon_usage 
+                            (coupon_code, user_id, order_id, discount_amount, referrer_bonus_amount)
+                            VALUES (%s, %s, %s, %s, %s)
+                        """, (referral_code_used.upper(), user_id, order_id, 
+                              discount_amount, bonus_result.get('referrer_bonus', 0)))
+                        
+                        # Update referral coupon stats
+                        cur.execute("""
+                            UPDATE referral_coupons 
+                            SET times_used = times_used + 1
+                            WHERE coupon_code = %s
+                        """, (referral_code_used.upper(),))
+                        
+                        conn.commit()
+        
+        return {'success': True}
+    except Exception as e:
+        print(f"Error in integrate_wallet_with_order: {e}")
+        conn.rollback()
+        return {'success': False, 'error': str(e)}
+
+# Made with Bob

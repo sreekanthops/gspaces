@@ -1,0 +1,371 @@
+{% extends "navbar.html" %}
+{% block content %}
+<style>
+    .wallet-card {
+        border-radius: 15px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+    }
+    .balance-display {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: #28a745;
+    }
+    .referral-code {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #007bff;
+        background: #f8f9fa;
+        padding: 10px 20px;
+        border-radius: 8px;
+        display: inline-block;
+        margin: 10px 0;
+    }
+    .transaction-credit {
+        color: #28a745;
+        font-weight: bold;
+    }
+    .transaction-debit {
+        color: #dc3545;
+        font-weight: bold;
+    }
+    .badge-bonus {
+        background-color: #ffc107;
+        color: #000;
+    }
+    .badge-referral {
+        background-color: #17a2b8;
+    }
+    .share-buttons button {
+        margin: 5px;
+    }
+</style>
+
+<div class="container mt-5 mb-5">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4">
+                <i class="fas fa-wallet"></i> My Wallet
+            </h2>
+        </div>
+    </div>
+
+    <!-- Wallet Balance Card -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card wallet-card">
+                <div class="card-body text-center">
+                    <h5 class="card-title text-muted">Current Balance</h5>
+                    <div class="balance-display">₹{{ "%.2f"|format(balance) }}</div>
+                    <p class="text-muted mt-3">
+                        <i class="fas fa-info-circle"></i> 
+                        Maximum bonus usage per order: ₹{{ "%.2f"|format(max_bonus_per_order) }}
+                    </p>
+                    <a href="{{ url_for('cart') }}" class="btn btn-primary mt-2">
+                        <i class="fas fa-shopping-cart"></i> Use in Cart
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="col-md-6">
+            <div class="card wallet-card">
+                <div class="card-body">
+                    <h5 class="card-title">Wallet Benefits</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle text-success"></i> 
+                            ₹500 signup bonus credited
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle text-success"></i> 
+                            5% cashback on first order
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle text-success"></i> 
+                            5% referral bonus for you & friends
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle text-success"></i> 
+                            Use up to ₹10,000 per order
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Referral Section -->
+    {% if referral_stats %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card wallet-card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-users"></i> Your Referral Program
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h5>Share Your Referral Code</h5>
+                            <div class="referral-code" id="referralCode">
+                                {{ referral_stats.coupon_code }}
+                            </div>
+                            <button class="btn btn-outline-primary btn-sm" onclick="copyReferralCode()">
+                                <i class="fas fa-copy"></i> Copy Code
+                            </button>
+                            
+                            <div class="alert alert-info mt-3">
+                                <strong>How it works:</strong>
+                                <ul class="mb-0">
+                                    <li>Share your code with friends</li>
+                                    <li>They get 5% off on their first order</li>
+                                    <li>You get 5% bonus when they make a purchase</li>
+                                    <li>Both bonuses added to wallet automatically!</li>
+                                </ul>
+                            </div>
+
+                            {% if referral_stats.expires_at %}
+                            <p class="text-muted">
+                                <i class="fas fa-clock"></i> 
+                                Code expires on: {{ referral_stats.expires_at }}
+                            </p>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h6 class="text-muted">Referral Stats</h6>
+                                    <div class="mb-3">
+                                        <h3 class="text-primary">{{ referral_stats.times_used }}</h3>
+                                        <small>Times Used</small>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-success">₹{{ "%.2f"|format(referral_stats.total_earnings) }}</h3>
+                                        <small>Total Earnings</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Referral History -->
+                    {% if referral_stats.referrals %}
+                    <hr>
+                    <h5 class="mt-4">Referral History</h5>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Friend</th>
+                                    <th>Date</th>
+                                    <th>Discount Given</th>
+                                    <th>Bonus Earned</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for ref in referral_stats.referrals %}
+                                <tr>
+                                    <td>{{ ref.name }}</td>
+                                    <td>{{ ref.used_at }}</td>
+                                    <td>₹{{ "%.2f"|format(ref.discount_given) }}</td>
+                                    <td class="text-success">+₹{{ "%.2f"|format(ref.bonus_earned) }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-warning mt-3">
+                        <i class="fas fa-info-circle"></i> 
+                        No referrals yet. Start sharing your code to earn bonuses!
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Transaction History -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card wallet-card">
+                <div class="card-header bg-secondary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-history"></i> Transaction History
+                    </h4>
+                </div>
+                <div class="card-body">
+                    {% if transactions %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Description</th>
+                                    <th>Type</th>
+                                    <th>Amount</th>
+                                    <th>Balance After</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for txn in transactions %}
+                                <tr>
+                                    <td>{{ txn.date }}</td>
+                                    <td>{{ txn.description }}</td>
+                                    <td>
+                                        {% if txn.type == 'bonus' %}
+                                            <span class="badge badge-bonus">
+                                                <i class="fas fa-gift"></i> Bonus
+                                            </span>
+                                        {% elif txn.type == 'referral_bonus' %}
+                                            <span class="badge badge-referral">
+                                                <i class="fas fa-users"></i> Referral
+                                            </span>
+                                        {% elif txn.type == 'credit' %}
+                                            <span class="badge badge-success">
+                                                <i class="fas fa-plus"></i> Credit
+                                            </span>
+                                        {% elif txn.type == 'debit' %}
+                                            <span class="badge badge-danger">
+                                                <i class="fas fa-minus"></i> Debit
+                                            </span>
+                                        {% else %}
+                                            <span class="badge badge-secondary">{{ txn.type }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="{{ 'transaction-credit' if txn.amount > 0 else 'transaction-debit' }}">
+                                        {{ "+" if txn.amount > 0 else "" }}₹{{ "%.2f"|format(txn.amount|abs) }}
+                                    </td>
+                                    <td>₹{{ "%.2f"|format(txn.balance_after) }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> 
+                        No transactions yet. Your wallet activity will appear here.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Help Section -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card wallet-card">
+                <div class="card-body">
+                    <h5><i class="fas fa-question-circle"></i> Frequently Asked Questions</h5>
+                    <div class="accordion" id="faqAccordion">
+                        <div class="card">
+                            <div class="card-header" id="faq1">
+                                <h6 class="mb-0">
+                                    <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapse1">
+                                        How do I use my wallet balance?
+                                    </button>
+                                </h6>
+                            </div>
+                            <div id="collapse1" class="collapse" data-parent="#faqAccordion">
+                                <div class="card-body">
+                                    During checkout, you can choose to use your wallet balance. The amount will be automatically deducted from your order total.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <div class="card-header" id="faq2">
+                                <h6 class="mb-0">
+                                    <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapse2">
+                                        What is the maximum I can use per order?
+                                    </button>
+                                </h6>
+                            </div>
+                            <div id="collapse2" class="collapse" data-parent="#faqAccordion">
+                                <div class="card-body">
+                                    You can use up to ₹10,000 from your wallet bonus per order. This limit helps us maintain sustainable pricing.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <div class="card-header" id="faq3">
+                                <h6 class="mb-0">
+                                    <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapse3">
+                                        How does the referral program work?
+                                    </button>
+                                </h6>
+                            </div>
+                            <div id="collapse3" class="collapse" data-parent="#faqAccordion">
+                                <div class="card-body">
+                                    Share your unique referral code with friends. When they sign up and make their first purchase, they get 5% off and you get 5% of their order value as bonus in your wallet!
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <div class="card-header" id="faq4">
+                                <h6 class="mb-0">
+                                    <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapse4">
+                                        When does my referral code expire?
+                                    </button>
+                                </h6>
+                            </div>
+                            <div id="collapse4" class="collapse" data-parent="#faqAccordion">
+                                <div class="card-body">
+                                    Referral codes are valid for 1 month from creation. After expiry, a new code will be automatically generated for you.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function copyReferralCode() {
+    const code = document.getElementById('referralCode').textContent.trim();
+    navigator.clipboard.writeText(code).then(function() {
+        // Show success message
+        const btn = event.target.closest('button');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+        btn.classList.remove('btn-outline-primary');
+        btn.classList.add('btn-success');
+        
+        setTimeout(function() {
+            btn.innerHTML = originalText;
+            btn.classList.remove('btn-success');
+            btn.classList.add('btn-outline-primary');
+        }, 2000);
+    }, function(err) {
+        alert('Failed to copy code. Please copy manually: ' + code);
+    });
+}
+
+// Auto-refresh balance every 30 seconds
+setInterval(function() {
+    fetch('/api/wallet/balance')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const balanceElement = document.querySelector('.balance-display');
+                if (balanceElement) {
+                    balanceElement.textContent = '₹' + data.balance.toFixed(2);
+                }
+            }
+        })
+        .catch(error => console.error('Error refreshing balance:', error));
+}, 30000);
+</script>
+
+{% endblock %}

@@ -482,20 +482,14 @@ def login():
         conn = connect_to_db()
         if not conn:
             flash("Database connection failed during login.", "error")
-            return render_template('login.html')
+            return render_template('login.html', google_client_id=GOOGLE_CLIENT_ID)
 
         cur = conn.cursor(cursor_factory=RealDictCursor)
         try:
             cur.execute("SELECT id, name, email, password FROM users WHERE email = %s", (email,))
             user_data = cur.fetchone()
-            # Credit signup bonus for new Google users
-            if user_data:
-                integrate_wallet_with_signup(cur, conn, user_data['id'], user_data['name'])
-            # Credit signup bonus for new Google users
-            if user_data:
-                integrate_wallet_with_signup(cur, conn, user_data['id'], user_data['name'])
 
-            if user_data and user_data['password'] == password:  
+            if user_data and user_data['password'] == password:
                 #  Create a User object for Flask-Login
                 user_obj = User(
                     id=user_data['id'],
@@ -512,11 +506,12 @@ def login():
 
                 return redirect(url_for('index'))
             else:
-                return render_template('login.html')
+                flash("Invalid email or password.", "error")
+                return render_template('login.html', google_client_id=GOOGLE_CLIENT_ID)
 
         except Error as e:
             print(f"Login DB error: {e}")
-            return render_template('login.html')
+            return render_template('login.html', google_client_id=GOOGLE_CLIENT_ID)
 
         finally:
             if conn:
@@ -539,24 +534,26 @@ def signup():
             # Validate inputs
             if not name or not email or not password:
                 flash("All fields are required.", "error")
-                return render_template('login.html')
+                return render_template('login.html', google_client_id=GOOGLE_CLIENT_ID)
 
             # Check for disposable email
             if is_disposable_email(email):
                 flash("Disposable email addresses are not allowed. Please use a valid email.", "error")
-                return render_template('login.html')
+                return render_template('login.html', google_client_id=GOOGLE_CLIENT_ID)
 
             conn = connect_to_db()
             if not conn:
                 flash("Database connection failed.", "error")
-                return redirect(url_for('signup'))
+                return render_template('login.html', google_client_id=GOOGLE_CLIENT_ID)
             cursor = conn.cursor(cursor_factory=RealDictCursor)
 
             # Check if user already exists
             cursor.execute("SELECT id FROM users WHERE email = %s", (email,))
             if cursor.fetchone():
                 flash("Email already registered. Please login.", "error")
-                return render_template('login.html')
+                cursor.close()
+                conn.close()
+                return render_template('login.html', google_client_id=GOOGLE_CLIENT_ID)
 
             # Clean up any expired OTPs
             clean_expired_otps(conn)
@@ -578,15 +575,19 @@ def signup():
             # Send OTP email
             if send_otp_email(email, otp, name):
                 flash("Verification code sent to your email!", "success")
+                cursor.close()
+                conn.close()
                 return redirect(url_for('verify_otp', email=email))
             else:
                 flash("Failed to send verification email. Please try again.", "error")
-                return render_template('login.html')
+                cursor.close()
+                conn.close()
+                return render_template('login.html', google_client_id=GOOGLE_CLIENT_ID)
 
         except Exception as e:
             print(f"ERROR: Signup error: {e}")
             flash("Signup failed due to a server error. Please try again.", "error")
-            return render_template('login.html')
+            return render_template('login.html', google_client_id=GOOGLE_CLIENT_ID)
         finally:
             if conn:
                 cursor.close()

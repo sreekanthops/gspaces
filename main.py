@@ -460,12 +460,16 @@ def signup():
             new_user_data = cursor.fetchone()
             conn.commit()
 
+            # Credit signup bonus for new users
+            if new_user_data:
+                integrate_wallet_with_signup(cursor, conn, new_user_data['id'], new_user_data['name'])
+
             # Automatically log in the new user after signup
             if new_user_data:
                 new_user_obj = User(id=new_user_data['id'], email=new_user_data['email'],
                                     name=new_user_data['name'], is_admin=(new_user_data['email'] in ADMIN_EMAILS))
                 login_user(new_user_obj)
-                flash("Signup successful! You have been logged in.", "success")
+                flash("Signup successful! You have been logged in with ₹500 bonus.", "success")
                 return redirect(url_for('index'))
             else:
                 flash("Signup failed. No user data returned after insert.", "error")

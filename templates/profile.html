@@ -574,6 +574,9 @@
                 });
             });
 
+        });
+
+        // Global function for copying referral code
         function copyReferralCode() {
             const code = document.getElementById('referralCode').textContent.trim();
             navigator.clipboard.writeText(code).then(function() {
@@ -592,7 +595,6 @@
                 alert('Failed to copy: ' + code);
             });
         }
-        });
     </script>
 </body>
 </html>

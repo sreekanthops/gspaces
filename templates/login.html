@@ -285,17 +285,58 @@
   
   @media (max-width: 768px) {
     .container {
-      min-height: 500px;
+      min-height: 100vh;
       width: 100%;
+      border-radius: 0;
     }
     
-    .overlay-panel h1 {
-      font-size: 24px;
+    .overlay-container {
+      display: none;
     }
     
-    .bonus-badge {
-      font-size: 16px;
-      padding: 10px 20px;
+    .form-container {
+      width: 100%;
+      position: relative;
+      transform: none !important;
+      opacity: 1 !important;
+      z-index: 1 !important;
+      padding: 20px;
+    }
+    
+    .sign-in-container {
+      display: none;
+    }
+    
+    .sign-up-container {
+      display: flex;
+      opacity: 1;
+      transform: none;
+    }
+    
+    form {
+      padding: 0 20px;
+    }
+    
+    form h1 {
+      font-size: 28px;
+    }
+    
+    form input {
+      max-width: 100%;
+    }
+    
+    .bonus-text {
+      font-size: 13px;
+      padding: 8px 16px;
+    }
+    
+    .logo {
+      top: 15px;
+      left: 15px;
+    }
+    
+    .logo img {
+      height: 40px;
     }
   }
 
@@ -308,6 +349,12 @@
   </div>
   
   <div class="container" id="container">
+    <!-- Mobile Toggle Buttons -->
+    <div class="mobile-toggle" style="display: none;">
+      <button type="button" id="mobileSignIn">Sign In</button>
+      <button type="button" id="mobileSignUp" class="active">Sign Up</button>
+    </div>
+    
     <!-- Sign Up -->
     <div class="form-container sign-up-container">
       <form id="signup-form" action="/signup" method="POST" onsubmit="return validateSignup()">
@@ -371,8 +418,42 @@
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script>
     const container = document.getElementById("container");
+    const signInContainer = document.querySelector('.sign-in-container');
+    const signUpContainer = document.querySelector('.sign-up-container');
+    const mobileToggle = document.querySelector('.mobile-toggle');
+    const mobileSignIn = document.getElementById('mobileSignIn');
+    const mobileSignUp = document.getElementById('mobileSignUp');
+    
+    // Desktop toggle
     document.getElementById("signUp").addEventListener("click", () => container.classList.add("right-panel-active"));
     document.getElementById("signIn").addEventListener("click", () => container.classList.remove("right-panel-active"));
+    
+    // Mobile toggle functions
+    function showMobileToggle() {
+      if (window.innerWidth <= 768) {
+        mobileToggle.style.display = 'flex';
+      } else {
+        mobileToggle.style.display = 'none';
+      }
+    }
+    
+    mobileSignIn.addEventListener('click', () => {
+      signUpContainer.style.display = 'none';
+      signInContainer.style.display = 'flex';
+      mobileSignIn.classList.add('active');
+      mobileSignUp.classList.remove('active');
+    });
+    
+    mobileSignUp.addEventListener('click', () => {
+      signInContainer.style.display = 'none';
+      signUpContainer.style.display = 'flex';
+      mobileSignUp.classList.add('active');
+      mobileSignIn.classList.remove('active');
+    });
+    
+    // Show/hide mobile toggle on resize
+    window.addEventListener('resize', showMobileToggle);
+    showMobileToggle();
 
     // Password validation for signup
     function validateSignup() {

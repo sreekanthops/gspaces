@@ -182,49 +182,41 @@ class WalletSystem:
     def process_referral_bonus(self, referrer_user_id, referred_user_id, order_id, order_amount):
         """
         Process referral bonus when referred user makes first order
-        Both referrer and referred user get 5% bonus
+        ONLY referrer gets 5% bonus (referred user only gets signup bonus)
         """
         try:
             cur = self.conn.cursor(cursor_factory=RealDictCursor)
             
-            # Check if referred user has already received referral bonus
+            # Check if referrer has already received bonus for this referred user
             cur.execute("""
-                SELECT COUNT(*) as count FROM wallet_transactions 
-                WHERE user_id = %s AND reference_type = 'referral' AND transaction_type = 'bonus'
-            """, (referred_user_id,))
+                SELECT COUNT(*) as count FROM wallet_transactions
+                WHERE user_id = %s AND reference_type = 'referral'
+                AND transaction_type = 'referral_bonus'
+                AND metadata::jsonb @> %s::jsonb
+            """, (referrer_user_id, json.dumps({'referred_user_id': referred_user_id})))
             
             if cur.fetchone()['count'] > 0:
-                return {'success': False, 'error': 'Referral bonus already processed'}
+                return {'success': False, 'error': 'Referral bonus already processed for this user'}
             
-            # Calculate bonus (5% of order amount)
+            # Calculate bonus (5% of order amount) - ONLY for referrer
             bonus_amount = (Decimal(str(order_amount)) * self.REFERRAL_BONUS_PERCENT / 100).quantize(Decimal('0.01'))
             
-            # Credit bonus to referrer
+            # Credit bonus ONLY to referrer (person who shared the code)
             referrer_result = self.add_transaction(
                 user_id=referrer_user_id,
                 transaction_type='referral_bonus',
                 amount=bonus_amount,
-                description=f'Referral bonus from order #{order_id}',
+                description=f'Referral bonus - User #{referred_user_id} used your code',
                 reference_type='referral',
                 reference_id=order_id,
                 metadata={'referred_user_id': referred_user_id, 'bonus_percent': float(self.REFERRAL_BONUS_PERCENT)}
             )
             
-            # Credit bonus to referred user
-            referred_result = self.add_transaction(
-                user_id=referred_user_id,
-                transaction_type='bonus',
-                amount=bonus_amount,
-                description=f'Referral bonus on your first order',
-                reference_type='referral',
-                reference_id=order_id,
-                metadata={'referrer_user_id': referrer_user_id, 'bonus_percent': float(self.REFERRAL_BONUS_PERCENT)}
-            )
-            
             # Update referral coupon stats
             cur.execute("""
-                UPDATE referral_coupons 
-                SET total_referral_earnings = total_referral_earnings + %s
+                UPDATE referral_coupons
+                SET times_used = times_used + 1,
+                    total_referral_earnings = total_referral_earnings + %s
                 WHERE user_id = %s
             """, (bonus_amount, referrer_user_id))
             
@@ -233,7 +225,7 @@ class WalletSystem:
             return {
                 'success': True,
                 'referrer_bonus': float(bonus_amount),
-                'referred_bonus': float(bonus_amount)
+                'referred_bonus': 0  # No bonus for referred user
             }
         except Exception as e:
             self.conn.rollback()

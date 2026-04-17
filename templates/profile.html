@@ -235,9 +235,21 @@
                     </div>
 
                     <div class="list-group list-group-flush">
-                        <a href="#personal-details" class="list-group-item list-group-item-action active" data-bs-toggle="list" role="tab">Personal Details</a>
-                        <a href="#password-change" class="list-group-item list-group-item-action" data-bs-toggle="list" role="tab">Change Password</a>
-                        <a href="#my-orders" class="list-group-item list-group-item-action" data-bs-toggle="list" role="tab">My Orders</a>
+                        <a href="#personal-details" class="list-group-item list-group-item-action active" data-bs-toggle="list" role="tab">
+                            <i class="bi bi-person-circle me-2"></i>Personal Details
+                        </a>
+                        <a href="#password-change" class="list-group-item list-group-item-action" data-bs-toggle="list" role="tab">
+                            <i class="bi bi-key me-2"></i>Change Password
+                        </a>
+                        <a href="#my-orders" class="list-group-item list-group-item-action" data-bs-toggle="list" role="tab">
+                            <i class="bi bi-bag-check me-2"></i>My Orders
+                        </a>
+                        <a href="#wallet" class="list-group-item list-group-item-action" data-bs-toggle="list" role="tab">
+                            <i class="bi bi-wallet2 me-2"></i>Wallet
+                            {% if wallet_balance is defined and wallet_balance > 0 %}
+                                <span class="badge bg-success ms-2">₹{{ wallet_balance|round(2) }}</span>
+                            {% endif %}
+                        </a>
                         <a href="{{ url_for('logout') }}" class="btn btn-outline-danger rounded-pill mt-3">Logout</a>
                     </div>
                 </div>
@@ -410,6 +422,133 @@
                                 <a href="{{ url_for('index') }}" class="btn btn-dark rounded-pill px-4">Start shopping</a>
                             </div>
                         {% endif %}
+
+                    <div class="tab-pane fade" id="wallet" role="tabpanel">
+                        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start mb-4 gap-3">
+                            <div>
+                                <h3 class="section-title">My Wallet</h3>
+                                <p class="section-subtitle mb-0">Manage your wallet balance, view transactions, and earn rewards through referrals.</p>
+                            </div>
+                        </div>
+
+                        <!-- Wallet Balance Card -->
+                        <div class="row g-4 mb-4">
+                            <div class="col-md-6">
+                                <div class="info-card text-center" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none;">
+                                    <div style="font-size: 0.9rem; opacity: 0.9; margin-bottom: 8px;">Your Wallet Balance</div>
+                                    <div style="font-size: 2.5rem; font-weight: 700; margin-bottom: 16px;">
+                                        ₹{{ wallet_balance|round(2) if wallet_balance else '0.00' }}
+                                    </div>
+                                    {% if wallet_balance and wallet_balance > 0 %}
+                                        <p style="opacity: 0.9; margin-bottom: 12px;">You have ₹{{ wallet_balance|round(2) }} in your wallet!</p>
+                                        <a href="{{ url_for('index') }}" class="btn btn-light rounded-pill px-4">
+                                            <i class="bi bi-cart-plus me-2"></i>Use Wallet Balance
+                                        </a>
+                                    {% else %}
+                                        <p style="opacity: 0.9; margin-bottom: 12px;">Your wallet is empty. Start earning rewards!</p>
+                                        <a href="#referral-section" class="btn btn-light rounded-pill px-4" onclick="document.getElementById('referral-section').scrollIntoView({behavior: 'smooth'});">
+                                            <i class="bi bi-gift me-2"></i>Refer & Earn
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="info-card">
+                                    <h5 class="mb-3"><i class="bi bi-star-fill text-warning me-2"></i>Wallet Benefits</h5>
+                                    <ul class="list-unstyled mb-0">
+                                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>₹500 signup bonus</li>
+                                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>5% cashback on first order</li>
+                                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>5% referral bonus</li>
+                                        <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>Use up to ₹10,000 per order</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Referral Section -->
+                        <div class="info-card" id="referral-section" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; border: none;">
+                            <h5 class="mb-3"><i class="bi bi-people-fill me-2"></i>Refer Friends & Earn</h5>
+                            {% if referral_code %}
+                                <div class="row align-items-center">
+                                    <div class="col-md-8">
+                                        <p class="mb-2">Your Referral Code:</p>
+                                        <div class="d-flex gap-2 align-items-center mb-3">
+                                            <div style="background: rgba(255,255,255,0.2); padding: 12px 20px; border-radius: 12px; font-size: 1.5rem; font-weight: 700; letter-spacing: 2px;" id="referralCode">
+                                                {{ referral_code }}
+                                            </div>
+                                            <button class="btn btn-light rounded-pill" onclick="copyReferralCode()">
+                                                <i class="bi bi-clipboard"></i> Copy
+                                            </button>
+                                        </div>
+                                        <div style="background: rgba(255,255,255,0.15); padding: 12px; border-radius: 8px; font-size: 0.9rem;">
+                                            <strong>How it works:</strong> Share your code → Friends get 5% off → You earn 5% bonus when they order!
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 text-center mt-3 mt-md-0">
+                                        {% if referral_stats %}
+                                            <div style="background: rgba(255,255,255,0.2); padding: 16px; border-radius: 12px;">
+                                                <div style="font-size: 2rem; font-weight: 700;">{{ referral_stats.times_used or 0 }}</div>
+                                                <div style="font-size: 0.85rem; opacity: 0.9;">Referrals</div>
+                                                <div style="font-size: 1.5rem; font-weight: 700; margin-top: 8px;">₹{{ referral_stats.total_earnings|round(2) if referral_stats.total_earnings else 0 }}</div>
+                                                <div style="font-size: 0.85rem; opacity: 0.9;">Earned</div>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% else %}
+                                <p class="mb-0">Referral code will be generated automatically. Please refresh the page.</p>
+                            {% endif %}
+                        </div>
+
+                        <!-- Transaction History -->
+                        <div class="info-card">
+                            <h5 class="mb-3"><i class="bi bi-clock-history me-2"></i>Recent Transactions</h5>
+                            {% if wallet_transactions and wallet_transactions|length > 0 %}
+                                <div class="table-responsive">
+                                    <table class="table table-hover mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th>Date</th>
+                                                <th>Description</th>
+                                                <th>Type</th>
+                                                <th class="text-end">Amount</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for txn in wallet_transactions[:10] %}
+                                                <tr>
+                                                    <td class="muted-copy">{{ txn.date }}</td>
+                                                    <td>{{ txn.description }}</td>
+                                                    <td>
+                                                        {% if txn.type == 'bonus' %}
+                                                            <span class="badge bg-warning text-dark"><i class="bi bi-gift"></i> Bonus</span>
+                                                        {% elif txn.type == 'referral_bonus' %}
+                                                            <span class="badge bg-info"><i class="bi bi-people"></i> Referral</span>
+                                                        {% elif txn.type == 'credit' %}
+                                                            <span class="badge bg-success"><i class="bi bi-plus-circle"></i> Credit</span>
+                                                        {% elif txn.type == 'debit' %}
+                                                            <span class="badge bg-danger"><i class="bi bi-dash-circle"></i> Debit</span>
+                                                        {% else %}
+                                                            <span class="badge bg-secondary">{{ txn.type }}</span>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td class="text-end fw-semibold {% if txn.amount > 0 %}text-success{% else %}text-danger{% endif %}">
+                                                        {{ "+" if txn.amount > 0 else "" }}₹{{ txn.amount|abs|round(2) }}
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <div class="text-center py-4">
+                                    <i class="bi bi-inbox" style="font-size: 3rem; color: #d1d5db;"></i>
+                                    <p class="muted-copy mt-2 mb-0">No transactions yet. Your wallet activity will appear here.</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
                     </div>
                 </div>
             </div>
@@ -433,6 +572,25 @@
                     history.pushState(null, null, this.getAttribute('href'));
                 });
             });
+
+        function copyReferralCode() {
+            const code = document.getElementById('referralCode').textContent.trim();
+            navigator.clipboard.writeText(code).then(function() {
+                const btn = event.target.closest('button');
+                const originalHTML = btn.innerHTML;
+                btn.innerHTML = '<i class="bi bi-check-circle"></i> Copied!';
+                btn.classList.remove('btn-light');
+                btn.classList.add('btn-success');
+                
+                setTimeout(function() {
+                    btn.innerHTML = originalHTML;
+                    btn.classList.remove('btn-success');
+                    btn.classList.add('btn-light');
+                }, 2000);
+            }).catch(function(err) {
+                alert('Failed to copy: ' + code);
+            });
+        }
         });
     </script>
 </body>

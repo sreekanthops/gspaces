@@ -52,6 +52,10 @@ from notifications import notify_new_order, notify_order_status_update, send_cus
 # or a proper configuration management system.
 from datetime import datetime, timedelta
 
+# Wallet system imports
+from wallet_system import WalletSystem
+from wallet_routes import add_wallet_routes, integrate_wallet_with_signup, integrate_wallet_with_order
+
 
 # Flask App Configuration
 app = Flask(__name__)
@@ -298,6 +302,9 @@ def inr_format(value):
     except:
         return value
 
+# Initialize wallet routes
+add_wallet_routes(app, connect_to_db)
+
 def get_catalogue_files():
     """Get list of files from the catalogue directory"""
     catalogue_dir = os.path.join(os.path.dirname(__file__), 'catalogue')
@@ -341,6 +348,9 @@ def upsert_user_from_google(google_sub, name, email):
             """, (name or email.split("@")[0], email, dummy_password))
             user_data = cur.fetchone()
             conn.commit()
+            # Credit signup bonus for new Google users
+            if user_data:
+                integrate_wallet_with_signup(cur, conn, user_data['id'], user_data['name'])
         return user_data
     except Exception as e:
         print(f"upsert_user_from_google error: {e}")
@@ -385,6 +395,12 @@ def login():
         try:
             cur.execute("SELECT id, name, email, password FROM users WHERE email = %s", (email,))
             user_data = cur.fetchone()
+            # Credit signup bonus for new Google users
+            if user_data:
+                integrate_wallet_with_signup(cur, conn, user_data['id'], user_data['name'])
+            # Credit signup bonus for new Google users
+            if user_data:
+                integrate_wallet_with_signup(cur, conn, user_data['id'], user_data['name'])
 
             if user_data and user_data['password'] == password:  
                 #  Create a User object for Flask-Login
@@ -414,7 +430,7 @@ def login():
                 cur.close()
                 conn.close()
 
-    return render_template('login.html')
+    return render_template('login.html', google_client_id=GOOGLE_CLIENT_ID)
 
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
@@ -463,7 +479,7 @@ def signup():
             if conn:
                 cursor.close()
                 conn.close()
-    return render_template('signup.html') # Ensure you have a signup.html template
+    return render_template('signup.html', google_client_id=GOOGLE_CLIENT_ID) # Ensure you have a signup.html template
 
 @app.route('/logout')
 @login_required
@@ -821,12 +837,48 @@ def profile():
             if conn:
                 conn.close()
 
+    # Fetch wallet data
+    wallet_balance = 0
+    referral_code = None
+    referral_stats = None
+    wallet_transactions = []
+    
+    conn = connect_to_db()
+    if conn:
+        try:
+            wallet = WalletSystem(conn)
+            wallet_balance = wallet.get_wallet_balance(user_id)
+            referral_stats = wallet.get_referral_stats(user_id)
+            wallet_transactions = wallet.get_transaction_history(user_id, 10)
+            
+            # Get referral code
+            cursor = conn.cursor(cursor_factory=RealDictCursor)
+            cursor.execute("SELECT referral_code FROM users WHERE id = %s", (user_id,))
+            result = cursor.fetchone()
+            if result:
+                referral_code = result.get('referral_code')
+        except Exception as e:
+            print(f"Error fetching wallet data: {e}")
+            import traceback
+            traceback.print_exc()
+        finally:
+            if conn:
+                conn.close()
+
+    print(f"DEBUG: wallet_balance={wallet_balance}, referral_code={referral_code}")
+    print(f"DEBUG: referral_stats={referral_stats}")
+    print(f"DEBUG: wallet_transactions count={len(wallet_transactions)}")
+
     return render_template(
         'profile.html',
         user=user_details['name'],
         user_details=user_details,
         user_orders=user_orders,
-        order_status_labels=ORDER_STATUS_LABELS
+        order_status_labels=ORDER_STATUS_LABELS,
+        wallet_balance=float(wallet_balance) if wallet_balance else 0,
+        referral_code=referral_code,
+        referral_stats=referral_stats,
+        wallet_transactions=wallet_transactions
     )
 def get_next_product_id():
     # Example: Generate sequential ID or use DB auto-increment

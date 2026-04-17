@@ -575,11 +575,47 @@
             });
 
         });
-
+    </script>
+    
+    <script>
         // Global function for copying referral code
         function copyReferralCode() {
             const code = document.getElementById('referralCode').textContent.trim();
-            navigator.clipboard.writeText(code).then(function() {
+            
+            // Try modern clipboard API first
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(code).then(function() {
+                    const btn = event.target.closest('button');
+                    const originalHTML = btn.innerHTML;
+                    btn.innerHTML = '<i class="bi bi-check-circle"></i> Copied!';
+                    btn.classList.remove('btn-light');
+                    btn.classList.add('btn-success');
+                    
+                    setTimeout(function() {
+                        btn.innerHTML = originalHTML;
+                        btn.classList.remove('btn-success');
+                        btn.classList.add('btn-light');
+                    }, 2000);
+                }).catch(function(err) {
+                    // Fallback to old method
+                    copyToClipboardFallback(code);
+                });
+            } else {
+                // Fallback for older browsers
+                copyToClipboardFallback(code);
+            }
+        }
+        
+        function copyToClipboardFallback(text) {
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-999999px';
+            document.body.appendChild(textArea);
+            textArea.select();
+            
+            try {
+                document.execCommand('copy');
                 const btn = event.target.closest('button');
                 const originalHTML = btn.innerHTML;
                 btn.innerHTML = '<i class="bi bi-check-circle"></i> Copied!';
@@ -591,9 +627,11 @@
                     btn.classList.remove('btn-success');
                     btn.classList.add('btn-light');
                 }, 2000);
-            }).catch(function(err) {
-                alert('Failed to copy: ' + code);
-            });
+            } catch (err) {
+                alert('Referral code: ' + text + '\n\nPlease copy manually.');
+            }
+            
+            document.body.removeChild(textArea);
         }
     </script>
 </body>

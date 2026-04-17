@@ -439,6 +439,27 @@
                             <strong id="coupon-discount-amount">- ₹0.00</strong>
                         </div>
                         
+                        <!-- Wallet Balance Section -->
+                        {% if wallet_balance and wallet_balance > 0 %}
+                        <div class="coupon-section" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; color: white;">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <strong style="font-size: 14px;"><i class="bi bi-wallet2 me-2"></i>Use Wallet Balance</strong>
+                                <span style="font-size: 13px; opacity: 0.9;">Available: ₹{{ wallet_balance|inr }}</span>
+                            </div>
+                            <div class="form-check" style="background: rgba(255,255,255,0.15); padding: 12px; border-radius: 8px;">
+                                <input class="form-check-input" type="checkbox" id="useWalletBalance" onchange="toggleWalletUsage()" style="cursor: pointer;">
+                                <label class="form-check-label" for="useWalletBalance" style="cursor: pointer; font-size: 13px;">
+                                    Apply wallet balance to this order (Max ₹10,000 per order)
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div id="wallet-discount-row" class="summary-row text-success d-none">
+                            <span><i class="bi bi-wallet2 me-1"></i>Wallet balance used</span>
+                            <strong id="wallet-discount-amount">- ₹0.00</strong>
+                        </div>
+                        {% endif %}
+                        
                         <div class="summary-row">
                             <span>GST (18%)</span>
                             <strong id="gst-amount">₹{{ gst_amount|inr }}</strong>
@@ -589,6 +610,54 @@
                 console.error('Error applying coupon:', error);
                 alert('Error applying coupon. Please try again.');
             }
+        // Wallet balance functionality
+        let walletAmountUsed = 0;
+        const maxWalletUsage = 10000; // ₹10,000 limit
+        const walletBalance = parseFloat('{{ wallet_balance|default(0) }}');
+        
+        function toggleWalletUsage() {
+            const checkbox = document.getElementById('useWalletBalance');
+            const walletRow = document.getElementById('wallet-discount-row');
+            const walletAmountDisplay = document.getElementById('wallet-discount-amount');
+            
+            if (checkbox.checked) {
+                // Calculate current total after coupon discount
+                let currentSubtotal = originalSubtotal;
+                if (appliedCoupon) {
+                    currentSubtotal -= appliedCoupon.discount_amount;
+                }
+                const currentGST = currentSubtotal * 0.18;
+                const currentTotal = currentSubtotal + currentGST;
+                
+                // Calculate how much wallet balance can be used
+                walletAmountUsed = Math.min(walletBalance, currentTotal, maxWalletUsage);
+                
+                // Update display
+                walletRow.classList.remove('d-none');
+                walletAmountDisplay.textContent = `- ₹${walletAmountUsed.toFixed(2)}`;
+                
+                // Update total
+                const newTotal = currentTotal - walletAmountUsed;
+                document.getElementById('total-amount').textContent = `₹${Math.max(0, newTotal).toFixed(2)}`;
+                total_amount = Math.max(0, newTotal) * 100;
+            } else {
+                // Remove wallet discount
+                walletAmountUsed = 0;
+                walletRow.classList.add('d-none');
+                
+                // Recalculate total without wallet
+                let currentSubtotal = originalSubtotal;
+                if (appliedCoupon) {
+                    currentSubtotal -= appliedCoupon.discount_amount;
+                }
+                const currentGST = currentSubtotal * 0.18;
+                const currentTotal = currentSubtotal + currentGST;
+                
+                document.getElementById('total-amount').textContent = `₹${currentTotal.toFixed(2)}`;
+                total_amount = currentTotal * 100;
+            }
+        }
+
         }
 
         function updateCartWithCoupon(discountAmount) {

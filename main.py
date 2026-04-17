@@ -2378,6 +2378,7 @@ def cart():
     conn = connect_to_db()
     cart_items = []
     user_details = {'phone': ''}
+    wallet_balance = 0
 
     if conn:
         try:
@@ -2396,6 +2397,12 @@ def cart():
             rec = cur.fetchone()
             if rec and rec.get('phone'):
                 user_details['phone'] = rec['phone']
+            
+            # Fetch wallet balance
+            cur.execute("SELECT wallet_balance FROM users WHERE id = %s", (current_user.id,))
+            wallet_rec = cur.fetchone()
+            if wallet_rec:
+                wallet_balance = float(wallet_rec.get('wallet_balance', 0))
 
         except Exception as e:
             print(f"Error fetching cart: {e}")
@@ -2430,7 +2437,8 @@ def cart():
         user_details=user_details,
         deal_active=totals["deal_active"],
         razorpay_order_id=razorpay_order_id,
-        razorpay_key=RAZORPAY_KEY_ID
+        razorpay_key=RAZORPAY_KEY_ID,
+        wallet_balance=wallet_balance
     )
 
 # --- Payment success route ---

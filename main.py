@@ -116,6 +116,8 @@ razorpay_client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET))
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login' # The endpoint name for the login page
+login_manager.login_message = None  # Disable the default "Please log in to access this page" message
+login_manager.login_message_category = None
 
 
 # User class for Flask-Login

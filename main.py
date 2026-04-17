@@ -530,10 +530,21 @@ def signup():
             name = request.form.get('name')
             email = request.form.get('email')
             password = request.form.get('password')
+            confirm_password = request.form.get('confirm_password')
 
             # Validate inputs
-            if not name or not email or not password:
+            if not name or not email or not password or not confirm_password:
                 flash("All fields are required.", "error")
+                return render_template('login.html', google_client_id=GOOGLE_CLIENT_ID)
+            
+            # Check password match
+            if password != confirm_password:
+                flash("Passwords do not match.", "error")
+                return render_template('login.html', google_client_id=GOOGLE_CLIENT_ID)
+            
+            # Check password length
+            if len(password) < 6:
+                flash("Password must be at least 6 characters long.", "error")
                 return render_template('login.html', google_client_id=GOOGLE_CLIENT_ID)
 
             # Check for disposable email

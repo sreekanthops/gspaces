@@ -313,8 +313,37 @@
       transform: none;
     }
     
+    .mobile-toggle {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: white;
+      padding: 15px 20px;
+      box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+      z-index: 1000;
+      text-align: center;
+    }
+    
+    .mobile-toggle-text {
+      color: #6b7280;
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+    
+    .mobile-toggle button {
+      background: transparent;
+      border: none;
+      color: #667eea;
+      font-weight: 700;
+      font-size: 16px;
+      cursor: pointer;
+      text-decoration: underline;
+      padding: 5px 10px;
+    }
+    
     form {
-      padding: 0 20px;
+      padding: 0 20px 80px 20px;
     }
     
     form h1 {
@@ -323,6 +352,10 @@
     
     form input {
       max-width: 100%;
+    }
+    
+    form button[type="submit"] {
+      margin-bottom: 20px;
     }
     
     .bonus-text {
@@ -349,10 +382,10 @@
   </div>
   
   <div class="container" id="container">
-    <!-- Mobile Toggle Buttons -->
+    <!-- Mobile Toggle at Bottom -->
     <div class="mobile-toggle" style="display: none;">
-      <button type="button" id="mobileSignIn">Sign In</button>
-      <button type="button" id="mobileSignUp" class="active">Sign Up</button>
+      <div class="mobile-toggle-text" id="toggleText">Already have an account?</div>
+      <button type="button" id="mobileToggleBtn">Sign In</button>
     </div>
     
     <!-- Sign Up -->
@@ -421,8 +454,9 @@
     const signInContainer = document.querySelector('.sign-in-container');
     const signUpContainer = document.querySelector('.sign-up-container');
     const mobileToggle = document.querySelector('.mobile-toggle');
-    const mobileSignIn = document.getElementById('mobileSignIn');
-    const mobileSignUp = document.getElementById('mobileSignUp');
+    const mobileToggleBtn = document.getElementById('mobileToggleBtn');
+    const toggleText = document.getElementById('toggleText');
+    let isSignUpView = true;
     
     // Desktop toggle
     document.getElementById("signUp").addEventListener("click", () => container.classList.add("right-panel-active"));
@@ -431,24 +465,28 @@
     // Mobile toggle functions
     function showMobileToggle() {
       if (window.innerWidth <= 768) {
-        mobileToggle.style.display = 'flex';
+        mobileToggle.style.display = 'block';
       } else {
         mobileToggle.style.display = 'none';
       }
     }
     
-    mobileSignIn.addEventListener('click', () => {
-      signUpContainer.style.display = 'none';
-      signInContainer.style.display = 'flex';
-      mobileSignIn.classList.add('active');
-      mobileSignUp.classList.remove('active');
-    });
-    
-    mobileSignUp.addEventListener('click', () => {
-      signInContainer.style.display = 'none';
-      signUpContainer.style.display = 'flex';
-      mobileSignUp.classList.add('active');
-      mobileSignIn.classList.remove('active');
+    mobileToggleBtn.addEventListener('click', () => {
+      if (isSignUpView) {
+        // Switch to Sign In
+        signUpContainer.style.display = 'none';
+        signInContainer.style.display = 'flex';
+        toggleText.textContent = "Don't have an account?";
+        mobileToggleBtn.textContent = 'Sign Up';
+        isSignUpView = false;
+      } else {
+        // Switch to Sign Up
+        signInContainer.style.display = 'none';
+        signUpContainer.style.display = 'flex';
+        toggleText.textContent = 'Already have an account?';
+        mobileToggleBtn.textContent = 'Sign In';
+        isSignUpView = true;
+      }
     });
     
     // Show/hide mobile toggle on resize

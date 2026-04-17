@@ -56,97 +56,6 @@ from datetime import datetime, timedelta
 from wallet_system import WalletSystem
 from wallet_routes import add_wallet_routes, integrate_wallet_with_signup, integrate_wallet_with_order
 
-# --- DISPOSABLE EMAIL DOMAINS BLACKLIST ---
-DISPOSABLE_EMAIL_DOMAINS = {
-    'tempmail.com', 'guerrillamail.com', '10minutemail.com', 'throwaway.email',
-    'mailinator.com', 'maildrop.cc', 'temp-mail.org', 'getnada.com',
-    'trashmail.com', 'fakeinbox.com', 'yopmail.com', 'mohmal.com',
-    'sharklasers.com', 'guerrillamail.info', 'grr.la', 'guerrillamail.biz',
-    'guerrillamail.de', 'spam4.me', 'mailnesia.com', 'mytemp.email',
-    'tempmail.net', 'dispostable.com', 'throwawaymail.com', 'emailondeck.com',
-    'mintemail.com', 'anonbox.net', 'mailcatch.com', 'mailexpire.com',
-    'tempr.email', 'getairmail.com', 'inboxbear.com', 'guerrillamailblock.com'
-}
-
-# --- OTP HELPER FUNCTIONS ---
-def generate_otp():
-    """Generate a 6-digit OTP"""
-    return ''.join([str(random.randint(0, 9)) for _ in range(6)])
-
-def is_disposable_email(email):
-    """Check if email domain is in disposable list"""
-    domain = email.split('@')[-1].lower()
-    return domain in DISPOSABLE_EMAIL_DOMAINS
-
-def send_otp_email(email, otp, name):
-    """Send OTP verification email"""
-    try:
-        msg = Message('Verify Your Email - GSpaces', recipients=[email])
-        msg.html = f"""
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <style>
-                body {{ font-family: 'Arial', sans-serif; background-color: #f4f4f4; margin: 0; padding: 0; }}
-                .container {{ max-width: 600px; margin: 40px auto; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }}
-                .header {{ background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 20px; text-align: center; color: white; }}
-                .header h1 {{ margin: 0; font-size: 28px; }}
-                .content {{ padding: 40px 30px; }}
-                .otp-box {{ background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 30px; text-align: center; border-radius: 10px; margin: 30px 0; }}
-                .otp-code {{ font-size: 42px; font-weight: bold; letter-spacing: 8px; margin: 10px 0; }}
-                .bonus-badge {{ background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 15px 25px; border-radius: 20px; display: inline-block; margin: 20px 0; font-weight: bold; }}
-                .footer {{ background: #f9fafb; padding: 20px; text-align: center; color: #6b7280; font-size: 12px; }}
-                .warning {{ background: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0; color: #92400e; }}
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <div class="header">
-                    <h1>🎉 Welcome to GSpaces!</h1>
-                </div>
-                <div class="content">
-                    <h2>Hi {name},</h2>
-                    <p>Thank you for signing up! Please verify your email address to complete your registration and claim your signup bonus.</p>
-                    
-                    <div class="otp-box">
-                        <p style="margin: 0; font-size: 16px;">Your Verification Code</p>
-                        <div class="otp-code">{otp}</div>
-                        <p style="margin: 0; font-size: 14px;">Valid for 5 minutes</p>
-                    </div>
-                    
-                    <div class="bonus-badge">
-                        🎁 ₹500 Signup Bonus Awaits!
-                    </div>
-                    
-                    <div class="warning">
-                        <strong>⚠️ Security Notice:</strong> Never share this code with anyone. GSpaces will never ask for your OTP via phone or email.
-                    </div>
-                    
-                    <p>If you didn't request this code, please ignore this email.</p>
-                </div>
-                <div class="footer">
-                    <p>© 2026 GSpaces. All rights reserved.</p>
-                    <p>Building your dream workspace, one piece at a time.</p>
-                </div>
-            </div>
-        </body>
-        </html>
-        """
-        mail.send(msg)
-        return True
-    except Exception as e:
-        print(f"Error sending OTP email: {e}")
-        return False
-
-def clean_expired_otps(conn):
-    """Clean up expired OTP records"""
-    try:
-        cur = conn.cursor()
-        cur.execute("DELETE FROM otp_verifications WHERE expires_at < NOW() AND verified = FALSE")
-        conn.commit()
-    except Exception as e:
-        print(f"Error cleaning expired OTPs: {e}")
-
 
 # Flask App Configuration
 app = Flask(__name__)
@@ -207,8 +116,9 @@ razorpay_client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET))
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login' # The endpoint name for the login page
-login_manager.login_message = None  # Disable the default "Please log in to access this page" message
-login_manager.login_message_category = None
+
+# Initialize wallet routes
+add_wallet_routes(app, connect_to_db)
 
 
 # User class for Flask-Login
@@ -395,9 +305,6 @@ def inr_format(value):
     except:
         return value
 
-# Initialize wallet routes
-add_wallet_routes(app, connect_to_db)
-
 def get_catalogue_files():
     """Get list of files from the catalogue directory"""
     catalogue_dir = os.path.join(os.path.dirname(__file__), 'catalogue')
@@ -430,6 +337,9 @@ def upsert_user_from_google(google_sub, name, email):
         cur = conn.cursor(cursor_factory=RealDictCursor)
         cur.execute("SELECT id, name, email FROM users WHERE email = %s", (email,))
         user_data = cur.fetchone()
+            # Credit signup bonus for new Google users
+            if user_data:
+                integrate_wallet_with_signup(cur, conn, user_data['id'], user_data['name'])
         if not user_data:
             # For Google users, we can use a dummy password or handle it differently
             # In a real app, you might distinguish between password and OAuth users
@@ -440,10 +350,10 @@ def upsert_user_from_google(google_sub, name, email):
                 RETURNING id, name, email
             """, (name or email.split("@")[0], email, dummy_password))
             user_data = cur.fetchone()
-            conn.commit()
             # Credit signup bonus for new Google users
             if user_data:
                 integrate_wallet_with_signup(cur, conn, user_data['id'], user_data['name'])
+            conn.commit()
         return user_data
     except Exception as e:
         print(f"upsert_user_from_google error: {e}")
@@ -491,9 +401,6 @@ def login():
             # Credit signup bonus for new Google users
             if user_data:
                 integrate_wallet_with_signup(cur, conn, user_data['id'], user_data['name'])
-            # Credit signup bonus for new Google users
-            if user_data:
-                integrate_wallet_with_signup(cur, conn, user_data['id'], user_data['name'])
 
             if user_data and user_data['password'] == password:  
                 #  Create a User object for Flask-Login
@@ -523,7 +430,7 @@ def login():
                 cur.close()
                 conn.close()
 
-    return render_template('login.html', google_client_id=GOOGLE_CLIENT_ID)
+    return render_template('login.html')
 
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
@@ -534,53 +441,34 @@ def signup():
         try:
             name = request.form.get('name')
             email = request.form.get('email')
-            password = request.form.get('password')
-
-            # Validate inputs
-            if not name or not email or not password:
-                flash("All fields are required.", "error")
-                return render_template('login.html')
-
-            # Check for disposable email
-            if is_disposable_email(email):
-                flash("Disposable email addresses are not allowed. Please use a valid email.", "error")
-                return render_template('login.html')
+            password = request.form.get('password') # In production, use hashed passwords!
 
             conn = connect_to_db()
             if not conn:
                 flash("Database connection failed.", "error")
                 return redirect(url_for('signup'))
-            cursor = conn.cursor(cursor_factory=RealDictCursor)
+            cursor = conn.cursor(cursor_factory=RealDictCursor) # Use RealDictCursor
 
-            # Check if user already exists
             cursor.execute("SELECT id FROM users WHERE email = %s", (email,))
             if cursor.fetchone():
-                flash("Email already registered. Please login.", "error")
                 return render_template('login.html')
 
-            # Clean up any expired OTPs
-            clean_expired_otps(conn)
-
-            # Generate OTP
-            otp = generate_otp()
-            expires_at = datetime.now() + timedelta(minutes=5)
-
-            # Delete any existing OTP for this email
-            cursor.execute("DELETE FROM otp_verifications WHERE email = %s", (email,))
-            
-            # Store OTP in database
             cursor.execute("""
-                INSERT INTO otp_verifications (email, otp_code, name, password, expires_at)
-                VALUES (%s, %s, %s, %s, %s)
-            """, (email, otp, name, password, expires_at))
+                INSERT INTO users (name, email, password)
+                VALUES (%s, %s, %s) RETURNING id, name, email
+            """, (name, email, password)) # Password should be hashed
+            new_user_data = cursor.fetchone()
             conn.commit()
 
-            # Send OTP email
-            if send_otp_email(email, otp, name):
-                flash("Verification code sent to your email!", "success")
-                return redirect(url_for('verify_otp', email=email))
+            # Automatically log in the new user after signup
+            if new_user_data:
+                new_user_obj = User(id=new_user_data['id'], email=new_user_data['email'],
+                                    name=new_user_data['name'], is_admin=(new_user_data['email'] in ADMIN_EMAILS))
+                login_user(new_user_obj)
+                flash("Signup successful! You have been logged in.", "success")
+                return redirect(url_for('index'))
             else:
-                flash("Failed to send verification email. Please try again.", "error")
+                flash("Signup failed. No user data returned after insert.", "error")
                 return render_template('login.html')
 
         except Exception as e:
@@ -591,175 +479,7 @@ def signup():
             if conn:
                 cursor.close()
                 conn.close()
-    return render_template('login.html', google_client_id=GOOGLE_CLIENT_ID)
-
-@app.route('/verify-otp', methods=['GET', 'POST'])
-def verify_otp():
-    email = request.args.get('email') or request.form.get('email')
-    
-    if not email:
-        flash("Invalid verification request.", "error")
-        return redirect(url_for('login'))
-
-    if request.method == 'POST':
-        otp_entered = request.form.get('otp')
-        
-        if not otp_entered or len(otp_entered) != 6:
-            return render_template('verify_otp.html', email=email, error="Please enter a valid 6-digit code.")
-
-        conn = None
-        try:
-            conn = connect_to_db()
-            if not conn:
-                return render_template('verify_otp.html', email=email, error="Database connection failed.")
-            
-            cursor = conn.cursor(cursor_factory=RealDictCursor)
-            
-            # Get OTP record
-            cursor.execute("""
-                SELECT * FROM otp_verifications
-                WHERE email = %s AND verified = FALSE
-                ORDER BY created_at DESC LIMIT 1
-            """, (email,))
-            otp_record = cursor.fetchone()
-            
-            if not otp_record:
-                return render_template('verify_otp.html', email=email,
-                                     error="No verification request found. Please sign up again.")
-            
-            # Check if OTP expired
-            if datetime.now() > otp_record['expires_at']:
-                cursor.execute("DELETE FROM otp_verifications WHERE email = %s", (email,))
-                conn.commit()
-                flash("Verification code expired. Please sign up again.", "error")
-                return redirect(url_for('login'))
-            
-            # Check attempts
-            if otp_record['attempts'] >= 3:
-                cursor.execute("DELETE FROM otp_verifications WHERE email = %s", (email,))
-                conn.commit()
-                flash("Maximum attempts exceeded. Please sign up again.", "error")
-                return redirect(url_for('login'))
-            
-            # Verify OTP
-            if otp_entered == otp_record['otp_code']:
-                # OTP is correct - create user account
-                cursor.execute("""
-                    INSERT INTO users (name, email, password)
-                    VALUES (%s, %s, %s) RETURNING id, name, email
-                """, (otp_record['name'], otp_record['email'], otp_record['password']))
-                new_user_data = cursor.fetchone()
-                
-                # Mark OTP as verified
-                cursor.execute("""
-                    UPDATE otp_verifications SET verified = TRUE
-                    WHERE email = %s
-                """, (email,))
-                conn.commit()
-                
-                # Credit signup bonus
-                if new_user_data:
-                    integrate_wallet_with_signup(cursor, conn, new_user_data['id'], new_user_data['name'])
-                
-                # Log in the user
-                if new_user_data:
-                    new_user_obj = User(
-                        id=new_user_data['id'],
-                        email=new_user_data['email'],
-                        name=new_user_data['name'],
-                        is_admin=(new_user_data['email'] in ADMIN_EMAILS)
-                    )
-                    login_user(new_user_obj)
-                    flash("Email verified! Welcome to GSpaces! ₹500 bonus credited to your wallet.", "success")
-                    return redirect(url_for('index'))
-            else:
-                # Wrong OTP - increment attempts
-                cursor.execute("""
-                    UPDATE otp_verifications SET attempts = attempts + 1
-                    WHERE email = %s
-                """, (email,))
-                conn.commit()
-                
-                attempts_left = 3 - (otp_record['attempts'] + 1)
-                if attempts_left > 0:
-                    return render_template('verify_otp.html', email=email,
-                                         error=f"Invalid code. {attempts_left} attempt(s) remaining.",
-                                         attempts_left=attempts_left)
-                else:
-                    cursor.execute("DELETE FROM otp_verifications WHERE email = %s", (email,))
-                    conn.commit()
-                    flash("Maximum attempts exceeded. Please sign up again.", "error")
-                    return redirect(url_for('login'))
-                    
-        except Exception as e:
-            print(f"ERROR: OTP verification error: {e}")
-            return render_template('verify_otp.html', email=email,
-                                 error="Verification failed. Please try again.")
-        finally:
-            if conn:
-                cursor.close()
-                conn.close()
-    
-    # GET request - show OTP form
-    return render_template('verify_otp.html', email=email)
-
-@app.route('/resend-otp')
-def resend_otp():
-    email = request.args.get('email')
-    
-    if not email:
-        flash("Invalid request.", "error")
-        return redirect(url_for('login'))
-    
-    conn = None
-    try:
-        conn = connect_to_db()
-        if not conn:
-            flash("Database connection failed.", "error")
-            return redirect(url_for('login'))
-        
-        cursor = conn.cursor(cursor_factory=RealDictCursor)
-        
-        # Get existing OTP record
-        cursor.execute("""
-            SELECT * FROM otp_verifications
-            WHERE email = %s AND verified = FALSE
-            ORDER BY created_at DESC LIMIT 1
-        """, (email,))
-        otp_record = cursor.fetchone()
-        
-        if not otp_record:
-            flash("No verification request found. Please sign up again.", "error")
-            return redirect(url_for('login'))
-        
-        # Generate new OTP
-        new_otp = generate_otp()
-        new_expires_at = datetime.now() + timedelta(minutes=5)
-        
-        # Update OTP record
-        cursor.execute("""
-            UPDATE otp_verifications
-            SET otp_code = %s, expires_at = %s, attempts = 0, created_at = NOW()
-            WHERE email = %s
-        """, (new_otp, new_expires_at, email))
-        conn.commit()
-        
-        # Send new OTP email
-        if send_otp_email(email, new_otp, otp_record['name']):
-            flash("New verification code sent to your email!", "success")
-        else:
-            flash("Failed to send verification email. Please try again.", "error")
-        
-        return redirect(url_for('verify_otp', email=email))
-        
-    except Exception as e:
-        print(f"ERROR: Resend OTP error: {e}")
-        flash("Failed to resend code. Please try again.", "error")
-        return redirect(url_for('login'))
-    finally:
-        if conn:
-            cursor.close()
-            conn.close()
+    return render_template('signup.html') # Ensure you have a signup.html template
 
 @app.route('/logout')
 @login_required
@@ -1117,48 +837,12 @@ def profile():
             if conn:
                 conn.close()
 
-    # Fetch wallet data
-    wallet_balance = 0
-    referral_code = None
-    referral_stats = None
-    wallet_transactions = []
-    
-    conn = connect_to_db()
-    if conn:
-        try:
-            wallet = WalletSystem(conn)
-            wallet_balance = wallet.get_wallet_balance(user_id)
-            referral_stats = wallet.get_referral_stats(user_id)
-            wallet_transactions = wallet.get_transaction_history(user_id, 10)
-            
-            # Get referral code
-            cursor = conn.cursor(cursor_factory=RealDictCursor)
-            cursor.execute("SELECT referral_code FROM users WHERE id = %s", (user_id,))
-            result = cursor.fetchone()
-            if result:
-                referral_code = result.get('referral_code')
-            cursor.close()
-        except Exception as e:
-            print(f"Error fetching wallet data: {e}")
-            import traceback
-            traceback.print_exc()
-            # Rollback the transaction on error
-            if conn:
-                conn.rollback()
-        finally:
-            if conn:
-                conn.close()
-
     return render_template(
         'profile.html',
         user=user_details['name'],
         user_details=user_details,
         user_orders=user_orders,
-        order_status_labels=ORDER_STATUS_LABELS,
-        wallet_balance=float(wallet_balance) if wallet_balance else 0,
-        referral_code=referral_code,
-        referral_stats=referral_stats,
-        wallet_transactions=wallet_transactions
+        order_status_labels=ORDER_STATUS_LABELS
     )
 def get_next_product_id():
     # Example: Generate sequential ID or use DB auto-increment
@@ -2658,7 +2342,6 @@ def cart():
     conn = connect_to_db()
     cart_items = []
     user_details = {'phone': ''}
-    wallet_balance = 0
 
     if conn:
         try:
@@ -2677,12 +2360,6 @@ def cart():
             rec = cur.fetchone()
             if rec and rec.get('phone'):
                 user_details['phone'] = rec['phone']
-            
-            # Fetch wallet balance
-            cur.execute("SELECT wallet_balance FROM users WHERE id = %s", (current_user.id,))
-            wallet_rec = cur.fetchone()
-            if wallet_rec:
-                wallet_balance = float(wallet_rec.get('wallet_balance', 0))
 
         except Exception as e:
             print(f"Error fetching cart: {e}")
@@ -2717,8 +2394,7 @@ def cart():
         user_details=user_details,
         deal_active=totals["deal_active"],
         razorpay_order_id=razorpay_order_id,
-        razorpay_key=RAZORPAY_KEY_ID,
-        wallet_balance=wallet_balance
+        razorpay_key=RAZORPAY_KEY_ID
     )
 
 # --- Payment success route ---

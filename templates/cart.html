@@ -610,6 +610,8 @@
                 console.error('Error applying coupon:', error);
                 alert('Error applying coupon. Please try again.');
             }
+        }
+
         // Wallet balance functionality
         let walletAmountUsed = 0;
         const maxWalletUsage = 10000; // ₹10,000 limit
@@ -656,8 +658,6 @@
                 document.getElementById('total-amount').textContent = `₹${currentTotal.toFixed(2)}`;
                 total_amount = currentTotal * 100;
             }
-        }
-
         }
 
         function updateCartWithCoupon(discountAmount) {

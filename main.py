@@ -857,17 +857,17 @@ def profile():
             result = cursor.fetchone()
             if result:
                 referral_code = result.get('referral_code')
+            cursor.close()
         except Exception as e:
             print(f"Error fetching wallet data: {e}")
             import traceback
             traceback.print_exc()
+            # Rollback the transaction on error
+            if conn:
+                conn.rollback()
         finally:
             if conn:
                 conn.close()
-
-    print(f"DEBUG: wallet_balance={wallet_balance}, referral_code={referral_code}")
-    print(f"DEBUG: referral_stats={referral_stats}")
-    print(f"DEBUG: wallet_transactions count={len(wallet_transactions)}")
 
     return render_template(
         'profile.html',

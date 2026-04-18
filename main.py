@@ -55,6 +55,7 @@ from datetime import datetime, timedelta
 # Wallet system imports
 from wallet_system import WalletSystem
 from wallet_routes import add_wallet_routes, integrate_wallet_with_signup, integrate_wallet_with_order
+from admin_referral_routes import add_admin_referral_routes
 
 # --- DISPOSABLE EMAIL DOMAINS BLACKLIST ---
 DISPOSABLE_EMAIL_DOMAINS = {
@@ -397,6 +398,9 @@ def inr_format(value):
 
 # Initialize wallet routes
 add_wallet_routes(app, connect_to_db)
+
+# Initialize admin referral coupon routes
+add_admin_referral_routes(app, connect_to_db, ADMIN_EMAILS)
 
 def get_catalogue_files():
     """Get list of files from the catalogue directory"""
@@ -2599,21 +2603,51 @@ def validate_coupon():
             referral_result = wallet.validate_referral_coupon(code, current_user.id)
             
             if referral_result['valid']:
-                # Calculate discount for referral coupon
-                discount_percentage = Decimal(str(referral_result['discount_percentage']))
-                discount_amount = (cart_total * discount_percentage / 100).quantize(Decimal('0.01'))
-                discount_amount = min(discount_amount, cart_total)
+                # Check minimum order amount
+                min_order = Decimal(str(referral_result.get('min_order_amount', 0)))
+                if cart_total < min_order:
+                    return jsonify({
+                        "status": "error",
+                        "message": f"Minimum order amount of ₹{min_order} required for this referral code"
+                    })
+                
+                # Calculate discount based on type (fixed or percentage)
+                discount_type = referral_result.get('discount_type', 'percentage')
+                
+                if discount_type == 'fixed':
+                    # Fixed amount discount
+                    discount_amount = Decimal(str(referral_result['discount_amount']))
+                    discount_amount = min(discount_amount, cart_total)  # Don't exceed cart total
+                    
+                    # Apply max discount cap if set
+                    max_discount = referral_result.get('max_discount_amount')
+                    if max_discount:
+                        discount_amount = min(discount_amount, Decimal(str(max_discount)))
+                else:
+                    # Percentage discount
+                    discount_percentage = Decimal(str(referral_result['discount_percentage']))
+                    discount_amount = (cart_total * discount_percentage / 100).quantize(Decimal('0.01'))
+                    
+                    # Apply max discount cap if set
+                    max_discount = referral_result.get('max_discount_amount')
+                    if max_discount:
+                        discount_amount = min(discount_amount, Decimal(str(max_discount)))
+                    
+                    discount_amount = min(discount_amount, cart_total)
                 
                 return jsonify({
                     "status": "success",
                     "message": f"Referral code applied! You saved ₹{discount_amount}",
                     "coupon_code": referral_result['coupon_code'],
                     "discount_amount": float(discount_amount),
-                    "discount_type": "percentage",
-                    "discount_value": float(discount_percentage),
+                    "discount_type": discount_type,
+                    "discount_value": float(referral_result.get('discount_amount' if discount_type == 'fixed' else 'discount_percentage', 0)),
                     "description": f"Referral discount from {referral_result['referrer_name']}",
                     "is_referral": True,
-                    "referrer_id": referral_result['referrer_id']
+                    "referrer_id": referral_result['referrer_id'],
+                    "referrer_bonus_type": referral_result.get('referrer_bonus_type'),
+                    "referrer_bonus_amount": referral_result.get('referrer_bonus_amount'),
+                    "referral_bonus_percentage": referral_result.get('referral_bonus_percentage')
                 })
             else:
                 return jsonify({"status": "error", "message": referral_result.get('error', 'Invalid coupon code')})
@@ -2872,23 +2906,42 @@ def payment_success():
         # Process referral coupon if used
         if coupon_code:
             try:
-                # Check if it's a referral coupon
+                # Check if it's a referral coupon and get full details
                 cur.execute("""
-                    SELECT user_id FROM referral_coupons
+                    SELECT * FROM referral_coupons
                     WHERE coupon_code = %s AND is_active = true
                 """, (coupon_code.upper(),))
                 referral_coupon = cur.fetchone()
                 
                 if referral_coupon:
                     referrer_id = referral_coupon['user_id']
-                    # Process referral bonus using wallet system
+                    
+                    # Calculate referrer bonus based on type (fixed or percentage)
+                    bonus_type = referral_coupon.get('referrer_bonus_type', 'percentage')
+                    if bonus_type == 'fixed':
+                        bonus_amount = Decimal(str(referral_coupon.get('referrer_bonus_amount', 0)))
+                    else:
+                        bonus_percentage = Decimal(str(referral_coupon.get('referral_bonus_percentage', 5)))
+                        bonus_amount = (Decimal(str(final_total)) * bonus_percentage / 100).quantize(Decimal('0.01'))
+                    
+                    # Credit bonus to referrer's wallet
                     wallet = WalletSystem(conn)
-                    wallet.process_referral_order(
-                        referrer_id=referrer_id,
-                        referred_user_id=current_user.id,
-                        order_id=new_order_id,
-                        order_amount=final_total
+                    wallet.add_transaction(
+                        user_id=referrer_id,
+                        amount=bonus_amount,
+                        transaction_type='referral_bonus',
+                        description=f'Referral bonus from order #{new_order_id}',
+                        reference_id=new_order_id,
+                        metadata={'referred_user_id': current_user.id, 'bonus_type': bonus_type}
                     )
+                    
+                    # Update referral coupon stats
+                    cur.execute("""
+                        UPDATE referral_coupons
+                        SET times_used = times_used + 1,
+                            total_referral_earnings = total_referral_earnings + %s
+                        WHERE id = %s
+                    """, (bonus_amount, referral_coupon['id']))
                     
                     # Record coupon usage
                     cur.execute("""
@@ -2896,6 +2949,8 @@ def payment_success():
                         VALUES (%s, %s, %s, %s, %s)
                     """, (current_user.id, coupon_code.upper(), new_order_id, coupon_discount, datetime.now()))
                     conn.commit()
+                    
+                    print(f"Referral bonus processed: ₹{bonus_amount} credited to user {referrer_id}")
                 else:
                     # Regular coupon - update usage count
                     cur.execute("""

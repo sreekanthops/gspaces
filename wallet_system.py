@@ -375,11 +375,11 @@ class WalletSystem:
             return None
     
     def validate_referral_coupon(self, coupon_code, user_id):
-        """Validate if a referral coupon can be used by a user"""
+        """Validate if a referral coupon can be used by a user - supports both fixed and percentage"""
         try:
             cur = self.conn.cursor(cursor_factory=RealDictCursor)
             
-            # Get coupon info
+            # Get coupon info with all new fields
             cur.execute("""
                 SELECT rc.*, u.name as referrer_name
                 FROM referral_coupons rc
@@ -402,19 +402,40 @@ class WalletSystem:
             if coupon['user_id'] == user_id:
                 return {'valid': False, 'error': 'You cannot use your own referral code'}
             
-            # Check if user has already used this coupon
+            # Check usage limit
+            if coupon.get('usage_limit') and coupon['times_used'] >= coupon['usage_limit']:
+                return {'valid': False, 'error': 'This referral code has reached its usage limit'}
+            
+            # Check per-user limit
+            per_user_limit = coupon.get('per_user_limit', 1)
             cur.execute("""
                 SELECT COUNT(*) as count FROM coupon_usage
                 WHERE user_id = %s AND coupon_code = %s
             """, (user_id, coupon_code.upper()))
             
-            if cur.fetchone()['count'] > 0:
+            if cur.fetchone()['count'] >= per_user_limit:
                 return {'valid': False, 'error': 'You have already used this referral code'}
             
+            # Check if first order only
+            if coupon.get('first_order_only'):
+                cur.execute("""
+                    SELECT COUNT(*) as count FROM orders WHERE user_id = %s
+                """, (user_id,))
+                if cur.fetchone()['count'] > 0:
+                    return {'valid': False, 'error': 'This referral code is only valid for first-time orders'}
+            
+            # Return coupon details with both fixed and percentage support
             return {
                 'valid': True,
                 'coupon_code': coupon['coupon_code'],
-                'discount_percentage': float(coupon['discount_percentage']),
+                'discount_type': coupon.get('discount_type', 'percentage'),
+                'discount_amount': float(coupon.get('discount_amount', 0)),
+                'discount_percentage': float(coupon.get('discount_percentage', 0)),
+                'min_order_amount': float(coupon.get('min_order_amount', 0)),
+                'max_discount_amount': float(coupon['max_discount_amount']) if coupon.get('max_discount_amount') else None,
+                'referrer_bonus_type': coupon.get('referrer_bonus_type', 'percentage'),
+                'referrer_bonus_amount': float(coupon.get('referrer_bonus_amount', 0)),
+                'referral_bonus_percentage': float(coupon.get('referral_bonus_percentage', 0)),
                 'referrer_name': coupon['referrer_name'],
                 'referrer_id': coupon['user_id']
             }

@@ -1138,6 +1138,12 @@ def profile():
     referral_code = None
     referral_stats = None
     wallet_transactions = []
+    referral_benefits = {
+        'friend_discount': '₹1000',
+        'owner_bonus': '₹1000',
+        'friend_discount_type': 'fixed',
+        'owner_bonus_type': 'fixed'
+    }
     
     conn = connect_to_db()
     if conn:
@@ -1147,12 +1153,45 @@ def profile():
             referral_stats = wallet.get_referral_stats(user_id)
             wallet_transactions = wallet.get_transaction_history(user_id, 10)
             
-            # Get referral code
+            # Get referral code and coupon settings
             cursor = conn.cursor(cursor_factory=RealDictCursor)
             cursor.execute("SELECT referral_code FROM users WHERE id = %s", (user_id,))
             result = cursor.fetchone()
             if result:
                 referral_code = result.get('referral_code')
+            
+            # Get referral coupon benefits for display
+            referral_benefits = {
+                'friend_discount': '₹1000',
+                'owner_bonus': '₹1000',
+                'friend_discount_type': 'fixed',
+                'owner_bonus_type': 'fixed'
+            }
+            if referral_code:
+                cursor.execute("""
+                    SELECT discount_type, discount_amount, discount_percentage,
+                           referrer_bonus_type, referrer_bonus_amount, referral_bonus_percentage
+                    FROM referral_coupons
+                    WHERE user_id = %s
+                """, (user_id,))
+                coupon_data = cursor.fetchone()
+                if coupon_data:
+                    # Friend's discount
+                    if coupon_data['discount_type'] == 'percentage':
+                        referral_benefits['friend_discount'] = f"{coupon_data['discount_percentage']}%"
+                        referral_benefits['friend_discount_type'] = 'percentage'
+                    else:
+                        referral_benefits['friend_discount'] = f"₹{int(coupon_data['discount_amount'])}"
+                        referral_benefits['friend_discount_type'] = 'fixed'
+                    
+                    # Owner's bonus
+                    if coupon_data['referrer_bonus_type'] == 'percentage':
+                        referral_benefits['owner_bonus'] = f"{coupon_data['referral_bonus_percentage']}%"
+                        referral_benefits['owner_bonus_type'] = 'percentage'
+                    else:
+                        referral_benefits['owner_bonus'] = f"₹{int(coupon_data['referrer_bonus_amount'])}"
+                        referral_benefits['owner_bonus_type'] = 'fixed'
+            
             cursor.close()
         except Exception as e:
             print(f"Error fetching wallet data: {e}")
@@ -1174,7 +1213,8 @@ def profile():
         wallet_balance=float(wallet_balance) if wallet_balance else 0,
         referral_code=referral_code,
         referral_stats=referral_stats,
-        wallet_transactions=wallet_transactions
+        wallet_transactions=wallet_transactions,
+        referral_benefits=referral_benefits
     )
 def get_next_product_id():
     # Example: Generate sequential ID or use DB auto-increment

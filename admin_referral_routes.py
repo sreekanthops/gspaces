@@ -8,6 +8,7 @@ from flask_login import login_required, current_user
 from psycopg2.extras import RealDictCursor
 from datetime import datetime
 from decimal import Decimal
+from email_helper import send_referral_update_email, send_bulk_referral_update_email
 
 
 def add_admin_referral_routes(app, connect_to_db, ADMIN_EMAILS):
@@ -33,14 +34,16 @@ def add_admin_referral_routes(app, connect_to_db, ADMIN_EMAILS):
         try:
             cur = conn.cursor(cursor_factory=RealDictCursor)
             
-            # Get all referral coupons with user info
+            # Get all referral coupons with user info and wallet balance
             cur.execute("""
-                SELECT 
+                SELECT
                     rc.*,
                     u.name as user_name,
-                    u.email as user_email
+                    u.email as user_email,
+                    COALESCE(w.balance, 0) as wallet_balance
                 FROM referral_coupons rc
                 JOIN users u ON rc.user_id = u.id
+                LEFT JOIN wallets w ON u.id = w.user_id
                 ORDER BY rc.created_at DESC
             """)
             coupons = cur.fetchall()
@@ -195,7 +198,18 @@ def add_admin_referral_routes(app, connect_to_db, ADMIN_EMAILS):
             referrer_bonus_amount = request.form.get('referrer_bonus_amount', 0)
             referral_bonus_percentage = request.form.get('referral_bonus_percentage', 0)
             
-            cur = conn.cursor()
+            cur = conn.cursor(cursor_factory=RealDictCursor)
+            
+            # Get affected users before update
+            cur.execute("""
+                SELECT u.id, u.name, u.email, rc.coupon_code
+                FROM referral_coupons rc
+                JOIN users u ON rc.user_id = u.id
+                WHERE rc.is_active = true
+            """)
+            affected_users = cur.fetchall()
+            
+            # Update coupons
             cur.execute("""
                 UPDATE referral_coupons
                 SET
@@ -212,13 +226,129 @@ def add_admin_referral_routes(app, connect_to_db, ADMIN_EMAILS):
             rows_updated = cur.rowcount
             conn.commit()
             
-            flash(f"✅ Successfully updated {rows_updated} active referral coupons!", "success")
+            # Prepare email data
+            friend_discount = f"₹{int(float(discount_amount))}" if discount_type == 'fixed' else f"{discount_percentage}%"
+            owner_bonus = f"₹{int(float(referrer_bonus_amount))}" if referrer_bonus_type == 'fixed' else f"{referral_bonus_percentage}%"
+            
+            # Send emails to all affected users
+            users_data = [{
+                'email': user['email'],
+                'name': user['name'],
+                'referral_code': user['coupon_code'],
+                'friend_discount': friend_discount,
+                'owner_bonus': owner_bonus
+            } for user in affected_users]
+            
+            try:
+                email_results = send_bulk_referral_update_email(users_data)
+                flash(f"✅ Successfully updated {rows_updated} active referral coupons! Emails sent: {email_results['success']}, Failed: {email_results['failed']}", "success")
+            except Exception as email_error:
+                print(f"Email sending failed: {email_error}")
+                flash(f"✅ Successfully updated {rows_updated} active referral coupons! (Email notifications failed)", "success")
+            
             return redirect(url_for('admin_referral_coupons'))
         
         except Exception as e:
             print(f"Error bulk updating referral coupons: {e}")
             flash(f"❌ Error: {str(e)}", "error")
             return redirect(url_for('admin_referral_coupons'))
+        finally:
+            conn.close()
+    
+    @app.route('/admin/referral-coupons/adjust-wallet', methods=['POST'])
+    @login_required
+    def adjust_user_wallet():
+        """Adjust user wallet balance (add or subtract)"""
+        if not is_admin():
+            return jsonify({'error': 'Access denied'}), 403
+        
+        conn = connect_to_db()
+        if not conn:
+            return jsonify({'error': 'Database connection failed'}), 500
+        
+        try:
+            data = request.get_json()
+            user_id = data.get('user_id')
+            adjustment_type = data.get('adjustment_type')  # 'add' or 'subtract'
+            amount = float(data.get('amount', 0))
+            reason = data.get('reason', 'Admin adjustment')
+            
+            if amount <= 0:
+                return jsonify({'error': 'Amount must be positive'}), 400
+            
+            cur = conn.cursor()
+            
+            # Get current balance
+            cur.execute("SELECT balance FROM wallets WHERE user_id = %s", (user_id,))
+            result = cur.fetchone()
+            current_balance = float(result[0]) if result else 0
+            
+            # Calculate new balance
+            if adjustment_type == 'add':
+                new_balance = current_balance + amount
+                transaction_type = 'admin_credit'
+                description = f"Admin added ₹{amount}: {reason}"
+            else:  # subtract
+                new_balance = current_balance - amount
+                if new_balance < 0:
+                    return jsonify({'error': 'Insufficient balance'}), 400
+                transaction_type = 'admin_debit'
+                description = f"Admin deducted ₹{amount}: {reason}"
+            
+            # Update wallet balance
+            if result:
+                cur.execute("""
+                    UPDATE wallets 
+                    SET balance = %s, updated_at = CURRENT_TIMESTAMP 
+                    WHERE user_id = %s
+                """, (new_balance, user_id))
+            else:
+                cur.execute("""
+                    INSERT INTO wallets (user_id, balance, created_at, updated_at)
+                    VALUES (%s, %s, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                """, (user_id, new_balance))
+            
+            # Add transaction record
+            cur.execute("""
+                INSERT INTO wallet_transactions 
+                (user_id, transaction_type, amount, description, balance_after, created_at)
+                VALUES (%s, %s, %s, %s, %s, CURRENT_TIMESTAMP)
+            """, (user_id, transaction_type, amount, description, new_balance))
+            
+            conn.commit()
+            
+            # Get user details for email
+            cur.execute("""
+                SELECT u.name, u.email, rc.coupon_code
+                FROM users u
+                LEFT JOIN referral_coupons rc ON u.id = rc.user_id
+                WHERE u.id = %s
+            """, (user_id,))
+            user_data = cur.fetchone()
+            
+            if user_data:
+                # Send email notification
+                try:
+                    send_referral_update_email(
+                        user_email=user_data[1],
+                        user_name=user_data[0],
+                        referral_code=user_data[2] or 'N/A',
+                        wallet_adjustment=True,
+                        new_wallet_balance=new_balance,
+                        wallet_adjustment_reason=reason
+                    )
+                except Exception as email_error:
+                    print(f"Email sending failed: {email_error}")
+            
+            return jsonify({
+                'success': True,
+                'new_balance': new_balance,
+                'message': f'Wallet balance updated successfully'
+            })
+        
+        except Exception as e:
+            print(f"Error adjusting wallet: {e}")
+            return jsonify({'error': str(e)}), 500
         finally:
             conn.close()
 

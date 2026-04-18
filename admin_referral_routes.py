@@ -259,10 +259,10 @@ def add_admin_referral_routes(app, connect_to_db, ADMIN_EMAILS):
                     
                     personal_reason = request.form.get('personal_coupon_reason', '').strip()
                     
-                    # Generate unique coupon code: PERSONAL_USERNAME_RANDOM
+                    # Generate unique coupon code: BONUS_USERNAME_RANDOM
                     username_part = user_name.upper().replace(' ', '')[:8]
                     random_part = ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
-                    personal_coupon_code = f"PERSONAL_{username_part}_{random_part}"
+                    personal_coupon_code = f"BONUS_{username_part}_{random_part}"
                     
                     # Set expiry to 3 months from now
                     expiry_date = datetime.now() + timedelta(days=90)

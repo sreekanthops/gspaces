@@ -710,17 +710,23 @@
                 
                 if (data.status === 'success' && data.coupons.length > 0) {
                     const couponsHTML = data.coupons.map(coupon => {
-                        const discountText = coupon.discount_type === 'percentage' 
-                            ? `${coupon.discount_value}% OFF` 
+                        const discountText = coupon.discount_type === 'percentage'
+                            ? `${coupon.discount_value}% OFF`
                             : `₹${coupon.discount_value} OFF`;
-                        const minOrder = coupon.min_order_amount > 0 
-                            ? `<small class="text-muted">Min order: ₹${coupon.min_order_amount}</small>` 
+                        const minOrder = coupon.min_order_amount > 0
+                            ? `<small class="text-muted">Min order: ₹${coupon.min_order_amount}</small>`
+                            : '';
+                        const personalBadge = coupon.is_personal
+                            ? `<span style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: bold;">🎁 PERSONAL</span>`
                             : '';
                         
                         return `
-                            <div class="coupon-card" onclick="selectCoupon('${coupon.code}')">
+                            <div class="coupon-card" onclick="selectCoupon('${coupon.code}')" style="${coupon.is_personal ? 'border-color: #8b5cf6; background: linear-gradient(135deg, rgba(139, 92, 246, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);' : ''}">
                                 <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <div class="coupon-code">${coupon.code}</div>
+                                    <div>
+                                        <div class="coupon-code">${coupon.code}</div>
+                                        ${personalBadge}
+                                    </div>
                                     <div class="coupon-discount">${discountText}</div>
                                 </div>
                                 <p class="mb-1">${coupon.description || ''}</p>

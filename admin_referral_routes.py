@@ -238,13 +238,88 @@ def add_admin_referral_routes(app, connect_to_db, ADMIN_EMAILS):
                     conn.commit()  # Commit the coupon update at least
                     return redirect(url_for('admin_referral_coupons'))
             
+            # Handle personal coupon creation if provided
+            personal_coupon_created = False
+            personal_coupon_code = None
+            personal_discount_type = request.form.get('personal_discount_type', '').strip()
+            
+            if personal_discount_type in ['fixed', 'percentage']:
+                try:
+                    import random
+                    import string
+                    from datetime import datetime, timedelta
+                    
+                    # Get discount values
+                    if personal_discount_type == 'fixed':
+                        personal_discount_amount = float(request.form.get('personal_discount_amount', 0))
+                        personal_discount_percentage = 0
+                    else:
+                        personal_discount_amount = 0
+                        personal_discount_percentage = float(request.form.get('personal_discount_percentage', 0))
+                    
+                    personal_reason = request.form.get('personal_coupon_reason', '').strip()
+                    
+                    # Generate unique coupon code: PERSONAL_USERNAME_RANDOM
+                    username_part = user_name.upper().replace(' ', '')[:8]
+                    random_part = ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
+                    personal_coupon_code = f"PERSONAL_{username_part}_{random_part}"
+                    
+                    # Set expiry to 3 months from now
+                    expiry_date = datetime.now() + timedelta(days=90)
+                    
+                    # Create personal coupon in coupons table
+                    cur.execute("""
+                        INSERT INTO coupons
+                        (code, discount_type, discount_value, description, user_id, is_personal,
+                         is_active, valid_until, created_by, created_at)
+                        VALUES (%s, %s, %s, %s, %s, TRUE, TRUE, %s, %s, NOW())
+                    """, (
+                        personal_coupon_code,
+                        personal_discount_type,
+                        personal_discount_amount if personal_discount_type == 'fixed' else personal_discount_percentage,
+                        personal_reason or f"Personal coupon for {user_name}",
+                        user_id,
+                        expiry_date,
+                        current_user.email
+                    ))
+                    
+                    personal_coupon_created = True
+                    
+                    # Send email notification about personal coupon
+                    try:
+                        from email_helper import send_personal_coupon_email
+                        discount_text = f"₹{personal_discount_amount}" if personal_discount_type == 'fixed' else f"{personal_discount_percentage}%"
+                        send_personal_coupon_email(
+                            user_email=user_email,
+                            user_name=user_name,
+                            coupon_code=personal_coupon_code,
+                            discount=discount_text,
+                            expiry_date=expiry_date.strftime('%B %d, %Y'),
+                            reason=personal_reason
+                        )
+                    except Exception as email_error:
+                        print(f"Failed to send personal coupon email: {email_error}")
+                        # Don't fail the whole operation if email fails
+                    
+                except Exception as personal_coupon_error:
+                    print(f"Error creating personal coupon: {personal_coupon_error}")
+                    flash(f"Coupon updated but personal coupon creation failed: {str(personal_coupon_error)}", "warning")
+                    conn.commit()  # Commit the referral coupon update at least
+                    return redirect(url_for('admin_referral_coupons'))
+            
             conn.commit()
             
             # Success message
+            messages = []
+            messages.append("Referral coupon updated successfully!")
+            
             if wallet_updated:
-                flash(f"Referral coupon updated successfully! Wallet balance adjusted by ₹{wallet_adjustment} (New balance: ₹{new_balance:.2f})", "success")
-            else:
-                flash("Referral coupon updated successfully!", "success")
+                messages.append(f"Wallet balance adjusted by ₹{wallet_adjustment} (New balance: ₹{new_balance:.2f})")
+            
+            if personal_coupon_created:
+                messages.append(f"Personal coupon '{personal_coupon_code}' created and sent to user")
+            
+            flash(" | ".join(messages), "success")
             
             return redirect(url_for('admin_referral_coupons'))
         

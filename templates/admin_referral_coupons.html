@@ -330,10 +330,7 @@
                             <strong style="color: #667eea; font-family: monospace;">{{ coupon.coupon_code }}</strong>
                         </td>
                         <td>
-                            <strong style="color: #10b981; font-size: 16px;">₹{{ coupon.wallet_balance|int }}</strong><br>
-                            <button class="btn-action" style="background: #10b981; color: white; font-size: 11px; padding: 4px 8px; margin-top: 4px;" onclick="openWalletModal({{ coupon.user_id }}, '{{ coupon.user_name }}', {{ coupon.wallet_balance }})">
-                                💰 Adjust
-                            </button>
+                            <strong style="color: #10b981; font-size: 16px;">₹{{ coupon.wallet_balance|int }}</strong>
                         </td>
                         <td>
                             {% if coupon.discount_type == 'fixed' %}
@@ -497,6 +494,41 @@
                     ℹ️ This will ADD the amount to current balance (not replace it)
                 </p>
 
+                <hr style="margin: 32px 0; border: none; border-top: 2px solid #e5e7eb;">
+
+                <h3 style="color: #8b5cf6;">🎁 Create Personal Coupon</h3>
+                <p style="color: #6b7280; font-size: 14px; margin-bottom: 16px;">
+                    Create a special coupon that only <strong id="edit_user_name_display"></strong> can see and use.
+                </p>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Discount Type</label>
+                        <select name="personal_discount_type" id="personal_discount_type" onchange="togglePersonalDiscountFields()">
+                            <option value="">-- Don't Create --</option>
+                            <option value="fixed">Fixed Amount (₹)</option>
+                            <option value="percentage">Percentage (%)</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="personal_discount_amount_group" style="display:none;">
+                        <label>Discount Amount (₹)</label>
+                        <input type="number" name="personal_discount_amount" id="personal_discount_amount" step="0.01" min="0" placeholder="e.g., 500">
+                    </div>
+                    <div class="form-group" id="personal_discount_percentage_group" style="display:none;">
+                        <label>Discount Percentage (%)</label>
+                        <input type="number" name="personal_discount_percentage" id="personal_discount_percentage" step="0.01" min="0" max="100" placeholder="e.g., 10">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Reason / Description</label>
+                    <input type="text" name="personal_coupon_reason" id="personal_coupon_reason" placeholder="e.g., Loyalty reward, Special offer">
+                </div>
+
+                <p style="color: #8b5cf6; font-size: 13px; margin-top: -8px;">
+                    ℹ️ Coupon will auto-expire in 3 months. User will receive email notification.
+                </p>
+
                 <div style="text-align: right; margin-top: 32px; display: flex; gap: 12px; justify-content: flex-end;">
                     <button type="button" class="btn-cancel" onclick="closeModal()">Cancel</button>
                     <button type="submit" class="btn-save">Save Changes</button>
@@ -555,43 +587,6 @@
                 </div>
 
                 <div style="text-align: right; margin-top: 24px; display: flex; gap: 12px; justify-content: flex-end;">
-    <!-- Wallet Adjustment Modal -->
-    <div id="walletModal" class="modal">
-        <div class="modal-content" style="max-width: 450px;">
-            <span class="close" onclick="closeWalletModal()">&times;</span>
-            <h2>💰 Adjust Wallet Balance</h2>
-            <p style="color: #6b7280; margin-bottom: 16px;">
-                <strong id="wallet_user_name"></strong><br>
-                Current Balance: <strong style="color: #10b981;">₹<span id="current_balance">0</span></strong>
-            </p>
-            
-            <input type="hidden" id="wallet_user_id">
-            
-            <div class="form-group">
-                <label>Adjustment Type</label>
-                <select id="adjustment_type" class="form-control">
-                    <option value="add">➕ Add Money</option>
-                    <option value="subtract">➖ Subtract Money</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label>Amount (₹)</label>
-                <input type="number" id="adjustment_amount" class="form-control" step="0.01" min="0" placeholder="Enter amount">
-            </div>
-
-            <div class="form-group">
-                <label>Reason</label>
-                <input type="text" id="adjustment_reason" class="form-control" placeholder="e.g., Bonus, Refund, Correction">
-            </div>
-
-            <div style="text-align: right; margin-top: 24px; display: flex; gap: 12px; justify-content: flex-end;">
-                <button type="button" class="btn-cancel" onclick="closeWalletModal()">Cancel</button>
-                <button type="button" class="btn-save" style="background: #10b981;" onclick="adjustWallet()">Apply Adjustment</button>
-            </div>
-        </div>
-    </div>
-
                     <button type="button" class="btn-cancel" onclick="closeBulkModal()">Cancel</button>
                     <button type="submit" class="btn-save" style="background: #f59e0b;" onclick="return confirm('Are you sure you want to update ALL active referral coupons?')">Update All Coupons</button>
                 </div>
@@ -636,6 +631,14 @@
         document.getElementById('wallet_adjustment').value = '';
         document.getElementById('wallet_reason').value = '';
         
+        // Personal coupon section
+        document.getElementById('edit_user_name_display').textContent = coupon.user_name;
+        document.getElementById('personal_discount_type').value = '';
+        document.getElementById('personal_discount_amount').value = '';
+        document.getElementById('personal_discount_percentage').value = '';
+        document.getElementById('personal_coupon_reason').value = '';
+        togglePersonalDiscountFields();
+        
         if (coupon.expires_at) {
             const date = new Date(coupon.expires_at);
             document.getElementById('expires_at').value = date.toISOString().split('T')[0];
@@ -644,6 +647,23 @@
         toggleDiscountFields();
         toggleBonusFields();
         document.getElementById('editModal').style.display = 'block';
+    }
+
+    function togglePersonalDiscountFields() {
+        const type = document.getElementById('personal_discount_type').value;
+        const amountGroup = document.getElementById('personal_discount_amount_group');
+        const percentageGroup = document.getElementById('personal_discount_percentage_group');
+        
+        if (type === 'fixed') {
+            amountGroup.style.display = 'block';
+            percentageGroup.style.display = 'none';
+        } else if (type === 'percentage') {
+            amountGroup.style.display = 'none';
+            percentageGroup.style.display = 'block';
+        } else {
+            amountGroup.style.display = 'none';
+            percentageGroup.style.display = 'none';
+        }
     }
 
     function toggleDiscountFields() {
@@ -707,77 +727,14 @@
     window.onclick = function(event) {
         const editModal = document.getElementById('editModal');
         const bulkModal = document.getElementById('bulkUpdateModal');
-        const walletModal = document.getElementById('walletModal');
         if (event.target == editModal) {
             closeModal();
         }
         if (event.target == bulkModal) {
             closeBulkModal();
         }
-        if (event.target == walletModal) {
-            closeWalletModal();
-        }
     }
 
-    function openWalletModal(userId, userName, currentBalance) {
-        document.getElementById('wallet_user_id').value = userId;
-        document.getElementById('wallet_user_name').textContent = userName;
-        document.getElementById('current_balance').textContent = parseFloat(currentBalance).toFixed(2);
-        document.getElementById('adjustment_amount').value = '';
-        document.getElementById('adjustment_reason').value = '';
-        document.getElementById('adjustment_type').value = 'add';
-        document.getElementById('walletModal').style.display = 'block';
-    }
-
-    function closeWalletModal() {
-        document.getElementById('walletModal').style.display = 'none';
-    }
-
-    async function adjustWallet() {
-        const userId = document.getElementById('wallet_user_id').value;
-        const adjustmentType = document.getElementById('adjustment_type').value;
-        const amount = parseFloat(document.getElementById('adjustment_amount').value);
-        const reason = document.getElementById('adjustment_reason').value;
-
-        if (!amount || amount <= 0) {
-            alert('Please enter a valid amount');
-            return;
-        }
-
-        if (!reason.trim()) {
-            alert('Please provide a reason for the adjustment');
-            return;
-        }
-
-        if (!confirm(`Are you sure you want to ${adjustmentType} ₹${amount}?`)) {
-            return;
-        }
-
-        try {
-            const response = await fetch('/admin/referral-coupons/adjust-wallet', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                credentials: 'same-origin',
-                body: JSON.stringify({
-                    user_id: userId,
-                    adjustment_type: adjustmentType,
-                    amount: amount,
-                    reason: reason
-                })
-            });
-
-            const data = await response.json();
-
-            if (response.ok && data.success) {
-                alert(`✅ ${data.message}\nNew Balance: ₹${data.new_balance.toFixed(2)}`);
-                location.reload();
-            } else {
-                alert(`❌ Error: ${data.error || 'Failed to adjust wallet'}`);
-            }
-        } catch (error) {
-            alert('❌ Error: ' + error.message);
-        }
-    }
     </script>
 </body>
 </html>

@@ -2739,23 +2739,37 @@ def validate_coupon():
 @app.route('/api/coupons/available')
 @login_required
 def get_available_coupons():
-    """Get list of active coupons for display"""
+    """Get list of active coupons for display (public + personal coupons for logged-in user)"""
     conn = connect_to_db()
     coupons = []
     
     if conn:
         try:
             cur = conn.cursor(cursor_factory=RealDictCursor)
+            # Get public coupons (user_id IS NULL or is_personal = FALSE)
+            # AND personal coupons for this specific user (user_id = current_user.id)
             cur.execute("""
-                SELECT code, discount_type, discount_value, description, min_order_amount
-                FROM coupons 
-                WHERE is_active = TRUE 
+                SELECT code, discount_type, discount_value, description, min_order_amount,
+                       is_personal, user_id
+                FROM coupons
+                WHERE is_active = TRUE
                   AND (valid_until IS NULL OR valid_until > NOW())
                   AND (usage_limit IS NULL OR times_used < usage_limit)
-                ORDER BY discount_value DESC
-                LIMIT 10
-            """)
+                  AND (user_id IS NULL OR user_id = %s)
+                ORDER BY
+                    CASE WHEN user_id = %s THEN 0 ELSE 1 END,  -- Personal coupons first
+                    discount_value DESC
+                LIMIT 20
+            """, (current_user.id, current_user.id))
             coupons = cur.fetchall()
+            
+            # Add a flag to indicate personal coupons in the response
+            for coupon in coupons:
+                coupon['is_personal'] = bool(coupon.get('user_id'))
+                # Remove user_id from response for security
+                if 'user_id' in coupon:
+                    del coupon['user_id']
+                    
         except Exception as e:
             print(f"Error fetching available coupons: {e}")
         finally:

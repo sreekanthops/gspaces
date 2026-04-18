@@ -683,16 +683,18 @@
     window.onclick = function(event) {
         const editModal = document.getElementById('editModal');
         const bulkModal = document.getElementById('bulkUpdateModal');
+        const walletModal = document.getElementById('walletModal');
         if (event.target == editModal) {
             closeModal();
         }
         if (event.target == bulkModal) {
             closeBulkModal();
         }
+        if (event.target == walletModal) {
+            closeWalletModal();
+        }
     }
-    </script>
-</body>
-</html>
+
     function openWalletModal(userId, userName, currentBalance) {
         document.getElementById('wallet_user_id').value = userId;
         document.getElementById('wallet_user_name').textContent = userName;
@@ -751,3 +753,6 @@
             alert('❌ Error: ' + error.message);
         }
     }
+    </script>
+</body>
+</html>

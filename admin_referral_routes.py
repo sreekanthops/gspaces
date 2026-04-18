@@ -35,18 +35,34 @@ def add_admin_referral_routes(app, connect_to_db, ADMIN_EMAILS):
             cur = conn.cursor(cursor_factory=RealDictCursor)
             
             # Get all referral coupons with user info and wallet balance
-            cur.execute("""
-                SELECT
-                    rc.*,
-                    u.name as user_name,
-                    u.email as user_email,
-                    COALESCE(w.balance, 0) as wallet_balance
-                FROM referral_coupons rc
-                JOIN users u ON rc.user_id = u.id
-                LEFT JOIN wallets w ON u.id = w.user_id
-                ORDER BY rc.created_at DESC
-            """)
-            coupons = cur.fetchall()
+            # Try to get wallet balance, default to 0 if wallets table doesn't exist
+            try:
+                cur.execute("""
+                    SELECT
+                        rc.*,
+                        u.name as user_name,
+                        u.email as user_email,
+                        COALESCE(w.balance, 0) as wallet_balance
+                    FROM referral_coupons rc
+                    JOIN users u ON rc.user_id = u.id
+                    LEFT JOIN wallets w ON u.id = w.user_id
+                    ORDER BY rc.created_at DESC
+                """)
+                coupons = cur.fetchall()
+            except Exception as wallet_error:
+                # If wallets table doesn't exist, get coupons without wallet balance
+                print(f"Wallets table not found, using default balance: {wallet_error}")
+                cur.execute("""
+                    SELECT
+                        rc.*,
+                        u.name as user_name,
+                        u.email as user_email,
+                        0 as wallet_balance
+                    FROM referral_coupons rc
+                    JOIN users u ON rc.user_id = u.id
+                    ORDER BY rc.created_at DESC
+                """)
+                coupons = cur.fetchall()
             
             # Get statistics
             cur.execute("""

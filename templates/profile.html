@@ -503,6 +503,61 @@
                             {% endif %}
                         </div>
 
+                        <!-- Bonus Coupons Section -->
+                        {% if bonus_coupons and bonus_coupons|length > 0 %}
+                        <div class="info-card" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); border: none;">
+                            <h5 class="mb-3" style="color: #333;"><i class="bi bi-gift-fill me-2"></i>My Bonus Coupons</h5>
+                            <p style="color: #555; margin-bottom: 20px;">Special coupons created just for you! Use them on your next order.</p>
+                            <div class="row g-3">
+                                {% for coupon in bonus_coupons %}
+                                <div class="col-md-6">
+                                    <div class="card border-0 shadow-sm h-100" style="background: white; border-radius: 12px; overflow: hidden;">
+                                        <div class="card-body p-3">
+                                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                                <div>
+                                                    <span class="badge" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-size: 0.75rem; padding: 4px 8px;">
+                                                        🎁 BONUS
+                                                    </span>
+                                                </div>
+                                                {% if coupon.is_active %}
+                                                    <span class="badge bg-success">Active</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">Inactive</span>
+                                                {% endif %}
+                                            </div>
+                                            <div class="d-flex align-items-center gap-2 mb-2">
+                                                <code style="background: #f3f4f6; padding: 8px 12px; border-radius: 6px; font-size: 1rem; font-weight: 700; color: #667eea; flex: 1;" id="coupon-{{ coupon.code }}">
+                                                    {{ coupon.code }}
+                                                </code>
+                                                <button class="btn btn-sm btn-outline-primary rounded-pill" onclick="copyCouponCode('{{ coupon.code }}')" title="Copy code">
+                                                    <i class="bi bi-clipboard"></i>
+                                                </button>
+                                            </div>
+                                            <div class="mb-2">
+                                                <strong style="color: #667eea; font-size: 1.25rem;">
+                                                    {% if coupon.discount_type == 'percentage' %}
+                                                        {{ coupon.discount_value }}% OFF
+                                                    {% else %}
+                                                        ₹{{ coupon.discount_value|int }} OFF
+                                                    {% endif %}
+                                                </strong>
+                                            </div>
+                                            {% if coupon.description %}
+                                            <p class="text-muted small mb-2">{{ coupon.description }}</p>
+                                            {% endif %}
+                                            {% if coupon.valid_until %}
+                                            <p class="text-muted small mb-0">
+                                                <i class="bi bi-calendar-event"></i> Expires: {{ coupon.valid_until.strftime('%b %d, %Y') if coupon.valid_until else 'No expiry' }}
+                                            </p>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+
                         <!-- Transaction History -->
                         <div class="info-card">
                             <h5 class="mb-3"><i class="bi bi-clock-history me-2"></i>Recent Transactions</h5>
@@ -630,6 +685,60 @@
                 }, 2000);
             } catch (err) {
                 alert('Referral code: ' + text + '\n\nPlease copy manually.');
+            }
+            
+            document.body.removeChild(textArea);
+        }
+        
+        // Function for copying bonus coupon codes
+        function copyCouponCode(code) {
+            // Try modern clipboard API first
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(code).then(function() {
+                    const btn = event.target.closest('button');
+                    const originalHTML = btn.innerHTML;
+                    btn.innerHTML = '<i class="bi bi-check-circle"></i>';
+                    btn.classList.remove('btn-outline-primary');
+                    btn.classList.add('btn-success');
+                    
+                    setTimeout(function() {
+                        btn.innerHTML = originalHTML;
+                        btn.classList.remove('btn-success');
+                        btn.classList.add('btn-outline-primary');
+                    }, 2000);
+                }).catch(function(err) {
+                    // Fallback to old method
+                    copyCouponFallback(code);
+                });
+            } else {
+                // Fallback for older browsers
+                copyCouponFallback(code);
+            }
+        }
+        
+        function copyCouponFallback(text) {
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-999999px';
+            document.body.appendChild(textArea);
+            textArea.select();
+            
+            try {
+                document.execCommand('copy');
+                const btn = event.target.closest('button');
+                const originalHTML = btn.innerHTML;
+                btn.innerHTML = '<i class="bi bi-check-circle"></i>';
+                btn.classList.remove('btn-outline-primary');
+                btn.classList.add('btn-success');
+                
+                setTimeout(function() {
+                    btn.innerHTML = originalHTML;
+                    btn.classList.remove('btn-success');
+                    btn.classList.add('btn-outline-primary');
+                }, 2000);
+            } catch (err) {
+                alert('Coupon code: ' + text + '\n\nPlease copy manually.');
             }
             
             document.body.removeChild(textArea);

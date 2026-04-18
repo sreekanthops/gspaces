@@ -310,6 +310,7 @@
                         <th>User</th>
                         <th>Coupon Code</th>
                         <th>Wallet Balance</th>
+                        <th>Bonus Coupons</th>
                         <th>Friend Gets</th>
                         <th>Owner Gets</th>
                         <th>Min Order</th>
@@ -331,6 +332,20 @@
                         </td>
                         <td>
                             <strong style="color: #10b981; font-size: 16px;">₹{{ coupon.wallet_balance|int }}</strong>
+                        </td>
+                        <td>
+                            {% if coupon.bonus_coupons %}
+                                <div style="max-width: 200px; overflow-x: auto;">
+                                    {% set codes = coupon.bonus_coupons.split(', ') %}
+                                    {% for code in codes %}
+                                        <span class="badge" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-size: 10px; margin: 2px; display: inline-block;">
+                                            🎁 {{ code }}
+                                        </span>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <span style="color: #9ca3af; font-size: 12px;">None</span>
+                            {% endif %}
                         </td>
                         <td>
                             {% if coupon.discount_type == 'fixed' %}

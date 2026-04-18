@@ -42,10 +42,17 @@ def add_admin_referral_routes(app, connect_to_db, ADMIN_EMAILS):
                         rc.*,
                         u.name as user_name,
                         u.email as user_email,
-                        COALESCE(w.balance, 0) as wallet_balance
+                        COALESCE(w.balance, 0) as wallet_balance,
+                        STRING_AGG(c.code, ', ' ORDER BY c.created_at DESC) as bonus_coupons
                     FROM referral_coupons rc
                     JOIN users u ON rc.user_id = u.id
                     LEFT JOIN wallets w ON u.id = w.user_id
+                    LEFT JOIN coupons c ON u.id = c.user_id AND c.is_personal = TRUE
+                    GROUP BY rc.id, rc.coupon_code, rc.user_id, rc.discount_type, rc.discount_amount,
+                             rc.discount_percentage, rc.referrer_bonus_type, rc.referrer_bonus_amount,
+                             rc.referral_bonus_percentage, rc.is_active, rc.times_used,
+                             rc.total_referral_earnings, rc.created_at, rc.updated_at,
+                             u.name, u.email, w.balance
                     ORDER BY rc.created_at DESC
                 """)
                 coupons = cur.fetchall()
@@ -59,9 +66,16 @@ def add_admin_referral_routes(app, connect_to_db, ADMIN_EMAILS):
                         rc.*,
                         u.name as user_name,
                         u.email as user_email,
-                        0 as wallet_balance
+                        0 as wallet_balance,
+                        STRING_AGG(c.code, ', ' ORDER BY c.created_at DESC) as bonus_coupons
                     FROM referral_coupons rc
                     JOIN users u ON rc.user_id = u.id
+                    LEFT JOIN coupons c ON u.id = c.user_id AND c.is_personal = TRUE
+                    GROUP BY rc.id, rc.coupon_code, rc.user_id, rc.discount_type, rc.discount_amount,
+                             rc.discount_percentage, rc.referrer_bonus_type, rc.referrer_bonus_amount,
+                             rc.referral_bonus_percentage, rc.is_active, rc.times_used,
+                             rc.total_referral_earnings, rc.created_at, rc.updated_at,
+                             u.name, u.email
                     ORDER BY rc.created_at DESC
                 """)
                 coupons = cur.fetchall()
@@ -176,6 +190,25 @@ def add_admin_referral_routes(app, connect_to_db, ADMIN_EMAILS):
                 min_order_amount, max_discount_amount, usage_limit, per_user_limit,
                 first_order_only, expires_at, description, coupon_id
             ))
+            
+            # Send email notification about referral coupon update
+            referral_updated = True
+            try:
+                # Get the updated coupon details for email
+                friend_discount = f"₹{discount_amount}" if discount_type == 'fixed' else f"{discount_percentage}%"
+                owner_bonus = f"₹{referrer_bonus_amount}" if referrer_bonus_type == 'fixed' else f"{referral_bonus_percentage}%"
+                
+                send_referral_update_email(
+                    user_email=user_email,
+                    user_name=user_name,
+                    referral_code=referral_code,
+                    friend_discount=friend_discount,
+                    owner_bonus=owner_bonus,
+                    referral_updated=True
+                )
+            except Exception as email_error:
+                print(f"Failed to send referral update email: {email_error}")
+                # Don't fail the whole operation if email fails
             
             # Handle wallet adjustment if provided
             wallet_updated = False

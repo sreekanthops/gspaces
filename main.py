@@ -1204,6 +1204,27 @@ def profile():
             if conn:
                 conn.close()
 
+    # Fetch bonus coupons for the user
+    bonus_coupons = []
+    conn = connect_to_db()
+    if conn:
+        try:
+            cursor = conn.cursor(cursor_factory=RealDictCursor)
+            cursor.execute("""
+                SELECT code, discount_type, discount_value, description,
+                       valid_until, is_active, created_at
+                FROM coupons
+                WHERE user_id = %s AND is_personal = TRUE
+                ORDER BY created_at DESC
+            """, (user_id,))
+            bonus_coupons = cursor.fetchall()
+            cursor.close()
+        except Exception as e:
+            print(f"Error fetching bonus coupons: {e}")
+        finally:
+            if conn:
+                conn.close()
+
     return render_template(
         'profile.html',
         user=user_details['name'],
@@ -1214,7 +1235,8 @@ def profile():
         referral_code=referral_code,
         referral_stats=referral_stats,
         wallet_transactions=wallet_transactions,
-        referral_benefits=referral_benefits
+        referral_benefits=referral_benefits,
+        bonus_coupons=bonus_coupons
     )
 def get_next_product_id():
     # Example: Generate sequential ID or use DB auto-increment

@@ -205,13 +205,13 @@ def add_admin_referral_routes(app, connect_to_db, ADMIN_EMAILS):
                     # Determine transaction type based on positive/negative adjustment
                     transaction_type = 'admin_credit' if adjustment_amount > 0 else 'admin_debit'
                     
-                    # Create wallet transaction record
+                    # Create wallet transaction record with balance_after
                     transaction_description = wallet_reason if wallet_reason else f"Admin adjustment by {current_user.email}"
                     cur.execute("""
                         INSERT INTO wallet_transactions
-                        (user_id, transaction_type, amount, description, created_at)
-                        VALUES (%s, %s, %s, %s, NOW())
-                    """, (user_id, transaction_type, abs(adjustment_amount), transaction_description))
+                        (user_id, transaction_type, amount, balance_after, description, created_at)
+                        VALUES (%s, %s, %s, %s, %s, NOW())
+                    """, (user_id, transaction_type, abs(adjustment_amount), new_balance, transaction_description))
                     
                     wallet_updated = True
                     

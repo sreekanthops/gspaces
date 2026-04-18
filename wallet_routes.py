@@ -175,10 +175,14 @@ def add_wallet_routes(app, connect_to_db):
 
 def integrate_wallet_with_signup(cursor, conn, user_id, user_name):
     """
-    Call this function after user signup to credit signup bonus
-    Add this to the signup route after user creation
+    Call this function after user signup to:
+    1. Credit signup bonus
+    2. Create referral coupon automatically
     """
     try:
+        from psycopg2.extras import RealDictCursor
+        
+        # Credit signup bonus
         wallet = WalletSystem(conn)
         result = wallet.credit_signup_bonus(user_id, user_name)
         
@@ -186,6 +190,45 @@ def integrate_wallet_with_signup(cursor, conn, user_id, user_name):
             print(f"Signup bonus credited to user {user_id}: ₹{WalletSystem.SIGNUP_BONUS}")
         else:
             print(f"Failed to credit signup bonus: {result.get('error')}")
+        
+        # Get user's referral code
+        cursor.execute("SELECT referral_code FROM users WHERE id = %s", (user_id,))
+        user_data = cursor.fetchone()
+        
+        # Create referral coupon if user has a referral code
+        if user_data and user_data.get('referral_code'):
+            referral_code = user_data['referral_code']
+            
+            # Check if referral coupon already exists
+            cursor.execute("""
+                SELECT id FROM referral_coupons WHERE user_id = %s
+            """, (user_id,))
+            
+            if not cursor.fetchone():
+                # Create referral coupon
+                cursor.execute("""
+                    INSERT INTO referral_coupons (
+                        user_id, coupon_code, discount_percentage,
+                        referral_bonus_percentage, times_used,
+                        total_referral_earnings, is_active,
+                        created_at, expires_at
+                    )
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """, (
+                    user_id,
+                    referral_code,
+                    WalletSystem.REFERRAL_DISCOUNT_PERCENT,
+                    WalletSystem.REFERRAL_BONUS_PERCENT,
+                    0,  # times_used
+                    0.00,  # total_referral_earnings
+                    True,  # is_active
+                    datetime.now(),
+                    datetime.now() + timedelta(days=365)  # 1 year validity
+                ))
+                conn.commit()
+                print(f"Referral coupon created for user {user_id}: {referral_code}")
+            else:
+                print(f"Referral coupon already exists for user {user_id}")
         
         return result
     except Exception as e:

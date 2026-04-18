@@ -50,8 +50,10 @@ def add_admin_referral_routes(app, connect_to_db, ADMIN_EMAILS):
                 """)
                 coupons = cur.fetchall()
             except Exception as wallet_error:
-                # If wallets table doesn't exist, get coupons without wallet balance
+                # If wallets table doesn't exist, rollback and get coupons without wallet balance
                 print(f"Wallets table not found, using default balance: {wallet_error}")
+                conn.rollback()  # Rollback the failed transaction
+                cur = conn.cursor(cursor_factory=RealDictCursor)  # Get new cursor
                 cur.execute("""
                     SELECT
                         rc.*,

@@ -2582,18 +2582,43 @@ def validate_coupon():
     
     try:
         cur = conn.cursor(cursor_factory=RealDictCursor)
+        
+        # First, check regular coupons table
         cur.execute("""
             SELECT id, code, discount_type, discount_value, description,
                    min_order_amount, max_discount_amount, is_active,
                    usage_limit, times_used, valid_until
-            FROM coupons 
+            FROM coupons
             WHERE code = %s
         """, (code,))
         coupon = cur.fetchone()
         
+        # If not found in coupons, check referral_coupons table
         if not coupon:
-            return jsonify({"status": "error", "message": "Invalid coupon code"})
+            wallet = WalletSystem(conn)
+            referral_result = wallet.validate_referral_coupon(code, current_user.id)
+            
+            if referral_result['valid']:
+                # Calculate discount for referral coupon
+                discount_percentage = Decimal(str(referral_result['discount_percentage']))
+                discount_amount = (cart_total * discount_percentage / 100).quantize(Decimal('0.01'))
+                discount_amount = min(discount_amount, cart_total)
+                
+                return jsonify({
+                    "status": "success",
+                    "message": f"Referral code applied! You saved ₹{discount_amount}",
+                    "coupon_code": referral_result['coupon_code'],
+                    "discount_amount": float(discount_amount),
+                    "discount_type": "percentage",
+                    "discount_value": float(discount_percentage),
+                    "description": f"Referral discount from {referral_result['referrer_name']}",
+                    "is_referral": True,
+                    "referrer_id": referral_result['referrer_id']
+                })
+            else:
+                return jsonify({"status": "error", "message": referral_result.get('error', 'Invalid coupon code')})
         
+        # Validate regular coupon
         if not coupon['is_active']:
             return jsonify({"status": "error", "message": "This coupon is no longer active"})
         
@@ -2605,7 +2630,7 @@ def validate_coupon():
         
         if cart_total < Decimal(str(coupon['min_order_amount'])):
             return jsonify({
-                "status": "error", 
+                "status": "error",
                 "message": f"Minimum order amount of ₹{coupon['min_order_amount']} required"
             })
         
@@ -2627,7 +2652,8 @@ def validate_coupon():
             "discount_amount": float(discount_amount),
             "discount_type": coupon['discount_type'],
             "discount_value": float(coupon['discount_value']),
-            "description": coupon['description']
+            "description": coupon['description'],
+            "is_referral": False
         })
         
     except Exception as e:
@@ -2842,6 +2868,45 @@ def payment_success():
 
         cur.execute("DELETE FROM cart WHERE user_id=%s", (current_user.id,))
         conn.commit()
+        
+        # Process referral coupon if used
+        if coupon_code:
+            try:
+                # Check if it's a referral coupon
+                cur.execute("""
+                    SELECT user_id FROM referral_coupons
+                    WHERE coupon_code = %s AND is_active = true
+                """, (coupon_code.upper(),))
+                referral_coupon = cur.fetchone()
+                
+                if referral_coupon:
+                    referrer_id = referral_coupon['user_id']
+                    # Process referral bonus using wallet system
+                    wallet = WalletSystem(conn)
+                    wallet.process_referral_order(
+                        referrer_id=referrer_id,
+                        referred_user_id=current_user.id,
+                        order_id=new_order_id,
+                        order_amount=final_total
+                    )
+                    
+                    # Record coupon usage
+                    cur.execute("""
+                        INSERT INTO coupon_usage (user_id, coupon_code, order_id, discount_amount, used_at)
+                        VALUES (%s, %s, %s, %s, %s)
+                    """, (current_user.id, coupon_code.upper(), new_order_id, coupon_discount, datetime.now()))
+                    conn.commit()
+                else:
+                    # Regular coupon - update usage count
+                    cur.execute("""
+                        UPDATE coupons
+                        SET times_used = times_used + 1
+                        WHERE code = %s
+                    """, (coupon_code.upper(),))
+                    conn.commit()
+            except Exception as e:
+                print(f"Error processing coupon after order: {e}")
+                # Don't fail the order if coupon processing fails
         
         # Send notification to admin about new order
         try:

@@ -51,7 +51,7 @@ def add_admin_referral_routes(app, connect_to_db, ADMIN_EMAILS):
                     GROUP BY rc.id, rc.coupon_code, rc.user_id, rc.discount_type, rc.discount_amount,
                              rc.discount_percentage, rc.referrer_bonus_type, rc.referrer_bonus_amount,
                              rc.referral_bonus_percentage, rc.is_active, rc.times_used,
-                             rc.total_referral_earnings, rc.created_at, rc.updated_at,
+                             rc.total_referral_earnings, rc.created_at,
                              u.name, u.email, w.balance
                     ORDER BY rc.created_at DESC
                 """)
@@ -74,7 +74,7 @@ def add_admin_referral_routes(app, connect_to_db, ADMIN_EMAILS):
                     GROUP BY rc.id, rc.coupon_code, rc.user_id, rc.discount_type, rc.discount_amount,
                              rc.discount_percentage, rc.referrer_bonus_type, rc.referrer_bonus_amount,
                              rc.referral_bonus_percentage, rc.is_active, rc.times_used,
-                             rc.total_referral_earnings, rc.created_at, rc.updated_at,
+                             rc.total_referral_earnings, rc.created_at,
                              u.name, u.email
                     ORDER BY rc.created_at DESC
                 """)

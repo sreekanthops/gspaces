@@ -1,30 +1,63 @@
 <!-- Urgency Banner -->
 <div id="urgency-banner" 
-     style="background:#ff4c4c; color:#fff; font-weight:700; font-size:16px; text-align:center; padding:12px; position:sticky; top:0; z-index:999; letter-spacing:0.5px; border-bottom:2px solid #f5d76e;">
+     style="background:#272424; color:#fff; font-weight:700; font-size:16px; text-align:center; padding:12px; position:sticky; top:0; z-index:999; letter-spacing:0.5px; border-bottom:2px solid #f5d76e;">
   🔥 Deal Ending Soon! Don’t Miss Out!
   <span id="countdown" style="display:none;"></span>
 </div>
 
 <!-- Admin Controls -->
 {% if current_user.is_authenticated and current_user.is_admin %}
-<div style="text-align:center; margin:10px 0;">
-  <input type="number" id="customMinutes" placeholder="Minutes" min="1" style="width:100px;"/>
+<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 15px; text-align:center; display:flex; gap:10px; justify-content:center; flex-wrap:wrap; align-items:center;">
+  
+  <!-- Admin Panel Link -->
+  <a href="{{ url_for('admin_orders') }}" class="btn btn-light btn-sm" style="font-weight:600; padding: 8px 20px;">
+    🎛️ Admin Panel
+  </a>
+  
+  <span style="color: white; font-weight: 600;">|</span>
+
+  <!-- Countdown Controls -->
+  <input type="number" id="customMinutes" placeholder="Minutes" min="1" style="width:100px; padding:6px;"/>
   <button id="startCountdownBtn" class="btn btn-warning btn-sm">Start Countdown</button>
   <form action="{{ url_for('stop_countdown') }}" method="post" style="display:inline;">
     <button type="submit" class="btn btn-danger btn-sm">Stop Countdown</button>
   </form>
+
+  <span style="color: white; font-weight: 600;">|</span>
+
+  <!-- Discount Controls -->
+  <input type="number" id="customDiscount" placeholder="Discount %" min="0" max="100" style="width:100px; padding:6px;"/>
+  <button id="updateDiscountBtn" class="btn btn-success btn-sm">Update Discount</button>
+
 </div>
 {% endif %}
-
 <script>
+let currentDiscount = 5; // default
+
+// Fetch persisted discount from DB
+async function fetchDiscount() {
+  try {
+    const res = await fetch("/get_discount");
+    const data = await res.json();
+    if (data.discount_percent) {
+      currentDiscount = data.discount_percent;
+      const discountInput = document.getElementById("customDiscount");
+      if (discountInput) discountInput.value = currentDiscount;
+    }
+  } catch (err) {
+    console.error("Error fetching discount:", err);
+  }
+}
+
+// Countdown function
 function startCountdown(elementId, duration) {
   const el = document.getElementById(elementId);
   const banner = document.getElementById("urgency-banner");
   if (!el || !banner) return;
 
   let remaining = duration;
-  el.style.display = "inline"; // show countdown
-  banner.innerHTML = `⏳ Exclusive Deal! Ends in <span id="countdown"></span> – Enjoy <strong style="color:#ffffff;">5% OFF + Free Delivery</strong>`;
+  el.style.display = "inline";
+  banner.innerHTML = `⏳ Exclusive Deal! Ends in <span id="countdown"></span> – Enjoy <strong style="color:#ffffff;">${currentDiscount}% OFF + Free Delivery</strong>`;
 
   const countdownSpan = document.getElementById("countdown");
 
@@ -32,23 +65,16 @@ function startCountdown(elementId, duration) {
     if (remaining <= 0) {
       countdownSpan.textContent = "00:00:00";
       banner.innerHTML = "🔥 Deal Ending Soon! Don’t Miss Out!";
-      banner.style.background = "#ff4c4c";
-      banner.style.color = "#fff";
-      banner.style.fontSize = "18px";
-      banner.style.fontWeight = "700";
       clearInterval(window.countdownInterval);
       return;
     }
-
     let hours = Math.floor((remaining / 3600) % 24);
     let minutes = Math.floor((remaining / 60) % 60);
     let seconds = Math.floor(remaining % 60);
-
     countdownSpan.textContent =
       (hours < 10 ? "0" + hours : hours) + ":" +
       (minutes < 10 ? "0" + minutes : minutes) + ":" +
       (seconds < 10 ? "0" + seconds : seconds);
-
     remaining--;
   }
 
@@ -57,29 +83,69 @@ function startCountdown(elementId, duration) {
   render();
 }
 
-// Admin Start Button
-const startBtn = document.getElementById("startCountdownBtn");
-if (startBtn) {
-  startBtn.addEventListener("click", async () => {
-    const minutes = parseInt(document.getElementById("customMinutes").value);
-    if (!minutes || minutes <= 0) return alert("Enter a valid number of minutes.");
-
-    // Send request to backend
-    const res = await fetch("/start_countdown_custom", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ minutes })
-    });
-
-    if (res.ok) {
-      startCountdown("countdown", minutes * 60);
-    } else {
-      const msg = await res.text();
-      alert("Error: " + msg);
+// Sync countdown on load
+async function initCountdownFromServer() {
+  try {
+    await fetchDiscount(); // fetch persisted discount first
+    const res = await fetch("/countdown_status");
+    const data = await res.json();
+    if (data.active && data.remaining > 0) {
+      startCountdown("countdown", data.remaining);
     }
-  });
+  } catch (err) {
+    console.error("Error fetching countdown status:", err);
+  }
 }
+
+// Admin: start countdown
+document.getElementById("startCountdownBtn")?.addEventListener("click", async () => {
+  const minutes = parseInt(document.getElementById("customMinutes").value);
+  if (!minutes || minutes <= 0) return alert("Enter a valid number of minutes.");
+
+  const res = await fetch("/start_countdown_custom", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ minutes })
+  });
+
+  if (res.ok) {
+    const data = await res.json();
+    startCountdown("countdown", data.remaining);
+  } else {
+    alert(await res.text());
+  }
+});
+
+// Admin: update discount
+document.getElementById("updateDiscountBtn")?.addEventListener("click", async () => {
+  const newDiscount = parseFloat(document.getElementById("customDiscount").value);
+  if (isNaN(newDiscount) || newDiscount < 0 || newDiscount > 100) return alert("Enter valid % (0-100)");
+
+  const res = await fetch("/update_discount", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ discount_percent: newDiscount })
+  });
+
+  if (res.ok) {
+    const data = await res.json();
+    currentDiscount = data.discount_percent;
+    const banner = document.getElementById("urgency-banner");
+    const countdownSpan = document.getElementById("countdown");
+    if (countdownSpan.style.display !== "none") {
+      banner.innerHTML = `⏳ Exclusive Deal! Ends in <span id="countdown"></span> – Enjoy <strong style="color:#ffffff;">${currentDiscount}% OFF + Free Delivery</strong>`;
+    }
+    alert("Discount updated to " + currentDiscount + "% ✅");
+  } else {
+    alert(await res.text());
+  }
+});
+
+// Initialize on page load
+document.addEventListener("DOMContentLoaded", initCountdownFromServer);
+
 </script>
+
 
 <nav class="custom-navbar navbar navbar-expand-md" aria-label="GSpaces Navigation Bar">
     <div class="container">
@@ -92,13 +158,13 @@ if (startBtn) {
         <div class="collapse navbar-collapse" id="navbarsFurni">
             <ul class="custom-navbar-nav navbar-nav ms-auto mb-2 mb-md-0">
                 <li class="nav-item {% if request.endpoint == 'index' %}active{% endif %}">
-                    <a class="nav-link" href="{{ url_for('index') }}#hero">Home</a>
+                    <a class="nav-link js-scroll-link" href="{{ url_for('index', section='home') }}" data-section="home">Home</a>
                 </li>
-                <li class="nav-item"><a class="nav-link" href="{{ url_for('index') }}#about">About</a></li>
-                <li class="nav-item"><a class="nav-link" href="{{ url_for('index') }}#services">Services</a></li>
-                <li class="nav-item"><a class="nav-link" href="{{ url_for('index') }}#products">Products</a></li>
-                <li class="nav-item"><a class="nav-link" href="{{ url_for('index') }}#team">Team</a></li>
-                <li class="nav-item"><a class="nav-link" href="{{ url_for('index') }}#contact">Contact</a></li>
+                <li class="nav-item"><a class="nav-link js-scroll-link" href="{{ url_for('index', section='about') }}" data-section="about">About</a></li>
+                <li class="nav-item"><a class="nav-link js-scroll-link" href="{{ url_for('index', section='corporate') }}" data-section="corporate">Corporate Tie-ups</a></li>
+                <li class="nav-item"><a class="nav-link js-scroll-link" href="{{ url_for('index', section='products') }}" data-section="products">Setups</a></li>
+                <li class="nav-item"><a class="nav-link js-scroll-link" href="{{ url_for('index', section='team') }}" data-section="team">Team</a></li>
+                <li class="nav-item"><a class="nav-link js-scroll-link" href="{{ url_for('index', section='contact') }}" data-section="contact">Contact</a></li>
             </ul>
             <ul class="custom-navbar-cta navbar-nav mb-2 mb-md-0 ms-5">
                 <li>
@@ -119,3 +185,4 @@ if (startBtn) {
     </div>
 </nav>
 <i class="mobile-nav-toggle"></i>
+

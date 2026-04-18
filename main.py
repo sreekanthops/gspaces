@@ -42,12 +42,111 @@ import razorpay
 # Datetime import
 from datetime import datetime
 
+# Notification system import
+from notifications import notify_new_order, notify_order_status_update, send_custom_email_to_customer
+
 # --- CONFIGURATION ---
 # Read from environment variables if available; fallback to development defaults.
 # IMPORTANT: In production, NEVER hardcode sensitive information like this.
 # Use environment variables (e.g., FLASK_APP_SECRET_KEY, DB_PASSWORD, RAZORPAY_KEY_ID)
 # or a proper configuration management system.
 from datetime import datetime, timedelta
+
+# Wallet system imports
+from wallet_system import WalletSystem
+from wallet_routes import add_wallet_routes, integrate_wallet_with_signup, integrate_wallet_with_order
+from admin_referral_routes import add_admin_referral_routes
+
+# --- DISPOSABLE EMAIL DOMAINS BLACKLIST ---
+DISPOSABLE_EMAIL_DOMAINS = {
+    'tempmail.com', 'guerrillamail.com', '10minutemail.com', 'throwaway.email',
+    'mailinator.com', 'maildrop.cc', 'temp-mail.org', 'getnada.com',
+    'trashmail.com', 'fakeinbox.com', 'yopmail.com', 'mohmal.com',
+    'sharklasers.com', 'guerrillamail.info', 'grr.la', 'guerrillamail.biz',
+    'guerrillamail.de', 'spam4.me', 'mailnesia.com', 'mytemp.email',
+    'tempmail.net', 'dispostable.com', 'throwawaymail.com', 'emailondeck.com',
+    'mintemail.com', 'anonbox.net', 'mailcatch.com', 'mailexpire.com',
+    'tempr.email', 'getairmail.com', 'inboxbear.com', 'guerrillamailblock.com'
+}
+
+# --- OTP HELPER FUNCTIONS ---
+def generate_otp():
+    """Generate a 6-digit OTP"""
+    return ''.join([str(random.randint(0, 9)) for _ in range(6)])
+
+def is_disposable_email(email):
+    """Check if email domain is in disposable list"""
+    domain = email.split('@')[-1].lower()
+    return domain in DISPOSABLE_EMAIL_DOMAINS
+
+def send_otp_email(email, otp, name):
+    """Send OTP verification email"""
+    try:
+        msg = Message('Verify Your Email - GSpaces', recipients=[email])
+        msg.html = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <style>
+                body {{ font-family: 'Arial', sans-serif; background-color: #f4f4f4; margin: 0; padding: 0; }}
+                .container {{ max-width: 600px; margin: 40px auto; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }}
+                .header {{ background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 20px; text-align: center; color: white; }}
+                .header h1 {{ margin: 0; font-size: 28px; }}
+                .content {{ padding: 40px 30px; }}
+                .otp-box {{ background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 30px; text-align: center; border-radius: 10px; margin: 30px 0; }}
+                .otp-code {{ font-size: 42px; font-weight: bold; letter-spacing: 8px; margin: 10px 0; }}
+                .bonus-badge {{ background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 15px 25px; border-radius: 20px; display: inline-block; margin: 20px 0; font-weight: bold; }}
+                .footer {{ background: #f9fafb; padding: 20px; text-align: center; color: #6b7280; font-size: 12px; }}
+                .warning {{ background: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0; color: #92400e; }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>🎉 Welcome to GSpaces!</h1>
+                </div>
+                <div class="content">
+                    <h2>Hi {name},</h2>
+                    <p>Thank you for signing up! Please verify your email address to complete your registration and claim your signup bonus.</p>
+                    
+                    <div class="otp-box">
+                        <p style="margin: 0; font-size: 16px;">Your Verification Code</p>
+                        <div class="otp-code">{otp}</div>
+                        <p style="margin: 0; font-size: 14px;">Valid for 5 minutes</p>
+                    </div>
+                    
+                    <div class="bonus-badge">
+                        🎁 ₹500 Signup Bonus Awaits!
+                    </div>
+                    
+                    <div class="warning">
+                        <strong>⚠️ Security Notice:</strong> Never share this code with anyone. GSpaces will never ask for your OTP via phone or email.
+                    </div>
+                    
+                    <p>If you didn't request this code, please ignore this email.</p>
+                </div>
+                <div class="footer">
+                    <p>© 2026 GSpaces. All rights reserved.</p>
+                    <p>Building your dream workspace, one piece at a time.</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+        mail.send(msg)
+        return True
+    except Exception as e:
+        print(f"Error sending OTP email: {e}")
+        return False
+
+def clean_expired_otps(conn):
+    """Clean up expired OTP records"""
+    try:
+        cur = conn.cursor()
+        cur.execute("DELETE FROM otp_verifications WHERE expires_at < NOW() AND verified = FALSE")
+        conn.commit()
+    except Exception as e:
+        print(f"Error cleaning expired OTPs: {e}")
 
 
 # Flask App Configuration
@@ -84,12 +183,18 @@ DB_PASSWORD = os.getenv("DB_PASSWORD", "gspaces2025")
 DB_HOST = os.getenv("DB_HOST", "localhost")
 DB_PORT = os.getenv("DB_PORT", "5432")
 
+# Application Base URL (for email links)
+APP_BASE_URL = os.getenv("APP_BASE_URL", "http://13.51.205.239")
+
 
 
 # File Uploads Configuration
 UPLOAD_FOLDER = os.path.join('static', 'img', 'Products')
+PROFILE_UPLOAD_FOLDER = os.path.join('static', 'img', 'profiles')
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+os.makedirs(PROFILE_UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['PROFILE_UPLOAD_FOLDER'] = PROFILE_UPLOAD_FOLDER
 
 # Razorpay Configuration
 RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID", "rzp_live_R6wg6buSedSnTV") # Test Key ID
@@ -103,6 +208,8 @@ razorpay_client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET))
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login' # The endpoint name for the login page
+login_manager.login_message = None  # Disable the default "Please log in to access this page" message
+login_manager.login_message_category = None
 
 
 # User class for Flask-Login
@@ -176,6 +283,16 @@ def create_users_table(conn):
                 phone VARCHAR(50)
             );
         """)
+        cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_photo VARCHAR(255)")
+        cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS address_line_2 VARCHAR(255)")
+        cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS city VARCHAR(120)")
+        cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS state VARCHAR(120)")
+        cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS pincode VARCHAR(20)")
+        cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS country VARCHAR(120)")
+        cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS landmark VARCHAR(255)")
+        cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS alternate_phone VARCHAR(50)")
+        cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS company_name VARCHAR(255)")
+        cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS gstin VARCHAR(30)")
         conn.commit()
     except Error as e:
         print(f"Error creating users table: {e}")
@@ -232,6 +349,21 @@ def create_orders_table(conn):
                 order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
         """)
+        cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS status_code VARCHAR(50)")
+        cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS status_updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+        cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_name VARCHAR(255)")
+        cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_phone VARCHAR(50)")
+        cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_address_line_1 VARCHAR(255)")
+        cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_address_line_2 VARCHAR(255)")
+        cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_city VARCHAR(120)")
+        cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_state VARCHAR(120)")
+        cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_pincode VARCHAR(20)")
+        cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_country VARCHAR(120)")
+        cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS delivery_instructions TEXT")
+        cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS company_name VARCHAR(255)")
+        cur.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS gstin VARCHAR(30)")
+        cur.execute("UPDATE orders SET status_code = COALESCE(status_code, LOWER(REPLACE(status, ' ', '_')))")
+        cur.execute("UPDATE orders SET status_updated_at = COALESCE(status_updated_at, order_date)")
         conn.commit()
     except Error as e:
         print(f"Error creating orders table: {e}")
@@ -250,6 +382,7 @@ def create_order_items_table(conn):
                 image_url VARCHAR(255)
             );
         """)
+        cur.execute("ALTER TABLE order_items ADD COLUMN IF NOT EXISTS product_link VARCHAR(255)")
         conn.commit()
     except Error as e:
         print(f"Error creating order_items table: {e}")
@@ -262,6 +395,35 @@ def inr_format(value):
         return f"{float(value):.2f}"
     except:
         return value
+
+# Initialize wallet routes
+add_wallet_routes(app, connect_to_db)
+
+# Initialize admin referral coupon routes
+add_admin_referral_routes(app, connect_to_db, ADMIN_EMAILS)
+
+def get_catalogue_files():
+    """Get list of files from the catalogue directory"""
+    catalogue_dir = os.path.join(os.path.dirname(__file__), 'catalogue')
+    files = []
+    try:
+        if os.path.exists(catalogue_dir):
+            for filename in os.listdir(catalogue_dir):
+                filepath = os.path.join(catalogue_dir, filename)
+                # Only include actual files, not directories
+                if os.path.isfile(filepath) and not filename.startswith('.'):
+                    # Create a user-friendly display name
+                    display_name = filename.rsplit('.', 1)[0]  # Remove extension
+                    display_name = display_name.replace('_', ' ').replace('-', ' ')
+                    files.append({
+                        'name': filename,
+                        'display_name': display_name
+                    })
+            # Sort files alphabetically by display name
+            files.sort(key=lambda x: x['display_name'])
+    except Exception as e:
+        print(f"Error reading catalogue directory: {e}")
+    return files
 
 def upsert_user_from_google(google_sub, name, email):
     """Insert user if missing; return (id, name, email)."""
@@ -283,6 +445,9 @@ def upsert_user_from_google(google_sub, name, email):
             """, (name or email.split("@")[0], email, dummy_password))
             user_data = cur.fetchone()
             conn.commit()
+            # Credit signup bonus for new Google users
+            if user_data:
+                integrate_wallet_with_signup(cur, conn, user_data['id'], user_data['name'])
         return user_data
     except Exception as e:
         print(f"upsert_user_from_google error: {e}")
@@ -321,15 +486,15 @@ def login():
         conn = connect_to_db()
         if not conn:
             flash("Database connection failed during login.", "error")
-            return render_template('login.html')
+            return render_template('login.html', google_client_id=GOOGLE_CLIENT_ID)
 
         cur = conn.cursor(cursor_factory=RealDictCursor)
         try:
             cur.execute("SELECT id, name, email, password FROM users WHERE email = %s", (email,))
             user_data = cur.fetchone()
 
-            if user_data and user_data['password'] == password:  
-                # ✅ Create a User object for Flask-Login
+            if user_data and user_data['password'] == password:
+                #  Create a User object for Flask-Login
                 user_obj = User(
                     id=user_data['id'],
                     email=user_data['email'],
@@ -337,26 +502,27 @@ def login():
                     is_admin=(user_data['email'] in ADMIN_EMAILS)
                 )
 
-                # ✅ Tell Flask-Login this user is logged in
+                #  Tell Flask-Login this user is logged in
                 login_user(user_obj, remember=True)  # 'remember=True' keeps session active
 
-                # ✅ Store email in session (optional, for easier access)
+                #  Store email in session (optional, for easier access)
                 session['user_email'] = user_data['email']
 
                 return redirect(url_for('index'))
             else:
-                return render_template('login.html')
+                flash("Invalid email or password.", "error")
+                return render_template('login.html', google_client_id=GOOGLE_CLIENT_ID)
 
         except Error as e:
             print(f"Login DB error: {e}")
-            return render_template('login.html')
+            return render_template('login.html', google_client_id=GOOGLE_CLIENT_ID)
 
         finally:
             if conn:
                 cur.close()
                 conn.close()
 
-    return render_template('login.html')
+    return render_template('login.html', google_client_id=GOOGLE_CLIENT_ID)
 
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
@@ -367,45 +533,249 @@ def signup():
         try:
             name = request.form.get('name')
             email = request.form.get('email')
-            password = request.form.get('password') # In production, use hashed passwords!
+            password = request.form.get('password')
+            confirm_password = request.form.get('confirm_password')
+
+            # Validate inputs
+            if not name or not email or not password or not confirm_password:
+                flash("All fields are required.", "error")
+                return render_template('login.html', google_client_id=GOOGLE_CLIENT_ID)
+            
+            # Check password match
+            if password != confirm_password:
+                flash("Passwords do not match.", "error")
+                return render_template('login.html', google_client_id=GOOGLE_CLIENT_ID)
+            
+            # Check password length
+            if len(password) < 6:
+                flash("Password must be at least 6 characters long.", "error")
+                return render_template('login.html', google_client_id=GOOGLE_CLIENT_ID)
+
+            # Check for disposable email
+            if is_disposable_email(email):
+                flash("Disposable email addresses are not allowed. Please use a valid email.", "error")
+                return render_template('login.html', google_client_id=GOOGLE_CLIENT_ID)
 
             conn = connect_to_db()
             if not conn:
                 flash("Database connection failed.", "error")
-                return redirect(url_for('signup'))
-            cursor = conn.cursor(cursor_factory=RealDictCursor) # Use RealDictCursor
+                return render_template('login.html', google_client_id=GOOGLE_CLIENT_ID)
+            cursor = conn.cursor(cursor_factory=RealDictCursor)
 
+            # Check if user already exists
             cursor.execute("SELECT id FROM users WHERE email = %s", (email,))
             if cursor.fetchone():
-                return render_template('login.html')
+                flash("Email already registered. Please login.", "error")
+                cursor.close()
+                conn.close()
+                return render_template('login.html', google_client_id=GOOGLE_CLIENT_ID)
 
+            # Clean up any expired OTPs
+            clean_expired_otps(conn)
+
+            # Generate OTP
+            otp = generate_otp()
+            expires_at = datetime.now() + timedelta(minutes=5)
+
+            # Delete any existing OTP for this email
+            cursor.execute("DELETE FROM otp_verifications WHERE email = %s", (email,))
+            
+            # Store OTP in database
             cursor.execute("""
-                INSERT INTO users (name, email, password)
-                VALUES (%s, %s, %s) RETURNING id, name, email
-            """, (name, email, password)) # Password should be hashed
-            new_user_data = cursor.fetchone()
+                INSERT INTO otp_verifications (email, otp_code, name, password, expires_at)
+                VALUES (%s, %s, %s, %s, %s)
+            """, (email, otp, name, password, expires_at))
             conn.commit()
 
-            # Automatically log in the new user after signup
-            if new_user_data:
-                new_user_obj = User(id=new_user_data['id'], email=new_user_data['email'],
-                                    name=new_user_data['name'], is_admin=(new_user_data['email'] in ADMIN_EMAILS))
-                login_user(new_user_obj)
-                flash("Signup successful! You have been logged in.", "success")
-                return redirect(url_for('index'))
+            # Send OTP email
+            if send_otp_email(email, otp, name):
+                flash("Verification code sent to your email!", "success")
+                cursor.close()
+                conn.close()
+                return redirect(url_for('verify_otp', email=email))
             else:
-                flash("Signup failed. No user data returned after insert.", "error")
-                return render_template('login.html')
+                flash("Failed to send verification email. Please try again.", "error")
+                cursor.close()
+                conn.close()
+                return render_template('login.html', google_client_id=GOOGLE_CLIENT_ID)
 
         except Exception as e:
-            print(f"❌ Signup error: {e}")
+            print(f"ERROR: Signup error: {e}")
             flash("Signup failed due to a server error. Please try again.", "error")
-            return render_template('login.html')
+            return render_template('login.html', google_client_id=GOOGLE_CLIENT_ID)
         finally:
             if conn:
                 cursor.close()
                 conn.close()
-    return render_template('signup.html') # Ensure you have a signup.html template
+    return render_template('login.html', google_client_id=GOOGLE_CLIENT_ID)
+
+@app.route('/verify-otp', methods=['GET', 'POST'])
+def verify_otp():
+    email = request.args.get('email') or request.form.get('email')
+    
+    if not email:
+        flash("Invalid verification request.", "error")
+        return redirect(url_for('login'))
+
+    if request.method == 'POST':
+        otp_entered = request.form.get('otp')
+        
+        if not otp_entered or len(otp_entered) != 6:
+            return render_template('verify_otp.html', email=email, error="Please enter a valid 6-digit code.")
+
+        conn = None
+        try:
+            conn = connect_to_db()
+            if not conn:
+                return render_template('verify_otp.html', email=email, error="Database connection failed.")
+            
+            cursor = conn.cursor(cursor_factory=RealDictCursor)
+            
+            # Get OTP record
+            cursor.execute("""
+                SELECT * FROM otp_verifications
+                WHERE email = %s AND verified = FALSE
+                ORDER BY created_at DESC LIMIT 1
+            """, (email,))
+            otp_record = cursor.fetchone()
+            
+            if not otp_record:
+                return render_template('verify_otp.html', email=email,
+                                     error="No verification request found. Please sign up again.")
+            
+            # Check if OTP expired
+            if datetime.now() > otp_record['expires_at']:
+                cursor.execute("DELETE FROM otp_verifications WHERE email = %s", (email,))
+                conn.commit()
+                flash("Verification code expired. Please sign up again.", "error")
+                return redirect(url_for('login'))
+            
+            # Check attempts
+            if otp_record['attempts'] >= 3:
+                cursor.execute("DELETE FROM otp_verifications WHERE email = %s", (email,))
+                conn.commit()
+                flash("Maximum attempts exceeded. Please sign up again.", "error")
+                return redirect(url_for('login'))
+            
+            # Verify OTP
+            if otp_entered == otp_record['otp_code']:
+                # OTP is correct - create user account
+                cursor.execute("""
+                    INSERT INTO users (name, email, password)
+                    VALUES (%s, %s, %s) RETURNING id, name, email
+                """, (otp_record['name'], otp_record['email'], otp_record['password']))
+                new_user_data = cursor.fetchone()
+                
+                # Mark OTP as verified
+                cursor.execute("""
+                    UPDATE otp_verifications SET verified = TRUE
+                    WHERE email = %s
+                """, (email,))
+                conn.commit()
+                
+                # Credit signup bonus
+                if new_user_data:
+                    integrate_wallet_with_signup(cursor, conn, new_user_data['id'], new_user_data['name'])
+                
+                # Log in the user
+                if new_user_data:
+                    new_user_obj = User(
+                        id=new_user_data['id'],
+                        email=new_user_data['email'],
+                        name=new_user_data['name'],
+                        is_admin=(new_user_data['email'] in ADMIN_EMAILS)
+                    )
+                    login_user(new_user_obj)
+                    flash("Email verified! Welcome to GSpaces! ₹500 bonus credited to your wallet.", "success")
+                    return redirect(url_for('index'))
+            else:
+                # Wrong OTP - increment attempts
+                cursor.execute("""
+                    UPDATE otp_verifications SET attempts = attempts + 1
+                    WHERE email = %s
+                """, (email,))
+                conn.commit()
+                
+                attempts_left = 3 - (otp_record['attempts'] + 1)
+                if attempts_left > 0:
+                    return render_template('verify_otp.html', email=email,
+                                         error=f"Invalid code. {attempts_left} attempt(s) remaining.",
+                                         attempts_left=attempts_left)
+                else:
+                    cursor.execute("DELETE FROM otp_verifications WHERE email = %s", (email,))
+                    conn.commit()
+                    flash("Maximum attempts exceeded. Please sign up again.", "error")
+                    return redirect(url_for('login'))
+                    
+        except Exception as e:
+            print(f"ERROR: OTP verification error: {e}")
+            return render_template('verify_otp.html', email=email,
+                                 error="Verification failed. Please try again.")
+        finally:
+            if conn:
+                cursor.close()
+                conn.close()
+    
+    # GET request - show OTP form
+    return render_template('verify_otp.html', email=email)
+
+@app.route('/resend-otp')
+def resend_otp():
+    email = request.args.get('email')
+    
+    if not email:
+        flash("Invalid request.", "error")
+        return redirect(url_for('login'))
+    
+    conn = None
+    try:
+        conn = connect_to_db()
+        if not conn:
+            flash("Database connection failed.", "error")
+            return redirect(url_for('login'))
+        
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        
+        # Get existing OTP record
+        cursor.execute("""
+            SELECT * FROM otp_verifications
+            WHERE email = %s AND verified = FALSE
+            ORDER BY created_at DESC LIMIT 1
+        """, (email,))
+        otp_record = cursor.fetchone()
+        
+        if not otp_record:
+            flash("No verification request found. Please sign up again.", "error")
+            return redirect(url_for('login'))
+        
+        # Generate new OTP
+        new_otp = generate_otp()
+        new_expires_at = datetime.now() + timedelta(minutes=5)
+        
+        # Update OTP record
+        cursor.execute("""
+            UPDATE otp_verifications
+            SET otp_code = %s, expires_at = %s, attempts = 0, created_at = NOW()
+            WHERE email = %s
+        """, (new_otp, new_expires_at, email))
+        conn.commit()
+        
+        # Send new OTP email
+        if send_otp_email(email, new_otp, otp_record['name']):
+            flash("New verification code sent to your email!", "success")
+        else:
+            flash("Failed to send verification email. Please try again.", "error")
+        
+        return redirect(url_for('verify_otp', email=email))
+        
+    except Exception as e:
+        print(f"ERROR: Resend OTP error: {e}")
+        flash("Failed to resend code. Please try again.", "error")
+        return redirect(url_for('login'))
+    finally:
+        if conn:
+            cursor.close()
+            conn.close()
 
 @app.route('/logout')
 @login_required
@@ -513,7 +883,7 @@ def forgot_password():
                 reset_url = url_for('reset_password', token=token, _external=True)
 
                 msg = Message('Password Reset Request for GSpaces', recipients=[email])
-                msg.body = f'''Hi,\n\nTo reset your password, click the link below:\n{reset_url}\n\nIf you didn’t request this, please ignore.\n\nRegards,\nGSpaces Team\n'''
+                msg.body = f'''Hi,\n\nTo reset your password, click the link below:\n{reset_url}\n\nIf you didn't request this, please ignore.\n\nRegards,\nGSpaces Team\n'''
                 mail.send(msg)
                 flash('A password reset link has been sent to your email.', 'success')
             else:
@@ -588,93 +958,285 @@ def index():
     else:
         flash("Error connecting to database to fetch products.", "error")
 
+    # Get catalogue files
+    catalogue_files = get_catalogue_files()
+
     # current_user is now available via Flask-Login
     user_display = current_user.name if current_user.is_authenticated else None
     return render_template('index.html',
                            products=product_list,
                            user=user_display,
+                           catalogue_files=catalogue_files,
                            is_admin=current_user.is_authenticated and current_user.is_admin)
+
+# --- CATALOGUE DOWNLOAD ROUTE ---
+@app.route('/download_catalogue/<filename>')
+def download_catalogue(filename):
+    """Serve catalogue files for download"""
+    try:
+        catalogue_dir = os.path.join(os.path.dirname(__file__), 'catalogue')
+        return send_from_directory(catalogue_dir, filename, as_attachment=True)
+    except Exception as e:
+        print(f"Error downloading catalogue file: {e}")
+        flash("File not found.", "error")
+        return redirect(url_for('index'))
+
+ORDER_STATUS_LABELS = {
+    'placed': 'Order placed',
+    'confirmed': 'Confirmed',
+    'packed': 'Packed',
+    'shipped': 'Shipped',
+    'out_for_delivery': 'Out for delivery',
+    'delivered': 'Delivered',
+    'cancelled': 'Cancelled',
+}
+
+ORDER_STATUS_FLOW = ['placed', 'confirmed', 'packed', 'shipped', 'out_for_delivery', 'delivered']
+
+
+def normalize_order_status(status_code, legacy_status=None):
+    normalized = (status_code or '').strip().lower().replace(' ', '_')
+    if normalized in ORDER_STATUS_LABELS:
+        return normalized
+
+    legacy = (legacy_status or '').strip().lower()
+    legacy_map = {
+        'completed': 'confirmed',
+        'pending': 'placed',
+        'shipped': 'shipped',
+        'delivered': 'delivered',
+        'cancelled': 'cancelled'
+    }
+    return legacy_map.get(legacy, 'placed')
+
+
+def build_tracking_timeline(status_code):
+    if status_code == 'cancelled':
+        return [{
+            'label': ORDER_STATUS_LABELS['cancelled'],
+            'state': 'current'
+        }]
+
+    current_index = ORDER_STATUS_FLOW.index(status_code) if status_code in ORDER_STATUS_FLOW else 0
+    timeline = []
+    for index, code in enumerate(ORDER_STATUS_FLOW):
+        state = 'upcoming'
+        if index < current_index:
+            state = 'complete'
+        elif index == current_index:
+            state = 'current'
+        timeline.append({
+            'code': code,
+            'label': ORDER_STATUS_LABELS[code],
+            'state': state
+        })
+    return timeline
+
 
 # --- USER PROFILE ROUTES ---
 @app.route('/profile')
 @login_required
 def profile():
-    # Obtain current user's ID and email via Flask-Login
     user_email = current_user.email
     user_id = current_user.id
-    # Default user details in case DB fields are null
     user_details = {
         'name': current_user.name,
         'email': user_email,
-        'address': 'Not provided',
-        'phone': 'Not provided'
+        'address': '',
+        'phone': '',
+        'profile_photo': '',
+        'address_line_2': '',
+        'city': '',
+        'state': '',
+        'pincode': '',
+        'country': 'India',
+        'landmark': '',
+        'alternate_phone': '',
+        'company_name': '',
+        'gstin': ''
     }
     user_orders = []
     conn = connect_to_db()
     if conn:
         try:
             cursor = conn.cursor(cursor_factory=RealDictCursor)
-            # 1. Fetch user details
             cursor.execute(
-                "SELECT name, email, address, phone FROM users WHERE id = %s",
+                """
+                SELECT
+                    name, email, address, phone, profile_photo, address_line_2,
+                    city, state, pincode, country, landmark,
+                    alternate_phone, company_name, gstin
+                FROM users
+                WHERE id = %s
+                """,
                 (user_id,)
             )
             rec = cursor.fetchone()
             if rec:
-                user_details['name']    = rec['name']
-                user_details['email']   = rec['email']
-                user_details['address'] = rec['address'] or 'Not provided'
-                user_details['phone']   = rec['phone']   or 'Not provided'
-            # 2. Fetch orders with JSON aggregation of items, using a new alias 'order_products'
+                user_details.update({
+                    'name': rec.get('name') or current_user.name,
+                    'email': rec.get('email') or user_email,
+                    'address': rec.get('address') or '',
+                    'phone': rec.get('phone') or '',
+                    'profile_photo': rec.get('profile_photo') or '',
+                    'address_line_2': rec.get('address_line_2') or '',
+                    'city': rec.get('city') or '',
+                    'state': rec.get('state') or '',
+                    'pincode': rec.get('pincode') or '',
+                    'country': rec.get('country') or 'India',
+                    'landmark': rec.get('landmark') or '',
+                    'alternate_phone': rec.get('alternate_phone') or '',
+                    'company_name': rec.get('company_name') or '',
+                    'gstin': rec.get('gstin') or ''
+                })
+
             cursor.execute("""
                 SELECT
                     o.id,
                     o.razorpay_order_id,
                     o.total_amount,
                     o.status,
+                    o.status_code,
+                    o.status_updated_at,
                     o.order_date,
                     json_agg(
                         json_build_object(
-                            'product_id',      oi.product_id,
-                            'product_name',    oi.product_name,
-                            'quantity',        oi.quantity,
+                            'product_id', oi.product_id,
+                            'product_name', oi.product_name,
+                            'quantity', oi.quantity,
                             'price_at_purchase', oi.price_at_purchase,
-                            'image_url',       oi.image_url
+                            'image_url', oi.image_url,
+                            'product_link', oi.product_link
                         )
-                    ) AS order_products -- CHANGED ALIAS HERE from 'items' to 'order_products'
+                        ORDER BY oi.id
+                    ) AS order_products
                 FROM orders o
                 JOIN order_items oi ON o.id = oi.order_id
                 WHERE o.user_id = %s
                 GROUP BY
-                    o.id, o.razorpay_order_id, o.total_amount, o.status, o.order_date
+                    o.id, o.razorpay_order_id, o.total_amount, o.status, o.status_code, o.status_updated_at, o.order_date
                 ORDER BY o.order_date DESC;
             """, (user_id,))
             orders_data = cursor.fetchall()
-            # 3. Format each order’s date and collect into list
             for order_row in orders_data:
                 order_row['order_date'] = order_row['order_date'].strftime('%Y-%m-%d %H:%M:%S')
-                
-                # IMPORTANT: Take the data from 'order_products' and assign it to 'items'
-                # This ensures the template still uses 'order.items' as expected.
-                if 'order_products' in order_row:
-                    order_row['items'] = order_row['order_products']
-                else:
-                    # Fallback in case 'order_products' is missing (shouldn't happen with correct SQL)
-                    order_row['items'] = [] 
-                    print(f"Warning: 'order_products' key missing in order_row: {order_row}")
+                order_status_code = normalize_order_status(order_row.get('status_code'), order_row.get('status'))
+                order_row['status_code'] = order_status_code
+                order_row['status_label'] = ORDER_STATUS_LABELS.get(order_status_code, 'Order placed')
+                order_row['tracking_timeline'] = build_tracking_timeline(order_status_code)
+                order_row['items'] = order_row.get('order_products') or []
                 user_orders.append(order_row)
         except Exception as e:
             print(f"Error fetching profile data or orders: {e}")
-            flash("Error loading profile data or orders.", "error")
+            flash("We couldn't load your profile details right now.", "danger")
         finally:
-            if conn: # Ensure conn exists before closing
+            if conn:
                 conn.close()
-    # Render the profile page with gathered data
+
+    # Fetch wallet data
+    wallet_balance = 0
+    referral_code = None
+    referral_stats = None
+    wallet_transactions = []
+    referral_benefits = {
+        'friend_discount': '₹1000',
+        'owner_bonus': '₹1000',
+        'friend_discount_type': 'fixed',
+        'owner_bonus_type': 'fixed'
+    }
+    
+    conn = connect_to_db()
+    if conn:
+        try:
+            wallet = WalletSystem(conn)
+            wallet_balance = wallet.get_wallet_balance(user_id)
+            referral_stats = wallet.get_referral_stats(user_id)
+            wallet_transactions = wallet.get_transaction_history(user_id, 10)
+            
+            # Get referral code and coupon settings
+            cursor = conn.cursor(cursor_factory=RealDictCursor)
+            cursor.execute("SELECT referral_code FROM users WHERE id = %s", (user_id,))
+            result = cursor.fetchone()
+            if result:
+                referral_code = result.get('referral_code')
+            
+            # Get referral coupon benefits for display
+            referral_benefits = {
+                'friend_discount': '₹1000',
+                'owner_bonus': '₹1000',
+                'friend_discount_type': 'fixed',
+                'owner_bonus_type': 'fixed'
+            }
+            if referral_code:
+                cursor.execute("""
+                    SELECT discount_type, discount_amount, discount_percentage,
+                           referrer_bonus_type, referrer_bonus_amount, referral_bonus_percentage
+                    FROM referral_coupons
+                    WHERE user_id = %s
+                """, (user_id,))
+                coupon_data = cursor.fetchone()
+                if coupon_data:
+                    # Friend's discount
+                    if coupon_data['discount_type'] == 'percentage':
+                        referral_benefits['friend_discount'] = f"{coupon_data['discount_percentage']}%"
+                        referral_benefits['friend_discount_type'] = 'percentage'
+                    else:
+                        referral_benefits['friend_discount'] = f"₹{int(coupon_data['discount_amount'])}"
+                        referral_benefits['friend_discount_type'] = 'fixed'
+                    
+                    # Owner's bonus
+                    if coupon_data['referrer_bonus_type'] == 'percentage':
+                        referral_benefits['owner_bonus'] = f"{coupon_data['referral_bonus_percentage']}%"
+                        referral_benefits['owner_bonus_type'] = 'percentage'
+                    else:
+                        referral_benefits['owner_bonus'] = f"₹{int(coupon_data['referrer_bonus_amount'])}"
+                        referral_benefits['owner_bonus_type'] = 'fixed'
+            
+            cursor.close()
+        except Exception as e:
+            print(f"Error fetching wallet data: {e}")
+            import traceback
+            traceback.print_exc()
+            # Rollback the transaction on error
+            if conn:
+                conn.rollback()
+        finally:
+            if conn:
+                conn.close()
+
+    # Fetch bonus coupons for the user
+    bonus_coupons = []
+    conn = connect_to_db()
+    if conn:
+        try:
+            cursor = conn.cursor(cursor_factory=RealDictCursor)
+            cursor.execute("""
+                SELECT code, discount_type, discount_value, description,
+                       valid_until, is_active, created_at
+                FROM coupons
+                WHERE user_id = %s AND is_personal = TRUE
+                ORDER BY created_at DESC
+            """, (user_id,))
+            bonus_coupons = cursor.fetchall()
+            cursor.close()
+        except Exception as e:
+            print(f"Error fetching bonus coupons: {e}")
+        finally:
+            if conn:
+                conn.close()
+
     return render_template(
         'profile.html',
         user=user_details['name'],
         user_details=user_details,
-        user_orders=user_orders
+        user_orders=user_orders,
+        order_status_labels=ORDER_STATUS_LABELS,
+        wallet_balance=float(wallet_balance) if wallet_balance else 0,
+        referral_code=referral_code,
+        referral_stats=referral_stats,
+        wallet_transactions=wallet_transactions,
+        referral_benefits=referral_benefits,
+        bonus_coupons=bonus_coupons
     )
 def get_next_product_id():
     # Example: Generate sequential ID or use DB auto-increment
@@ -694,32 +1256,79 @@ def save_sub_image_record(product_id, filename, description):
 @login_required
 def update_profile():
     user_id = current_user.id
-    name = request.form.get('name')
-    phone = request.form.get('phone')
-    address = request.form.get('address')
+    name = (request.form.get('name') or '').strip()
+    phone = (request.form.get('phone') or '').strip()
+    address = (request.form.get('address') or '').strip()
+    address_line_2 = (request.form.get('address_line_2') or '').strip()
+    city = (request.form.get('city') or '').strip()
+    state = (request.form.get('state') or '').strip()
+    pincode = (request.form.get('pincode') or '').strip()
+    country = (request.form.get('country') or 'India').strip()
+    landmark = (request.form.get('landmark') or '').strip()
+    alternate_phone = (request.form.get('alternate_phone') or '').strip()
+    company_name = (request.form.get('company_name') or '').strip()
+    gstin = (request.form.get('gstin') or '').strip()
+    profile_photo = request.files.get('profile_photo')
+
+    if not name or not phone or not address or not city or not state or not pincode:
+        flash("Please complete all required profile fields before saving.", "warning")
+        return redirect(url_for('profile', _anchor='personal-details'))
 
     conn = connect_to_db()
     if not conn:
-        flash("Database connection failed.", "error")
-        return redirect(url_for('profile'))
+        flash("We couldn't save your profile right now. Please try again.", "danger")
+        return redirect(url_for('profile', _anchor='personal-details'))
 
     try:
-        cur = conn.cursor()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute("SELECT profile_photo FROM users WHERE id=%s", (user_id,))
+        existing_user = cur.fetchone()
+        profile_photo_path = existing_user.get('profile_photo') if existing_user else None
+
+        if profile_photo and profile_photo.filename:
+            filename = secure_filename(profile_photo.filename)
+            ext = os.path.splitext(filename)[1].lower()
+            allowed_exts = {'.png', '.jpg', '.jpeg', '.webp'}
+            if ext not in allowed_exts:
+                flash("Profile photo must be a PNG, JPG, JPEG, or WEBP image.", "warning")
+                return redirect(url_for('profile', _anchor='personal-details'))
+
+            profile_filename = f"user_{user_id}_{int(datetime.utcnow().timestamp())}{ext}"
+            saved_path = os.path.join(app.config['PROFILE_UPLOAD_FOLDER'], profile_filename)
+            profile_photo.save(saved_path)
+            profile_photo_path = f"img/profiles/{profile_filename}"
+
         cur.execute("""
             UPDATE users
-            SET name=%s, phone=%s, address=%s
+            SET
+                name=%s,
+                phone=%s,
+                address=%s,
+                profile_photo=%s,
+                address_line_2=%s,
+                city=%s,
+                state=%s,
+                pincode=%s,
+                country=%s,
+                landmark=%s,
+                alternate_phone=%s,
+                company_name=%s,
+                gstin=%s
             WHERE id=%s
-        """, (name, phone, address, user_id))
+        """, (
+            name, phone, address, profile_photo_path, address_line_2, city, state,
+            pincode, country, landmark, alternate_phone, company_name, gstin, user_id
+        ))
         conn.commit()
         cur.close()
         flash("Profile updated successfully.", "success")
     except Exception as e:
         print(f"Error updating profile: {e}")
-        flash("Failed to update profile.", "error")
+        flash("We couldn't update your profile. Please try again.", "danger")
     finally:
         conn.close()
 
-    return redirect(url_for('profile'))
+    return redirect(url_for('profile', _anchor='personal-details'))
 
 @app.route('/update_profile_phone', methods=['POST'])
 @login_required
@@ -1215,13 +1824,13 @@ def add_to_cart(product_id):
         row = cur.fetchone()
 
         if row:
-            # If exists → increment quantity
+            # If exists - increment quantity
             cur.execute(
                 "UPDATE cart SET quantity = quantity + 1 WHERE user_id = %s AND product_id = %s",
                 (current_user.id, product_id)
             )
         else:
-            # If not exists → insert new row
+            # If not exists - insert new row
             cur.execute(
                 "INSERT INTO cart (user_id, product_id, quantity) VALUES (%s, %s, %s)",
                 (current_user.id, product_id, 1)
@@ -1231,8 +1840,11 @@ def add_to_cart(product_id):
         cur.close()
         conn.close()
     except Exception as e:
-        flash(f"Error adding product to cart: {str(e)}")
+        print(f"Error adding product to cart: {e}")
+        flash("We couldn't add that item to your cart. Please try again.", "danger")
+        return redirect(url_for("product_detail", product_id=product_id))
 
+    flash("Added to cart.", "success")
     return redirect(url_for("cart"))
 
 # ------------------ PAYMENT ROUTE ------------------ #
@@ -1246,11 +1858,11 @@ def send_order():
         order_id = data.get("order_id", "N/A")
         total_amount = data.get("amount", 0)
 
-        # Use plain text INR instead of ₹ symbol
+        # Use plain text INR instead of INR symbol
         message_body = f"""
         Hello {current_user.name},
 
-        Your order has been placed successfully ✅
+        Your order has been placed successfully 
         Order ID: {order_id}
         Total Amount: INR {total_amount}
 
@@ -1268,7 +1880,9 @@ def send_order():
 
         with smtplib.SMTP("smtp.gmail.com", 587) as server:
             server.starttls()
-            server.login(os.getenv("EMAIL_USER"), os.getenv("EMAIL_PASS"))
+            # FIX: Use MAIL_USERNAME and MAIL_PASSWORD for consistency
+            server.login(os.getenv("MAIL_USERNAME", "sri.chityala501@gmail.com"),
+                        os.getenv("MAIL_PASSWORD", "zupd zixc vvzp kptk"))
             server.sendmail(msg["From"], [msg["To"]], msg.as_string())
 
         # ------------------ RESPONSE ------------------ #
@@ -1290,7 +1904,7 @@ def remove_from_cart(product_id):
             flash("Item removed from cart.", "info")
         except Exception as e:
             print(f"Error removing from cart: {e}")
-            flash("Error removing product from cart.", "error")
+            flash("We couldn't remove that item from your cart.", "danger")
         finally:
             conn.close()
     return redirect(url_for('cart'))
@@ -1320,7 +1934,7 @@ def update_quantity(product_id, action):
             conn.commit()
         except Exception as e:
             print(f"Error updating quantity: {e}")
-            flash("Error updating quantity.", "error")
+            flash("We couldn't update your cart right now.", "danger")
         finally:
             conn.close()
     return redirect(url_for('cart'))
@@ -1375,11 +1989,11 @@ def is_deal_active():
         return datetime.utcnow() < end_time
     return False
 
-def calculate_cart_totals(cart_items):
+def calculate_cart_totals(cart_items, coupon_discount=Decimal("0.00")):
     deal_active = is_deal_active()
     subtotal_after_discount = Decimal("0.00")
     original_subtotal = Decimal("0.00")
-    coupon_discount = Decimal("0.00")
+    deal_discount = Decimal("0.00")
 
     for item in cart_items:
         # Ensure price is a Decimal for math
@@ -1389,7 +2003,7 @@ def calculate_cart_totals(cart_items):
         if deal_active and DISCOUNT_RATE is not None:
             discounted_price = (price * DISCOUNT_RATE).quantize(Decimal('0.01'))
             # Add price difference to discount total
-            coupon_discount += (price - discounted_price) * item['quantity']
+            deal_discount += (price - discounted_price) * item['quantity']
             
             item['display_price'] = discounted_price
             subtotal_after_discount += discounted_price * item['quantity']
@@ -1397,15 +2011,22 @@ def calculate_cart_totals(cart_items):
             item['display_price'] = price
             subtotal_after_discount += price * item['quantity']
 
+    # Apply coupon discount to subtotal
+    subtotal_after_coupon = (subtotal_after_discount - coupon_discount).quantize(Decimal('0.01'))
+    if subtotal_after_coupon < 0:
+        subtotal_after_coupon = Decimal("0.00")
+    
     gst_rate = Decimal('0.18')
-    gst_amount = (subtotal_after_discount * gst_rate).quantize(Decimal('0.01'))
-    total_with_gst = (subtotal_after_discount + gst_amount).quantize(Decimal('0.01'))
+    gst_amount = (subtotal_after_coupon * gst_rate).quantize(Decimal('0.01'))
+    total_with_gst = (subtotal_after_coupon + gst_amount).quantize(Decimal('0.01'))
 
     return {
         "deal_active": deal_active,
-        "subtotal": subtotal_after_discount, # Subtotal AFTER applied discount
+        "subtotal": subtotal_after_discount, # Subtotal AFTER deal discount but BEFORE coupon
         "original_subtotal": original_subtotal, # Subtotal BEFORE any discount
-        "coupon_discount": coupon_discount.quantize(Decimal('0.01')), # NEW: Explicit discount amount
+        "deal_discount": deal_discount.quantize(Decimal('0.01')),
+        "coupon_discount": coupon_discount.quantize(Decimal('0.01')),
+        "subtotal_after_coupon": subtotal_after_coupon,
         "gst_amount": gst_amount,
         "total_with_gst": total_with_gst
     }
@@ -1524,6 +2145,660 @@ cart_items = []
 total_price = 0
 gst_amount = 0
 total_with_gst = 0
+# --- COUPON MANAGEMENT ROUTES ---
+@app.route('/admin/coupons')
+@login_required
+def admin_coupons():
+    """Admin page to manage coupons"""
+    if current_user.email not in ADMIN_EMAILS:
+        flash("Access denied. Admin privileges required.", "danger")
+        return redirect(url_for('index'))
+    
+    conn = connect_to_db()
+    coupons = []
+    
+    if conn:
+        try:
+            cur = conn.cursor(cursor_factory=RealDictCursor)
+            cur.execute("""
+                SELECT id, code, discount_type, discount_value, description, 
+                       min_order_amount, max_discount_amount, is_active, 
+                       usage_limit, times_used, valid_from, valid_until, created_at
+                FROM coupons 
+                ORDER BY created_at DESC
+            """)
+            coupons = cur.fetchall()
+        except Exception as e:
+            print(f"Error fetching coupons: {e}")
+            flash("Error loading coupons.", "danger")
+        finally:
+            conn.close()
+    
+    return render_template('admin_coupons.html', coupons=coupons)
+
+@app.route('/admin/coupons/add', methods=['POST'])
+@login_required
+def add_coupon():
+    """Add a new coupon"""
+    if current_user.email not in ADMIN_EMAILS:
+        return jsonify({"status": "error", "message": "Access denied"}), 403
+    
+    try:
+        code = request.form.get('code', '').strip().upper()
+        discount_type = request.form.get('discount_type')
+        discount_value = Decimal(request.form.get('discount_value', 0))
+        description = request.form.get('description', '').strip()
+        min_order_amount = Decimal(request.form.get('min_order_amount', 0))
+        max_discount_amount = request.form.get('max_discount_amount')
+        usage_limit = request.form.get('usage_limit')
+        valid_until = request.form.get('valid_until')
+        
+        if not code or not discount_type or discount_value <= 0:
+            flash("Invalid coupon data. Code, type, and value are required.", "danger")
+            return redirect(url_for('admin_coupons'))
+        
+        conn = connect_to_db()
+        if conn:
+            try:
+                cur = conn.cursor()
+                cur.execute("""
+                    INSERT INTO coupons 
+                    (code, discount_type, discount_value, description, min_order_amount, 
+                     max_discount_amount, usage_limit, valid_until, created_by)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """, (code, discount_type, discount_value, description, min_order_amount,
+                      max_discount_amount if max_discount_amount else None,
+                      usage_limit if usage_limit else None,
+                      valid_until if valid_until else None,
+                      current_user.email))
+                conn.commit()
+                flash(f"Coupon '{code}' added successfully!", "success")
+            except Exception as e:
+                print(f"Error adding coupon: {e}")
+                flash(f"Error adding coupon: {str(e)}", "danger")
+            finally:
+                conn.close()
+    except Exception as e:
+        flash(f"Error: {str(e)}", "danger")
+    
+    return redirect(url_for('admin_coupons'))
+
+@app.route('/admin/coupons/toggle/<int:coupon_id>', methods=['POST'])
+@login_required
+def toggle_coupon(coupon_id):
+    """Toggle coupon active status"""
+    if current_user.email not in ADMIN_EMAILS:
+        return jsonify({"status": "error", "message": "Access denied"}), 403
+    
+    conn = connect_to_db()
+    if conn:
+        try:
+            cur = conn.cursor()
+            cur.execute("UPDATE coupons SET is_active = NOT is_active WHERE id = %s", (coupon_id,))
+            conn.commit()
+            flash("Coupon status updated.", "success")
+        except Exception as e:
+            print(f"Error toggling coupon: {e}")
+            flash("Error updating coupon.", "danger")
+        finally:
+            conn.close()
+    
+    return redirect(url_for('admin_coupons'))
+
+@app.route('/admin/coupons/edit/<int:coupon_id>', methods=['POST'])
+@login_required
+def edit_coupon(coupon_id):
+    """Edit an existing coupon"""
+    if current_user.email not in ADMIN_EMAILS:
+        return jsonify({"status": "error", "message": "Access denied"}), 403
+    
+    try:
+        code = request.form.get('code', '').strip().upper()
+        discount_type = request.form.get('discount_type')
+        discount_value = Decimal(request.form.get('discount_value', 0))
+        description = request.form.get('description', '').strip()
+        min_order_amount = Decimal(request.form.get('min_order_amount', 0))
+        max_discount_amount = request.form.get('max_discount_amount')
+        usage_limit = request.form.get('usage_limit')
+        valid_until = request.form.get('valid_until')
+        
+        if not code or not discount_type or discount_value <= 0:
+            flash("Invalid coupon data. Code, type, and value are required.", "danger")
+            return redirect(url_for('admin_coupons'))
+        
+        conn = connect_to_db()
+        if conn:
+            try:
+                cur = conn.cursor()
+                cur.execute("""
+                    UPDATE coupons 
+                    SET code = %s, discount_type = %s, discount_value = %s, 
+                        description = %s, min_order_amount = %s, 
+                        max_discount_amount = %s, usage_limit = %s, valid_until = %s
+                    WHERE id = %s
+                """, (code, discount_type, discount_value, description, min_order_amount,
+                      max_discount_amount if max_discount_amount else None,
+                      usage_limit if usage_limit else None,
+                      valid_until if valid_until else None,
+                      coupon_id))
+                conn.commit()
+                flash(f"Coupon '{code}' updated successfully!", "success")
+            except Exception as e:
+                print(f"Error updating coupon: {e}")
+                flash(f"Error updating coupon: {str(e)}", "danger")
+            finally:
+                conn.close()
+    except Exception as e:
+        flash(f"Error: {str(e)}", "danger")
+    
+    return redirect(url_for('admin_coupons'))
+
+@app.route('/admin/coupons/get/<int:coupon_id>')
+@login_required
+def get_coupon(coupon_id):
+    """Get coupon details for editing"""
+    if current_user.email not in ADMIN_EMAILS:
+        return jsonify({"status": "error", "message": "Access denied"}), 403
+    
+    conn = connect_to_db()
+    if conn:
+        try:
+            cur = conn.cursor(cursor_factory=RealDictCursor)
+            cur.execute("""
+                SELECT id, code, discount_type, discount_value, description,
+                       min_order_amount, max_discount_amount, usage_limit, 
+                       valid_until
+                FROM coupons WHERE id = %s
+            """, (coupon_id,))
+            coupon = cur.fetchone()
+            if coupon:
+                # Convert date to string for JSON
+                if coupon['valid_until']:
+                    coupon['valid_until'] = coupon['valid_until'].strftime('%Y-%m-%d')
+                return jsonify({"status": "success", "coupon": dict(coupon)})
+            return jsonify({"status": "error", "message": "Coupon not found"})
+        except Exception as e:
+            print(f"Error fetching coupon: {e}")
+            return jsonify({"status": "error", "message": str(e)})
+        finally:
+            conn.close()
+    return jsonify({"status": "error", "message": "Database connection error"})
+
+# --- ADMIN ORDER MANAGEMENT ROUTES ---
+@app.route('/admin/orders')
+@login_required
+def admin_orders():
+    """Admin page to manage all orders"""
+    if current_user.email not in ADMIN_EMAILS:
+        flash("Access denied. Admin privileges required.", "danger")
+        return redirect(url_for('index'))
+    
+    conn = connect_to_db()
+    orders = []
+    
+    # Get filter parameters
+    status_filter = request.args.get('status', 'all')
+    search_query = request.args.get('search', '').strip()
+    
+    if conn:
+        try:
+            cur = conn.cursor(cursor_factory=RealDictCursor)
+            
+            # Build query based on filters
+            query = """
+                SELECT
+                    o.id,
+                    o.user_id,
+                    o.user_email,
+                    o.razorpay_order_id,
+                    o.total_amount,
+                    o.status,
+                    o.status_code,
+                    o.status_updated_at,
+                    o.order_date,
+                    o.shipping_name,
+                    o.shipping_phone,
+                    o.coupon_code,
+                    o.coupon_discount,
+                    COUNT(oi.id) AS items_count
+                FROM orders o
+                LEFT JOIN order_items oi ON oi.order_id = o.id
+                WHERE 1=1
+            """
+            params = []
+            
+            # Add status filter
+            if status_filter != 'all':
+                query += " AND o.status_code = %s"
+                params.append(status_filter)
+            
+            # Add search filter
+            if search_query:
+                query += " AND (CAST(o.id AS TEXT) LIKE %s OR o.user_email LIKE %s OR o.shipping_name LIKE %s)"
+                search_pattern = f"%{search_query}%"
+                params.extend([search_pattern, search_pattern, search_pattern])
+            
+            query += """
+                GROUP BY o.id, o.user_id, o.user_email, o.razorpay_order_id, 
+                         o.total_amount, o.status, o.status_code, o.status_updated_at, 
+                         o.order_date, o.shipping_name, o.shipping_phone, 
+                         o.coupon_code, o.coupon_discount
+                ORDER BY o.order_date DESC
+                LIMIT 100
+            """
+            
+            cur.execute(query, params)
+            orders = cur.fetchall()
+            
+            # Normalize status codes
+            for order in orders:
+                order['status_code'] = normalize_order_status(order.get('status_code'), order.get('status'))
+                order['status_label'] = ORDER_STATUS_LABELS.get(order['status_code'], 'Order placed')
+                
+        except Exception as e:
+            print(f"Error fetching orders: {e}")
+            flash("Error loading orders.", "danger")
+        finally:
+            conn.close()
+    
+    return render_template(
+        'admin_orders.html',
+        orders=orders,
+        status_filter=status_filter,
+        search_query=search_query,
+        order_statuses=ORDER_STATUS_LABELS,
+        order_status_flow=ORDER_STATUS_FLOW
+    )
+
+@app.route('/admin/orders/update_status/<int:order_id>', methods=['POST'])
+@login_required
+def update_order_status(order_id):
+    """Update order status"""
+    if current_user.email not in ADMIN_EMAILS:
+        return jsonify({"status": "error", "message": "Access denied"}), 403
+    
+    new_status = request.form.get('status')
+    
+    if not new_status or new_status not in ORDER_STATUS_LABELS:
+        flash("Invalid status selected.", "danger")
+        return redirect(url_for('admin_orders'))
+    
+    conn = connect_to_db()
+    if conn:
+        try:
+            cur = conn.cursor(cursor_factory=RealDictCursor)
+            
+            # Get old status, customer details, and order items before update
+            cur.execute("""
+                SELECT o.status_code, o.user_email, o.shipping_name, o.shipping_phone, o.total_amount
+                FROM orders o
+                WHERE o.id = %s
+            """, (order_id,))
+            order_data = cur.fetchone()
+            old_status = order_data['status_code'] if order_data else None
+            
+            # Get order items
+            cur.execute("""
+                SELECT product_name, quantity, price_at_purchase
+                FROM order_items
+                WHERE order_id = %s
+            """, (order_id,))
+            order_items = cur.fetchall()
+            
+            # Update order status
+            cur.execute("""
+                UPDATE orders
+                SET status_code = %s,
+                    status = %s,
+                    status_updated_at = NOW()
+                WHERE id = %s
+            """, (new_status, ORDER_STATUS_LABELS[new_status], order_id))
+            conn.commit()
+            
+            # Send notification to customer about status update
+            if order_data:
+                try:
+                    notify_order_status_update(
+                        order_id=order_id,
+                        customer_name=order_data['shipping_name'],
+                        customer_email=order_data['user_email'],
+                        customer_phone=order_data['shipping_phone'],
+                        old_status=old_status,
+                        new_status=new_status,
+                        status_label=ORDER_STATUS_LABELS[new_status],
+                        order_items=order_items,
+                        total_amount=order_data['total_amount']
+                    )
+                except Exception as e:
+                    print(f"Error sending status update notification: {e}")
+            
+            flash(f"Order #{order_id} status updated to '{ORDER_STATUS_LABELS[new_status]}'", "success")
+        except Exception as e:
+            print(f"Error updating order status: {e}")
+            flash("Error updating order status.", "danger")
+        finally:
+            conn.close()
+    
+    return redirect(url_for('admin_orders'))
+
+@app.route('/admin/orders/view/<int:order_id>')
+@login_required
+def admin_view_order(order_id):
+    """View detailed order information"""
+    if current_user.email not in ADMIN_EMAILS:
+        flash("Access denied. Admin privileges required.", "danger")
+        return redirect(url_for('index'))
+    
+    conn = connect_to_db()
+    order = None
+    
+    if conn:
+        try:
+            cur = conn.cursor(cursor_factory=RealDictCursor)
+            
+            # Fetch order details
+            cur.execute("SELECT * FROM orders WHERE id = %s", (order_id,))
+            order = cur.fetchone()
+            
+            if order:
+                # Fetch order items separately
+                cur.execute("""
+                    SELECT
+                        product_id,
+                        product_name,
+                        quantity,
+                        price_at_purchase,
+                        image_url
+                    FROM order_items
+                    WHERE order_id = %s
+                    ORDER BY id
+                """, (order_id,))
+                order_items = cur.fetchall()
+                
+                # Convert to dict and add items
+                order = dict(order)
+                order['order_items'] = order_items
+                
+                order['status_code'] = normalize_order_status(order.get('status_code'), order.get('status'))
+                order['status_label'] = ORDER_STATUS_LABELS.get(order['status_code'], 'Order placed')
+                order['tracking_timeline'] = build_tracking_timeline(order['status_code'])
+        except Exception as e:
+            print(f"Error fetching order details: {e}")
+            flash("Error loading order details.", "danger")
+        finally:
+            conn.close()
+    
+    if not order:
+        flash("Order not found.", "danger")
+        return redirect(url_for('admin_orders'))
+    
+    return render_template(
+        'admin_order_detail.html',
+        order=order,
+        order_statuses=ORDER_STATUS_LABELS,
+        order_status_flow=ORDER_STATUS_FLOW
+    )
+
+@app.route('/admin/orders/send_custom_email/<int:order_id>', methods=['POST'])
+@login_required
+def send_custom_order_email(order_id):
+    """Send custom email to customer about their order"""
+    if current_user.email not in ADMIN_EMAILS:
+        return jsonify({"status": "error", "message": "Access denied"}), 403
+    
+    subject = request.form.get('subject', '').strip()
+    message = request.form.get('message', '').strip()
+    
+    if not subject or not message:
+        flash("Subject and message are required.", "danger")
+        return redirect(url_for('admin_view_order', order_id=order_id))
+    
+    conn = connect_to_db()
+    if conn:
+        try:
+            cur = conn.cursor(cursor_factory=RealDictCursor)
+            # Get order details
+            cur.execute("""
+                SELECT user_email, shipping_name, total_amount
+                FROM orders
+                WHERE id = %s
+            """, (order_id,))
+            order_data = cur.fetchone()
+            
+            # Get order items with product details
+            cur.execute("""
+                SELECT
+                    oi.product_id,
+                    oi.product_name,
+                    oi.quantity,
+                    oi.price_at_purchase,
+                    oi.image_url,
+                    p.id as current_product_id
+                FROM order_items oi
+                LEFT JOIN products p ON oi.product_id = p.id
+                WHERE oi.order_id = %s
+                ORDER BY oi.id
+            """, (order_id,))
+            order_items = cur.fetchall()
+            
+            if order_data:
+                success = send_custom_email_to_customer(
+                    customer_email=order_data['user_email'],
+                    customer_name=order_data['shipping_name'],
+                    order_id=order_id,
+                    subject=subject,
+                    message=message,
+                    order_items=order_items,
+                    total_amount=order_data['total_amount']
+                )
+                
+                if success:
+                    flash(f"Custom email sent successfully to {order_data['user_email']}", "success")
+                else:
+                    flash("Failed to send email. Please check email configuration.", "danger")
+            else:
+                flash("Order not found.", "danger")
+                
+        except Exception as e:
+            print(f"Error sending custom email: {e}")
+            flash("Error sending custom email.", "danger")
+        finally:
+            conn.close()
+    
+    return redirect(url_for('admin_view_order', order_id=order_id))
+
+
+
+@app.route('/admin/coupons/delete/<int:coupon_id>', methods=['POST'])
+@login_required
+def delete_coupon(coupon_id):
+    """Delete a coupon"""
+    if current_user.email not in ADMIN_EMAILS:
+        return jsonify({"status": "error", "message": "Access denied"}), 403
+    
+    conn = connect_to_db()
+    if conn:
+        try:
+            cur = conn.cursor()
+            cur.execute("DELETE FROM coupons WHERE id = %s", (coupon_id,))
+            conn.commit()
+            flash("Coupon deleted successfully.", "success")
+        except Exception as e:
+            print(f"Error deleting coupon: {e}")
+            flash("Error deleting coupon.", "danger")
+        finally:
+            conn.close()
+    
+    return redirect(url_for('admin_coupons'))
+
+@app.route('/api/coupons/validate', methods=['POST'])
+@login_required
+def validate_coupon():
+    """Validate a coupon code and return discount info"""
+    data = request.get_json()
+    code = data.get('code', '').strip().upper()
+    cart_total = Decimal(str(data.get('cart_total', 0)))
+    
+    if not code:
+        return jsonify({"status": "error", "message": "Please enter a coupon code"})
+    
+    conn = connect_to_db()
+    if not conn:
+        return jsonify({"status": "error", "message": "Database connection error"})
+    
+    try:
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        
+        # First, check regular coupons table
+        cur.execute("""
+            SELECT id, code, discount_type, discount_value, description,
+                   min_order_amount, max_discount_amount, is_active,
+                   usage_limit, times_used, valid_until
+            FROM coupons
+            WHERE code = %s
+        """, (code,))
+        coupon = cur.fetchone()
+        
+        # If not found in coupons, check referral_coupons table
+        if not coupon:
+            wallet = WalletSystem(conn)
+            referral_result = wallet.validate_referral_coupon(code, current_user.id)
+            
+            if referral_result['valid']:
+                # Check minimum order amount
+                min_order = Decimal(str(referral_result.get('min_order_amount', 0)))
+                if cart_total < min_order:
+                    return jsonify({
+                        "status": "error",
+                        "message": f"Minimum order amount of ₹{min_order} required for this referral code"
+                    })
+                
+                # Calculate discount based on type (fixed or percentage)
+                discount_type = referral_result.get('discount_type', 'percentage')
+                
+                if discount_type == 'fixed':
+                    # Fixed amount discount
+                    discount_amount = Decimal(str(referral_result['discount_amount']))
+                    discount_amount = min(discount_amount, cart_total)  # Don't exceed cart total
+                    
+                    # Apply max discount cap if set
+                    max_discount = referral_result.get('max_discount_amount')
+                    if max_discount:
+                        discount_amount = min(discount_amount, Decimal(str(max_discount)))
+                else:
+                    # Percentage discount
+                    discount_percentage = Decimal(str(referral_result['discount_percentage']))
+                    discount_amount = (cart_total * discount_percentage / 100).quantize(Decimal('0.01'))
+                    
+                    # Apply max discount cap if set
+                    max_discount = referral_result.get('max_discount_amount')
+                    if max_discount:
+                        discount_amount = min(discount_amount, Decimal(str(max_discount)))
+                    
+                    discount_amount = min(discount_amount, cart_total)
+                
+                return jsonify({
+                    "status": "success",
+                    "message": f"Referral code applied! You saved ₹{discount_amount}",
+                    "coupon_code": referral_result['coupon_code'],
+                    "discount_amount": float(discount_amount),
+                    "discount_type": discount_type,
+                    "discount_value": float(referral_result.get('discount_amount' if discount_type == 'fixed' else 'discount_percentage', 0)),
+                    "description": f"Referral discount from {referral_result['referrer_name']}",
+                    "is_referral": True,
+                    "referrer_id": referral_result['referrer_id'],
+                    "referrer_bonus_type": referral_result.get('referrer_bonus_type'),
+                    "referrer_bonus_amount": referral_result.get('referrer_bonus_amount'),
+                    "referral_bonus_percentage": referral_result.get('referral_bonus_percentage')
+                })
+            else:
+                return jsonify({"status": "error", "message": referral_result.get('error', 'Invalid coupon code')})
+        
+        # Validate regular coupon
+        if not coupon['is_active']:
+            return jsonify({"status": "error", "message": "This coupon is no longer active"})
+        
+        if coupon['valid_until'] and datetime.now() > coupon['valid_until']:
+            return jsonify({"status": "error", "message": "This coupon has expired"})
+        
+        if coupon['usage_limit'] and coupon['times_used'] >= coupon['usage_limit']:
+            return jsonify({"status": "error", "message": "This coupon has reached its usage limit"})
+        
+        if cart_total < Decimal(str(coupon['min_order_amount'])):
+            return jsonify({
+                "status": "error",
+                "message": f"Minimum order amount of ₹{coupon['min_order_amount']} required"
+            })
+        
+        # Calculate discount
+        if coupon['discount_type'] == 'percentage':
+            discount_amount = (cart_total * Decimal(str(coupon['discount_value'])) / 100).quantize(Decimal('0.01'))
+            if coupon['max_discount_amount']:
+                discount_amount = min(discount_amount, Decimal(str(coupon['max_discount_amount'])))
+        else:  # fixed
+            discount_amount = Decimal(str(coupon['discount_value']))
+        
+        # Don't allow discount to exceed cart total
+        discount_amount = min(discount_amount, cart_total)
+        
+        return jsonify({
+            "status": "success",
+            "message": f"Coupon applied! You saved ₹{discount_amount}",
+            "coupon_code": coupon['code'],
+            "discount_amount": float(discount_amount),
+            "discount_type": coupon['discount_type'],
+            "discount_value": float(coupon['discount_value']),
+            "description": coupon['description'],
+            "is_referral": False
+        })
+        
+    except Exception as e:
+        print(f"Error validating coupon: {e}")
+        return jsonify({"status": "error", "message": "Error validating coupon"})
+    finally:
+        conn.close()
+
+@app.route('/api/coupons/available')
+@login_required
+def get_available_coupons():
+    """Get list of active coupons for display (public + personal coupons for logged-in user)"""
+    conn = connect_to_db()
+    coupons = []
+    
+    if conn:
+        try:
+            cur = conn.cursor(cursor_factory=RealDictCursor)
+            # Get public coupons (user_id IS NULL or is_personal = FALSE)
+            # AND personal coupons for this specific user (user_id = current_user.id)
+            cur.execute("""
+                SELECT code, discount_type, discount_value, description, min_order_amount,
+                       is_personal, user_id
+                FROM coupons
+                WHERE is_active = TRUE
+                  AND (valid_until IS NULL OR valid_until > NOW())
+                  AND (usage_limit IS NULL OR times_used < usage_limit)
+                  AND (user_id IS NULL OR user_id = %s)
+                ORDER BY
+                    CASE WHEN user_id = %s THEN 0 ELSE 1 END,  -- Personal coupons first
+                    discount_value DESC
+                LIMIT 20
+            """, (current_user.id, current_user.id))
+            coupons = cur.fetchall()
+            
+            # Add a flag to indicate personal coupons in the response
+            for coupon in coupons:
+                coupon['is_personal'] = bool(coupon.get('user_id'))
+                # Remove user_id from response for security
+                if 'user_id' in coupon:
+                    del coupon['user_id']
+                    
+        except Exception as e:
+            print(f"Error fetching available coupons: {e}")
+        finally:
+            conn.close()
+    
+    return jsonify({"status": "success", "coupons": coupons})
+
 # --- Cart route ---
 @app.route('/cart')
 @login_required
@@ -1531,6 +2806,7 @@ def cart():
     conn = connect_to_db()
     cart_items = []
     user_details = {'phone': ''}
+    wallet_balance = 0
 
     if conn:
         try:
@@ -1549,10 +2825,16 @@ def cart():
             rec = cur.fetchone()
             if rec and rec.get('phone'):
                 user_details['phone'] = rec['phone']
+            
+            # Fetch wallet balance
+            cur.execute("SELECT wallet_balance FROM users WHERE id = %s", (current_user.id,))
+            wallet_rec = cur.fetchone()
+            if wallet_rec:
+                wallet_balance = float(wallet_rec.get('wallet_balance', 0))
 
         except Exception as e:
             print(f"Error fetching cart: {e}")
-            flash("Error loading cart.", "error")
+            flash("We couldn't load your cart right now.", "danger")
         finally:
             conn.close()
 
@@ -1571,7 +2853,7 @@ def cart():
             razorpay_order_id = order['id']
         except Exception as e:
             print(f"Error creating Razorpay order: {e}")
-            flash("Error processing payment.", "error")
+            flash("We couldn't initialize payment right now. Please try again.", "danger")
 
     return render_template(
         "cart.html",
@@ -1583,7 +2865,8 @@ def cart():
         user_details=user_details,
         deal_active=totals["deal_active"],
         razorpay_order_id=razorpay_order_id,
-        razorpay_key=RAZORPAY_KEY_ID
+        razorpay_key=RAZORPAY_KEY_ID,
+        wallet_balance=wallet_balance
     )
 
 # --- Payment success route ---
@@ -1596,8 +2879,9 @@ def payment_success():
         payment_id = data.get('razorpay_payment_id')
         order_id_from_razorpay = data.get('razorpay_order_id')
         signature = data.get('razorpay_signature')
+        coupon_code = data.get('coupon_code')
+        coupon_discount = Decimal(str(data.get('coupon_discount', 0)))
 
-        # Verify Razorpay signature
         razorpay_client.utility.verify_payment_signature({
             'razorpay_order_id': order_id_from_razorpay,
             'razorpay_payment_id': payment_id,
@@ -1607,126 +2891,296 @@ def payment_success():
         conn = connect_to_db()
         cur = conn.cursor(cursor_factory=RealDictCursor)
 
-        # Fetch cart items
-        # FINAL FIX: Removed non-existent column reference. We rely on calculate_cart_totals to inject 'display_price'.
         cur.execute("""
-            SELECT c.product_id, c.quantity, p.name, p.price, p.image_url
+            SELECT
+                c.product_id,
+                c.quantity,
+                p.name,
+                p.price,
+                p.image_url
             FROM cart c
             JOIN products p ON c.product_id = p.id
             WHERE c.user_id = %s
         """, (current_user.id,))
         cart_items = cur.fetchall()
         if not cart_items:
-            return jsonify({"status": "error", "error": "Cart is empty"})
+            return jsonify({"status": "error", "error": "Your cart is empty."})
 
-        # Calculate totals and inject 'display_price' into cart_items
-        totals = calculate_cart_totals(cart_items) 
-        
+        totals = calculate_cart_totals(cart_items, coupon_discount)
         final_total = totals.get("total_with_gst")
         if final_total is None:
-             raise Exception("Total calculation failed.")
+            raise Exception("Total calculation failed.")
 
-
-        # Insert order
         cur.execute("""
-            INSERT INTO orders (user_id, user_email, razorpay_order_id, razorpay_payment_id, total_amount, status, order_date)
-            VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id
-        """, (current_user.id, current_user.email, order_id_from_razorpay, payment_id, 
-              final_total, 'Completed', datetime.now())) 
+            SELECT
+                name, email, phone, address, address_line_2,
+                city, state, pincode, country, landmark,
+                company_name, gstin
+            FROM users
+            WHERE id = %s
+        """, (current_user.id,))
+        user_profile = cur.fetchone() or {}
 
-        # --- ROBUST FIX for Order ID retrieval (handles RealDictRow) ---
+        shipping_name = user_profile.get('name') or current_user.name
+        shipping_phone = user_profile.get('phone') or ''
+        shipping_address_line_1 = user_profile.get('address') or ''
+        shipping_address_line_2 = user_profile.get('address_line_2') or ''
+        shipping_city = user_profile.get('city') or ''
+        shipping_state = user_profile.get('state') or ''
+        shipping_pincode = user_profile.get('pincode') or ''
+        shipping_country = user_profile.get('country') or 'India'
+        delivery_instructions = user_profile.get('landmark') or ''
+        company_name = user_profile.get('company_name') or ''
+        gstin = user_profile.get('gstin') or ''
+
+        cur.execute("""
+            INSERT INTO orders (
+                user_id, user_email, razorpay_order_id, razorpay_payment_id,
+                total_amount, status, status_code, status_updated_at, order_date,
+                shipping_name, shipping_phone, shipping_address_line_1, shipping_address_line_2,
+                shipping_city, shipping_state, shipping_pincode, shipping_country,
+                delivery_instructions, company_name, gstin, coupon_code, coupon_discount
+            )
+            VALUES (
+                %s, %s, %s, %s,
+                %s, %s, %s, %s, %s,
+                %s, %s, %s, %s,
+                %s, %s, %s, %s,
+                %s, %s, %s, %s, %s
+            ) RETURNING id
+        """, (
+            current_user.id, current_user.email, order_id_from_razorpay, payment_id,
+            final_total, 'Confirmed', 'confirmed', datetime.now(), datetime.now(),
+            shipping_name, shipping_phone, shipping_address_line_1, shipping_address_line_2,
+            shipping_city, shipping_state, shipping_pincode, shipping_country,
+            delivery_instructions, company_name, gstin, coupon_code, coupon_discount
+        ))
+
         order_record = cur.fetchone()
-        new_order_id = None
-        
-        if order_record is not None:
-            # Convert RealDictRow to dict and safely get the ID
-            new_order_id = dict(order_record).get('id') 
-        
+        new_order_id = dict(order_record).get('id') if order_record else None
         if not new_order_id:
             raise Exception("Order insertion failed to return the ID.")
-        # --- END ROBUST FIX ---
 
-
-        # Insert order items
         for item in cart_items:
-            # item['display_price'] is guaranteed to exist now, added by calculate_cart_totals()
             price_to_save = item['display_price']
-            
-            cur.execute("""
-                INSERT INTO order_items (order_id, product_id, product_name, quantity, price_at_purchase, image_url)
-                VALUES (%s, %s, %s, %s, %s, %s)
-            """, (new_order_id, item['product_id'], item['name'], item['quantity'], price_to_save, item['image_url']))
+            product_link = url_for('product_detail', product_id=item['product_id'])
 
-        # Clear cart
+            cur.execute("""
+                INSERT INTO order_items (
+                    order_id, product_id, product_name, quantity,
+                    price_at_purchase, image_url, product_link
+                )
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+            """, (
+                new_order_id, item['product_id'], item['name'],
+                item['quantity'], price_to_save, item['image_url'], product_link
+            ))
+
         cur.execute("DELETE FROM cart WHERE user_id=%s", (current_user.id,))
         conn.commit()
-
-        # --- Email Sending Logic ---
-        sender = os.getenv("EMAIL_USER", "sri.chityala501@gmail.com")
-        receiver = current_user.email
         
-        # Prepare Discount line for email (using the new 'coupon_discount' key)
-        discount_amount = totals.get('coupon_discount', Decimal('0.00'))
-        discount_html = ""
-        if discount_amount > Decimal('0.00'):
-            discount_html = f"""
-            <h3 style="color: #d9534f; font-weight: 600;">Deal Discount Applied: -{discount_amount} INR</h3>
-            """
+        # Process referral coupon if used
+        if coupon_code:
+            try:
+                # Check if it's a referral coupon and get full details
+                cur.execute("""
+                    SELECT * FROM referral_coupons
+                    WHERE coupon_code = %s AND is_active = true
+                """, (coupon_code.upper(),))
+                referral_coupon = cur.fetchone()
+                
+                if referral_coupon:
+                    referrer_id = referral_coupon['user_id']
+                    
+                    # Calculate referrer bonus based on type (fixed or percentage)
+                    bonus_type = referral_coupon.get('referrer_bonus_type', 'percentage')
+                    if bonus_type == 'fixed':
+                        bonus_amount = Decimal(str(referral_coupon.get('referrer_bonus_amount', 0)))
+                    else:
+                        bonus_percentage = Decimal(str(referral_coupon.get('referral_bonus_percentage', 5)))
+                        bonus_amount = (Decimal(str(final_total)) * bonus_percentage / 100).quantize(Decimal('0.01'))
+                    
+                    # Credit bonus to referrer's wallet
+                    wallet = WalletSystem(conn)
+                    wallet.add_transaction(
+                        user_id=referrer_id,
+                        amount=bonus_amount,
+                        transaction_type='referral_bonus',
+                        description=f'Referral bonus from order #{new_order_id}',
+                        reference_id=new_order_id,
+                        metadata={'referred_user_id': current_user.id, 'bonus_type': bonus_type}
+                    )
+                    
+                    # Update referral coupon stats
+                    cur.execute("""
+                        UPDATE referral_coupons
+                        SET times_used = times_used + 1,
+                            total_referral_earnings = total_referral_earnings + %s
+                        WHERE id = %s
+                    """, (bonus_amount, referral_coupon['id']))
+                    
+                    # Record coupon usage
+                    cur.execute("""
+                        INSERT INTO coupon_usage (user_id, coupon_code, order_id, discount_amount, used_at)
+                        VALUES (%s, %s, %s, %s, %s)
+                    """, (current_user.id, coupon_code.upper(), new_order_id, coupon_discount, datetime.now()))
+                    conn.commit()
+                    
+                    print(f"Referral bonus processed: ₹{bonus_amount} credited to user {referrer_id}")
+                else:
+                    # Regular coupon - update usage count
+                    cur.execute("""
+                        UPDATE coupons
+                        SET times_used = times_used + 1
+                        WHERE code = %s
+                    """, (coupon_code.upper(),))
+                    conn.commit()
+            except Exception as e:
+                print(f"Error processing coupon after order: {e}")
+                # Don't fail the order if coupon processing fails
+        
+        # Send notification to admin about new order
+        try:
+            notify_new_order(
+                order_id=new_order_id,
+                customer_name=shipping_name,
+                customer_email=current_user.email,
+                total_amount=final_total,
+                items_count=len(cart_items)
+            )
+        except Exception as e:
+            print(f"Error sending new order notification: {e}")
 
-        msg = MIMEMultipart("alternative")
-        msg["Subject"] = f"Your GSpaces Order #{new_order_id} Confirmation"
-        msg["From"] = sender
-        msg["To"] = receiver
+        sender = os.getenv("MAIL_USERNAME", "sri.chityala501@gmail.com")
+        receiver = current_user.email
+        discount_amount = totals.get('coupon_discount', Decimal('0.00'))
+        order_status_label = ORDER_STATUS_LABELS['confirmed']
 
         items_html = "".join([
             f"""
             <tr>
-                <td><img src='{url_for('static', filename=item['image_url'], _external=True)}' width='50'></td>
-                <td>{item['name']}</td>
-                <td>{item['quantity']}</td>
-                <td>{item['display_price']} INR</td>
-                <td>{item['display_price'] * item['quantity']} INR</td>
+                <td style='padding:12px;border-bottom:1px solid #e5e7eb;'>
+                    <img src='{url_for('static', filename=item['image_url'], _external=True)}' width='56' style='border-radius:8px;object-fit:cover;'>
+                </td>
+                <td style='padding:12px;border-bottom:1px solid #e5e7eb;'>
+                    <a href='{url_for('product_detail', product_id=item['product_id'], _external=True)}' style='color:#111827;text-decoration:none;font-weight:600;'>
+                        {item['name']}
+                    </a>
+                </td>
+                <td style='padding:12px;border-bottom:1px solid #e5e7eb;'>{item['quantity']}</td>
+                <td style='padding:12px;border-bottom:1px solid #e5e7eb;'>INR {item['display_price']}</td>
+                <td style='padding:12px;border-bottom:1px solid #e5e7eb;'>INR {item['display_price'] * item['quantity']}</td>
             </tr>
             """ for item in cart_items
         ])
 
+        discount_row = ""
+        if discount_amount > Decimal('0.00'):
+            discount_row = f"""
+            <tr>
+                <td style="padding:8px 0;color:#b91c1c;">Deal discount</td>
+                <td style="padding:8px 0;text-align:right;color:#b91c1c;">- INR {discount_amount}</td>
+            </tr>
+            """
+
+        shipping_lines = [
+            shipping_name,
+            shipping_address_line_1,
+            shipping_address_line_2,
+            f"{shipping_city}, {shipping_state} - {shipping_pincode}" if shipping_city or shipping_state or shipping_pincode else "",
+            shipping_country,
+            f"Phone: {shipping_phone}" if shipping_phone else "",
+        ]
+        shipping_html = "<br>".join([line for line in shipping_lines if line])
+
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = f"Order Confirmed - Invoice for Order #{new_order_id}"
+        msg["From"] = sender
+        msg["To"] = receiver
+
         html_body = f"""
         <html>
-        <body style="font-family: Arial, sans-serif; color: #333;">
-            <h2>Thank you for your order, {current_user.name}!</h2>
-            <p>Your payment (<b>{payment_id}</b>) was successful. Here are your order details:</p>
-            <table border="1" cellspacing="0" cellpadding="10" style="border-collapse: collapse; width: 100%;">
-                <tr style="background-color:#f2f2f2;">
-                    <th>Image</th>
-                    <th>Product</th>
-                    <th>Qty</th>
-                    <th>Price</th>
-                    <th>Subtotal</th>
-                </tr>
-                {items_html}
-            </table>
-            
-            <div style="margin-top: 20px; border-top: 2px solid #eee; padding-top: 10px;">
-                <h3 style="margin: 5px 0;">Subtotal (Before Discount): {totals.get('original_subtotal', 0)} INR</h3>
-                {discount_html}
-                <h3 style="margin: 5px 0;">Subtotal (After Discount): {totals.get('subtotal', 0)} INR</h3>
-                <h3 style="margin: 5px 0;">GST (18%): {totals.get('gst_amount', 0)} INR</h3>
-                <h2 style="color: #28a745; margin: 10px 0;">Total Paid: {totals.get('total_with_gst', 0)} INR</h2>
+        <body style="margin:0;padding:0;background-color:#f5f5f5;font-family:Arial,sans-serif;color:#111827;">
+            <div style="max-width:760px;margin:0 auto;padding:24px;">
+                <div style="background:#111827;color:#fff;padding:24px 28px;border-radius:16px 16px 0 0;">
+                    <h1 style="margin:0;font-size:28px;">GSpaces Invoice / Order Summary</h1>
+                    <p style="margin:8px 0 0;color:#d1d5db;">Order #{new_order_id} - Payment ID {payment_id}</p>
+                </div>
+                <div style="background:#ffffff;padding:28px;border-radius:0 0 16px 16px;">
+                    <p style="font-size:16px;margin-top:0;">Hello {current_user.name},</p>
+                    <p style="line-height:1.7;color:#4b5563;">Your payment was successful and your order is now <strong>{order_status_label}</strong>. You can review status updates from your profile dashboard.</p>
+
+                    <table style="width:100%;margin:24px 0;border-collapse:collapse;">
+                        <tr>
+                            <td style="width:50%;vertical-align:top;padding-right:16px;">
+                                <h3 style="margin:0 0 8px;font-size:16px;">Shipping details</h3>
+                                <p style="margin:0;color:#4b5563;line-height:1.7;">{shipping_html}</p>
+                            </td>
+                            <td style="width:50%;vertical-align:top;padding-left:16px;">
+                                <h3 style="margin:0 0 8px;font-size:16px;">Invoice details</h3>
+                                <p style="margin:0;color:#4b5563;line-height:1.7;">
+                                    Order date: {datetime.now().strftime('%d %b %Y, %I:%M %p')}<br>
+                                    Status: {order_status_label}<br>
+                                    GSTIN: 36AORPG7724G1ZN
+                                </p>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <table style="width:100%;border-collapse:collapse;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;">
+                        <thead>
+                            <tr style="background:#f9fafb;text-align:left;">
+                                <th style="padding:14px 12px;">Item</th>
+                                <th style="padding:14px 12px;">Product</th>
+                                <th style="padding:14px 12px;">Qty</th>
+                                <th style="padding:14px 12px;">Unit price</th>
+                                <th style="padding:14px 12px;">Line total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {items_html}
+                        </tbody>
+                    </table>
+
+                    <table style="width:320px;margin:24px 0 0 auto;border-collapse:collapse;">
+                        <tr>
+                            <td style="padding:8px 0;color:#4b5563;">Subtotal</td>
+                            <td style="padding:8px 0;text-align:right;">INR {totals.get('original_subtotal', 0)}</td>
+                        </tr>
+                        {discount_row}
+                        <tr>
+                            <td style="padding:8px 0;color:#4b5563;">Taxable subtotal</td>
+                            <td style="padding:8px 0;text-align:right;">INR {totals.get('subtotal', 0)}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding:8px 0;color:#4b5563;">GST (18%)</td>
+                            <td style="padding:8px 0;text-align:right;">INR {totals.get('gst_amount', 0)}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding:12px 0;font-weight:700;border-top:1px solid #e5e7eb;">Total paid</td>
+                            <td style="padding:12px 0;text-align:right;font-weight:700;border-top:1px solid #e5e7eb;">INR {totals.get('total_with_gst', 0)}</td>
+                        </tr>
+                    </table>
+
+                    <p style="margin-top:32px;color:#4b5563;line-height:1.7;">
+                        Need help with your order? Reply to this email or contact the GSpaces team. Product links above remain available from your profile order history as well.
+                    </p>
+                </div>
             </div>
-            
-            <p>We will process your order shortly. You can track your order on your GSpaces account.</p>
-            <br>
-            <p>Best Regards,<br>Team GSpaces</p>
         </body>
         </html>
         """
         msg.attach(MIMEText(html_body, "html", "utf-8"))
 
         with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-            server.login(sender, os.getenv("EMAIL_PASS")) 
+            server.login(sender, os.getenv("MAIL_PASSWORD", "zupd zixc vvzp kptk"))
             server.sendmail(sender, receiver, msg.as_string())
 
-        return jsonify({"status": "success", "message": "Payment successful, email sent"})
+        return jsonify({
+            "status": "success",
+            "message": "Payment received. Your order has been placed.",
+            "order_id": new_order_id
+        })
 
     except Exception as e:
         if conn:
@@ -1737,11 +3191,51 @@ def payment_success():
             conn.close()
 
 @app.route('/thankyou')
+@login_required
 def thankyou():
-    """
-    Renders the thank you page after a successful payment.
-    """
-    return render_template('thankyou.html')
+    order_id = request.args.get('order_id', type=int)
+    order = None
+
+    if order_id:
+        conn = connect_to_db()
+        if conn:
+            try:
+                cur = conn.cursor(cursor_factory=RealDictCursor)
+                cur.execute("""
+                    SELECT
+                        o.id,
+                        o.user_id,
+                        o.total_amount,
+                        o.status,
+                        o.status_code,
+                        o.order_date,
+                        json_agg(
+                            json_build_object(
+                                'product_id', oi.product_id,
+                                'product_name', oi.product_name,
+                                'quantity', oi.quantity,
+                                'price_at_purchase', oi.price_at_purchase,
+                                'image_url', oi.image_url,
+                                'product_link', oi.product_link
+                            )
+                            ORDER BY oi.id
+                        ) AS items
+                    FROM orders o
+                    JOIN order_items oi ON oi.order_id = o.id
+                    WHERE o.id = %s AND o.user_id = %s
+                    GROUP BY o.id, o.user_id, o.total_amount, o.status, o.status_code, o.order_date
+                """, (order_id, current_user.id))
+                order = cur.fetchone()
+                if order:
+                    order['status_code'] = normalize_order_status(order.get('status_code'), order.get('status'))
+                    order['status_label'] = ORDER_STATUS_LABELS.get(order['status_code'], 'Order placed')
+                    order['tracking_timeline'] = build_tracking_timeline(order['status_code'])
+            except Exception as e:
+                print(f"Error loading thank you order: {e}")
+            finally:
+                conn.close()
+
+    return render_template('thankyou.html', order_id=order_id, order=order)
 
 # --- SITEMAP (for local testing, typically served by web server in prod) ---
 @app.route('/sitemap.xml')

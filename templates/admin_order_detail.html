@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order #{{ order.id }} - GSpaces Admin</title>
+    <link href="{{ url_for('static', filename='img/favicon.png') }}" rel="icon">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/main.css') }}" rel="stylesheet">
+    <style>
+        body {
+            background: #f7f8fc;
+        }
+        .admin-container {
+            margin-top: 96px;
+            padding-bottom: 56px;
+        }
+        .admin-card {
+            background: #fff;
+            border-radius: 24px;
+            box-shadow: 0 18px 40px rgba(17, 24, 39, 0.08);
+            padding: 32px;
+            margin-bottom: 24px;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 24px 0;
+        }
+        .info-item {
+            padding: 16px;
+            background: #f9fafb;
+            border-radius: 12px;
+        }
+        .info-label {
+            font-size: 13px;
+            color: #6b7280;
+            margin-bottom: 4px;
+        }
+        .info-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: #111827;
+        }
+        .status-badge {
+            padding: 8px 16px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            display: inline-block;
+        }
+        .status-placed { background: #dbeafe; color: #1e40af; }
+        .status-confirmed { background: #d1fae5; color: #065f46; }
+        .status-packed { background: #fef3c7; color: #92400e; }
+        .status-shipped { background: #e0e7ff; color: #3730a3; }
+        .status-out_for_delivery { background: #fce7f3; color: #831843; }
+        .status-delivered { background: #d1fae5; color: #065f46; }
+        .status-cancelled { background: #fee2e2; color: #991b1b; }
+        .timeline {
+            position: relative;
+            padding-left: 40px;
+            margin: 24px 0;
+        }
+        .timeline-item {
+            position: relative;
+            padding-bottom: 24px;
+        }
+        .timeline-item:last-child {
+            padding-bottom: 0;
+        }
+        .timeline-dot {
+            position: absolute;
+            left: -40px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: 3px solid #e5e7eb;
+            background: white;
+        }
+        .timeline-item.complete .timeline-dot {
+            background: #10b981;
+            border-color: #10b981;
+        }
+        .timeline-item.current .timeline-dot {
+            background: #3b82f6;
+            border-color: #3b82f6;
+            animation: pulse 2s infinite;
+        }
+        .timeline-line {
+            position: absolute;
+            left: -33px;
+            top: 16px;
+            bottom: 0;
+            width: 2px;
+            background: #e5e7eb;
+        }
+        .timeline-item.complete .timeline-line {
+            background: #10b981;
+        }
+        .timeline-item:last-child .timeline-line {
+            display: none;
+        }
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
+            50% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
+        }
+        .items-table {
+            width: 100%;
+            margin-top: 16px;
+        }
+        .items-table th {
+            background: #f9fafb;
+            padding: 12px;
+            font-weight: 600;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        .items-table td {
+            padding: 12px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .product-img {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    {% include 'navbar.html' %}
+
+    <div class="container admin-container">
+        <div class="mb-4">
+            <a href="{{ url_for('admin_orders') }}" class="btn btn-outline-dark">← Back to Orders</a>
+        </div>
+
+        <div class="admin-card">
+            <div class="d-flex justify-content-between align-items-start mb-4">
+                <div>
+                    <h2 class="mb-2">Order #{{ order.id }}</h2>
+                    <p class="text-muted mb-0">Placed on {{ order.order_date.strftime('%B %d, %Y at %I:%M %p') if order.order_date else '-' }}</p>
+                </div>
+                <span class="status-badge status-{{ order.status_code }}">
+                    {{ order.status_label }}
+                </span>
+            </div>
+
+            <!-- Order Information Grid -->
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">Customer Email</div>
+                    <div class="info-value">{{ order.user_email }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Total Amount</div>
+                    <div class="info-value">₹{{ order.total_amount }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Payment ID</div>
+                    <div class="info-value">{{ order.razorpay_payment_id or 'Pending' }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Last Updated</div>
+                    <div class="info-value">{{ order.status_updated_at.strftime('%Y-%m-%d %H:%M') if order.status_updated_at else '-' }}</div>
+                </div>
+            </div>
+
+            <!-- Update Status Section -->
+            <div class="mt-4 p-3 bg-light rounded">
+                <h5 class="mb-3">Update Order Status</h5>
+                <form action="{{ url_for('update_order_status', order_id=order.id) }}" method="POST" class="d-flex gap-3 align-items-center">
+                    <select name="status" class="form-select" style="max-width: 300px;">
+                        {% for code in order_status_flow %}
+                            <option value="{{ code }}" {% if order.status_code == code %}selected{% endif %}>
+                                {{ order_statuses[code] }}
+                            </option>
+                        {% endfor %}
+                        <option value="cancelled" {% if order.status_code == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                    </select>
+                    <button type="submit" class="btn btn-primary">Update Status</button>
+                </form>
+
+            <!-- Send Custom Email Section -->
+            <div class="mt-4 p-4 bg-light rounded">
+                <h5 class="mb-3">
+                    <i class="bi bi-envelope"></i> Send Custom Email to Customer
+                </h5>
+                <p class="text-muted small mb-3">Send a personalized message to the customer about this order (e.g., delay notification, special instructions, etc.)</p>
+                <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#customEmailModal">
+                    <i class="bi bi-send"></i> Compose Email
+                </button>
+            </div>
+
+            <!-- Custom Email Modal -->
+            <div class="modal fade" id="customEmailModal" tabindex="-1" aria-labelledby="customEmailModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header bg-primary text-white">
+                            <h5 class="modal-title" id="customEmailModalLabel">
+                                <i class="bi bi-envelope-fill"></i> Send Custom Email
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <form action="{{ url_for('send_custom_order_email', order_id=order.id) }}" method="POST">
+                            <div class="modal-body">
+                                <div class="alert alert-info">
+                                    <strong>Recipient:</strong> {{ order.shipping_name }} ({{ order.user_email }})<br>
+                                    <strong>Order:</strong> #{{ order.id }}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="emailSubject" class="form-label">Email Subject *</label>
+                                    <input type="text" class="form-control" id="emailSubject" name="subject" 
+                                           placeholder="e.g., Update on Your Order #{{ order.id }}" required>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="emailMessage" class="form-label">Message *</label>
+                                    <textarea class="form-control" id="emailMessage" name="message" rows="8" 
+                                              placeholder="Write your message here..." required></textarea>
+                                    <div class="form-text">
+                                        <strong>Quick Templates:</strong>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary ms-2" onclick="fillTemplate('delay')">Delay Notice</button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="fillTemplate('ready')">Ready for Pickup</button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="fillTemplate('custom')">Custom Update</button>
+                                    </div>
+                                </div>
+                                
+                                <div class="alert alert-warning">
+                                    <i class="bi bi-info-circle"></i> This email will be sent immediately. Please review before sending.
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-send"></i> Send Email
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <script>
+                function fillTemplate(type) {
+                    const messageBox = document.getElementById('emailMessage');
+                    const subjectBox = document.getElementById('emailSubject');
+                    const orderNum = '{{ order.id }}';
+                    
+                    if (type === 'delay') {
+                        subjectBox.value = `Important Update: Slight Delay in Order #${orderNum}`;
+                        messageBox.value = `We wanted to inform you that your order is experiencing a slight delay due to [reason - e.g., high demand, logistics].
+
+We sincerely apologize for any inconvenience this may cause. Your order is our priority, and we're working diligently to get it to you as soon as possible.
+
+Expected new delivery date: [Date]
+
+Thank you for your patience and understanding.`;
+                    } else if (type === 'ready') {
+                        subjectBox.value = `Great News! Your Order #${orderNum} is Ready`;
+                        messageBox.value = `Good news! Your order is now ready for pickup/delivery.
+
+Please ensure someone is available to receive the delivery at the address provided.
+
+If you have any questions or need to reschedule, please don't hesitate to contact us.
+
+Thank you for choosing GSpaces!`;
+                    } else if (type === 'custom') {
+                        subjectBox.value = `Update on Your Order #${orderNum}`;
+                        messageBox.value = `We wanted to reach out regarding your recent order.
+
+[Your custom message here]
+
+If you have any questions, please feel free to contact us.
+
+Thank you for your business!`;
+                    }
+                }
+            </script>
+            </div>
+
+            <!-- Tracking Timeline -->
+            <div class="mt-5">
+                <h5 class="mb-4">Order Tracking</h5>
+                <div class="timeline">
+                    {% for step in order.tracking_timeline %}
+                        <div class="timeline-item {{ step.state }}">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-line"></div>
+                            <div>
+                                <strong>{{ step.label }}</strong>
+                                {% if step.state == 'current' %}
+                                    <span class="badge bg-primary ms-2">Current</span>
+                                {% elif step.state == 'complete' %}
+                                    <span class="badge bg-success ms-2">✓</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Shipping Information -->
+            <div class="mt-5">
+                <h5 class="mb-3">Shipping Information</h5>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="info-label">Name</div>
+                        <div class="info-value">{{ order.shipping_name or '-' }}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Phone</div>
+                        <div class="info-value">{{ order.shipping_phone or '-' }}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Address</div>
+                        <div class="info-value">
+                            {{ order.shipping_address_line_1 or '-' }}<br>
+                            {% if order.shipping_address_line_2 %}{{ order.shipping_address_line_2 }}<br>{% endif %}
+                            {{ order.shipping_city or '' }} {{ order.shipping_state or '' }} {{ order.shipping_pincode or '' }}
+                        </div>
+                    </div>
+                    {% if order.company_name %}
+                        <div class="info-item">
+                            <div class="info-label">Company</div>
+                            <div class="info-value">{{ order.company_name }}</div>
+                        </div>
+                    {% endif %}
+                    {% if order.gstin %}
+                        <div class="info-item">
+                            <div class="info-label">GSTIN</div>
+                            <div class="info-value">{{ order.gstin }}</div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Order Items -->
+            <div class="mt-5">
+                <h5 class="mb-3">Order Items</h5>
+                <div class="table-responsive">
+                    <table class="items-table">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Name</th>
+                                <th>Quantity</th>
+                                <th>Price</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in order.order_items %}
+                                <tr>
+                                    <td>
+                                        {% if item.image_url %}
+                                            <img src="{{ url_for('static', filename=item.image_url) }}" class="product-img" alt="{{ item.product_name }}">
+                                        {% else %}
+                                            <div class="product-img bg-secondary"></div>
+                                        {% endif %}
+                                    </td>
+                                    <td><strong>{{ item.product_name }}</strong></td>
+                                    <td>{{ item.quantity }}</td>
+                                    <td>₹{{ item.price_at_purchase }}</td>
+                                    <td><strong>₹{{ (item.price_at_purchase * item.quantity)|round(2) }}</strong></td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="4" class="text-end"><strong>Total Amount:</strong></td>
+                                <td><strong>₹{{ order.total_amount }}</strong></td>
+                            </tr>
+                            {% if order.coupon_code %}
+                                <tr>
+                                    <td colspan="4" class="text-end">Coupon ({{ order.coupon_code }}):</td>
+                                    <td class="text-success">- ₹{{ order.coupon_discount }}</td>
+                                </tr>
+                            {% endif %}
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    {% include 'footer.html' %}
+</body>
+</html>

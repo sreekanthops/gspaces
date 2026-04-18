@@ -167,36 +167,70 @@
   });
 
   /**
-   * Correct scrolling position upon page load for URLs containing hash links.
+   * Clean same-page navigation without exposing hash fragments in the URL.
    */
-  window.addEventListener('load', function(e) {
-    if (window.location.hash) {
-      if (document.querySelector(window.location.hash)) {
-        setTimeout(() => {
-          let section = document.querySelector(window.location.hash);
-          let scrollMarginTop = getComputedStyle(section).scrollMarginTop;
-          window.scrollTo({
-            top: section.offsetTop - parseInt(scrollMarginTop),
-            behavior: 'smooth'
-          });
-        }, 100);
+  const scrollLinks = document.querySelectorAll('.js-scroll-link');
+
+  function scrollToSection(sectionId, updateUrl = false) {
+    const section = document.getElementById(sectionId);
+    if (!section) return false;
+
+    const scrollMarginTop = parseInt(getComputedStyle(section).scrollMarginTop || '0', 10);
+    window.scrollTo({
+      top: section.offsetTop - scrollMarginTop,
+      behavior: 'smooth'
+    });
+
+    if (updateUrl) {
+      history.replaceState(null, '', window.location.pathname);
+    }
+
+    return true;
+  }
+
+  scrollLinks.forEach(link => {
+    link.addEventListener('click', function(event) {
+      const sectionId = this.dataset.section;
+      const isHomePage = window.location.pathname === '/' || window.location.pathname === '/index' || window.location.pathname.endsWith('/index.html');
+
+      if (isHomePage && sectionId) {
+        event.preventDefault();
+        scrollToSection(sectionId, true);
       }
+    });
+  });
+
+  /**
+   * Scroll to requested section from query string, then clean the URL.
+   */
+  window.addEventListener('load', function() {
+    const params = new URLSearchParams(window.location.search);
+    const sectionId = params.get('section');
+    if (sectionId) {
+      setTimeout(() => {
+        if (scrollToSection(sectionId, false)) {
+          history.replaceState(null, '', window.location.pathname);
+        }
+      }, 100);
     }
   });
 
   /**
    * Navmenu Scrollspy
    */
-  let navmenulinks = document.querySelectorAll('.navmenu a');
+  let navmenulinks = document.querySelectorAll('.js-scroll-link');
 
   function navmenuScrollspy() {
     navmenulinks.forEach(navmenulink => {
-      if (!navmenulink.hash) return;
-      let section = document.querySelector(navmenulink.hash);
+      const sectionId = navmenulink.dataset.section;
+      if (!sectionId) return;
+
+      let section = document.getElementById(sectionId);
       if (!section) return;
+
       let position = window.scrollY + 200;
       if (position >= section.offsetTop && position <= (section.offsetTop + section.offsetHeight)) {
-        document.querySelectorAll('.navmenu a.active').forEach(link => link.classList.remove('active'));
+        document.querySelectorAll('.js-scroll-link.active').forEach(link => link.classList.remove('active'));
         navmenulink.classList.add('active');
       } else {
         navmenulink.classList.remove('active');

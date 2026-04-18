@@ -1,0 +1,54 @@
+#!/bin/bash
+
+# Script to force pull git changes and restart gspaces service
+# Repository path
+REPO_PATH="/home/ec2-user/gspaces"
+
+# Log file for tracking updates
+LOG_FILE="/var/log/gspaces_update.log"
+
+# Function to log messages
+log_message() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"
+}
+
+log_message "Starting gspaces update process..."
+
+# Navigate to repository
+cd "$REPO_PATH" || {
+    log_message "ERROR: Failed to navigate to $REPO_PATH"
+    exit 1
+}
+
+# Fetch latest changes
+log_message "Fetching latest changes from remote..."
+git fetch --all 2>&1 | tee -a "$LOG_FILE"
+
+# Get current branch
+CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+log_message "Current branch: $CURRENT_BRANCH"
+
+# Force reset to remote branch
+log_message "Force pulling changes..."
+git reset --hard "origin/$CURRENT_BRANCH" 2>&1 | tee -a "$LOG_FILE"
+
+# Clean untracked files
+log_message "Cleaning untracked files..."
+git clean -fd 2>&1 | tee -a "$LOG_FILE"
+
+# Restart gspaces service
+log_message "Restarting gspaces service..."
+sudo systemctl restart gspaces 2>&1 | tee -a "$LOG_FILE"
+
+# Check service status
+if sudo systemctl is-active --quiet gspaces; then
+    log_message "SUCCESS: gspaces service restarted successfully"
+else
+    log_message "ERROR: gspaces service failed to restart"
+    exit 1
+fi
+
+log_message "Update process completed successfully"
+log_message "----------------------------------------"
+
+# Made with Bob

@@ -1,100 +1,140 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Order Confirmation</title>
+    <title>Thank You - GSpaces</title>
     <link href="{{ url_for('static', filename='img/favicon.png') }}" rel="icon">
-    <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
-    <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/main.css') }}" rel="stylesheet">
     <style>
         body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            background-color: #f8f9fa;
+            background: linear-gradient(180deg, #f7f8fc 0%, #eef2ff 100%);
         }
-        .container {
-            text-align: center;
-            padding: 40px;
-            border-radius: 8px;
-            background-color: #ffffff;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            max-width: 500px;
-            width: 90%;
+        .thankyou-shell {
+            margin-top: 96px;
+            padding-bottom: 56px;
         }
-        h1 {
-            color: #28a745; /* Success green */
-            margin-bottom: 20px;
-            font-size: 2.5em;
+        .thankyou-card,
+        .next-steps-card {
+            background: #fff;
+            border-radius: 28px;
+            box-shadow: 0 24px 48px rgba(17, 24, 39, 0.10);
         }
-        p {
-            color: #495057;
-            font-size: 1.1em;
-            margin-bottom: 30px;
+        .thankyou-card {
+            padding: 38px;
         }
-        .btn {
-            display: inline-block;
-            padding: 12px 25px;
-            font-size: 1.1em;
-            font-weight: bold;
+        .next-steps-card {
+            padding: 28px;
+            height: 100%;
+        }
+        .success-badge {
+            width: 84px;
+            height: 84px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #22c55e, #16a34a);
             color: #fff;
-            background-color: #007bff; /* Primary blue */
-            border: none;
-            border-radius: 5px;
-            text-decoration: none;
-            transition: background-color 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 34px;
+            margin-bottom: 22px;
+            box-shadow: 0 16px 32px rgba(34, 197, 94, 0.28);
         }
-        .btn:hover {
-            background-color: #0056b3;
+        .lead-copy {
+            color: #4b5563;
+            font-size: 1.1rem;
+            line-height: 1.8;
         }
-
-        @media (max-width: 600px) {
-            h1 {
-                font-size: 2em;
-            }
-            p {
-                font-size: 1em;
-            }
-            .btn {
-                padding: 10px 20px;
-                font-size: 1em;
-            }
+        .order-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border-radius: 999px;
+            padding: 10px 16px;
+            background: #ecfdf5;
+            color: #166534;
+            font-weight: 700;
+        }
+        .step-card {
+            border: 1px solid #e5e7eb;
+            border-radius: 20px;
+            padding: 18px;
+            background: #f9fafb;
+            margin-bottom: 14px;
+        }
+        .step-card:last-child {
+            margin-bottom: 0;
+        }
+        .step-card h6 {
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+        .step-card p {
+            margin: 0;
+            color: #6b7280;
         }
     </style>
 </head>
 <body>
-    <div id="root"></div>
+    {% include 'navbar.html' %}
 
-    <script type="text/babel">
-        function OrderConfirmation() {
-            // Function to simulate navigation
-            const handleContinueShopping = () => {
-                // In a real Flask app, you would redirect using Flask's url_for
-                // For this standalone React example, we'll just log and
-                // simulate a navigation to a root path or a specific product listing
-                console.log('Navigating back to shopping...');
-                window.location.href = '/'; // Simulate redirect to home/index
-            };
+    <div class="container thankyou-shell">
+        <div class="row g-4 align-items-stretch">
+            <div class="col-lg-7">
+                <div class="thankyou-card h-100">
+                    <div class="success-badge">✓</div>
+                    <div class="order-tag mb-3">
+                        Payment received
+                        {% if order_id %}
+                            <span>· Order #{{ order_id }}</span>
+                        {% endif %}
+                    </div>
+                    <h1 class="mb-3">Thank you for shopping with GSpaces</h1>
+                    <p class="lead-copy mb-4">
+                        Your order has been placed successfully. We’ve started processing it and will keep you updated through your profile timeline and order email.
+                    </p>
 
-            return (
-                <div className="container">
-                    <h1>Thank You!</h1>
-                    <p>Your payment was successful. Your order is being processed.</p>
-                    <button className="btn" onClick={handleContinueShopping}>
-                        Continue Shopping
-                    </button>
+                    <div class="d-flex flex-wrap gap-3">
+                        <a href="{{ url_for('profile', _anchor='my-orders') }}" class="btn btn-dark rounded-pill px-4">Track my order</a>
+                        <a href="{{ url_for('index') }}" class="btn btn-outline-dark rounded-pill px-4">Continue shopping</a>
+                    </div>
                 </div>
-            );
-        }
+            </div>
 
-        ReactDOM.render(<OrderConfirmation />, document.getElementById('root'));
-    </script>
+            <div class="col-lg-5">
+                <div class="next-steps-card">
+                    <h4 class="mb-3">What to expect next</h4>
+
+                    <div class="step-card">
+                        <h6>1. Confirmation</h6>
+                        <p>Your order is confirmed and your invoice-style email has been sent to your registered email address.</p>
+                    </div>
+
+                    <div class="step-card">
+                        <h6>2. Tracking updates</h6>
+                        <p>You can follow your order status in your profile as it moves through confirmation, packing, shipping, and delivery.</p>
+                    </div>
+
+                    <div class="step-card">
+                        <h6>3. Product access</h6>
+                        <p>Your ordered products remain clickable from your order history, so you can revisit item details anytime.</p>
+                    </div>
+
+                    <div class="step-card">
+                        <h6>4. Support</h6>
+                        <p>If you need help, contact the GSpaces team for updates, assistance, or billing questions.</p>
+                    </div>
+
+                    <div class="mt-4 text-muted small">
+                        GSTIN for invoice reference: <strong>36AORPG7724G1ZN</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% include 'footer.html' %}
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
-

@@ -479,6 +479,24 @@
                     <textarea name="description" id="description" placeholder="Internal notes about this coupon..."></textarea>
                 </div>
 
+                <h3 style="color: #10b981;">💰 Wallet Balance Adjustment</h3>
+                <p style="color: #6b7280; font-size: 14px; margin-bottom: 16px;">
+                    Current Balance: <strong style="color: #10b981;">₹<span id="edit_current_balance">0</span></strong>
+                </p>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Add Amount (₹)</label>
+                        <input type="number" name="wallet_adjustment" id="wallet_adjustment" step="0.01" min="0" placeholder="Leave empty for no change">
+                    </div>
+                    <div class="form-group">
+                        <label>Adjustment Reason</label>
+                        <input type="text" name="wallet_reason" id="wallet_reason" placeholder="e.g., Bonus, Reward">
+                    </div>
+                </div>
+                <p style="color: #f59e0b; font-size: 13px; margin-top: -12px;">
+                    ℹ️ This will ADD the amount to current balance (not replace it)
+                </p>
+
                 <div style="text-align: right; margin-top: 32px; display: flex; gap: 12px; justify-content: flex-end;">
                     <button type="button" class="btn-cancel" onclick="closeModal()">Cancel</button>
                     <button type="submit" class="btn-save">Save Changes</button>
@@ -612,6 +630,11 @@
         document.getElementById('per_user_limit').value = coupon.per_user_limit || 1;
         document.getElementById('first_order_only').checked = coupon.first_order_only || false;
         document.getElementById('description').value = coupon.description || '';
+        
+        // Wallet balance
+        document.getElementById('edit_current_balance').textContent = parseFloat(coupon.wallet_balance || 0).toFixed(2);
+        document.getElementById('wallet_adjustment').value = '';
+        document.getElementById('wallet_reason').value = '';
         
         if (coupon.expires_at) {
             const date = new Date(coupon.expires_at);

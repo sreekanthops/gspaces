@@ -103,7 +103,7 @@ def add_admin_referral_routes(app, connect_to_db, ADMIN_EMAILS):
     @app.route('/admin/referral-coupons/update', methods=['POST'])
     @login_required
     def update_referral_coupon():
-        """Update referral coupon settings"""
+        """Update referral coupon settings and optionally adjust wallet balance"""
         if not is_admin():
             return jsonify({'error': 'Access denied'}), 403
         
@@ -128,10 +128,34 @@ def add_admin_referral_routes(app, connect_to_db, ADMIN_EMAILS):
             expires_at = request.form.get('expires_at') or None
             description = request.form.get('description', '')
             
-            cur = conn.cursor()
+            # Wallet adjustment fields
+            wallet_adjustment = request.form.get('wallet_adjustment', '').strip()
+            wallet_reason = request.form.get('wallet_reason', '').strip()
+            
+            cur = conn.cursor(cursor_factory=RealDictCursor)
+            
+            # Get user_id, user info, and coupon code for this coupon
+            cur.execute("""
+                SELECT rc.user_id, rc.coupon_code, u.email, u.name
+                FROM referral_coupons rc
+                JOIN users u ON rc.user_id = u.id
+                WHERE rc.id = %s
+            """, (coupon_id,))
+            coupon_user = cur.fetchone()
+            
+            if not coupon_user:
+                flash("Coupon not found", "error")
+                return redirect(url_for('admin_referral_coupons'))
+            
+            user_id = coupon_user['user_id']
+            user_email = coupon_user['email']
+            user_name = coupon_user['name']
+            referral_code = coupon_user['coupon_code']
+            
+            # Update referral coupon
             cur.execute("""
                 UPDATE referral_coupons
-                SET 
+                SET
                     discount_type = %s,
                     discount_amount = %s,
                     discount_percentage = %s,
@@ -152,9 +176,76 @@ def add_admin_referral_routes(app, connect_to_db, ADMIN_EMAILS):
                 min_order_amount, max_discount_amount, usage_limit, per_user_limit,
                 first_order_only, expires_at, description, coupon_id
             ))
+            
+            # Handle wallet adjustment if provided
+            wallet_updated = False
+            new_balance = None
+            if wallet_adjustment and float(wallet_adjustment) != 0:
+                try:
+                    adjustment_amount = float(wallet_adjustment)
+                    
+                    # Ensure wallet exists for user
+                    cur.execute("""
+                        INSERT INTO wallets (user_id, balance)
+                        VALUES (%s, 0)
+                        ON CONFLICT (user_id) DO NOTHING
+                    """, (user_id,))
+                    
+                    # Add to current balance (not replace)
+                    cur.execute("""
+                        UPDATE wallets
+                        SET balance = balance + %s
+                        WHERE user_id = %s
+                        RETURNING balance
+                    """, (adjustment_amount, user_id))
+                    
+                    result = cur.fetchone()
+                    new_balance = float(result['balance']) if result else 0
+                    
+                    # Determine transaction type based on positive/negative adjustment
+                    transaction_type = 'admin_credit' if adjustment_amount > 0 else 'admin_debit'
+                    
+                    # Create wallet transaction record
+                    transaction_description = wallet_reason if wallet_reason else f"Admin adjustment by {current_user.email}"
+                    cur.execute("""
+                        INSERT INTO wallet_transactions
+                        (user_id, transaction_type, amount, description, created_at)
+                        VALUES (%s, %s, %s, %s, NOW())
+                    """, (user_id, transaction_type, abs(adjustment_amount), transaction_description))
+                    
+                    wallet_updated = True
+                    
+                    # Send email notification about wallet adjustment
+                    try:
+                        send_referral_update_email(
+                            user_email=user_email,
+                            user_name=user_name,
+                            referral_code=referral_code,
+                            wallet_adjustment=True,
+                            new_wallet_balance=new_balance,
+                            wallet_adjustment_reason=transaction_description
+                        )
+                    except Exception as email_error:
+                        print(f"Failed to send wallet adjustment email: {email_error}")
+                        # Don't fail the whole operation if email fails
+                    
+                except ValueError:
+                    flash("Invalid wallet adjustment amount", "error")
+                    return redirect(url_for('admin_referral_coupons'))
+                except Exception as wallet_error:
+                    print(f"Error adjusting wallet: {wallet_error}")
+                    flash(f"Coupon updated but wallet adjustment failed: {str(wallet_error)}", "warning")
+                    conn.commit()  # Commit the coupon update at least
+                    return redirect(url_for('admin_referral_coupons'))
+            
             conn.commit()
             
-            flash("Referral coupon updated successfully!", "success")
+            # Success message
+            if wallet_updated:
+                flash(f"Referral coupon updated successfully! Wallet balance adjusted by ₹{wallet_adjustment} (New balance: ₹{new_balance:.2f})", "success")
+            else:
+                flash("Referral coupon updated successfully!", "success")
+            
             return redirect(url_for('admin_referral_coupons'))
         
         except Exception as e:

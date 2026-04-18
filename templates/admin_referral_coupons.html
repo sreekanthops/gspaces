@@ -646,6 +646,7 @@
             const response = await fetch('/admin/referral-coupons/toggle', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
+                credentials: 'same-origin',
                 body: JSON.stringify({coupon_id: couponId, is_active: !isActive})
             });
             
@@ -733,6 +734,7 @@
             const response = await fetch('/admin/referral-coupons/adjust-wallet', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
+                credentials: 'same-origin',
                 body: JSON.stringify({
                     user_id: userId,
                     adjustment_type: adjustmentType,

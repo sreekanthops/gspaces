@@ -189,30 +189,35 @@ def add_admin_referral_routes(app, connect_to_db, ADMIN_EMAILS):
         
         try:
             discount_type = request.form.get('discount_type', 'fixed')
-            discount_amount = request.form.get('discount_amount', 1000)
+            discount_amount = request.form.get('discount_amount', 0)
+            discount_percentage = request.form.get('discount_percentage', 0)
             referrer_bonus_type = request.form.get('referrer_bonus_type', 'fixed')
-            referrer_bonus_amount = request.form.get('referrer_bonus_amount', 1000)
+            referrer_bonus_amount = request.form.get('referrer_bonus_amount', 0)
+            referral_bonus_percentage = request.form.get('referral_bonus_percentage', 0)
             
             cur = conn.cursor()
             cur.execute("""
                 UPDATE referral_coupons
-                SET 
+                SET
                     discount_type = %s,
                     discount_amount = %s,
+                    discount_percentage = %s,
                     referrer_bonus_type = %s,
-                    referrer_bonus_amount = %s
+                    referrer_bonus_amount = %s,
+                    referral_bonus_percentage = %s
                 WHERE is_active = true
-            """, (discount_type, discount_amount, referrer_bonus_type, referrer_bonus_amount))
+            """, (discount_type, discount_amount, discount_percentage,
+                  referrer_bonus_type, referrer_bonus_amount, referral_bonus_percentage))
             
             rows_updated = cur.rowcount
             conn.commit()
             
-            flash(f"Successfully updated {rows_updated} active referral coupons!", "success")
+            flash(f"✅ Successfully updated {rows_updated} active referral coupons!", "success")
             return redirect(url_for('admin_referral_coupons'))
         
         except Exception as e:
             print(f"Error bulk updating referral coupons: {e}")
-            flash(f"Error: {str(e)}", "error")
+            flash(f"❌ Error: {str(e)}", "error")
             return redirect(url_for('admin_referral_coupons'))
         finally:
             conn.close()

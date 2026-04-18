@@ -269,8 +269,15 @@
         </div>
 
         <div class="page-header">
-            <h1>🎯 Referral Coupon Management</h1>
-            <p>Full control over referral discounts and bonuses</p>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h1>🎯 Referral Coupon Management</h1>
+                    <p>Full control over referral discounts and bonuses</p>
+                </div>
+                <button class="btn-save" onclick="openBulkUpdateModal()" style="background: #f59e0b; padding: 12px 24px;">
+                    ⚡ Bulk Update All
+                </button>
+            </div>
         </div>
 
         <div class="stats-grid">
@@ -471,6 +478,65 @@
                 </div>
             </form>
         </div>
+    <!-- Bulk Update Modal -->
+    <div id="bulkUpdateModal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <span class="close" onclick="closeBulkModal()">&times;</span>
+            <h2>⚡ Bulk Update All Active Coupons</h2>
+            <p style="color: #6b7280; margin-bottom: 24px;">This will update ALL active referral coupons with the same settings.</p>
+            
+            <form method="POST" action="/admin/referral-coupons/bulk-update">
+                <h3>Friend's Discount</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Discount Type</label>
+                        <select name="discount_type" id="bulk_discount_type" onchange="toggleBulkDiscountFields()">
+                            <option value="fixed">Fixed Amount (₹)</option>
+                            <option value="percentage">Percentage (%)</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="bulk_discount_amount_group">
+                        <label>Discount Amount (₹)</label>
+                        <input type="number" name="discount_amount" id="bulk_discount_amount" step="0.01" min="0" value="1000">
+                    </div>
+                    <div class="form-group" id="bulk_discount_percentage_group" style="display:none;">
+                        <label>Discount Percentage (%)</label>
+                        <input type="number" name="discount_percentage" id="bulk_discount_percentage" step="0.01" min="0" max="100" value="10">
+                    </div>
+                </div>
+
+                <h3>Owner's Bonus</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Bonus Type</label>
+                        <select name="referrer_bonus_type" id="bulk_bonus_type" onchange="toggleBulkBonusFields()">
+                            <option value="fixed">Fixed Amount (₹)</option>
+                            <option value="percentage">Percentage (%)</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="bulk_bonus_amount_group">
+                        <label>Bonus Amount (₹)</label>
+                        <input type="number" name="referrer_bonus_amount" id="bulk_bonus_amount" step="0.01" min="0" value="1000">
+                    </div>
+                    <div class="form-group" id="bulk_bonus_percentage_group" style="display:none;">
+                        <label>Bonus Percentage (%)</label>
+                        <input type="number" name="referral_bonus_percentage" id="bulk_bonus_percentage" step="0.01" min="0" max="100" value="10">
+                    </div>
+                </div>
+
+                <div style="background: #fef3c7; border: 2px solid #f59e0b; border-radius: 8px; padding: 16px; margin: 24px 0;">
+                    <strong style="color: #92400e;">⚠️ Warning:</strong>
+                    <p style="color: #92400e; margin: 8px 0 0 0; font-size: 14px;">This will update all active referral coupons. Individual coupon settings will be overwritten.</p>
+                </div>
+
+                <div style="text-align: right; margin-top: 24px; display: flex; gap: 12px; justify-content: flex-end;">
+                    <button type="button" class="btn-cancel" onclick="closeBulkModal()">Cancel</button>
+                    <button type="submit" class="btn-save" style="background: #f59e0b;" onclick="return confirm('Are you sure you want to update ALL active referral coupons?')">Update All Coupons</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -559,3 +625,34 @@
     </script>
 </body>
 </html>
+    function openBulkUpdateModal() {
+        document.getElementById('bulkUpdateModal').style.display = 'block';
+    }
+
+    function closeBulkModal() {
+        document.getElementById('bulkUpdateModal').style.display = 'none';
+    }
+
+    function toggleBulkDiscountFields() {
+        const type = document.getElementById('bulk_discount_type').value;
+        document.getElementById('bulk_discount_amount_group').style.display = type === 'fixed' ? 'block' : 'none';
+        document.getElementById('bulk_discount_percentage_group').style.display = type === 'percentage' ? 'block' : 'none';
+    }
+
+    function toggleBulkBonusFields() {
+        const type = document.getElementById('bulk_bonus_type').value;
+        document.getElementById('bulk_bonus_amount_group').style.display = type === 'fixed' ? 'block' : 'none';
+        document.getElementById('bulk_bonus_percentage_group').style.display = type === 'percentage' ? 'block' : 'none';
+    }
+
+    // Close modals when clicking outside
+    window.onclick = function(event) {
+        const editModal = document.getElementById('editModal');
+        const bulkModal = document.getElementById('bulkUpdateModal');
+        if (event.target == editModal) {
+            closeModal();
+        }
+        if (event.target == bulkModal) {
+            closeBulkModal();
+        }
+    }

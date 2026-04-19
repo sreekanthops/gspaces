@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Details - {{ customer.name }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+</head>
+<body>
+    <div class="container my-5">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h3><i class="bi bi-person-circle"></i> {{ customer.name }}</h3>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Email:</strong> {{ customer.email }}</p>
+                        <p><strong>Phone:</strong> {{ customer.phone or 'N/A' }}</p>
+                        <p><strong>Joined:</strong> {{ customer.created_at.strftime('%d %b %Y') }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Total Orders:</strong> {{ orders|length }}</p>
+                        <p><strong>Total Reviews:</strong> {{ reviews|length }}</p>
+                    </div>
+                </div>
+
+                <h4 class="mt-4">Orders</h4>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in orders %}
+                        <tr>
+                            <td>{{ order.id }}</td>
+                            <td>₹{{ '{:,.2f}'.format(order.total_amount) }}</td>
+                            <td>{{ order.status }}</td>
+                            <td>{{ order.order_date.strftime('%d %b %Y') }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+                <h4 class="mt-4">Reviews</h4>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Rating</th>
+                            <th>Review</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for review in reviews %}
+                        <tr>
+                            <td>{{ review.product_name }}</td>
+                            <td>{{ review.rating }} ⭐</td>
+                            <td>{{ review.review_text[:100] }}...</td>
+                            <td>{{ review.created_at.strftime('%d %b %Y') }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+                <a href="{{ url_for('admin_customers') }}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Back
+                </a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

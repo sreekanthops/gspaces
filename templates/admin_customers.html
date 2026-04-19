@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Management - GSpaces</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .admin-container {
+            max-width: 1600px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+        
+        .admin-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .admin-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 30px;
+        }
+        
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+        }
+        
+        .bulk-actions {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .bulk-actions.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <div class="admin-card">
+            <div class="admin-header">
+                <h1><i class="bi bi-people"></i> Customer Management</h1>
+                <p class="mb-0">View and manage customer accounts</p>
+            </div>
+            
+            <!-- Admin Navigation -->
+            <div class="p-3 bg-light">
+                <div class="d-flex gap-2 flex-wrap">
+                    <a href="{{ url_for('admin_orders') }}" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-box-seam"></i> Orders
+                    </a>
+                    <a href="{{ url_for('admin_coupons') }}" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-ticket-perforated"></i> Coupons
+                    </a>
+                    <a href="{{ url_for('admin_referral_coupons') }}" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-gift"></i> Referrals
+                    </a>
+                    <a href="{{ url_for('admin_reviews') }}" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-star"></i> Reviews
+                    </a>
+                    <a href="{{ url_for('admin_gst_settings') }}" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-gear"></i> GST
+                    </a>
+                    <a href="{{ url_for('admin_customers') }}" class="btn btn-sm btn-primary">
+                        <i class="bi bi-people"></i> Customers
+                    </a>
+                </div>
+            </div>
+            
+            <div class="p-4">
+                <!-- Statistics -->
+                <div class="stats-row">
+                    <div class="stat-card">
+                        <i class="bi bi-people-fill" style="font-size: 24px;"></i>
+                        <h3>{{ total_customers }}</h3>
+                        <p>Total Customers</p>
+                    </div>
+                    <div class="stat-card" style="background: linear-gradient(135deg, #10b981, #059669);">
+                        <i class="bi bi-person-check-fill" style="font-size: 24px;"></i>
+                        <h3>{{ active_customers }}</h3>
+                        <p>Active</p>
+                    </div>
+                    <div class="stat-card" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                        <i class="bi bi-cart-fill" style="font-size: 24px;"></i>
+                        <h3>{{ customers_with_orders }}</h3>
+                        <p>With Orders</p>
+                    </div>
+                </div>
+
+                <!-- Search and Filter -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <form method="GET" class="row g-3">
+                            <div class="col-md-4">
+                                <input type="text" name="search" class="form-control" 
+                                       placeholder="Search by name or email..." 
+                                       value="{{ search_query }}">
+                            </div>
+                            <div class="col-md-3">
+                                <select name="filter" class="form-select">
+                                    <option value="all" {% if filter_type == 'all' %}selected{% endif %}>All Customers</option>
+                                    <option value="with_orders" {% if filter_type == 'with_orders' %}selected{% endif %}>With Orders</option>
+                                    <option value="no_orders" {% if filter_type == 'no_orders' %}selected{% endif %}>No Orders</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <select name="sort" class="form-select">
+                                    <option value="newest" {% if sort_by == 'newest' %}selected{% endif %}>Newest First</option>
+                                    <option value="oldest" {% if sort_by == 'oldest' %}selected{% endif %}>Oldest First</option>
+                                    <option value="name" {% if sort_by == 'name' %}selected{% endif %}>Name A-Z</option>
+                                    <option value="orders" {% if sort_by == 'orders' %}selected{% endif %}>Most Orders</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="bi bi-search"></i> Search
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Bulk Actions Bar -->
+                <div class="bulk-actions" id="bulkActions">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span id="selectedCount">0 customers selected</span>
+                        <div>
+                            <button type="button" class="btn btn-danger" onclick="bulkDelete()">
+                                <i class="bi bi-trash"></i> Delete Selected
+                            </button>
+                            <button type="button" class="btn btn-secondary" onclick="clearSelection()">
+                                <i class="bi bi-x"></i> Clear
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Customers Table -->
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Customers ({{ customers|length }})</h5>
+                        <div>
+                            <input type="checkbox" id="selectAll" onchange="toggleSelectAll(this)">
+                            <label for="selectAll" class="ms-2">Select All</label>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <form id="bulkDeleteForm" method="POST" action="{{ url_for('admin_bulk_delete_customers') }}">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th width="50">
+                                                <input type="checkbox" class="select-all-checkbox" disabled>
+                                            </th>
+                                            <th>Name</th>
+                                            <th>Email</th>
+                                            <th>Phone</th>
+                                            <th>Joined</th>
+                                            <th>Orders</th>
+                                            <th>Total Spent</th>
+                                            <th>Last Order</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for customer in customers %}
+                                        <tr>
+                                            <td>
+                                                <input type="checkbox" name="customer_ids" value="{{ customer.id }}" 
+                                                       class="customer-checkbox" onchange="updateBulkActions()">
+                                            </td>
+                                            <td>
+                                                <i class="bi bi-person-circle"></i> {{ customer.name }}
+                                            </td>
+                                            <td>{{ customer.email }}</td>
+                                            <td>{{ customer.phone or '-' }}</td>
+                                            <td>{{ customer.first_order_date.strftime('%d %b %Y') if customer.first_order_date else 'No orders yet' }}</td>
+                                            <td>
+                                                <span class="badge bg-primary">{{ customer.order_count or 0 }}</span>
+                                            </td>
+                                            <td>₹{{ '{:,.2f}'.format(customer.total_spent or 0) }}</td>
+                                            <td>{{ customer.last_order_date.strftime('%d %b %Y') if customer.last_order_date else 'Never' }}</td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm">
+                                                    <a href="{{ url_for('admin_customer_detail', customer_id=customer.id) }}" 
+                                                       class="btn btn-outline-primary" title="View Details">
+                                                        <i class="bi bi-eye"></i>
+                                                    </a>
+                                                    <form method="POST" action="{{ url_for('admin_delete_customer', customer_id=customer.id) }}" 
+                                                          onsubmit="return confirm('Delete customer {{ customer.name }}? This will also delete their orders and reviews.')" 
+                                                          style="display: inline;">
+                                                        <button type="submit" class="btn btn-outline-danger" title="Delete">
+                                                            <i class="bi bi-trash"></i>
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Back Button -->
+                <div class="mt-4">
+                    <a href="{{ url_for('admin_orders') }}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Back to Admin Panel
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function toggleSelectAll(checkbox) {
+            const checkboxes = document.querySelectorAll('.customer-checkbox');
+            checkboxes.forEach(cb => cb.checked = checkbox.checked);
+            updateBulkActions();
+        }
+
+        function updateBulkActions() {
+            const checkboxes = document.querySelectorAll('.customer-checkbox:checked');
+            const count = checkboxes.length;
+            const bulkActions = document.getElementById('bulkActions');
+            const selectedCount = document.getElementById('selectedCount');
+            
+            if (count > 0) {
+                bulkActions.classList.add('show');
+                selectedCount.textContent = `${count} customer${count > 1 ? 's' : ''} selected`;
+            } else {
+                bulkActions.classList.remove('show');
+            }
+            
+            // Update select all checkbox
+            const selectAll = document.getElementById('selectAll');
+            const allCheckboxes = document.querySelectorAll('.customer-checkbox');
+            selectAll.checked = count === allCheckboxes.length && count > 0;
+        }
+
+        function clearSelection() {
+            document.querySelectorAll('.customer-checkbox').forEach(cb => cb.checked = false);
+            document.getElementById('selectAll').checked = false;
+            updateBulkActions();
+        }
+
+        function bulkDelete() {
+            const checkboxes = document.querySelectorAll('.customer-checkbox:checked');
+            if (checkboxes.length === 0) {
+                alert('Please select customers to delete');
+                return;
+            }
+            
+            if (confirm(`Are you sure you want to delete ${checkboxes.length} customer(s)? This action cannot be undone and will delete all their orders and reviews.`)) {
+                document.getElementById('bulkDeleteForm').submit();
+            }
+        }
+    </script>
+</body>
+</html>

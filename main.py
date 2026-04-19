@@ -3142,6 +3142,256 @@ def delete_coupon(coupon_id):
         finally:
             conn.close()
     
+
+# --- CUSTOMER MANAGEMENT ROUTES ---
+@app.route('/admin/customers')
+@login_required
+def admin_customers():
+    """Admin page to manage customers"""
+    if current_user.email not in ADMIN_EMAILS:
+        flash("Access denied. Admin privileges required.", "danger")
+        return redirect(url_for('index'))
+    
+    conn = connect_to_db()
+    if not conn:
+        flash("Database connection error.", "danger")
+        return redirect(url_for('index'))
+    
+    customers = []
+    total_customers = 0
+    active_customers = 0
+    customers_with_orders = 0
+    
+    # Get filter parameters
+    search_query = request.args.get('search', '').strip()
+    filter_type = request.args.get('filter', 'all')
+    sort_by = request.args.get('sort', 'newest')
+    
+    try:
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        
+        # Build query
+        query = """
+            SELECT 
+                u.id, u.name, u.email, u.phone,
+                COUNT(DISTINCT o.id) as order_count,
+                COALESCE(SUM(o.total_amount), 0) as total_spent,
+                MAX(o.order_date) as last_order_date,
+                MIN(o.order_date) as first_order_date
+            FROM users u
+            LEFT JOIN orders o ON u.id = o.user_id
+            WHERE 1=1
+        """
+        params = []
+        
+        # Search filter
+        if search_query:
+            query += " AND (u.name ILIKE %s OR u.email ILIKE %s)"
+            search_pattern = f"%{search_query}%"
+            params.extend([search_pattern, search_pattern])
+        
+        query += " GROUP BY u.id, u.name, u.email, u.phone"
+        
+        # Filter by order status
+        if filter_type == 'with_orders':
+            query += " HAVING COUNT(DISTINCT o.id) > 0"
+        elif filter_type == 'no_orders':
+            query += " HAVING COUNT(DISTINCT o.id) = 0"
+        
+        # Sorting
+        if sort_by == 'oldest':
+            query += " ORDER BY first_order_date ASC NULLS LAST"
+        elif sort_by == 'name':
+            query += " ORDER BY u.name ASC"
+        elif sort_by == 'orders':
+            query += " ORDER BY order_count DESC"
+        else:  # newest
+            query += " ORDER BY first_order_date DESC NULLS LAST"
+        
+        query += " LIMIT 1000"
+        
+        cur.execute(query, params)
+        customers = cur.fetchall()
+        
+        # Get statistics
+        cur.execute("SELECT COUNT(*) as total FROM users")
+        total_customers = cur.fetchone()['total']
+        
+        # Count active customers (those with recent orders)
+        cur.execute("""
+            SELECT COUNT(DISTINCT user_id) as active 
+            FROM orders 
+            WHERE order_date > NOW() - INTERVAL '30 days' AND user_id IS NOT NULL
+        """)
+        active_customers = cur.fetchone()['active']
+        
+        cur.execute("""
+            SELECT COUNT(DISTINCT user_id) as with_orders 
+            FROM orders WHERE user_id IS NOT NULL
+        """)
+        customers_with_orders = cur.fetchone()['with_orders']
+        
+    except Exception as e:
+        print(f"Error fetching customers: {e}")
+        flash("Error loading customers.", "danger")
+    finally:
+        conn.close()
+    
+    return render_template(
+        'admin_customers.html',
+        customers=customers,
+        total_customers=total_customers,
+        active_customers=active_customers,
+        customers_with_orders=customers_with_orders,
+        search_query=search_query,
+        filter_type=filter_type,
+        sort_by=sort_by
+    )
+
+@app.route('/admin/customers/<int:customer_id>/delete', methods=['POST'])
+@login_required
+def admin_delete_customer(customer_id):
+    """Delete a customer and all their data"""
+    if current_user.email not in ADMIN_EMAILS:
+        flash("Access denied. Admin privileges required.", "danger")
+        return redirect(url_for('admin_customers'))
+    
+    conn = connect_to_db()
+    if not conn:
+        flash("Database connection error.", "danger")
+        return redirect(url_for('admin_customers'))
+    
+    try:
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        
+        # Get customer info before deleting
+        cur.execute("SELECT name, email FROM users WHERE id = %s", (customer_id,))
+        customer = cur.fetchone()
+        
+        if not customer:
+            flash("Customer not found.", "danger")
+            return redirect(url_for('admin_customers'))
+        
+        # Delete customer (cascade will handle related records)
+        cur.execute("DELETE FROM users WHERE id = %s", (customer_id,))
+        conn.commit()
+        
+        flash(f"Customer {customer['name']} deleted successfully!", "success")
+        
+    except Exception as e:
+        print(f"Error deleting customer: {e}")
+        flash("Error deleting customer.", "danger")
+    finally:
+        conn.close()
+    
+    return redirect(url_for('admin_customers'))
+
+@app.route('/admin/customers/bulk-delete', methods=['POST'])
+@login_required
+def admin_bulk_delete_customers():
+    """Bulk delete customers"""
+    if current_user.email not in ADMIN_EMAILS:
+        flash("Access denied. Admin privileges required.", "danger")
+        return redirect(url_for('admin_customers'))
+    
+    customer_ids = request.form.getlist('customer_ids')
+    
+    if not customer_ids:
+        flash("No customers selected.", "warning")
+        return redirect(url_for('admin_customers'))
+    
+    conn = connect_to_db()
+    if not conn:
+        flash("Database connection error.", "danger")
+        return redirect(url_for('admin_customers'))
+    
+    try:
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        
+        # Delete customers
+        cur.execute("""
+            DELETE FROM users 
+            WHERE id = ANY(%s)
+        """, (customer_ids,))
+        
+        deleted_count = cur.rowcount
+        conn.commit()
+        
+        flash(f"Successfully deleted {deleted_count} customer(s)!", "success")
+        
+    except Exception as e:
+        print(f"Error bulk deleting customers: {e}")
+        flash("Error deleting customers.", "danger")
+    finally:
+        conn.close()
+    
+    return redirect(url_for('admin_customers'))
+
+@app.route('/admin/customers/<int:customer_id>')
+@login_required
+def admin_customer_detail(customer_id):
+    """View detailed customer information"""
+    if current_user.email not in ADMIN_EMAILS:
+        flash("Access denied. Admin privileges required.", "danger")
+        return redirect(url_for('index'))
+    
+    conn = connect_to_db()
+    if not conn:
+        flash("Database connection error.", "danger")
+        return redirect(url_for('admin_customers'))
+    
+    customer = None
+    orders = []
+    reviews = []
+    
+    try:
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        
+        # Get customer info
+        cur.execute("""
+            SELECT id, name, email, phone
+            FROM users WHERE id = %s
+        """, (customer_id,))
+        customer = cur.fetchone()
+        
+        if not customer:
+            flash("Customer not found.", "danger")
+            return redirect(url_for('admin_customers'))
+        
+        # Get orders
+        cur.execute("""
+            SELECT id, razorpay_order_id, total_amount, status, order_date
+            FROM orders
+            WHERE user_id = %s
+            ORDER BY order_date DESC
+        """, (customer_id,))
+        orders = cur.fetchall()
+        
+        # Get reviews
+        cur.execute("""
+            SELECT pr.id, pr.rating, pr.review_text, pr.created_at,
+                   p.name as product_name
+            FROM product_reviews pr
+            JOIN products p ON pr.product_id = p.id
+            WHERE pr.user_id = %s
+            ORDER BY pr.created_at DESC
+        """, (customer_id,))
+        reviews = cur.fetchall()
+        
+    except Exception as e:
+        print(f"Error fetching customer details: {e}")
+        flash("Error loading customer details.", "danger")
+        return redirect(url_for('admin_customers'))
+    finally:
+        conn.close()
+    
+    return render_template(
+        'admin_customer_detail.html',
+        customer=customer,
+        orders=orders,
+        reviews=reviews
+    )
+
     return redirect(url_for('admin_coupons'))
 
 @app.route('/api/coupons/validate', methods=['POST'])

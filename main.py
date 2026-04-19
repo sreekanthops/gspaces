@@ -995,22 +995,63 @@ def reset_password(token):
 def index():
     conn = connect_to_db()
     product_list = []
+    
+    # Get filter and sort parameters
+    sort_by = request.args.get('sort', 'default')  # default, price_low, price_high, rating_high, rating_low
+    category_filter = request.args.get('category', 'all')
+    min_rating = request.args.get('min_rating', type=int)
+    
     if conn:
         try:
-            cursor = conn.cursor(cursor_factory=RealDictCursor) # Use RealDictCursor
-            cursor.execute("""
-                SELECT id, name, description, category, price, rating, image_url
-                FROM products ORDER BY id;
-            """)
-            product_list = cursor.fetchall() # Fetches as list of dicts
+            cursor = conn.cursor(cursor_factory=RealDictCursor)
+            
+            # Build query with filters
+            query = """
+                SELECT id, name, description, category, price, rating, image_url, review_count
+                FROM products
+                WHERE 1=1
+            """
+            params = []
+            
+            # Category filter
+            if category_filter and category_filter != 'all':
+                query += " AND category = %s"
+                params.append(category_filter)
+            
+            # Rating filter
+            if min_rating:
+                query += " AND rating >= %s"
+                params.append(min_rating)
+            
+            # Sorting
+            if sort_by == 'price_low':
+                query += " ORDER BY price ASC"
+            elif sort_by == 'price_high':
+                query += " ORDER BY price DESC"
+            elif sort_by == 'rating_high':
+                query += " ORDER BY rating DESC, review_count DESC"
+            elif sort_by == 'rating_low':
+                query += " ORDER BY rating ASC"
+            else:  # default
+                query += " ORDER BY id"
+            
+            cursor.execute(query, params)
+            product_list = cursor.fetchall()
+            
+            # Get unique categories for filter
+            cursor.execute("SELECT DISTINCT category FROM products WHERE category IS NOT NULL ORDER BY category")
+            categories = [row['category'] for row in cursor.fetchall()]
+            
         except Error as e:
             print(f"Error fetching products: {e}")
             flash("Error fetching products from database.", "error")
+            categories = []
         finally:
             if conn:
                 conn.close()
     else:
         flash("Error connecting to database to fetch products.", "error")
+        categories = []
 
     # Get catalogue files
     catalogue_files = get_catalogue_files()
@@ -1021,7 +1062,11 @@ def index():
                            products=product_list,
                            user=user_display,
                            catalogue_files=catalogue_files,
-                           is_admin=current_user.is_authenticated and current_user.is_admin)
+                           is_admin=current_user.is_authenticated and current_user.is_admin,
+                           categories=categories,
+                           current_sort=sort_by,
+                           current_category=category_filter,
+                           current_min_rating=min_rating)
 
 # --- CATALOGUE DOWNLOAD ROUTE ---
 @app.route('/download_catalogue/<filename>')
@@ -1726,56 +1771,84 @@ def product_detail(product_id):
                 return redirect(url_for('login'))
 
             user_id = current_user.id
-            user_name = current_user.name
-
             rating = request.form.get('rating', type=int)
-            comment = request.form.get('comment')
+            review_title = request.form.get('review_title', '').strip()
+            review_text = request.form.get('review_text', '').strip()
 
-            if not rating or not comment:
-                flash("Provide both a rating and a comment.", "error")
+            if not rating or not review_text:
+                flash("Please provide both a rating and review text.", "error")
             elif rating < 1 or rating > 5:
                 flash("Rating must be between 1 and 5.", "error")
             else:
-                cur.execute("SELECT id FROM reviews WHERE product_id = %s AND user_id = %s",
-                            (product_id, user_id))
+                # Check if user has purchased this product
+                cur.execute("""
+                    SELECT o.id FROM orders o
+                    JOIN order_items oi ON o.id = oi.order_id
+                    WHERE o.user_id = %s AND oi.product_id = %s
+                    AND o.status_code IN ('delivered', 'shipped', 'out_for_delivery')
+                    LIMIT 1
+                """, (user_id, product_id))
+                order = cur.fetchone()
+                is_verified = bool(order)
+                order_id = order['id'] if order else None
+                
+                # Check if review already exists
+                cur.execute("""
+                    SELECT id FROM product_reviews
+                    WHERE product_id = %s AND user_id = %s
+                """, (product_id, user_id))
                 existing = cur.fetchone()
+                
                 if existing:
+                    # Update existing review
                     cur.execute("""
-                        UPDATE reviews
-                           SET rating=%s, comment=%s, created_at=CURRENT_TIMESTAMP
-                         WHERE id=%s
-                    """, (rating, comment, existing['id']))
+                        UPDATE product_reviews
+                        SET rating = %s, review_title = %s, review_text = %s,
+                            updated_at = CURRENT_TIMESTAMP
+                        WHERE id = %s
+                    """, (rating, review_title, review_text, existing['id']))
+                    flash("Your review has been updated!", "success")
                 else:
+                    # Insert new review
                     cur.execute("""
-                        INSERT INTO reviews (product_id, user_id, username, rating, comment)
-                        VALUES (%s, %s, %s, %s, %s)
-                    """, (product_id, user_id, user_name, rating, comment))
+                        INSERT INTO product_reviews
+                        (product_id, user_id, order_id, rating, review_title, review_text, is_verified_purchase)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s)
+                    """, (product_id, user_id, order_id, rating, review_title, review_text, is_verified))
+                    flash("Thank you for your review!", "success")
+                
                 conn.commit()
                 return redirect(url_for('product_detail', product_id=product_id))
 
         # --- Fetch Reviews ---
         cur.execute("""
-            SELECT username, rating, comment, created_at
-              FROM reviews
-             WHERE product_id = %s
-          ORDER BY created_at DESC
+            SELECT pr.id, pr.rating, pr.review_title, pr.review_text, pr.created_at,
+                   pr.is_verified_purchase, pr.helpful_count,
+                   u.name as username
+            FROM product_reviews pr
+            JOIN users u ON pr.user_id = u.id
+            WHERE pr.product_id = %s AND pr.is_approved = TRUE
+            ORDER BY pr.created_at DESC
         """, (product_id,))
         reviews_data = cur.fetchall()
         for r in reviews_data:
-            r['created_at'] = r['created_at'].strftime('%Y-%m-%d %H:%M')
+            r['created_at'] = r['created_at'].strftime('%d %b %Y')
             reviews.append(r)
 
         # --- Check if Current User Already Reviewed ---
         if current_user.is_authenticated:
             cur.execute("""
-                SELECT r.rating, r.comment
-                  FROM reviews r
-                  JOIN users u ON u.id = r.user_id
-                 WHERE r.product_id = %s AND u.id = %s
+                SELECT rating, review_title, review_text
+                FROM product_reviews
+                WHERE product_id = %s AND user_id = %s
             """, (product_id, current_user.id))
             ur = cur.fetchone()
             if ur:
-                user_review = {'rating': ur['rating'], 'comment': ur['comment']}
+                user_review = {
+                    'rating': ur['rating'],
+                    'review_title': ur['review_title'],
+                    'review_text': ur['review_text']
+                }
 
         # --- Fetch Sub Images ---
         cur.execute("""
@@ -1799,6 +1872,57 @@ def product_detail(product_id):
         reviews=reviews,
         user_review=user_review,
         sub_images=sub_images
+    )
+
+# --- REVIEW HELPFUL VOTE ROUTE ---
+@app.route('/review/<int:review_id>/helpful', methods=['POST'])
+@login_required
+def mark_review_helpful(review_id):
+    conn = connect_to_db()
+    if not conn:
+        return jsonify({'success': False, 'message': 'Database error'})
+    
+    try:
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        
+        # Check if user already voted
+        cur.execute("""
+            SELECT id FROM review_helpful_votes 
+            WHERE review_id = %s AND user_id = %s
+        """, (review_id, current_user.id))
+        
+        if cur.fetchone():
+            return jsonify({'success': False, 'message': 'Already voted'})
+        
+        # Add vote
+        cur.execute("""
+            INSERT INTO review_helpful_votes (review_id, user_id)
+            VALUES (%s, %s)
+        """, (review_id, current_user.id))
+        
+        # Update helpful count
+        cur.execute("""
+            UPDATE product_reviews 
+            SET helpful_count = helpful_count + 1
+            WHERE id = %s
+            RETURNING helpful_count
+        """, (review_id,))
+        
+        result = cur.fetchone()
+        conn.commit()
+        
+        return jsonify({
+            'success': True, 
+            'helpful_count': result['helpful_count']
+        })
+        
+    except Exception as e:
+        print(f"Error marking review helpful: {e}")
+        return jsonify({'success': False, 'message': 'Error occurred'})
+    finally:
+        if conn:
+            conn.close()
+
     )
 
 @app.route('/edit_detailed_description/<int:product_id>', methods=['POST'])

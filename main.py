@@ -1779,7 +1779,8 @@ def product_detail(product_id):
             user_id = current_user.id
             rating = request.form.get('rating', type=int)
             review_title = request.form.get('review_title', '').strip()
-            review_text = request.form.get('review_text', '').strip()
+            # Support both old 'comment' and new 'review_text' field names
+            review_text = request.form.get('review_text', '').strip() or request.form.get('comment', '').strip()
 
             if not rating or not review_text:
                 flash("Please provide both a rating and review text.", "error")

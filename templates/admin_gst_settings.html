@@ -135,17 +135,56 @@
 
                         <div class="mb-4" id="gst-rate-group">
                             <label for="gst_rate" class="form-label">GST Rate (%)</label>
-                            <input type="number" class="form-control" id="gst_rate" name="gst_rate" 
-                                   step="0.01" min="0" max="100" 
+                            <input type="number" class="form-control" id="gst_rate" name="gst_rate"
+                                   step="0.01" min="0" max="100"
                                    value="{{ (gst_settings.gst_rate * 100)|round(2) }}" required>
                             <small class="text-muted">Current rate: {{ (gst_settings.gst_rate * 100)|round(2) }}%</small>
                         </div>
 
                         <div class="mb-4" id="gst-number-group">
                             <label for="gst_number" class="form-label">GST Number (GSTIN)</label>
-                            <input type="text" class="form-control" id="gst_number" name="gst_number" 
+                            <input type="text" class="form-control" id="gst_number" name="gst_number"
                                    value="{{ gst_settings.gst_number }}" maxlength="20" required>
                             <small class="text-muted">This will appear on invoices when GST is enabled</small>
+                        </div>
+
+                        <hr class="my-4">
+                        
+                        <h5 class="mb-3">💳 Razorpay Account Settings</h5>
+                        <p class="text-muted mb-4">Configure different Razorpay accounts for GST and non-GST transactions</p>
+
+                        <!-- Razorpay for GST Enabled -->
+                        <div class="mb-4">
+                            <h6 class="text-success mb-3">✓ With GST Account</h6>
+                            <div class="mb-3">
+                                <label for="razorpay_key_gst" class="form-label">Razorpay Key ID (GST)</label>
+                                <input type="text" class="form-control" id="razorpay_key_gst" name="razorpay_key_gst"
+                                       value="{{ gst_settings.razorpay_key_gst or '' }}" placeholder="rzp_live_xxxxx">
+                                <small class="text-muted">Used when GST is enabled</small>
+                            </div>
+                            <div class="mb-3">
+                                <label for="razorpay_secret_gst" class="form-label">Razorpay Secret Key (GST)</label>
+                                <input type="password" class="form-control" id="razorpay_secret_gst" name="razorpay_secret_gst"
+                                       value="{{ gst_settings.razorpay_secret_gst or '' }}" placeholder="Enter secret key">
+                                <small class="text-muted">Keep this confidential</small>
+                            </div>
+                        </div>
+
+                        <!-- Razorpay for No GST -->
+                        <div class="mb-4">
+                            <h6 class="text-warning mb-3">✗ Without GST Account</h6>
+                            <div class="mb-3">
+                                <label for="razorpay_key_no_gst" class="form-label">Razorpay Key ID (No GST)</label>
+                                <input type="text" class="form-control" id="razorpay_key_no_gst" name="razorpay_key_no_gst"
+                                       value="{{ gst_settings.razorpay_key_no_gst or '' }}" placeholder="rzp_live_xxxxx">
+                                <small class="text-muted">Used when GST is disabled</small>
+                            </div>
+                            <div class="mb-3">
+                                <label for="razorpay_secret_no_gst" class="form-label">Razorpay Secret Key (No GST)</label>
+                                <input type="password" class="form-control" id="razorpay_secret_no_gst" name="razorpay_secret_no_gst"
+                                       value="{{ gst_settings.razorpay_secret_no_gst or '' }}" placeholder="Enter secret key">
+                                <small class="text-muted">Keep this confidential</small>
+                            </div>
                         </div>
 
                         <div class="d-flex gap-3">

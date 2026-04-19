@@ -298,6 +298,22 @@ def get_gst_settings():
     finally:
         if conn:
             conn.close()
+def get_razorpay_credentials():
+    """Get Razorpay credentials based on GST settings"""
+    gst_settings = get_gst_settings()
+    gst_enabled = gst_settings.get('gst_enabled', True)
+    
+    if gst_enabled:
+        # Use GST account
+        key_id = gst_settings.get('razorpay_key_gst') or RAZORPAY_KEY_ID
+        key_secret = gst_settings.get('razorpay_secret_gst') or RAZORPAY_KEY_SECRET
+    else:
+        # Use non-GST account
+        key_id = gst_settings.get('razorpay_key_no_gst') or RAZORPAY_KEY_ID
+        key_secret = gst_settings.get('razorpay_secret_no_gst') or RAZORPAY_KEY_SECRET
+    
+    return key_id, key_secret
+
 
 
 def create_users_table(conn):
@@ -2384,19 +2400,30 @@ def admin_gst_settings():
             gst_rate = Decimal(request.form.get('gst_rate', '18')) / Decimal('100')  # Convert percentage to decimal
             gst_number = request.form.get('gst_number', '36AORPG7724G1ZN').strip()
             
-            # Update GST settings
+            # Get Razorpay credentials
+            razorpay_key_gst = request.form.get('razorpay_key_gst', '').strip()
+            razorpay_secret_gst = request.form.get('razorpay_secret_gst', '').strip()
+            razorpay_key_no_gst = request.form.get('razorpay_key_no_gst', '').strip()
+            razorpay_secret_no_gst = request.form.get('razorpay_secret_no_gst', '').strip()
+            
+            # Update GST settings including Razorpay credentials
             cursor.execute("""
-                UPDATE gst_settings 
-                SET gst_enabled = %s, 
-                    gst_rate = %s, 
+                UPDATE gst_settings
+                SET gst_enabled = %s,
+                    gst_rate = %s,
                     gst_number = %s,
+                    razorpay_key_gst = %s,
+                    razorpay_secret_gst = %s,
+                    razorpay_key_no_gst = %s,
+                    razorpay_secret_no_gst = %s,
                     updated_at = CURRENT_TIMESTAMP,
                     updated_by = %s
                 WHERE id = (SELECT id FROM gst_settings ORDER BY id DESC LIMIT 1)
-            """, (gst_enabled, gst_rate, gst_number, current_user.email))
+            """, (gst_enabled, gst_rate, gst_number, razorpay_key_gst, razorpay_secret_gst,
+                  razorpay_key_no_gst, razorpay_secret_no_gst, current_user.email))
             
             conn.commit()
-            flash("GST settings updated successfully!", "success")
+            flash("GST and Razorpay settings updated successfully!", "success")
             return redirect(url_for('admin_gst_settings'))
         
         # GET request - fetch current settings
@@ -2929,6 +2956,12 @@ def cart():
 
     totals = calculate_cart_totals(cart_items)
 
+    # Get appropriate Razorpay credentials based on GST settings
+    razorpay_key, razorpay_secret = get_razorpay_credentials()
+    
+    # Create Razorpay client with appropriate credentials
+    current_razorpay_client = razorpay.Client(auth=(razorpay_key, razorpay_secret))
+
     # Razorpay order creation
     razorpay_order_id = None
     if totals["total_with_gst"] > 0:
@@ -2938,7 +2971,7 @@ def cart():
                 "currency": "INR",
                 "payment_capture": 1
             }
-            order = razorpay_client.order.create(order_data)
+            order = current_razorpay_client.order.create(order_data)
             razorpay_order_id = order['id']
         except Exception as e:
             print(f"Error creating Razorpay order: {e}")
@@ -2954,7 +2987,7 @@ def cart():
         user_details=user_details,
         deal_active=totals["deal_active"],
         razorpay_order_id=razorpay_order_id,
-        razorpay_key=RAZORPAY_KEY_ID,
+        razorpay_key=razorpay_key,
         wallet_balance=wallet_balance,
         gst_enabled=totals["gst_enabled"],
         gst_rate=totals["gst_rate"],
@@ -2974,7 +3007,11 @@ def payment_success():
         coupon_code = data.get('coupon_code')
         coupon_discount = Decimal(str(data.get('coupon_discount', 0)))
 
-        razorpay_client.utility.verify_payment_signature({
+        # Get appropriate Razorpay credentials for verification
+        razorpay_key, razorpay_secret = get_razorpay_credentials()
+        verification_client = razorpay.Client(auth=(razorpay_key, razorpay_secret))
+        
+        verification_client.utility.verify_payment_signature({
             'razorpay_order_id': order_id_from_razorpay,
             'razorpay_payment_id': payment_id,
             'razorpay_signature': signature

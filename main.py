@@ -1007,7 +1007,9 @@ def index():
             
             # Build query with filters
             query = """
-                SELECT id, name, description, category, price, rating, image_url, review_count
+                SELECT id, name, description, category, price,
+                       CASE WHEN review_count > 0 THEN rating ELSE NULL END as rating,
+                       image_url, review_count
                 FROM products
                 WHERE 1=1
             """
@@ -1756,13 +1758,17 @@ def product_detail(product_id):
 
         # --- Fetch Product ---
         cur.execute("""
-            SELECT id, name, description, detailed_description, category, price, rating, image_url
+            SELECT id, name, description, detailed_description, category, price, rating, image_url, review_count
             FROM products
             WHERE id = %s
         """, (product_id,))
         product = cur.fetchone()
         if not product:
             return redirect(url_for('index'))
+        
+        # Don't show rating if no reviews
+        if product['review_count'] == 0:
+            product['rating'] = None
 
 
         # --- Handle Review Submission ---

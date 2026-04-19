@@ -191,10 +191,18 @@ APP_BASE_URL = os.getenv("APP_BASE_URL", "http://13.51.205.239")
 # File Uploads Configuration
 UPLOAD_FOLDER = os.path.join('static', 'img', 'Products')
 PROFILE_UPLOAD_FOLDER = os.path.join('static', 'img', 'profiles')
+REVIEW_MEDIA_FOLDER = os.path.join('static', 'img', 'reviews')
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(PROFILE_UPLOAD_FOLDER, exist_ok=True)
+os.makedirs(REVIEW_MEDIA_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['PROFILE_UPLOAD_FOLDER'] = PROFILE_UPLOAD_FOLDER
+app.config['REVIEW_MEDIA_FOLDER'] = REVIEW_MEDIA_FOLDER
+
+# Allowed file extensions for reviews
+ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+ALLOWED_VIDEO_EXTENSIONS = {'mp4', 'webm', 'mov'}
+MAX_REVIEW_MEDIA = 5  # Maximum 5 images/videos per review
 
 # Razorpay Configuration
 RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID", "rzp_live_R6wg6buSedSnTV") # Test Key ID
@@ -1806,6 +1814,33 @@ def product_detail(product_id):
                 """, (product_id, user_id))
                 existing = cur.fetchone()
                 
+                # Handle media uploads
+                media_files = request.files.getlist('review_media')
+                uploaded_media = []
+                
+                if media_files and media_files[0].filename:
+                    for media_file in media_files[:MAX_REVIEW_MEDIA]:  # Limit to MAX_REVIEW_MEDIA files
+                        if media_file and media_file.filename:
+                            filename = secure_filename(media_file.filename)
+                            ext = filename.rsplit('.', 1)[1].lower() if '.' in filename else ''
+                            
+                            # Determine media type
+                            if ext in ALLOWED_IMAGE_EXTENSIONS:
+                                media_type = 'image'
+                            elif ext in ALLOWED_VIDEO_EXTENSIONS:
+                                media_type = 'video'
+                            else:
+                                continue  # Skip unsupported files
+                            
+                            # Generate unique filename
+                            unique_filename = f"review_{user_id}_{product_id}_{int(datetime.utcnow().timestamp())}_{filename}"
+                            media_path = os.path.join(app.config['REVIEW_MEDIA_FOLDER'], unique_filename)
+                            media_file.save(media_path)
+                            
+                            # Store relative URL
+                            media_url = f"/static/img/reviews/{unique_filename}"
+                            uploaded_media.append({'url': media_url, 'type': media_type})
+                
                 if existing:
                     # Update existing review
                     cur.execute("""
@@ -1814,6 +1849,17 @@ def product_detail(product_id):
                             updated_at = CURRENT_TIMESTAMP
                         WHERE id = %s
                     """, (rating, review_title, review_text, existing['id']))
+                    review_id = existing['id']
+                    
+                    # Add new media to existing review
+                    if uploaded_media:
+                        for media in uploaded_media:
+                            cur.execute("""
+                                INSERT INTO review_media (review_id, media_url, media_type)
+                                VALUES (%s, %s, %s)
+                                ON CONFLICT (review_id, media_url) DO NOTHING
+                            """, (review_id, media['url'], media['type']))
+                    
                     flash("Your review has been updated!", "success")
                 else:
                     # Insert new review
@@ -1821,7 +1867,18 @@ def product_detail(product_id):
                         INSERT INTO product_reviews
                         (product_id, user_id, order_id, rating, review_title, review_text, is_verified_purchase)
                         VALUES (%s, %s, %s, %s, %s, %s, %s)
+                        RETURNING id
                     """, (product_id, user_id, order_id, rating, review_title, review_text, is_verified))
+                    review_id = cur.fetchone()['id']
+                    
+                    # Insert media files
+                    if uploaded_media:
+                        for media in uploaded_media:
+                            cur.execute("""
+                                INSERT INTO review_media (review_id, media_url, media_type)
+                                VALUES (%s, %s, %s)
+                            """, (review_id, media['url'], media['type']))
+                    
                     flash("Thank you for your review!", "success")
                 
                 conn.commit()
@@ -1840,6 +1897,18 @@ def product_detail(product_id):
         reviews_data = cur.fetchall()
         for r in reviews_data:
             r['created_at'] = r['created_at'].strftime('%d %b %Y')
+            # Also add 'comment' key for backward compatibility with template
+            r['comment'] = r['review_text']
+            
+            # Fetch media for this review
+            cur.execute("""
+                SELECT media_url, media_type
+                FROM review_media
+                WHERE review_id = %s
+                ORDER BY id ASC
+            """, (r['id'],))
+            r['media'] = cur.fetchall()
+            
             reviews.append(r)
 
         # --- Check if Current User Already Reviewed ---
@@ -1854,7 +1923,8 @@ def product_detail(product_id):
                 user_review = {
                     'rating': ur['rating'],
                     'review_title': ur['review_title'],
-                    'review_text': ur['review_text']
+                    'review_text': ur['review_text'],
+                    'comment': ur['review_text']  # Backward compatibility
                 }
 
         # --- Fetch Sub Images ---
@@ -1929,6 +1999,196 @@ def mark_review_helpful(review_id):
     finally:
         if conn:
             conn.close()
+# --- ADMIN REVIEW MANAGEMENT ROUTES ---
+@app.route('/admin/reviews')
+@login_required
+def admin_reviews():
+    """Admin page to manage product reviews"""
+    if current_user.email not in ADMIN_EMAILS:
+        flash("Access denied. Admin privileges required.", "danger")
+        return redirect(url_for('index'))
+    
+    conn = connect_to_db()
+    if not conn:
+        flash("Database connection error.", "danger")
+        return redirect(url_for('index'))
+    
+    reviews = []
+    total_reviews = 0
+    approved_reviews = 0
+    pending_reviews = 0
+    
+    try:
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        
+        # Get filter parameters
+        filter_status = request.args.get('status', 'all')
+        sort_by = request.args.get('sort', 'newest')
+        
+        # Build query
+        query = """
+            SELECT 
+                pr.id,
+                pr.product_id,
+                pr.user_id,
+                pr.rating,
+                pr.review_title,
+                pr.review_text,
+                pr.is_verified_purchase,
+                pr.is_approved,
+                pr.helpful_count,
+                pr.created_at,
+                p.name as product_name,
+                u.name as username
+            FROM product_reviews pr
+            JOIN products p ON pr.product_id = p.id
+            JOIN users u ON pr.user_id = u.id
+            WHERE 1=1
+        """
+        params = []
+        
+        # Apply status filter
+        if filter_status == 'approved':
+            query += " AND pr.is_approved = TRUE"
+        elif filter_status == 'pending':
+            query += " AND pr.is_approved = FALSE"
+        
+        # Apply sorting
+        if sort_by == 'oldest':
+            query += " ORDER BY pr.created_at ASC"
+        elif sort_by == 'rating_high':
+            query += " ORDER BY pr.rating DESC, pr.created_at DESC"
+        elif sort_by == 'rating_low':
+            query += " ORDER BY pr.rating ASC, pr.created_at DESC"
+        else:  # newest
+            query += " ORDER BY pr.created_at DESC"
+        
+        cur.execute(query, params)
+        reviews_data = cur.fetchall()
+        
+        # Format reviews and fetch media
+        for review in reviews_data:
+            review['created_at'] = review['created_at'].strftime('%d %b %Y, %I:%M %p')
+            
+            # Fetch media for this review
+            cur.execute("""
+                SELECT media_url, media_type
+                FROM review_media
+                WHERE review_id = %s
+                ORDER BY id ASC
+            """, (review['id'],))
+            review['media'] = cur.fetchall()
+            
+            reviews.append(review)
+        
+        # Get statistics
+        cur.execute("SELECT COUNT(*) as total FROM product_reviews")
+        total_reviews = cur.fetchone()['total']
+        
+        cur.execute("SELECT COUNT(*) as approved FROM product_reviews WHERE is_approved = TRUE")
+        approved_reviews = cur.fetchone()['approved']
+        
+        cur.execute("SELECT COUNT(*) as pending FROM product_reviews WHERE is_approved = FALSE")
+        pending_reviews = cur.fetchone()['pending']
+        
+    except Exception as e:
+        print(f"Error fetching reviews: {e}")
+        flash("Error loading reviews.", "danger")
+    finally:
+        conn.close()
+    
+    return render_template(
+        'admin_reviews.html',
+        reviews=reviews,
+        total_reviews=total_reviews,
+        approved_reviews=approved_reviews,
+        pending_reviews=pending_reviews,
+        filter_status=filter_status,
+        sort_by=sort_by
+    )
+
+@app.route('/admin/reviews/<int:review_id>/approve', methods=['POST'])
+@login_required
+def admin_approve_review(review_id):
+    """Approve a review"""
+    if current_user.email not in ADMIN_EMAILS:
+        flash("Access denied. Admin privileges required.", "danger")
+        return redirect(url_for('index'))
+    
+    conn = connect_to_db()
+    if not conn:
+        flash("Database connection error.", "danger")
+        return redirect(url_for('admin_reviews'))
+    
+    try:
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        
+        # Update review status
+        cur.execute("""
+            UPDATE product_reviews
+            SET is_approved = TRUE
+            WHERE id = %s
+        """, (review_id,))
+        
+        conn.commit()
+        flash("Review approved successfully!", "success")
+        
+    except Exception as e:
+        print(f"Error approving review: {e}")
+        flash("Error approving review.", "danger")
+    finally:
+        conn.close()
+    
+    return redirect(url_for('admin_reviews'))
+
+@app.route('/admin/reviews/<int:review_id>/delete', methods=['POST'])
+@login_required
+def admin_delete_review(review_id):
+    """Delete a review"""
+    if current_user.email not in ADMIN_EMAILS:
+        flash("Access denied. Admin privileges required.", "danger")
+        return redirect(url_for('index'))
+    
+    conn = connect_to_db()
+    if not conn:
+        flash("Database connection error.", "danger")
+        return redirect(url_for('admin_reviews'))
+    
+    try:
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        
+        # Get media files to delete from filesystem
+        cur.execute("""
+            SELECT media_url FROM review_media WHERE review_id = %s
+        """, (review_id,))
+        media_files = cur.fetchall()
+        
+        # Delete review (cascade will delete media records)
+        cur.execute("""
+            DELETE FROM product_reviews WHERE id = %s
+        """, (review_id,))
+        
+        conn.commit()
+        
+        # Delete media files from filesystem
+        for media in media_files:
+            try:
+                file_path = os.path.join(app.root_path, media['media_url'].lstrip('/'))
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+            except Exception as e:
+                print(f"Error deleting media file: {e}")
+        
+        flash("Review deleted successfully!", "success")
+        
+    except Exception as e:
+        print(f"Error deleting review: {e}")
+        flash("Error deleting review.", "danger")
+    finally:
+        conn.close()
+    
+    return redirect(url_for('admin_reviews'))
+
 
 @app.route('/edit_detailed_description/<int:product_id>', methods=['POST'])
 @login_required

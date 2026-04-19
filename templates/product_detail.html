@@ -857,22 +857,53 @@
               {% if current_user.is_authenticated %}
               <div class="review-form-section mb-4">
                 <h3>{% if user_review %}Edit Your Review{% else %}Write a Review{% endif %}</h3>
-                <form action="{{ url_for('product_detail', product_id=product['id']) }}" method="post">
+                <form action="{{ url_for('product_detail', product_id=product['id']) }}" method="post" enctype="multipart/form-data">
                   <div class="mb-3">
-                    <label for="rating" class="form-label">Rating</label>
+                    <label for="rating" class="form-label fw-bold">
+                      <i class="bi bi-star-fill text-warning"></i> Rating *
+                    </label>
                     <select class="form-select" id="rating" name="rating" required>
                       <option value="">Select a rating</option>
                       {% for i in range(5,0,-1) %}
-                        <option value="{{i}}" {% if user_review and user_review['rating'] == i %}selected{% endif %}>{{i}} Stars</option>
+                        <option value="{{i}}" {% if user_review and user_review['rating'] == i %}selected{% endif %}>
+                          {{ '⭐' * i }} ({{i}} Star{{ 's' if i > 1 else '' }})
+                        </option>
                       {% endfor %}
                     </select>
                   </div>
+                  
                   <div class="mb-3">
-                    <label for="comment" class="form-label">Comment</label>
-                    <textarea class="form-control" id="comment" name="comment" rows="4" required>{{ user_review['comment'] if user_review }}</textarea>
+                    <label for="review_title" class="form-label fw-bold">
+                      <i class="bi bi-pencil"></i> Review Title (Optional)
+                    </label>
+                    <input type="text" class="form-control" id="review_title" name="review_title"
+                           placeholder="Summarize your experience" maxlength="200"
+                           value="{{ user_review['review_title'] if user_review and user_review.get('review_title') }}">
                   </div>
-                  <button type="submit" class="btn btn-success">
-                    <i class="bi bi-send"></i> {% if user_review %}Update Review{% else %}Submit Review{% endif %}
+                  
+                  <div class="mb-3">
+                    <label for="review_text" class="form-label fw-bold">
+                      <i class="bi bi-chat-left-text"></i> Your Review *
+                    </label>
+                    <textarea class="form-control" id="review_text" name="review_text" rows="5" required
+                              placeholder="Share your experience with this product...">{{ user_review['review_text'] if user_review and user_review.get('review_text') else (user_review['comment'] if user_review else '') }}</textarea>
+                    <small class="text-muted">Minimum 10 characters</small>
+                  </div>
+                  
+                  <div class="mb-3">
+                    <label for="review_media" class="form-label fw-bold">
+                      <i class="bi bi-images"></i> Add Photos or Videos (Optional)
+                    </label>
+                    <input type="file" class="form-control" id="review_media" name="review_media"
+                           multiple accept="image/png,image/jpg,image/jpeg,image/gif,image/webp,video/mp4,video/webm,video/quicktime">
+                    <small class="text-muted">
+                      <i class="bi bi-info-circle"></i> You can upload up to 5 images or videos.
+                      Supported formats: PNG, JPG, GIF, WEBP, MP4, WEBM, MOV (Max 10MB per file)
+                    </small>
+                  </div>
+                  
+                  <button type="submit" class="btn btn-success btn-lg">
+                    <i class="bi bi-send-fill"></i> {% if user_review %}Update Review{% else %}Submit Review{% endif %}
                   </button>
                 </form>
               </div>
@@ -901,7 +932,53 @@
                       <i class="bi bi-star"></i>
                     {% endfor %}
                   </div>
-                  <p class="review-comment mb-0">{{ review['comment'] }}</p>
+                  
+                  <!-- Review Title -->
+                  {% if review['review_title'] %}
+                  <h6 class="fw-bold mb-2">{{ review['review_title'] }}</h6>
+                  {% endif %}
+                  
+                  <!-- Review Text -->
+                  <p class="review-comment mb-3">{{ review['comment'] }}</p>
+                  
+                  <!-- Review Media (Images/Videos) -->
+                  {% if review['media'] and review['media']|length > 0 %}
+                  <div class="review-media-gallery mb-3">
+                    <div class="row g-2">
+                      {% for media in review['media'] %}
+                      <div class="col-auto">
+                        {% if media['media_type'] == 'image' %}
+                        <a href="{{ media['media_url'] }}" target="_blank">
+                          <img src="{{ media['media_url'] }}" alt="Review image"
+                               class="review-media-thumbnail"
+                               style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; cursor: pointer;">
+                        </a>
+                        {% elif media['media_type'] == 'video' %}
+                        <video controls class="review-media-thumbnail"
+                               style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px;">
+                          <source src="{{ media['media_url'] }}" type="video/mp4">
+                          Your browser does not support the video tag.
+                        </video>
+                        {% endif %}
+                      </div>
+                      {% endfor %}
+                    </div>
+                  </div>
+                  {% endif %}
+                  
+                  <!-- Verified Purchase Badge -->
+                  {% if review['is_verified_purchase'] %}
+                  <span class="badge bg-success mb-2">
+                    <i class="bi bi-patch-check"></i> Verified Purchase
+                  </span>
+                  {% endif %}
+                  
+                  <!-- Helpful Button -->
+                  <div class="mt-2">
+                    <button class="btn btn-sm btn-outline-secondary" onclick="markHelpful({{ review['id'] }})">
+                      <i class="bi bi-hand-thumbs-up"></i> Helpful ({{ review['helpful_count'] or 0 }})
+                    </button>
+                  </div>
                 </div>
                 {% endfor %}
               {% else %}
@@ -1019,6 +1096,33 @@
       prevBtn.addEventListener('click', ()=>{strip.scrollBy({left:-SCROLL_BY, behavior:'smooth'}); setTimeout(updateNavDisabled,250);});
       nextBtn.addEventListener('click', ()=>{strip.scrollBy({left:SCROLL_BY, behavior:'smooth'}); setTimeout(updateNavDisabled,250);});
       strip.addEventListener('scroll', updateNavDisabled);
+
+    // Mark review as helpful
+    function markHelpful(reviewId) {
+      fetch(`/review/${reviewId}/helpful`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          // Update the helpful count in the UI
+          const button = event.target.closest('button');
+          button.innerHTML = `<i class="bi bi-hand-thumbs-up-fill"></i> Helpful (${data.helpful_count})`;
+          button.disabled = true;
+          button.classList.remove('btn-outline-secondary');
+          button.classList.add('btn-secondary');
+        } else {
+          alert(data.message || 'You have already marked this review as helpful');
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred. Please try again.');
+      });
+    }
       window.addEventListener('resize', updateNavDisabled);
       updateNavDisabled();
     }

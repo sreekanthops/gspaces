@@ -460,10 +460,12 @@
                         </div>
                         {% endif %}
                         
+                        {% if gst_enabled %}
                         <div class="summary-row">
-                            <span>GST (18%)</span>
+                            <span>GST ({{ (gst_rate * 100)|round(0)|int }}%)</span>
                             <strong id="gst-amount">₹{{ gst_amount|inr }}</strong>
                         </div>
+                        {% endif %}
                         <div class="summary-row pt-3">
                             <span class="summary-total">Total payable</span>
                             <span class="summary-total" id="total-amount">₹{{ total_with_gst|inr }}</span>
@@ -552,6 +554,8 @@
         var originalSubtotal = parseFloat("{{ subtotal }}");
         var originalGST = parseFloat("{{ gst_amount }}");
         var originalTotal = parseFloat("{{ total_with_gst }}");
+        var gstEnabled = {{ gst_enabled|tojson }};
+        var gstRate = parseFloat("{{ gst_rate }}");
 
         async function ensurePhone() {
             if (!user_phone) {
@@ -628,7 +632,7 @@
                 if (appliedCoupon) {
                     currentSubtotal -= appliedCoupon.discount_amount;
                 }
-                const currentGST = currentSubtotal * 0.18;
+                const currentGST = gstEnabled ? currentSubtotal * gstRate : 0;
                 const currentTotal = currentSubtotal + currentGST;
                 
                 // Calculate how much wallet balance can be used
@@ -652,7 +656,7 @@
                 if (appliedCoupon) {
                     currentSubtotal -= appliedCoupon.discount_amount;
                 }
-                const currentGST = currentSubtotal * 0.18;
+                const currentGST = gstEnabled ? currentSubtotal * gstRate : 0;
                 const currentTotal = currentSubtotal + currentGST;
                 
                 document.getElementById('total-amount').textContent = `₹${currentTotal.toFixed(2)}`;
@@ -662,12 +666,14 @@
 
         function updateCartWithCoupon(discountAmount) {
             const newSubtotal = originalSubtotal - discountAmount;
-            const newGST = newSubtotal * 0.18;
+            const newGST = gstEnabled ? newSubtotal * gstRate : 0;
             const newTotal = newSubtotal + newGST;
             
             document.getElementById('coupon-discount-row').classList.remove('d-none');
             document.getElementById('coupon-discount-amount').textContent = `- ₹${discountAmount.toFixed(2)}`;
-            document.getElementById('gst-amount').textContent = `₹${newGST.toFixed(2)}`;
+            if (gstEnabled) {
+                document.getElementById('gst-amount').textContent = `₹${newGST.toFixed(2)}`;
+            }
             document.getElementById('total-amount').textContent = `₹${newTotal.toFixed(2)}`;
             document.getElementById('coupon-savings').classList.remove('d-none');
             
@@ -693,7 +699,9 @@
         function removeCoupon() {
             appliedCoupon = null;
             document.getElementById('coupon-discount-row').classList.add('d-none');
-            document.getElementById('gst-amount').textContent = `₹${originalGST.toFixed(2)}`;
+            if (gstEnabled) {
+                document.getElementById('gst-amount').textContent = `₹${originalGST.toFixed(2)}`;
+            }
             document.getElementById('total-amount').textContent = `₹${originalTotal.toFixed(2)}`;
             document.getElementById('coupon-applied-msg').classList.add('d-none');
             document.getElementById('coupon-code-input').disabled = false;

@@ -269,6 +269,36 @@ def connect_to_db():
     except Error as e:
         print(f"DB connection error: {e}")
         return None
+def get_gst_settings():
+    """Get current GST settings from database"""
+    conn = None
+    try:
+        conn = connect_to_db()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        cursor.execute("SELECT * FROM gst_settings ORDER BY id DESC LIMIT 1")
+        settings = cursor.fetchone()
+        if settings:
+            return settings
+        else:
+            # Return default settings if none exist
+            return {
+                'gst_enabled': True,
+                'gst_rate': Decimal('0.18'),
+                'gst_number': '36AORPG7724G1ZN',
+                'updated_at': None
+            }
+    except Exception as e:
+        print(f"Error fetching GST settings: {e}")
+        return {
+            'gst_enabled': True,
+            'gst_rate': Decimal('0.18'),
+            'gst_number': '36AORPG7724G1ZN',
+            'updated_at': None
+        }
+    finally:
+        if conn:
+            conn.close()
+
 
 def create_users_table(conn):
     try:
@@ -2016,9 +2046,18 @@ def calculate_cart_totals(cart_items, coupon_discount=Decimal("0.00")):
     if subtotal_after_coupon < 0:
         subtotal_after_coupon = Decimal("0.00")
     
-    gst_rate = Decimal('0.18')
-    gst_amount = (subtotal_after_coupon * gst_rate).quantize(Decimal('0.01'))
-    total_with_gst = (subtotal_after_coupon + gst_amount).quantize(Decimal('0.01'))
+    # Get GST settings from database
+    gst_settings = get_gst_settings()
+    gst_enabled = gst_settings.get('gst_enabled', True)
+    gst_rate = gst_settings.get('gst_rate', Decimal('0.18'))
+    
+    # Calculate GST only if enabled
+    if gst_enabled:
+        gst_amount = (subtotal_after_coupon * gst_rate).quantize(Decimal('0.01'))
+        total_with_gst = (subtotal_after_coupon + gst_amount).quantize(Decimal('0.01'))
+    else:
+        gst_amount = Decimal('0.00')
+        total_with_gst = subtotal_after_coupon
 
     return {
         "deal_active": deal_active,
@@ -2028,7 +2067,10 @@ def calculate_cart_totals(cart_items, coupon_discount=Decimal("0.00")):
         "coupon_discount": coupon_discount.quantize(Decimal('0.01')),
         "subtotal_after_coupon": subtotal_after_coupon,
         "gst_amount": gst_amount,
-        "total_with_gst": total_with_gst
+        "total_with_gst": total_with_gst,
+        "gst_enabled": gst_enabled,
+        "gst_rate": gst_rate,
+        "gst_number": gst_settings.get('gst_number', '36AORPG7724G1ZN')
     }
 
 
@@ -2323,6 +2365,53 @@ def get_coupon(coupon_id):
         finally:
             conn.close()
     return jsonify({"status": "error", "message": "Database connection error"})
+# --- ADMIN GST SETTINGS ROUTE ---
+@app.route('/admin/gst-settings', methods=['GET', 'POST'])
+@login_required
+def admin_gst_settings():
+    if not current_user.is_admin:
+        flash("Unauthorized access", "danger")
+        return redirect(url_for('index'))
+    
+    conn = None
+    try:
+        conn = connect_to_db()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        
+        if request.method == 'POST':
+            # Get form data
+            gst_enabled = request.form.get('gst_enabled') == 'on'
+            gst_rate = Decimal(request.form.get('gst_rate', '18')) / Decimal('100')  # Convert percentage to decimal
+            gst_number = request.form.get('gst_number', '36AORPG7724G1ZN').strip()
+            
+            # Update GST settings
+            cursor.execute("""
+                UPDATE gst_settings 
+                SET gst_enabled = %s, 
+                    gst_rate = %s, 
+                    gst_number = %s,
+                    updated_at = CURRENT_TIMESTAMP,
+                    updated_by = %s
+                WHERE id = (SELECT id FROM gst_settings ORDER BY id DESC LIMIT 1)
+            """, (gst_enabled, gst_rate, gst_number, current_user.email))
+            
+            conn.commit()
+            flash("GST settings updated successfully!", "success")
+            return redirect(url_for('admin_gst_settings'))
+        
+        # GET request - fetch current settings
+        gst_settings = get_gst_settings()
+        return render_template('admin_gst_settings.html', gst_settings=gst_settings)
+        
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        flash(f"Error updating GST settings: {str(e)}", "danger")
+        return redirect(url_for('admin_gst_settings'))
+    finally:
+        if conn:
+            conn.close()
+
 
 # --- ADMIN ORDER MANAGEMENT ROUTES ---
 @app.route('/admin/orders')
@@ -2866,7 +2955,10 @@ def cart():
         deal_active=totals["deal_active"],
         razorpay_order_id=razorpay_order_id,
         razorpay_key=RAZORPAY_KEY_ID,
-        wallet_balance=wallet_balance
+        wallet_balance=wallet_balance,
+        gst_enabled=totals["gst_enabled"],
+        gst_rate=totals["gst_rate"],
+        gst_number=totals["gst_number"]
     )
 
 # --- Payment success route ---
@@ -3121,7 +3213,7 @@ def payment_success():
                                 <p style="margin:0;color:#4b5563;line-height:1.7;">
                                     Order date: {datetime.now().strftime('%d %b %Y, %I:%M %p')}<br>
                                     Status: {order_status_label}<br>
-                                    GSTIN: 36AORPG7724G1ZN
+                                    {f"GSTIN: {totals.get('gst_number', '36AORPG7724G1ZN')}" if totals.get('gst_enabled', True) else ""}
                                 </p>
                             </td>
                         </tr>
@@ -3152,10 +3244,10 @@ def payment_success():
                             <td style="padding:8px 0;color:#4b5563;">Taxable subtotal</td>
                             <td style="padding:8px 0;text-align:right;">INR {totals.get('subtotal', 0)}</td>
                         </tr>
-                        <tr>
-                            <td style="padding:8px 0;color:#4b5563;">GST (18%)</td>
+                        {f'''<tr>
+                            <td style="padding:8px 0;color:#4b5563;">GST ({(totals.get('gst_rate', Decimal('0.18')) * 100):.0f}%)</td>
                             <td style="padding:8px 0;text-align:right;">INR {totals.get('gst_amount', 0)}</td>
-                        </tr>
+                        </tr>''' if totals.get('gst_enabled', True) else ''}
                         <tr>
                             <td style="padding:12px 0;font-weight:700;border-top:1px solid #e5e7eb;">Total paid</td>
                             <td style="padding:12px 0;text-align:right;font-weight:700;border-top:1px solid #e5e7eb;">INR {totals.get('total_with_gst', 0)}</td>

@@ -1923,8 +1923,6 @@ def mark_review_helpful(review_id):
         if conn:
             conn.close()
 
-    )
-
 @app.route('/edit_detailed_description/<int:product_id>', methods=['POST'])
 @login_required
 def edit_detailed_description(product_id):

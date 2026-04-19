@@ -305,12 +305,20 @@ def get_razorpay_credentials():
     
     if gst_enabled:
         # Use GST account
-        key_id = gst_settings.get('razorpay_key_gst') or RAZORPAY_KEY_ID
-        key_secret = gst_settings.get('razorpay_secret_gst') or RAZORPAY_KEY_SECRET
+        key_id = gst_settings.get('razorpay_key_gst')
+        key_secret = gst_settings.get('razorpay_secret_gst')
+        # Fall back to default if empty or None
+        if not key_id or not key_secret or key_id.strip() == '' or key_secret.strip() == '':
+            key_id = RAZORPAY_KEY_ID
+            key_secret = RAZORPAY_KEY_SECRET
     else:
         # Use non-GST account
-        key_id = gst_settings.get('razorpay_key_no_gst') or RAZORPAY_KEY_ID
-        key_secret = gst_settings.get('razorpay_secret_no_gst') or RAZORPAY_KEY_SECRET
+        key_id = gst_settings.get('razorpay_key_no_gst')
+        key_secret = gst_settings.get('razorpay_secret_no_gst')
+        # Fall back to default if empty or None
+        if not key_id or not key_secret or key_id.strip() == '' or key_secret.strip() == '':
+            key_id = RAZORPAY_KEY_ID
+            key_secret = RAZORPAY_KEY_SECRET
     
     return key_id, key_secret
 

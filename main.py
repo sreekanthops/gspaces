@@ -3300,6 +3300,13 @@ def admin_bulk_delete_customers():
         flash("No customers selected.", "warning")
         return redirect(url_for('admin_customers'))
     
+    # Convert string IDs to integers
+    try:
+        customer_ids = [int(id) for id in customer_ids]
+    except ValueError:
+        flash("Invalid customer IDs.", "danger")
+        return redirect(url_for('admin_customers'))
+    
     conn = connect_to_db()
     if not conn:
         flash("Database connection error.", "danger")
@@ -3310,7 +3317,7 @@ def admin_bulk_delete_customers():
         
         # Delete customers
         cur.execute("""
-            DELETE FROM users 
+            DELETE FROM users
             WHERE id = ANY(%s)
         """, (customer_ids,))
         

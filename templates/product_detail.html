@@ -515,6 +515,21 @@
         padding: 14px 24px;
       }
     }
+
+    /* Modal z-index fix */
+    .modal {
+      z-index: 1055 !important;
+    }
+    .modal-backdrop {
+      z-index: 1050 !important;
+    }
+    .modal-dialog {
+      z-index: 1056 !important;
+    }
+    .modal-content {
+      position: relative;
+      z-index: 1057 !important;
+    }
   </style>
 </head>
 <body>

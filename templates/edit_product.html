@@ -204,7 +204,7 @@
     btn.addEventListener('click', function() {
       if(confirm('Are you sure you want to delete this sub-image?')) {
         const subId = this.dataset.subId;
-        fetch(`/delete-sub-image/${subId}`, { method: 'POST' })
+        fetch(`/delete_sub_image/${subId}`, { method: 'POST' })
           .then(() => location.reload());
       }
     });

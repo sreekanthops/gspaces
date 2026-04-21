@@ -4,11 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Share Your Desk Setup Story | GSpaces</title>
-  <link href="{{ url_for('static', filename='img/favicon.png') }}" rel="icon">
+  <link href="{{ url_for('static', filename='img/favicon.svg') }}" rel="icon">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
   <link href="{{ url_for('static', filename='css/main.css') }}" rel="stylesheet">
-  <script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
   <style>
     .create-blog-container {
       max-width: 900px;
@@ -32,6 +31,38 @@
       font-size: 0.9rem;
       color: #6c757d;
       margin-top: 5px;
+    }
+    .editor-toolbar {
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-bottom: none;
+      padding: 10px;
+      border-radius: 8px 8px 0 0;
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap;
+    }
+    .editor-toolbar button {
+      border: 1px solid #dee2e6;
+      background: white;
+      padding: 5px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .editor-toolbar button:hover {
+      background: #e9ecef;
+    }
+    .editor-toolbar button.active {
+      background: #0d6efd;
+      color: white;
+      border-color: #0d6efd;
+    }
+    #content {
+      border-radius: 0 0 8px 8px;
+      border-top: none;
+      min-height: 300px;
+      font-family: Arial, sans-serif;
     }
   </style>
 </head>
@@ -70,8 +101,22 @@
       <!-- Content -->
       <div class="mb-4">
         <label for="content" class="form-label">Your Story *</label>
-        <textarea id="content" name="content" class="form-control" rows="15" required
-                  placeholder="Share your desk setup journey, what you love about it, tips for others..."></textarea>
+        <div class="editor-toolbar">
+          <button type="button" onclick="formatText('bold')" title="Bold"><i class="bi bi-type-bold"></i></button>
+          <button type="button" onclick="formatText('italic')" title="Italic"><i class="bi bi-type-italic"></i></button>
+          <button type="button" onclick="formatText('underline')" title="Underline"><i class="bi bi-type-underline"></i></button>
+          <button type="button" onclick="formatText('insertUnorderedList')" title="Bullet List"><i class="bi bi-list-ul"></i></button>
+          <button type="button" onclick="formatText('insertOrderedList')" title="Numbered List"><i class="bi bi-list-ol"></i></button>
+          <button type="button" onclick="formatText('justifyLeft')" title="Align Left"><i class="bi bi-text-left"></i></button>
+          <button type="button" onclick="formatText('justifyCenter')" title="Align Center"><i class="bi bi-text-center"></i></button>
+          <button type="button" onclick="formatText('justifyRight')" title="Align Right"><i class="bi bi-text-right"></i></button>
+          <button type="button" onclick="insertHeading()" title="Heading"><i class="bi bi-type-h1"></i></button>
+          <button type="button" onclick="insertLink()" title="Insert Link"><i class="bi bi-link-45deg"></i></button>
+        </div>
+        <div id="content" contenteditable="true" class="form-control"
+             style="min-height: 300px; overflow-y: auto;"
+             placeholder="Share your desk setup journey, what you love about it, tips for others..."></div>
+        <textarea id="content-hidden" name="content" style="display: none;" required></textarea>
         <div class="upload-info">
           You can format your text with bold, italic, lists, and more. Minimum 100 characters.
         </div>
@@ -139,18 +184,51 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-  // Initialize TinyMCE
-  tinymce.init({
-    selector: '#content',
-    height: 400,
-    menubar: false,
-    plugins: [
-      'lists', 'link', 'code', 'preview'
-    ],
-    toolbar: 'undo redo | formatselect | bold italic underline | alignleft aligncenter alignright | bullist numlist | link | code preview',
-    content_style: 'body { font-family: Arial, sans-serif; font-size: 14px; }',
-    branding: false,
-    promotion: false
+  // Rich text editor functions
+  function formatText(command) {
+    document.execCommand(command, false, null);
+    document.getElementById('content').focus();
+  }
+
+  function insertHeading() {
+    document.execCommand('formatBlock', false, '<h3>');
+    document.getElementById('content').focus();
+  }
+
+  function insertLink() {
+    const url = prompt('Enter URL:');
+    if (url) {
+      document.execCommand('createLink', false, url);
+    }
+    document.getElementById('content').focus();
+  }
+
+  // Sync contenteditable with hidden textarea before submit
+  document.querySelector('form').addEventListener('submit', function(e) {
+    const content = document.getElementById('content').innerHTML;
+    document.getElementById('content-hidden').value = content;
+    
+    // Validate minimum length
+    const textContent = document.getElementById('content').innerText;
+    if (textContent.trim().length < 100) {
+      e.preventDefault();
+      alert('Please write at least 100 characters for your story.');
+      return false;
+    }
+  });
+
+  // Placeholder handling
+  const editor = document.getElementById('content');
+  editor.addEventListener('focus', function() {
+    if (this.innerText.trim() === '') {
+      this.innerHTML = '';
+    }
+  });
+
+  editor.addEventListener('blur', function() {
+    if (this.innerText.trim() === '') {
+      this.innerHTML = '';
+    }
   });
 
   // File validation

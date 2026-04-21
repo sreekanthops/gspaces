@@ -3,12 +3,13 @@ Customer Blog System Routes
 Allows customers to share their desk setup experiences with images and videos
 """
 
-from flask import render_template, request, redirect, url_for, flash, jsonify
+from flask import render_template, request, redirect, url_for, flash, jsonify, session
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 import os
 from datetime import datetime
 import bleach
+import uuid
 
 # Allowed HTML tags for blog content (for security)
 ALLOWED_TAGS = [
@@ -69,21 +70,21 @@ def add_blog_routes(app, connect_to_db):
             # Build query based on sort
             if sort_by == 'popular':
                 order_clause = "cb.views DESC"
-            elif sort_by == 'liked':
-                order_clause = "like_count DESC"
+            elif sort_by == 'reactions':
+                order_clause = "reaction_count DESC"
             else:  # recent
                 order_clause = "cb.created_at DESC"
             
             query = f"""
-                SELECT 
+                SELECT
                     cb.id, cb.title, cb.content, cb.views, cb.created_at,
                     u.name as author_name, u.email as author_email,
-                    COUNT(DISTINCT bl.id) as like_count,
+                    COUNT(DISTINCT br.id) as reaction_count,
                     COUNT(DISTINCT bc.id) as comment_count,
                     (SELECT media_url FROM blog_media WHERE blog_id = cb.id AND media_type = 'image' ORDER BY media_order LIMIT 1) as thumbnail
                 FROM customer_blogs cb
                 JOIN users u ON cb.user_id = u.id
-                LEFT JOIN blog_likes bl ON cb.id = bl.blog_id
+                LEFT JOIN blog_reactions br ON cb.id = br.blog_id
                 LEFT JOIN blog_comments bc ON cb.id = bc.blog_id
                 WHERE cb.status = 'approved'
                 GROUP BY cb.id, u.name, u.email
@@ -117,16 +118,16 @@ def add_blog_routes(app, connect_to_db):
         try:
             cur = conn.cursor()
             
-            # Get blog details
+            # Get blog details with reaction counts
             cur.execute("""
-                SELECT 
+                SELECT
                     cb.id, cb.title, cb.content, cb.views, cb.created_at, cb.user_id,
                     u.name as author_name, u.email as author_email,
-                    COUNT(DISTINCT bl.id) as like_count,
+                    COUNT(DISTINCT br.id) as total_reactions,
                     COUNT(DISTINCT bc.id) as comment_count
                 FROM customer_blogs cb
                 JOIN users u ON cb.user_id = u.id
-                LEFT JOIN blog_likes bl ON cb.id = bl.blog_id
+                LEFT JOIN blog_reactions br ON cb.id = br.blog_id
                 LEFT JOIN blog_comments bc ON cb.id = bc.blog_id
                 WHERE cb.id = %s AND cb.status = 'approved'
                 GROUP BY cb.id, u.name, u.email
@@ -161,23 +162,40 @@ def add_blog_routes(app, connect_to_db):
             """, (blog_id,))
             comments = cur.fetchall()
             
-            # Check if current user liked this blog
-            user_liked = False
+            # Get reaction counts by type
+            cur.execute("""
+                SELECT reaction_type, COUNT(*) as count
+                FROM blog_reactions
+                WHERE blog_id = %s
+                GROUP BY reaction_type
+            """, (blog_id,))
+            reactions = {row[0]: row[1] for row in cur.fetchall()}
+            
+            # Get user's reactions (if any)
+            user_reactions = []
+            session_id = session.get('session_id')
             if current_user.is_authenticated:
                 cur.execute("""
-                    SELECT id FROM blog_likes 
+                    SELECT reaction_type FROM blog_reactions
                     WHERE blog_id = %s AND user_id = %s
                 """, (blog_id, current_user.id))
-                user_liked = cur.fetchone() is not None
+                user_reactions = [row[0] for row in cur.fetchall()]
+            elif session_id:
+                cur.execute("""
+                    SELECT reaction_type FROM blog_reactions
+                    WHERE blog_id = %s AND session_id = %s
+                """, (blog_id, session_id))
+                user_reactions = [row[0] for row in cur.fetchall()]
             
             cur.close()
             conn.close()
             
-            return render_template('blog_detail.html', 
-                                 blog=blog, 
-                                 media=media, 
+            return render_template('blog_detail.html',
+                                 blog=blog,
+                                 media=media,
                                  comments=comments,
-                                 user_liked=user_liked)
+                                 reactions=reactions,
+                                 user_reactions=user_reactions)
             
         except Exception as e:
             print(f"Error fetching blog detail: {e}")
@@ -290,13 +308,13 @@ def add_blog_routes(app, connect_to_db):
             cur = conn.cursor()
             
             cur.execute("""
-                SELECT 
+                SELECT
                     cb.id, cb.title, cb.status, cb.views, cb.created_at,
-                    COUNT(DISTINCT bl.id) as like_count,
+                    COUNT(DISTINCT br.id) as reaction_count,
                     COUNT(DISTINCT bc.id) as comment_count,
                     (SELECT media_url FROM blog_media WHERE blog_id = cb.id AND media_type = 'image' ORDER BY media_order LIMIT 1) as thumbnail
                 FROM customer_blogs cb
-                LEFT JOIN blog_likes bl ON cb.id = bl.blog_id
+                LEFT JOIN blog_reactions br ON cb.id = br.blog_id
                 LEFT JOIN blog_comments bc ON cb.id = bc.blog_id
                 WHERE cb.user_id = %s
                 GROUP BY cb.id
@@ -316,12 +334,26 @@ def add_blog_routes(app, connect_to_db):
             return redirect(url_for('index'))
     
     # -----------------------
-    # LIKE BLOG
+    # REACT TO BLOG (with emoji reactions)
     # -----------------------
-    @app.route('/blog/<int:blog_id>/like', methods=['POST'])
-    @login_required
-    def like_blog(blog_id):
-        """Like or unlike a blog"""
+    @app.route('/blog/<int:blog_id>/react', methods=['POST'])
+    def react_to_blog(blog_id):
+        """Add or remove emoji reaction to a blog (works for logged in and guest users)"""
+        data = request.get_json()
+        reaction_type = data.get('reaction_type')
+        
+        # Validate reaction type
+        valid_reactions = ['love', 'fire', 'happy', 'wow', 'clap', 'heart']
+        if reaction_type not in valid_reactions:
+            return jsonify({'success': False, 'message': 'Invalid reaction type'})
+        
+        # Get or create session ID for guest users
+        if not session.get('session_id'):
+            session['session_id'] = str(uuid.uuid4())
+        
+        session_id = session.get('session_id')
+        user_id = current_user.id if current_user.is_authenticated else None
+        
         conn = connect_to_db()
         if not conn:
             return jsonify({'success': False, 'message': 'Database error'})
@@ -329,49 +361,72 @@ def add_blog_routes(app, connect_to_db):
         try:
             cur = conn.cursor()
             
-            # Check if already liked
-            cur.execute("""
-                SELECT id FROM blog_likes 
-                WHERE blog_id = %s AND user_id = %s
-            """, (blog_id, current_user.id))
-            
-            existing_like = cur.fetchone()
-            
-            if existing_like:
-                # Unlike
+            # Check if user/session already reacted with this type
+            if user_id:
                 cur.execute("""
-                    DELETE FROM blog_likes 
-                    WHERE blog_id = %s AND user_id = %s
-                """, (blog_id, current_user.id))
-                action = 'unliked'
+                    SELECT id FROM blog_reactions
+                    WHERE blog_id = %s AND user_id = %s AND reaction_type = %s
+                """, (blog_id, user_id, reaction_type))
             else:
-                # Like
                 cur.execute("""
-                    INSERT INTO blog_likes (blog_id, user_id)
-                    VALUES (%s, %s)
-                """, (blog_id, current_user.id))
-                action = 'liked'
+                    SELECT id FROM blog_reactions
+                    WHERE blog_id = %s AND session_id = %s AND reaction_type = %s
+                """, (blog_id, session_id, reaction_type))
+            
+            existing_reaction = cur.fetchone()
+            
+            if existing_reaction:
+                # Remove reaction
+                if user_id:
+                    cur.execute("""
+                        DELETE FROM blog_reactions
+                        WHERE blog_id = %s AND user_id = %s AND reaction_type = %s
+                    """, (blog_id, user_id, reaction_type))
+                else:
+                    cur.execute("""
+                        DELETE FROM blog_reactions
+                        WHERE blog_id = %s AND session_id = %s AND reaction_type = %s
+                    """, (blog_id, session_id, reaction_type))
+                action = 'removed'
+            else:
+                # Add reaction
+                if user_id:
+                    cur.execute("""
+                        INSERT INTO blog_reactions (blog_id, user_id, reaction_type)
+                        VALUES (%s, %s, %s)
+                        ON CONFLICT (blog_id, user_id, reaction_type) DO NOTHING
+                    """, (blog_id, user_id, reaction_type))
+                else:
+                    cur.execute("""
+                        INSERT INTO blog_reactions (blog_id, session_id, reaction_type)
+                        VALUES (%s, %s, %s)
+                        ON CONFLICT (blog_id, session_id, reaction_type) DO NOTHING
+                    """, (blog_id, session_id, reaction_type))
+                action = 'added'
             
             conn.commit()
             
-            # Get updated like count
+            # Get updated reaction counts
             cur.execute("""
-                SELECT COUNT(*) FROM blog_likes WHERE blog_id = %s
+                SELECT reaction_type, COUNT(*) as count
+                FROM blog_reactions
+                WHERE blog_id = %s
+                GROUP BY reaction_type
             """, (blog_id,))
-            like_count = cur.fetchone()[0]
+            reactions = {row[0]: row[1] for row in cur.fetchall()}
             
             cur.close()
             conn.close()
             
             return jsonify({
-                'success': True, 
+                'success': True,
                 'action': action,
-                'like_count': like_count
+                'reactions': reactions
             })
             
         except Exception as e:
-            print(f"Error liking blog: {e}")
-            return jsonify({'success': False, 'message': 'Error processing like'})
+            print(f"Error processing reaction: {e}")
+            return jsonify({'success': False, 'message': 'Error processing reaction'})
     
     # -----------------------
     # ADD COMMENT
@@ -438,14 +493,14 @@ def add_blog_routes(app, connect_to_db):
                 status_clause = f"WHERE cb.status = '{status_filter}'"
             
             cur.execute(f"""
-                SELECT 
+                SELECT
                     cb.id, cb.title, cb.status, cb.views, cb.created_at,
                     u.name as author_name, u.email as author_email,
-                    COUNT(DISTINCT bl.id) as like_count,
+                    COUNT(DISTINCT br.id) as reaction_count,
                     COUNT(DISTINCT bc.id) as comment_count
                 FROM customer_blogs cb
                 JOIN users u ON cb.user_id = u.id
-                LEFT JOIN blog_likes bl ON cb.id = bl.blog_id
+                LEFT JOIN blog_reactions br ON cb.id = br.blog_id
                 LEFT JOIN blog_comments bc ON cb.id = bc.blog_id
                 {status_clause}
                 GROUP BY cb.id, u.name, u.email

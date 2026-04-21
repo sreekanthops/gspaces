@@ -14,12 +14,14 @@ import uuid
 # Allowed HTML tags for blog content (for security)
 ALLOWED_TAGS = [
     'p', 'br', 'strong', 'em', 'u', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-    'ul', 'ol', 'li', 'blockquote', 'code', 'pre', 'a', 'img'
+    'ul', 'ol', 'li', 'blockquote', 'code', 'pre', 'a', 'img', 'div', 'span',
+    'article', 'section', 'header', 'footer', 'table', 'tr', 'td', 'th', 'thead', 'tbody'
 ]
 
 ALLOWED_ATTRIBUTES = {
-    'a': ['href', 'title'],
-    'img': ['src', 'alt', 'title']
+    '*': ['style', 'class', 'id'],  # Allow style, class, and id on all tags
+    'a': ['href', 'title', 'target'],
+    'img': ['src', 'alt', 'title', 'width', 'height']
 }
 
 # File upload configuration

@@ -581,14 +581,8 @@ def add_blog_routes(app, connect_to_db):
                     flash('Title and content are required', 'danger')
                     return redirect(url_for('edit_blog', blog_id=blog_id))
                 
-                # Sanitize HTML content
-                content = bleach.clean(
-                    content,
-                    tags=['p', 'br', 'strong', 'em', 'u', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 
-                          'ul', 'ol', 'li', 'blockquote', 'a', 'img'],
-                    attributes={'a': ['href', 'title'], 'img': ['src', 'alt']},
-                    strip=True
-                )
+                # Sanitize HTML content using the updated rules
+                content = sanitize_html(content)
                 
                 # Update blog
                 if product_id:

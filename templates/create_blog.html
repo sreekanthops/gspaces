@@ -203,22 +203,33 @@
     document.getElementById('content').focus();
   }
 
-  // Sync contenteditable with hidden textarea before submit
+  // Sync contenteditable with hidden textarea on input
+  const contentDiv = document.getElementById('content');
+  const hiddenTextarea = document.getElementById('content-hidden');
+  
+  contentDiv.addEventListener('input', function() {
+    hiddenTextarea.value = this.innerHTML;
+  });
+  
+  // Sync before submit and validate
   document.querySelector('form').addEventListener('submit', function(e) {
-    const content = document.getElementById('content').innerHTML;
-    document.getElementById('content-hidden').value = content;
+    const content = contentDiv.innerHTML;
+    hiddenTextarea.value = content;
     
     // Validate minimum length
-    const textContent = document.getElementById('content').innerText;
+    const textContent = contentDiv.innerText;
     if (textContent.trim().length < 100) {
       e.preventDefault();
       alert('Please write at least 100 characters for your story.');
       return false;
     }
   });
+  
+  // Initialize with space to satisfy required attribute
+  hiddenTextarea.value = ' ';
 
   // Placeholder handling
-  const editor = document.getElementById('content');
+  const editor = contentDiv;
   editor.addEventListener('focus', function() {
     if (this.innerText.trim() === '') {
       this.innerHTML = '';

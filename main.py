@@ -1696,17 +1696,34 @@ def delete_main_image(product_id):
 @login_required
 def delete_sub_image(sub_image_id):
     if not current_user.is_admin:
+        flash('Unauthorized access', 'error')
         return redirect(url_for('index'))
 
     conn = connect_to_db()
     if not conn:
+        flash('Database connection error', 'error')
         return redirect(url_for('index'))
 
     try:
         cur = conn.cursor()
+        # First check if the sub-image exists
+        cur.execute("SELECT id FROM product_sub_images WHERE id=%s", (sub_image_id,))
+        result = cur.fetchone()
+        
+        if not result:
+            flash('Sub-image not found', 'error')
+            cur.close()
+            conn.close()
+            return redirect(request.referrer or url_for('index'))
+        
+        # Delete the sub-image
         cur.execute("DELETE FROM product_sub_images WHERE id=%s", (sub_image_id,))
         conn.commit()
+        flash('Sub-image deleted successfully', 'success')
         cur.close()
+    except Exception as e:
+        flash(f'Error deleting sub-image: {str(e)}', 'error')
+        conn.rollback()
     finally:
         conn.close()
 

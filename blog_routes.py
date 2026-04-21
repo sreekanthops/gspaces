@@ -501,11 +501,11 @@ def add_blog_routes(app, connect_to_db):
     def delete_blog(blog_id):
         """Delete a blog"""
         if not current_user.is_admin:
-            return jsonify({'success': False, 'message': 'Unauthorized'})
+            return jsonify({'success': False, 'error': 'Unauthorized'})
         
         conn = connect_to_db()
         if not conn:
-            return jsonify({'success': False, 'message': 'Database error'})
+            return jsonify({'success': False, 'error': 'Database error'})
         
         try:
             cur = conn.cursor()
@@ -516,7 +516,7 @@ def add_blog_routes(app, connect_to_db):
             """, (blog_id,))
             media_files = cur.fetchall()
             
-            # Delete blog (cascade will delete media records, likes, comments)
+            # Delete blog (cascade will delete media records, reactions, comments)
             cur.execute("DELETE FROM customer_blogs WHERE id = %s", (blog_id,))
             
             conn.commit()
@@ -532,10 +532,10 @@ def add_blog_routes(app, connect_to_db):
                 except Exception as e:
                     print(f"Error deleting file {media[0]}: {e}")
             
-            return jsonify({'success': True, 'message': 'Blog deleted'})
+            return jsonify({'success': True})
             
         except Exception as e:
             print(f"Error deleting blog: {e}")
-            return jsonify({'success': False, 'message': 'Error deleting blog'})
+            return jsonify({'success': False, 'error': 'Error deleting blog'})
 
 # Made with Bob

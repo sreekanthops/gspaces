@@ -56,6 +56,7 @@ from datetime import datetime, timedelta
 from wallet_system import WalletSystem
 from wallet_routes import add_wallet_routes, integrate_wallet_with_signup, integrate_wallet_with_order
 from admin_referral_routes import add_admin_referral_routes
+from blog_routes import add_blog_routes
 
 # --- DISPOSABLE EMAIL DOMAINS BLACKLIST ---
 DISPOSABLE_EMAIL_DOMAINS = {
@@ -463,6 +464,9 @@ add_wallet_routes(app, connect_to_db)
 
 # Initialize admin referral coupon routes
 add_admin_referral_routes(app, connect_to_db, ADMIN_EMAILS)
+
+# Initialize blog routes
+add_blog_routes(app, connect_to_db)
 
 def get_catalogue_files():
     """Get list of files from the catalogue directory"""

@@ -163,6 +163,9 @@ document.addEventListener("DOMContentLoaded", initCountdownFromServer);
                 <li class="nav-item"><a class="nav-link js-scroll-link" href="{{ url_for('index', section='about') }}" data-section="about">About</a></li>
                 <li class="nav-item"><a class="nav-link js-scroll-link" href="{{ url_for('index', section='corporate') }}" data-section="corporate">Corporate Tie-ups</a></li>
                 <li class="nav-item"><a class="nav-link js-scroll-link" href="{{ url_for('index', section='products') }}" data-section="products">Setups</a></li>
+                <li class="nav-item {% if request.endpoint == 'blogs' or request.endpoint == 'blog_detail' %}active{% endif %}">
+                    <a class="nav-link" href="{{ url_for('blogs') }}">Blogs</a>
+                </li>
                 <li class="nav-item"><a class="nav-link js-scroll-link" href="{{ url_for('index', section='team') }}" data-section="team">Team</a></li>
                 <li class="nav-item"><a class="nav-link js-scroll-link" href="{{ url_for('index', section='contact') }}" data-section="contact">Contact</a></li>
             </ul>

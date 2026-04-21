@@ -9,6 +9,7 @@ from werkzeug.utils import secure_filename
 import os
 from datetime import datetime
 import bleach
+from bleach.css_sanitizer import CSSSanitizer
 import uuid
 
 # Allowed HTML tags for blog content (for security)
@@ -23,6 +24,20 @@ ALLOWED_ATTRIBUTES = {
     'a': ['href', 'title', 'target'],
     'img': ['src', 'alt', 'title', 'width', 'height']
 }
+
+# CSS Sanitizer - allows common safe CSS properties
+ALLOWED_CSS_PROPERTIES = [
+    'color', 'background-color', 'font-size', 'font-weight', 'font-family', 'font-style',
+    'text-align', 'text-decoration', 'line-height', 'letter-spacing',
+    'margin', 'margin-top', 'margin-bottom', 'margin-left', 'margin-right',
+    'padding', 'padding-top', 'padding-bottom', 'padding-left', 'padding-right',
+    'border', 'border-radius', 'border-color', 'border-width', 'border-style',
+    'width', 'height', 'max-width', 'max-height', 'min-width', 'min-height',
+    'display', 'float', 'clear', 'position', 'top', 'bottom', 'left', 'right',
+    'list-style', 'list-style-type', 'vertical-align'
+]
+
+css_sanitizer = CSSSanitizer(allowed_css_properties=ALLOWED_CSS_PROPERTIES)
 
 # File upload configuration
 BLOG_UPLOAD_FOLDER = 'static/img/blogs'
@@ -44,7 +59,13 @@ def allowed_file(filename, file_type='image'):
 
 def sanitize_html(content):
     """Sanitize HTML content to prevent XSS attacks"""
-    return bleach.clean(content, tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES, strip=True)
+    return bleach.clean(
+        content,
+        tags=ALLOWED_TAGS,
+        attributes=ALLOWED_ATTRIBUTES,
+        css_sanitizer=css_sanitizer,
+        strip=True
+    )
 
 def add_blog_routes(app, connect_to_db):
     """Add blog routes to the Flask app"""

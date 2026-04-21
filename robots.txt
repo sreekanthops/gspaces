@@ -1,9 +1,32 @@
+# GSpaces Robots.txt
 User-agent: *
-Disallow: /sicbo/
-Disallow: /craps/
-Disallow: /uono-board-poker*
-Disallow: /game-big-poker*
-Disallow: /*.shtml$
-Disallow: /*.html$  # Reconsider keeping this if you want these pages indexed
+Allow: /
+Disallow: /admin/
+Disallow: /cart/
+Disallow: /checkout/
+Disallow: /login
+Disallow: /signup
+Disallow: /profile
+Disallow: /wallet
+Disallow: /api/
+Disallow: /*?*sort=
+Disallow: /*?*filter=
+Disallow: /search?
 
+# Allow important pages
+Allow: /product/
+Allow: /static/
+Allow: /*.css
+Allow: /*.js
+Allow: /*.jpg
+Allow: /*.jpeg
+Allow: /*.png
+Allow: /*.gif
+Allow: /*.svg
+Allow: /*.webp
+
+# Crawl-delay for respectful crawling
+Crawl-delay: 1
+
+# Sitemap location
 Sitemap: https://gspaces.in/sitemap.xml

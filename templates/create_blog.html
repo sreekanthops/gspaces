@@ -90,10 +90,24 @@
 
     <form method="POST" enctype="multipart/form-data">
       
+      <!-- Product Selection (Optional) -->
+      <div class="mb-4">
+        <label for="product_id" class="form-label">Your Setup Product (Optional)</label>
+        <select class="form-control form-control-lg" id="product_id" name="product_id">
+          <option value="">Select your setup (optional)</option>
+          {% if products %}
+            {% for product in products %}
+              <option value="{{ product[0] }}">{{ product[1] }}</option>
+            {% endfor %}
+          {% endif %}
+        </select>
+        <div class="upload-info">Let others know which GSpaces product you're using</div>
+      </div>
+
       <!-- Title -->
       <div class="mb-4">
         <label for="title" class="form-label">Blog Title *</label>
-        <input type="text" class="form-control form-control-lg" id="title" name="title" 
+        <input type="text" class="form-control form-control-lg" id="title" name="title"
                placeholder="e.g., My Dream WFH Desk Setup Transformation" required maxlength="255">
         <div class="upload-info">Make it catchy! This is what people see first.</div>
       </div>

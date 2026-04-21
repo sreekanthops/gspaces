@@ -72,13 +72,24 @@
 
 <div class="container my-5">
   
-  <!-- Sort Bar -->
+  <!-- Sort Bar with Share Button -->
   <div class="sort-bar">
     <div class="row align-items-center">
-      <div class="col-md-6">
+      <div class="col-md-4">
         <h5 class="mb-0">Browse Desk Setup Stories</h5>
       </div>
-      <div class="col-md-6 text-end">
+      <div class="col-md-4 text-center">
+        {% if current_user.is_authenticated %}
+        <a href="{{ url_for('create_blog') }}" class="btn btn-primary">
+          <i class="bi bi-plus-circle"></i> Share Your Setup
+        </a>
+        {% else %}
+        <a href="{{ url_for('login') }}" class="btn btn-outline-primary">
+          <i class="bi bi-box-arrow-in-right"></i> Login to Share
+        </a>
+        {% endif %}
+      </div>
+      <div class="col-md-4 text-end">
         <div class="btn-group" role="group">
           <a href="{{ url_for('blogs', sort='recent') }}" class="btn btn-sm {% if sort_by == 'recent' %}btn-primary{% else %}btn-outline-primary{% endif %}">
             <i class="bi bi-clock"></i> Recent
@@ -108,7 +119,8 @@
         
         <div class="blog-card-body">
           <h5>{{ blog[1] }}</h5>
-          <p class="text-muted">{{ blog[2][:150]|striptags }}...</p>
+          {% set plain_text = blog[2]|striptags %}
+          <p class="text-muted">{{ plain_text[:150] }}{% if plain_text|length > 150 %}...{% endif %}</p>
           
           <div class="blog-meta">
             <span><i class="bi bi-person"></i> {{ blog[5] }}</span>
@@ -140,12 +152,6 @@
 
 </div>
 
-<!-- Floating Create Button -->
-{% if current_user.is_authenticated %}
-<a href="{{ url_for('create_blog') }}" class="btn btn-primary btn-lg create-blog-btn">
-  <i class="bi bi-plus-circle"></i> Share Your Setup
-</a>
-{% endif %}
 
 {% include 'footer.html' %}
 

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Blogs - Admin Panel</title>
+    <link href="{{ url_for('static', filename='img/favicon.svg') }}" rel="icon">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body { background: #f8f9fa; font-family: 'Inter', sans-serif; }
+        .admin-container { max-width: 1400px; margin: 40px auto; padding: 0 20px; }
+        .admin-card { background: white; border-radius: 16px; padding: 32px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .admin-nav-btn { padding: 10px 20px; border-radius: 12px; text-decoration: none; font-weight: 600; transition: all 0.3s; }
+        .admin-nav-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .admin-nav-btn.active { background: #d4af37 !important; color: #111827 !important; }
+        .blog-table { width: 100%; }
+        .blog-table th { background: #f8f9fa; padding: 12px; font-weight: 600; border-bottom: 2px solid #dee2e6; }
+        .blog-table td { padding: 12px; border-bottom: 1px solid #e9ecef; vertical-align: middle; }
+        .blog-table tr:hover { background: #f8f9fa; }
+        .delete-btn { background: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; }
+        .delete-btn:hover { background: #c82333; }
+        .view-btn { background: #0d6efd; color: white; padding: 6px 12px; border-radius: 6px; text-decoration: none; display: inline-block; }
+        .view-btn:hover { background: #0b5ed7; color: white; }
+    </style>
+</head>
+<body>
+
+{% include 'navbar.html' %}
+
+<div class="admin-container">
+    <!-- Admin Navigation -->
+    <div class="admin-nav" style="display: flex; gap: 16px; margin-bottom: 24px; flex-wrap: wrap;">
+        <a href="{{ url_for('admin_orders') }}" class="admin-nav-btn" style="padding: 10px 20px; border-radius: 12px; text-decoration: none; font-weight: 600; background: #f3f4f6; color: #6b7280;">📦 Orders</a>
+        <a href="{{ url_for('admin_coupons') }}" class="admin-nav-btn" style="padding: 10px 20px; border-radius: 12px; text-decoration: none; font-weight: 600; background: #f3f4f6; color: #6b7280;">🎁 Coupons</a>
+        <a href="{{ url_for('admin_referral_coupons') }}" class="admin-nav-btn" style="padding: 10px 20px; border-radius: 12px; text-decoration: none; font-weight: 600; background: #f3f4f6; color: #6b7280;">🎯 Referral Coupons</a>
+        <a href="{{ url_for('admin_reviews') }}" class="admin-nav-btn" style="padding: 10px 20px; border-radius: 12px; text-decoration: none; font-weight: 600; background: #f3f4f6; color: #6b7280;">⭐ Reviews</a>
+        <a href="{{ url_for('admin_gst_settings') }}" class="admin-nav-btn" style="padding: 10px 20px; border-radius: 12px; text-decoration: none; font-weight: 600; background: #f3f4f6; color: #6b7280;">💰 GST Settings</a>
+        <a href="{{ url_for('admin_customers') }}" class="admin-nav-btn" style="padding: 10px 20px; border-radius: 12px; text-decoration: none; font-weight: 600; background: #f3f4f6; color: #6b7280;">👤 Customers</a>
+        <a href="{{ url_for('admin_blogs') }}" class="admin-nav-btn active" style="padding: 10px 20px; border-radius: 12px; text-decoration: none; font-weight: 600; background: #d4af37; color: #111827;">📝 Blogs</a>
+    </div>
+
+    <div class="admin-card">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="mb-2">Blog Management</h2>
+                <p class="text-muted mb-0">View and manage customer desk setup stories</p>
+            </div>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="table-responsive">
+            <table class="blog-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Title</th>
+                        <th>Author</th>
+                        <th>Product</th>
+                        <th>Views</th>
+                        <th>Reactions</th>
+                        <th>Comments</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if blogs %}
+                        {% for blog in blogs %}
+                        <tr>
+                            <td>#{{ blog[0] }}</td>
+                            <td style="max-width: 300px;">{{ blog[1] }}</td>
+                            <td>{{ blog[4] }}</td>
+                            <td>{{ blog[8] if blog[8] else 'Not specified' }}</td>
+                            <td><i class="bi bi-eye"></i> {{ blog[2] }}</td>
+                            <td><i class="bi bi-emoji-smile"></i> {{ blog[6] }}</td>
+                            <td><i class="bi bi-chat"></i> {{ blog[7] }}</td>
+                            <td>{{ blog[3].strftime('%b %d, %Y') }}</td>
+                            <td>
+                                <a href="{{ url_for('blog_detail', blog_id=blog[0]) }}" class="view-btn" target="_blank">
+                                    <i class="bi bi-eye"></i> View
+                                </a>
+                                <button class="delete-btn" onclick="deleteBlog({{ blog[0] }})">
+                                    <i class="bi bi-trash"></i> Delete
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="9" class="text-center py-5">
+                                <i class="bi bi-journal-text" style="font-size: 3rem; color: #ccc;"></i>
+                                <p class="text-muted mt-3">No blogs yet</p>
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% include 'footer.html' %}
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+function deleteBlog(blogId) {
+    if (!confirm('Are you sure you want to delete this blog? This action cannot be undone.')) {
+        return;
+    }
+
+    fetch(`/admin/blogs/${blogId}/delete`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Blog deleted successfully');
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error deleting blog');
+    });
+}
+</script>
+
+</body>
+</html>

@@ -537,5 +537,89 @@ def add_blog_routes(app, connect_to_db):
         except Exception as e:
             print(f"Error deleting blog: {e}")
             return jsonify({'success': False, 'error': 'Error deleting blog'})
+    
+    # -----------------------
+    # EDIT BLOG
+    # -----------------------
+    @app.route('/blog/<int:blog_id>/edit', methods=['GET', 'POST'])
+    @login_required
+    def edit_blog(blog_id):
+        """Edit a blog"""
+        conn = connect_to_db()
+        if not conn:
+            flash('Database connection error', 'danger')
+            return redirect(url_for('blogs'))
+        
+        try:
+            cur = conn.cursor()
+            
+            # Get blog details
+            cur.execute("""
+                SELECT id, user_id, product_id, title, content 
+                FROM customer_blogs 
+                WHERE id = %s
+            """, (blog_id,))
+            blog = cur.fetchone()
+            
+            if not blog:
+                flash('Blog not found', 'danger')
+                return redirect(url_for('blogs'))
+            
+            # Check if user owns the blog or is admin
+            if blog[1] != current_user.id and not current_user.is_admin:
+                flash('You do not have permission to edit this blog', 'danger')
+                return redirect(url_for('blog_detail', blog_id=blog_id))
+            
+            if request.method == 'POST':
+                title = request.form.get('title', '').strip()
+                content = request.form.get('content', '').strip()
+                product_id = request.form.get('product_id')
+                
+                if not title or not content:
+                    flash('Title and content are required', 'danger')
+                    return redirect(url_for('edit_blog', blog_id=blog_id))
+                
+                # Sanitize HTML content
+                content = bleach.clean(
+                    content,
+                    tags=['p', 'br', 'strong', 'em', 'u', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 
+                          'ul', 'ol', 'li', 'blockquote', 'a', 'img'],
+                    attributes={'a': ['href', 'title'], 'img': ['src', 'alt']},
+                    strip=True
+                )
+                
+                # Update blog
+                if product_id:
+                    cur.execute("""
+                        UPDATE customer_blogs 
+                        SET title = %s, content = %s, product_id = %s, updated_at = NOW()
+                        WHERE id = %s
+                    """, (title, content, product_id, blog_id))
+                else:
+                    cur.execute("""
+                        UPDATE customer_blogs 
+                        SET title = %s, content = %s, product_id = NULL, updated_at = NOW()
+                        WHERE id = %s
+                    """, (title, content, blog_id))
+                
+                conn.commit()
+                flash('Blog updated successfully!', 'success')
+                return redirect(url_for('blog_detail', blog_id=blog_id))
+            
+            # GET request - show edit form
+            # Get all products for dropdown
+            cur.execute("SELECT id, name FROM products ORDER BY name")
+            products = cur.fetchall()
+            
+            cur.close()
+            conn.close()
+            
+            return render_template('edit_blog.html', blog=blog, products=products)
+            
+        except Exception as e:
+            print(f"Error editing blog: {e}")
+            flash('Error editing blog', 'danger')
+            return redirect(url_for('blogs'))
+
 
 # Made with Bob

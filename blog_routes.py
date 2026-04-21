@@ -81,13 +81,14 @@ def add_blog_routes(app, connect_to_db):
                     u.name as author_name, u.email as author_email,
                     COUNT(DISTINCT br.id) as reaction_count,
                     COUNT(DISTINCT bc.id) as comment_count,
-                    (SELECT media_url FROM blog_media WHERE blog_id = cb.id AND media_type = 'image' ORDER BY media_order LIMIT 1) as thumbnail
+                    (SELECT media_url FROM blog_media WHERE blog_id = cb.id AND media_type = 'image' ORDER BY media_order LIMIT 1) as thumbnail,
+                    p.name as product_name
                 FROM customer_blogs cb
                 JOIN users u ON cb.user_id = u.id
+                LEFT JOIN products p ON cb.product_id = p.id
                 LEFT JOIN blog_reactions br ON cb.id = br.blog_id
                 LEFT JOIN blog_comments bc ON cb.id = bc.blog_id
-                WHERE cb.status = 'approved'
-                GROUP BY cb.id, u.name, u.email
+                GROUP BY cb.id, u.name, u.email, p.name
                 ORDER BY {order_clause}
             """
             
@@ -124,13 +125,15 @@ def add_blog_routes(app, connect_to_db):
                     cb.id, cb.title, cb.content, cb.views, cb.created_at, cb.user_id,
                     u.name as author_name, u.email as author_email,
                     COUNT(DISTINCT br.id) as total_reactions,
-                    COUNT(DISTINCT bc.id) as comment_count
+                    COUNT(DISTINCT bc.id) as comment_count,
+                    p.name as product_name
                 FROM customer_blogs cb
                 JOIN users u ON cb.user_id = u.id
+                LEFT JOIN products p ON cb.product_id = p.id
                 LEFT JOIN blog_reactions br ON cb.id = br.blog_id
                 LEFT JOIN blog_comments bc ON cb.id = bc.blog_id
-                WHERE cb.id = %s AND cb.status = 'approved'
-                GROUP BY cb.id, u.name, u.email
+                WHERE cb.id = %s
+                GROUP BY cb.id, u.name, u.email, p.name
             """, (blog_id,))
             
             blog = cur.fetchone()
@@ -210,11 +213,27 @@ def add_blog_routes(app, connect_to_db):
     def create_blog():
         """Create a new blog post"""
         if request.method == 'GET':
-            return render_template('create_blog.html')
+            # Get all products for dropdown
+            conn = connect_to_db()
+            if not conn:
+                flash('Database connection error', 'error')
+                return redirect(url_for('blogs'))
+            
+            try:
+                cur = conn.cursor()
+                cur.execute("SELECT id, name FROM products ORDER BY name")
+                products = cur.fetchall()
+                cur.close()
+                conn.close()
+                return render_template('create_blog.html', products=products)
+            except Exception as e:
+                print(f"Error fetching products: {e}")
+                return render_template('create_blog.html', products=[])
         
         # POST request - handle blog creation
         title = request.form.get('title', '').strip()
         content = request.form.get('content', '').strip()
+        product_id = request.form.get('product_id')
         
         if not title or not content:
             flash('Title and content are required', 'error')
@@ -235,12 +254,12 @@ def add_blog_routes(app, connect_to_db):
         try:
             cur = conn.cursor()
             
-            # Insert blog
+            # Insert blog (immediately visible, no approval needed)
             cur.execute("""
-                INSERT INTO customer_blogs (user_id, title, content, status)
-                VALUES (%s, %s, %s, 'pending')
+                INSERT INTO customer_blogs (user_id, product_id, title, content)
+                VALUES (%s, %s, %s, %s)
                 RETURNING id
-            """, (current_user.id, title, content))
+            """, (current_user.id, product_id if product_id else None, title, content))
             
             blog_id = cur.fetchone()[0]
             
@@ -283,8 +302,8 @@ def add_blog_routes(app, connect_to_db):
             cur.close()
             conn.close()
             
-            flash('Blog submitted successfully! It will be visible after admin approval.', 'success')
-            return redirect(url_for('my_blogs'))
+            flash('Blog published successfully!', 'success')
+            return redirect(url_for('blog_detail', blog_id=blog_id))
             
         except Exception as e:
             print(f"Error creating blog: {e}")
@@ -292,234 +311,6 @@ def add_blog_routes(app, connect_to_db):
             flash('Error creating blog', 'error')
             return redirect(url_for('create_blog'))
     
-    # -----------------------
-    # MY BLOGS
-    # -----------------------
-    @app.route('/my-blogs')
-    @login_required
-    def my_blogs():
-        """Display current user's blogs"""
-        conn = connect_to_db()
-        if not conn:
-            flash('Database connection error', 'error')
-            return redirect(url_for('index'))
-        
-        try:
-            cur = conn.cursor()
-            
-            cur.execute("""
-                SELECT
-                    cb.id, cb.title, cb.status, cb.views, cb.created_at,
-                    COUNT(DISTINCT br.id) as reaction_count,
-                    COUNT(DISTINCT bc.id) as comment_count,
-                    (SELECT media_url FROM blog_media WHERE blog_id = cb.id AND media_type = 'image' ORDER BY media_order LIMIT 1) as thumbnail
-                FROM customer_blogs cb
-                LEFT JOIN blog_reactions br ON cb.id = br.blog_id
-                LEFT JOIN blog_comments bc ON cb.id = bc.blog_id
-                WHERE cb.user_id = %s
-                GROUP BY cb.id
-                ORDER BY cb.created_at DESC
-            """, (current_user.id,))
-            
-            blogs = cur.fetchall()
-            
-            cur.close()
-            conn.close()
-            
-            return render_template('my_blogs.html', blogs=blogs)
-            
-        except Exception as e:
-            print(f"Error fetching user blogs: {e}")
-    
-    # -----------------------
-    # EDIT BLOG
-    # -----------------------
-    @app.route('/blog/<int:blog_id>/edit', methods=['GET', 'POST'])
-    @login_required
-    def edit_blog(blog_id):
-        """Edit user's own blog"""
-        conn = connect_to_db()
-        if not conn:
-            flash('Database connection error', 'error')
-            return redirect(url_for('my_blogs'))
-        
-        try:
-            cur = conn.cursor()
-            
-            # Get blog and verify ownership
-            cur.execute("""
-                SELECT id, user_id, title, content, status
-                FROM customer_blogs
-                WHERE id = %s
-            """, (blog_id,))
-            
-            blog = cur.fetchone()
-            
-            if not blog:
-                flash('Blog not found', 'error')
-                return redirect(url_for('my_blogs'))
-            
-            # Check if user owns this blog
-            if blog[1] != current_user.id:
-                flash('You can only edit your own blogs', 'error')
-                return redirect(url_for('my_blogs'))
-            
-            # Check if blog is approved (can't edit approved blogs)
-            if blog[4] == 'approved':
-                flash('Cannot edit approved blogs. Please contact admin if you need changes.', 'warning')
-                return redirect(url_for('my_blogs'))
-            
-            if request.method == 'GET':
-                # Get existing media
-                cur.execute("""
-                    SELECT id, media_type, media_url, media_order
-                    FROM blog_media
-                    WHERE blog_id = %s
-                    ORDER BY media_order
-                """, (blog_id,))
-                media = cur.fetchall()
-                
-                cur.close()
-                conn.close()
-                
-                return render_template('edit_blog.html', blog=blog, media=media)
-            
-            # POST request - handle blog update
-            title = request.form.get('title', '').strip()
-            content = request.form.get('content', '').strip()
-            
-            if not title or not content:
-                flash('Title and content are required', 'error')
-                return redirect(url_for('edit_blog', blog_id=blog_id))
-            
-            if len(title) > 255:
-                flash('Title is too long (max 255 characters)', 'error')
-                return redirect(url_for('edit_blog', blog_id=blog_id))
-            
-            # Sanitize HTML content
-            content = sanitize_html(content)
-            
-            # Update blog
-            cur.execute("""
-                UPDATE customer_blogs 
-                SET title = %s, content = %s, status = 'pending', updated_at = CURRENT_TIMESTAMP
-                WHERE id = %s AND user_id = %s
-            """, (title, content, blog_id, current_user.id))
-            
-            # Handle new file uploads if provided
-            images = request.files.getlist('images')
-            if images and images[0].filename:
-                # Get current image count
-                cur.execute("""
-                    SELECT COUNT(*) FROM blog_media 
-                    WHERE blog_id = %s AND media_type = 'image'
-                """, (blog_id,))
-                current_image_count = cur.fetchone()[0]
-                
-                image_count = current_image_count
-                for img in images:
-                    if img and img.filename and image_count < 2:
-                        if allowed_file(img.filename, 'image'):
-                            filename = secure_filename(f"blog_{blog_id}_{image_count}_{datetime.now().strftime('%Y%m%d%H%M%S')}_{img.filename}")
-                            filepath = os.path.join(BLOG_UPLOAD_FOLDER, filename)
-                            img.save(filepath)
-                            
-                            cur.execute("""
-                                INSERT INTO blog_media (blog_id, media_type, media_url, media_order)
-                                VALUES (%s, 'image', %s, %s)
-                            """, (blog_id, f'img/blogs/{filename}', image_count))
-                            
-                            image_count += 1
-            
-            # Handle new video if provided
-            video = request.files.get('video')
-            if video and video.filename:
-                if allowed_file(video.filename, 'video'):
-                    # Check if video already exists
-                    cur.execute("""
-                        SELECT COUNT(*) FROM blog_media 
-                        WHERE blog_id = %s AND media_type = 'video'
-                    """, (blog_id,))
-                    
-                    if cur.fetchone()[0] == 0:
-                        filename = secure_filename(f"blog_{blog_id}_video_{datetime.now().strftime('%Y%m%d%H%M%S')}_{video.filename}")
-                        filepath = os.path.join(BLOG_UPLOAD_FOLDER, filename)
-                        video.save(filepath)
-                        
-                        cur.execute("""
-                            INSERT INTO blog_media (blog_id, media_type, media_url, media_order)
-                            VALUES (%s, 'video', %s, %s)
-                        """, (blog_id, f'img/blogs/{filename}', 2))
-            
-            conn.commit()
-            cur.close()
-            conn.close()
-            
-            flash('Blog updated successfully! It will be reviewed again by admin.', 'success')
-            return redirect(url_for('my_blogs'))
-            
-        except Exception as e:
-            print(f"Error updating blog: {e}")
-            conn.rollback()
-            flash('Error updating blog', 'error')
-            return redirect(url_for('edit_blog', blog_id=blog_id))
-    
-    # -----------------------
-    # DELETE BLOG MEDIA
-    # -----------------------
-    @app.route('/blog/<int:blog_id>/media/<int:media_id>/delete', methods=['POST'])
-    @login_required
-    def delete_blog_media(blog_id, media_id):
-        """Delete a media file from user's blog"""
-        conn = connect_to_db()
-        if not conn:
-            return jsonify({'success': False, 'message': 'Database error'})
-        
-        try:
-            cur = conn.cursor()
-            
-            # Verify blog ownership
-            cur.execute("""
-                SELECT user_id FROM customer_blogs WHERE id = %s
-            """, (blog_id,))
-            
-            blog = cur.fetchone()
-            if not blog or blog[0] != current_user.id:
-                return jsonify({'success': False, 'message': 'Unauthorized'})
-            
-            # Get media file path
-            cur.execute("""
-                SELECT media_url FROM blog_media WHERE id = %s AND blog_id = %s
-            """, (media_id, blog_id))
-            
-            media = cur.fetchone()
-            if not media:
-                return jsonify({'success': False, 'message': 'Media not found'})
-            
-            # Delete from database
-            cur.execute("""
-                DELETE FROM blog_media WHERE id = %s AND blog_id = %s
-            """, (media_id, blog_id))
-            
-            conn.commit()
-            cur.close()
-            conn.close()
-            
-            # Delete physical file
-            try:
-                filepath = os.path.join('static', media[0])
-                if os.path.exists(filepath):
-                    os.remove(filepath)
-            except Exception as e:
-                print(f"Error deleting file: {e}")
-            
-            return jsonify({'success': True, 'message': 'Media deleted'})
-            
-        except Exception as e:
-            print(f"Error deleting media: {e}")
-            return jsonify({'success': False, 'message': 'Error deleting media'})
-            flash('Error loading your blogs', 'error')
-            return redirect(url_for('index'))
     
     # -----------------------
     # REACT TO BLOG (with emoji reactions)
@@ -673,25 +464,19 @@ def add_blog_routes(app, connect_to_db):
         try:
             cur = conn.cursor()
             
-            status_filter = request.args.get('status', 'all')
-            
-            if status_filter == 'all':
-                status_clause = ""
-            else:
-                status_clause = f"WHERE cb.status = '{status_filter}'"
-            
-            cur.execute(f"""
+            cur.execute("""
                 SELECT
-                    cb.id, cb.title, cb.status, cb.views, cb.created_at,
+                    cb.id, cb.title, cb.views, cb.created_at,
                     u.name as author_name, u.email as author_email,
                     COUNT(DISTINCT br.id) as reaction_count,
-                    COUNT(DISTINCT bc.id) as comment_count
+                    COUNT(DISTINCT bc.id) as comment_count,
+                    p.name as product_name
                 FROM customer_blogs cb
                 JOIN users u ON cb.user_id = u.id
+                LEFT JOIN products p ON cb.product_id = p.id
                 LEFT JOIN blog_reactions br ON cb.id = br.blog_id
                 LEFT JOIN blog_comments bc ON cb.id = bc.blog_id
-                {status_clause}
-                GROUP BY cb.id, u.name, u.email
+                GROUP BY cb.id, u.name, u.email, p.name
                 ORDER BY cb.created_at DESC
             """)
             
@@ -700,78 +485,13 @@ def add_blog_routes(app, connect_to_db):
             cur.close()
             conn.close()
             
-            return render_template('admin_blogs.html', blogs=blogs, status_filter=status_filter)
+            return render_template('admin_blogs.html', blogs=blogs)
             
         except Exception as e:
             print(f"Error fetching admin blogs: {e}")
             flash('Error loading blogs', 'error')
             return redirect(url_for('index'))
     
-    # -----------------------
-    # ADMIN: APPROVE BLOG
-    # -----------------------
-    @app.route('/admin/blogs/<int:blog_id>/approve', methods=['POST'])
-    @login_required
-    def approve_blog(blog_id):
-        """Approve a blog"""
-        if not current_user.is_admin:
-            return jsonify({'success': False, 'message': 'Unauthorized'})
-        
-        conn = connect_to_db()
-        if not conn:
-            return jsonify({'success': False, 'message': 'Database error'})
-        
-        try:
-            cur = conn.cursor()
-            
-            cur.execute("""
-                UPDATE customer_blogs 
-                SET status = 'approved', approved_at = CURRENT_TIMESTAMP, approved_by = %s
-                WHERE id = %s
-            """, (current_user.id, blog_id))
-            
-            conn.commit()
-            cur.close()
-            conn.close()
-            
-            return jsonify({'success': True, 'message': 'Blog approved'})
-            
-        except Exception as e:
-            print(f"Error approving blog: {e}")
-            return jsonify({'success': False, 'message': 'Error approving blog'})
-    
-    # -----------------------
-    # ADMIN: REJECT BLOG
-    # -----------------------
-    @app.route('/admin/blogs/<int:blog_id>/reject', methods=['POST'])
-    @login_required
-    def reject_blog(blog_id):
-        """Reject a blog"""
-        if not current_user.is_admin:
-            return jsonify({'success': False, 'message': 'Unauthorized'})
-        
-        conn = connect_to_db()
-        if not conn:
-            return jsonify({'success': False, 'message': 'Database error'})
-        
-        try:
-            cur = conn.cursor()
-            
-            cur.execute("""
-                UPDATE customer_blogs 
-                SET status = 'rejected'
-                WHERE id = %s
-            """, (blog_id,))
-            
-            conn.commit()
-            cur.close()
-            conn.close()
-            
-            return jsonify({'success': True, 'message': 'Blog rejected'})
-            
-        except Exception as e:
-            print(f"Error rejecting blog: {e}")
-            return jsonify({'success': False, 'message': 'Error rejecting blog'})
     
     # -----------------------
     # ADMIN: DELETE BLOG

@@ -25,6 +25,30 @@
       flex: 1;
       min-width: 0;
     }
+    .blog-text-content {
+      font-family: Arial, sans-serif;
+      line-height: 1.8;
+      color: #333;
+    }
+    .blog-text-content h1, .blog-text-content h2, .blog-text-content h3 {
+      color: #2c3e50;
+      margin-top: 1.5em;
+      margin-bottom: 0.5em;
+    }
+    .blog-text-content p {
+      margin-bottom: 1em;
+    }
+    .blog-text-content blockquote {
+      margin: 20px 0;
+      padding: 15px 25px;
+      background: #f4f6f7;
+      border-left: 4px solid #27ae60;
+      font-style: italic;
+    }
+    .blog-text-content strong {
+      font-weight: 600;
+      color: #2c3e50;
+    }
     .blog-content img {
       max-width: 100%;
       height: auto;
@@ -148,7 +172,7 @@
   <!-- Main Content (Left) -->
   <div class="blog-content">
     <!-- Blog Content -->
-    <div class="bg-white p-4 rounded-3 shadow-sm">
+    <div class="bg-white p-4 rounded-3 shadow-sm blog-text-content">
       {{ blog[2]|safe }}
     </div>
 
@@ -211,43 +235,6 @@
               </div>
               <small class="text-muted">{{ comment[2].strftime('%b %d, %Y') }}</small>
             </div>
-          
-            <!-- Media Sidebar (Right) -->
-            {% if media %}
-            <div class="media-sidebar">
-              <div class="media-carousel">
-                <h5 class="mb-3"><i class="bi bi-images"></i> Setup Photos</h5>
-                <div id="mediaCarousel" class="carousel slide" data-bs-ride="carousel">
-                  <div class="carousel-indicators">
-                    {% for item in media %}
-                    <button type="button" data-bs-target="#mediaCarousel" data-bs-slide-to="{{ loop.index0 }}" {% if loop.first %}class="active"{% endif %}></button>
-                    {% endfor %}
-                  </div>
-                  <div class="carousel-inner">
-                    {% for item in media %}
-                    <div class="carousel-item {% if loop.first %}active{% endif %}">
-                      {% if item[1] == 'image' %}
-                        <img src="{{ url_for('static', filename=item[2]) }}" alt="Setup photo" onclick="openImageModal(this.src)">
-                      {% elif item[1] == 'video' %}
-                        <video controls>
-                          <source src="{{ url_for('static', filename=item[2]) }}" type="video/mp4">
-                        </video>
-                      {% endif %}
-                    </div>
-                    {% endfor %}
-                  </div>
-                  {% if media|length > 1 %}
-                  <button class="carousel-control-prev" type="button" data-bs-target="#mediaCarousel" data-bs-slide="prev">
-                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                  </button>
-                  <button class="carousel-control-next" type="button" data-bs-target="#mediaCarousel" data-bs-slide="next">
-                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                  </button>
-                  {% endif %}
-                </div>
-              </div>
-            </div>
-            {% endif %}
           </div>
           {% endfor %}
         {% else %}
@@ -257,6 +244,43 @@
     </div>
 
   </div>
+
+  <!-- Media Sidebar (Right) -->
+  {% if media %}
+  <div class="media-sidebar">
+    <div class="media-carousel">
+      <h5 class="mb-3"><i class="bi bi-images"></i> Setup Photos</h5>
+      <div id="mediaCarousel" class="carousel slide" data-bs-ride="carousel">
+        <div class="carousel-indicators">
+          {% for item in media %}
+          <button type="button" data-bs-target="#mediaCarousel" data-bs-slide-to="{{ loop.index0 }}" {% if loop.first %}class="active"{% endif %}></button>
+          {% endfor %}
+        </div>
+        <div class="carousel-inner">
+          {% for item in media %}
+          <div class="carousel-item {% if loop.first %}active{% endif %}">
+            {% if item[1] == 'image' %}
+              <img src="{{ url_for('static', filename=item[2]) }}" alt="Setup photo" onclick="openImageModal(this.src)" style="cursor: pointer;">
+            {% elif item[1] == 'video' %}
+              <video controls>
+                <source src="{{ url_for('static', filename=item[2]) }}" type="video/mp4">
+              </video>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+        {% if media|length > 1 %}
+        <button class="carousel-control-prev" type="button" data-bs-target="#mediaCarousel" data-bs-slide="prev">
+          <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#mediaCarousel" data-bs-slide="next">
+          <span class="carousel-control-next-icon" aria-hidden="true"></span>
+        </button>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
 </div>
 
 <!-- Image Modal -->

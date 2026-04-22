@@ -77,7 +77,7 @@
       {% endif %}
     {% endwith %}
 
-    <form method="POST">
+    <form method="POST" enctype="multipart/form-data">
       
       <!-- Product Selection (Optional) -->
       <div class="mb-4">
@@ -123,6 +123,71 @@
         <textarea id="content-hidden" name="content" style="display: none;" required></textarea>
         <div class="upload-info">
           You can format your text with the toolbar, or click "HTML" to paste/edit HTML code directly with inline styles.
+        </div>
+      </div>
+
+      <!-- Existing Media Section -->
+      {% if existing_media %}
+      <div class="mb-4">
+        <label class="form-label">Current Media</label>
+        <div class="row g-3">
+          {% for media in existing_media %}
+            <div class="col-md-6">
+              <div class="card">
+                <div class="card-body">
+                  {% if media[2] == 'image' %}
+                    <img src="{{ url_for('static', filename=media[3]) }}" class="img-fluid rounded mb-2" alt="Blog image">
+                    <p class="mb-0"><i class="bi bi-image"></i> Image {{ loop.index }}</p>
+                  {% else %}
+                    <video src="{{ url_for('static', filename=media[3]) }}" class="w-100 rounded mb-2" controls></video>
+                    <p class="mb-0"><i class="bi bi-camera-video"></i> Video</p>
+                  {% endif %}
+                  <div class="form-check mt-2">
+                    <input class="form-check-input" type="checkbox" name="delete_media" value="{{ media[0] }}" id="delete_{{ media[0] }}">
+                    <label class="form-check-label text-danger" for="delete_{{ media[0] }}">
+                      <i class="bi bi-trash"></i> Delete this media
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+        <div class="upload-info mt-2">
+          <i class="bi bi-info-circle"></i> Check the boxes above to delete media when you update
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Upload New Media -->
+      <div class="mb-4">
+        <label class="form-label">
+          <i class="bi bi-cloud-upload"></i> Upload New Media
+        </label>
+        
+        <!-- Images Upload -->
+        <div class="mb-3">
+          <label for="images" class="form-label">Images (up to 2)</label>
+          <input type="file" class="form-control" id="images" name="images"
+                 accept="image/png,image/jpeg,image/jpg,image/gif,image/webp" multiple>
+          <div class="upload-info">
+            <i class="bi bi-info-circle"></i> Max 2 images, 5MB each. Formats: PNG, JPG, GIF, WEBP
+          </div>
+        </div>
+
+        <!-- Video Upload -->
+        <div class="mb-3">
+          <label for="video" class="form-label">Video (up to 1)</label>
+          <input type="file" class="form-control" id="video" name="video"
+                 accept="video/mp4,video/webm,video/mov">
+          <div class="upload-info">
+            <i class="bi bi-info-circle"></i> Max 1 video, 50MB, 60 seconds. Formats: MP4, WEBM, MOV
+          </div>
+        </div>
+
+        <div class="alert alert-info">
+          <i class="bi bi-lightbulb"></i> <strong>Note:</strong> New uploads will be added to your existing media.
+          If you want to replace media, check the delete boxes above first.
         </div>
       </div>
 

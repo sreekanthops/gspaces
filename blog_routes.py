@@ -567,7 +567,7 @@ def add_blog_routes(app, connect_to_db):
     @app.route('/blog/<int:blog_id>/edit', methods=['GET', 'POST'])
     @login_required
     def edit_blog(blog_id):
-        """Edit a blog"""
+        """Edit a blog with media upload support"""
         conn = connect_to_db()
         if not conn:
             flash('Database connection error', 'danger')
@@ -578,8 +578,8 @@ def add_blog_routes(app, connect_to_db):
             
             # Get blog details
             cur.execute("""
-                SELECT id, user_id, product_id, title, content 
-                FROM customer_blogs 
+                SELECT id, user_id, product_id, title, content
+                FROM customer_blogs
                 WHERE id = %s
             """, (blog_id,))
             blog = cur.fetchone()
@@ -602,22 +602,96 @@ def add_blog_routes(app, connect_to_db):
                     flash('Title and content are required', 'danger')
                     return redirect(url_for('edit_blog', blog_id=blog_id))
                 
-                # Sanitize HTML content using the updated rules
+                # Sanitize HTML content
                 content = sanitize_html(content)
                 
-                # Update blog
+                # Update blog text content
                 if product_id:
                     cur.execute("""
-                        UPDATE customer_blogs 
+                        UPDATE customer_blogs
                         SET title = %s, content = %s, product_id = %s, updated_at = NOW()
                         WHERE id = %s
                     """, (title, content, product_id, blog_id))
                 else:
                     cur.execute("""
-                        UPDATE customer_blogs 
+                        UPDATE customer_blogs
                         SET title = %s, content = %s, product_id = NULL, updated_at = NOW()
                         WHERE id = %s
                     """, (title, content, blog_id))
+                
+                # Handle media deletions
+                delete_media_ids = request.form.getlist('delete_media')
+                if delete_media_ids:
+                    for media_id in delete_media_ids:
+                        # Get media file path before deleting
+                        cur.execute("SELECT media_url FROM blog_media WHERE id = %s AND blog_id = %s", (media_id, blog_id))
+                        media_row = cur.fetchone()
+                        if media_row:
+                            # Delete file from filesystem
+                            file_path = os.path.join('static', media_row[0])
+                            if os.path.exists(file_path):
+                                os.remove(file_path)
+                            # Delete from database
+                            cur.execute("DELETE FROM blog_media WHERE id = %s AND blog_id = %s", (media_id, blog_id))
+                
+                # Get current media counts
+                cur.execute("""
+                    SELECT COUNT(*) FROM blog_media
+                    WHERE blog_id = %s AND media_type = 'image'
+                """, (blog_id,))
+                current_image_count = cur.fetchone()[0]
+                
+                cur.execute("""
+                    SELECT COUNT(*) FROM blog_media
+                    WHERE blog_id = %s AND media_type = 'video'
+                """, (blog_id,))
+                current_video_count = cur.fetchone()[0]
+                
+                # Handle new image uploads (up to 2 total)
+                images = request.files.getlist('images')
+                images_uploaded = 0
+                for img in images:
+                    if img and img.filename and current_image_count + images_uploaded < 2:
+                        if allowed_file(img.filename, 'image'):
+                            # Get next order number
+                            cur.execute("SELECT COALESCE(MAX(media_order), -1) + 1 FROM blog_media WHERE blog_id = %s", (blog_id,))
+                            next_order = cur.fetchone()[0]
+                            
+                            filename = secure_filename(f"blog_{blog_id}_{next_order}_{datetime.now().strftime('%Y%m%d%H%M%S')}_{img.filename}")
+                            filepath = os.path.join(BLOG_UPLOAD_FOLDER, filename)
+                            
+                            # Create directory if it doesn't exist
+                            os.makedirs(BLOG_UPLOAD_FOLDER, exist_ok=True)
+                            img.save(filepath)
+                            
+                            # Save to database
+                            cur.execute("""
+                                INSERT INTO blog_media (blog_id, media_type, media_url, media_order)
+                                VALUES (%s, 'image', %s, %s)
+                            """, (blog_id, f'img/blogs/{filename}', next_order))
+                            
+                            images_uploaded += 1
+                
+                # Handle new video upload (up to 1 total)
+                video = request.files.get('video')
+                if video and video.filename and current_video_count < 1:
+                    if allowed_file(video.filename, 'video'):
+                        # Get next order number
+                        cur.execute("SELECT COALESCE(MAX(media_order), -1) + 1 FROM blog_media WHERE blog_id = %s", (blog_id,))
+                        next_order = cur.fetchone()[0]
+                        
+                        filename = secure_filename(f"blog_{blog_id}_video_{datetime.now().strftime('%Y%m%d%H%M%S')}_{video.filename}")
+                        filepath = os.path.join(BLOG_UPLOAD_FOLDER, filename)
+                        
+                        # Create directory if it doesn't exist
+                        os.makedirs(BLOG_UPLOAD_FOLDER, exist_ok=True)
+                        video.save(filepath)
+                        
+                        # Save to database
+                        cur.execute("""
+                            INSERT INTO blog_media (blog_id, media_type, media_url, media_order)
+                            VALUES (%s, 'video', %s, %s)
+                        """, (blog_id, f'img/blogs/{filename}', next_order))
                 
                 conn.commit()
                 flash('Blog updated successfully!', 'success')
@@ -628,13 +702,24 @@ def add_blog_routes(app, connect_to_db):
             cur.execute("SELECT id, name FROM products ORDER BY name")
             products = cur.fetchall()
             
+            # Get existing media
+            cur.execute("""
+                SELECT id, blog_id, media_type, media_url, media_order
+                FROM blog_media
+                WHERE blog_id = %s
+                ORDER BY media_order
+            """, (blog_id,))
+            existing_media = cur.fetchall()
+            
             cur.close()
             conn.close()
             
-            return render_template('edit_blog.html', blog=blog, products=products)
+            return render_template('edit_blog.html', blog=blog, products=products, existing_media=existing_media)
             
         except Exception as e:
             print(f"Error editing blog: {e}")
+            if conn:
+                conn.rollback()
             flash('Error editing blog', 'danger')
             return redirect(url_for('blogs'))
 

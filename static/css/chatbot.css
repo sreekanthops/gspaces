@@ -54,13 +54,12 @@
     border-radius: 20px;
     box-shadow: 0 10px 50px rgba(0, 0, 0, 0.2);
     z-index: 1001;
-    display: flex;
     flex-direction: column;
     overflow: hidden;
 }
 
 .chatbot-modal.active {
-    display: flex;
+    display: flex !important;
 }
 
 /* Chat Header */

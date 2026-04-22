@@ -221,10 +221,18 @@ document.addEventListener("DOMContentLoaded", initCountdownFromServer);
                 💳 Viewing your wallet balance
                 📦 Tracking your orders
                 📞 Getting contact information
+                ℹ️ Learning about GSpaces
                 
                 How can I assist you today?
             </div>
             <div class="message-time" id="initialTime"></div>
+            <div class="quick-replies" id="initialQuickReplies">
+                <button class="quick-reply-btn" onclick="sendQuickReply('Show coupons')">🎫 Coupons</button>
+                <button class="quick-reply-btn" onclick="sendQuickReply('Wallet balance')">💳 Wallet</button>
+                <button class="quick-reply-btn" onclick="sendQuickReply('Products under 30k')">💰 Under 30k</button>
+                <button class="quick-reply-btn" onclick="sendQuickReply('What is GSpaces?')">ℹ️ About</button>
+                <button class="quick-reply-btn" onclick="sendQuickReply('Contact us')">📞 Contact</button>
+            </div>
         </div>
     </div>
     
@@ -323,8 +331,14 @@ document.addEventListener('DOMContentLoaded', function() {
         if (e.key === 'Enter') sendMessage();
     });
     
+    // Send quick reply
+    window.sendQuickReply = function(text) {
+        input.value = text;
+        sendMessage();
+    }
+    
     // Add message to chat
-    function addMessage(text, sender) {
+    function addMessage(text, sender, quickReplies = null) {
         const messageDiv = document.createElement('div');
         messageDiv.className = `chatbot-message ${sender}`;
         
@@ -338,58 +352,88 @@ document.addEventListener('DOMContentLoaded', function() {
         
         messageDiv.appendChild(bubble);
         messageDiv.appendChild(time);
+        
+        // Add quick reply buttons if provided
+        if (quickReplies && quickReplies.length > 0) {
+            const quickRepliesDiv = document.createElement('div');
+            quickRepliesDiv.className = 'quick-replies';
+            quickReplies.forEach(reply => {
+                const btn = document.createElement('button');
+                btn.className = 'quick-reply-btn';
+                btn.textContent = reply;
+                btn.onclick = () => sendQuickReply(reply);
+                quickRepliesDiv.appendChild(btn);
+            });
+            messageDiv.appendChild(quickRepliesDiv);
+        }
+        
         messagesContainer.appendChild(messageDiv);
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
     
     // Handle bot response
     function handleBotResponse(data) {
+        const quickReplies = data.quick_replies || null;
+        
         if (data.type === 'text') {
-            addMessage(data.message, 'bot');
+            addMessage(data.message, 'bot', quickReplies);
         } else if (data.type === 'budget_search') {
-            addMessage(data.message, 'bot');
-            fetchProductsByBudget(data.budget);
+            addMessage(data.message, 'bot', quickReplies);
+            fetchProductsByBudget(data.budget, null, null, quickReplies);
+        } else if (data.type === 'budget_range') {
+            addMessage(data.message, 'bot', quickReplies);
+            fetchProductsByBudget(null, data.min_budget, data.max_budget, quickReplies);
         } else if (data.type === 'wallet') {
-            addMessage(data.message, 'bot');
-            fetchWalletInfo();
+            addMessage(data.message, 'bot', quickReplies);
+            fetchWalletInfo(quickReplies);
         } else if (data.type === 'coupons') {
-            addMessage(data.message, 'bot');
-            fetchCoupons();
+            addMessage(data.message, 'bot', quickReplies);
+            fetchCoupons(quickReplies);
         } else if (data.type === 'contact') {
-            addMessage(data.message, 'bot');
-            fetchContactInfo();
+            addMessage(data.message, 'bot', quickReplies);
+            fetchContactInfo(quickReplies);
         } else if (data.type === 'orders') {
-            addMessage(data.message, 'bot');
-            fetchOrders();
+            addMessage(data.message, 'bot', quickReplies);
+            fetchOrders(quickReplies);
         }
     }
     
     // Fetch products by budget
-    function fetchProductsByBudget(budget) {
+    function fetchProductsByBudget(budget, minBudget, maxBudget, quickReplies) {
+        const body = budget ? { budget: budget } : { min_budget: minBudget, max_budget: maxBudget };
+        
         fetch('/chatbot/products_by_budget', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ budget: budget })
+            body: JSON.stringify(body)
         })
         .then(res => res.json())
         .then(data => {
             if (data.products && data.products.length > 0) {
-                const messageDiv = document.createElement('div');
-                messageDiv.className = 'chatbot-message bot';
-                
-                const bubble = document.createElement('div');
-                bubble.className = 'message-bubble';
-                bubble.innerHTML = `Found ${data.count} products within ₹${budget}:`;
-                
-                messageDiv.appendChild(bubble);
-                messagesContainer.appendChild(messageDiv);
+                const rangeText = budget ? `₹${budget.toLocaleString()}` : `₹${minBudget.toLocaleString()} - ₹${maxBudget.toLocaleString()}`;
+                addMessage(`Found ${data.count} products within ${rangeText}:`, 'bot');
                 
                 data.products.forEach(product => {
                     const card = createProductCard(product);
                     messagesContainer.appendChild(card);
                 });
+                
+                // Add action buttons after products
+                const actionDiv = document.createElement('div');
+                actionDiv.className = 'chatbot-message bot';
+                actionDiv.innerHTML = `
+                    <div class="message-bubble" style="background: #f3f4f6; color: #333;">
+                        Want to add one more setup? <a href="/?section=products" style="color: #667eea; font-weight: 600;">Browse All Setups →</a>
+                    </div>
+                `;
+                messagesContainer.appendChild(actionDiv);
+                
+                if (quickReplies) {
+                    addQuickReplies(quickReplies);
+                }
             } else {
-                addMessage(`No products found within ₹${budget}. Try increasing your budget!`, 'bot');
+                const rangeText = budget ? `₹${budget.toLocaleString()}` : `₹${minBudget.toLocaleString()} - ₹${maxBudget.toLocaleString()}`;
+                addMessage(`No products found within ${rangeText}. Try adjusting your budget!`, 'bot', quickReplies);
             }
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         })
@@ -397,6 +441,23 @@ document.addEventListener('DOMContentLoaded', function() {
             addMessage('Failed to fetch products. Please try again.', 'bot');
             console.error(err);
         });
+    }
+    
+    // Add quick replies as separate element
+    function addQuickReplies(replies) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'chatbot-message bot';
+        const quickRepliesDiv = document.createElement('div');
+        quickRepliesDiv.className = 'quick-replies';
+        replies.forEach(reply => {
+            const btn = document.createElement('button');
+            btn.className = 'quick-reply-btn';
+            btn.textContent = reply;
+            btn.onclick = () => sendQuickReply(reply);
+            quickRepliesDiv.appendChild(btn);
+        });
+        messageDiv.appendChild(quickRepliesDiv);
+        messagesContainer.appendChild(messageDiv);
     }
     
     // Create product card
@@ -416,7 +477,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Fetch wallet info
-    function fetchWalletInfo() {
+    function fetchWalletInfo(quickReplies) {
         fetch('/chatbot/wallet_info')
         .then(res => res.json())
         .then(data => {
@@ -432,6 +493,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             `;
             messagesContainer.appendChild(messageDiv);
+            if (quickReplies) addQuickReplies(quickReplies);
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         })
         .catch(err => {
@@ -441,14 +503,14 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Fetch coupons
-    function fetchCoupons() {
+    function fetchCoupons(quickReplies) {
         fetch('/chatbot/coupons')
         .then(res => res.json())
         .then(data => {
             const totalCoupons = data.personal.length + data.referral.length + data.bonus.length;
             
             if (totalCoupons === 0) {
-                addMessage('You don\'t have any active coupons right now.', 'bot');
+                addMessage('You don\'t have any active coupons right now.', 'bot', quickReplies);
                 return;
             }
             
@@ -473,6 +535,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             }
             
+            if (quickReplies) addQuickReplies(quickReplies);
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         })
         .catch(err => {
@@ -500,7 +563,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Fetch contact info
-    function fetchContactInfo() {
+    function fetchContactInfo(quickReplies) {
         fetch('/chatbot/contact_info')
         .then(res => res.json())
         .then(data => {
@@ -531,6 +594,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             `;
             messagesContainer.appendChild(messageDiv);
+            if (quickReplies) addQuickReplies(quickReplies);
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         })
         .catch(err => {
@@ -540,17 +604,29 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Fetch orders
-    function fetchOrders() {
+    function fetchOrders(quickReplies) {
         fetch('/chatbot/orders')
         .then(res => res.json())
         .then(data => {
             if (data.orders && data.orders.length > 0) {
-                addMessage('Your Recent Orders:', 'bot');
+                addMessage(`You have ${data.orders.length} order(s):`, 'bot');
                 data.orders.forEach(order => {
                     messagesContainer.appendChild(createOrderCard(order));
                 });
+                
+                // Add link to add more
+                const actionDiv = document.createElement('div');
+                actionDiv.className = 'chatbot-message bot';
+                actionDiv.innerHTML = `
+                    <div class="message-bubble" style="background: #f3f4f6; color: #333;">
+                        Want to add one more setup? <a href="/?section=products" style="color: #667eea; font-weight: 600;">Browse All Setups →</a>
+                    </div>
+                `;
+                messagesContainer.appendChild(actionDiv);
+                
+                if (quickReplies) addQuickReplies(quickReplies);
             } else {
-                addMessage('You don\'t have any orders yet.', 'bot');
+                addMessage('You don\'t have any orders yet. Browse our products to get started!', 'bot', quickReplies);
             }
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         })
@@ -564,12 +640,16 @@ document.addEventListener('DOMContentLoaded', function() {
     function createOrderCard(order) {
         const card = document.createElement('div');
         card.className = 'chatbot-message bot';
+        const statusClass = order.status.toLowerCase().replace(' ', '-');
         card.innerHTML = `
-            <div class="chat-order-card">
+            <div class="chat-order-card" onclick="window.location.href='/profile#orders'" style="cursor: pointer;">
                 <div class="chat-order-id">Order #${order.order_id}</div>
                 <div>Amount: ₹${order.total_amount.toLocaleString()}</div>
                 <div>Date: ${new Date(order.created_at).toLocaleDateString()}</div>
-                <span class="chat-order-status ${order.status.toLowerCase()}">${order.status}</span>
+                <span class="chat-order-status ${statusClass}">${order.status}</span>
+                <div style="margin-top: 8px; font-size: 12px; color: #667eea;">
+                    Click to track order →
+                </div>
             </div>
         `;
         return card;

@@ -189,3 +189,384 @@ document.addEventListener("DOMContentLoaded", initCountdownFromServer);
 </nav>
 <i class="mobile-nav-toggle"></i>
 
+
+
+<!-- Chatbot CSS -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/chatbot.css') }}">
+
+<!-- Chatbot Float Button -->
+<div class="chatbot-float-btn" id="chatbotFloatBtn" title="Chat with us!">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+        <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/>
+        <path d="M7 9h2v2H7zm4 0h2v2h-2zm4 0h2v2h-2z"/>
+    </svg>
+</div>
+
+<!-- Chatbot Modal -->
+<div class="chatbot-modal" id="chatbotModal">
+    <div class="chatbot-header">
+        <h3>🤖 GSpaces Assistant</h3>
+        <button class="chatbot-close" id="chatbotClose">&times;</button>
+    </div>
+    
+    <div class="chatbot-messages" id="chatbotMessages">
+        <div class="chatbot-message bot">
+            <div class="message-bubble">
+                Hello! 👋 I'm your GSpaces assistant. I can help you with:
+                
+                💰 Finding products within your budget
+                🎫 Checking available coupons
+                💳 Viewing your wallet balance
+                📦 Tracking your orders
+                📞 Getting contact information
+                
+                How can I assist you today?
+            </div>
+            <div class="message-time" id="initialTime"></div>
+        </div>
+    </div>
+    
+    <div class="chatbot-input-area">
+        <input type="text" class="chatbot-input" id="chatbotInput" placeholder="Type your message...">
+        <button class="chatbot-send-btn" id="chatbotSendBtn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="white">
+                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+            </svg>
+        </button>
+    </div>
+</div>
+
+<!-- Chatbot JavaScript -->
+<script>
+(function() {
+    const floatBtn = document.getElementById('chatbotFloatBtn');
+    const modal = document.getElementById('chatbotModal');
+    const closeBtn = document.getElementById('chatbotClose');
+    const messagesContainer = document.getElementById('chatbotMessages');
+    const input = document.getElementById('chatbotInput');
+    const sendBtn = document.getElementById('chatbotSendBtn');
+    
+    // Set initial time
+    document.getElementById('initialTime').textContent = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    
+    // Toggle modal
+    floatBtn.addEventListener('click', () => {
+        modal.classList.toggle('active');
+        if (modal.classList.contains('active')) {
+            input.focus();
+        }
+    });
+    
+    closeBtn.addEventListener('click', () => {
+        modal.classList.remove('active');
+    });
+    
+    // Send message
+    function sendMessage() {
+        const message = input.value.trim();
+        if (!message) return;
+        
+        // Add user message
+        addMessage(message, 'user');
+        input.value = '';
+        
+        // Show typing indicator
+        showTypingIndicator();
+        
+        // Send to backend
+        fetch('/chatbot/message', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: message })
+        })
+        .then(res => res.json())
+        .then(data => {
+            removeTypingIndicator();
+            handleBotResponse(data);
+        })
+        .catch(err => {
+            removeTypingIndicator();
+            addMessage('Sorry, something went wrong. Please try again.', 'bot');
+            console.error('Chatbot error:', err);
+        });
+    }
+    
+    sendBtn.addEventListener('click', sendMessage);
+    input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') sendMessage();
+    });
+    
+    // Add message to chat
+    function addMessage(text, sender) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `chatbot-message ${sender}`;
+        
+        const bubble = document.createElement('div');
+        bubble.className = 'message-bubble';
+        bubble.textContent = text;
+        
+        const time = document.createElement('div');
+        time.className = 'message-time';
+        time.textContent = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        
+        messageDiv.appendChild(bubble);
+        messageDiv.appendChild(time);
+        messagesContainer.appendChild(messageDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+    
+    // Handle bot response
+    function handleBotResponse(data) {
+        if (data.type === 'text') {
+            addMessage(data.message, 'bot');
+        } else if (data.type === 'budget_search') {
+            addMessage(data.message, 'bot');
+            fetchProductsByBudget(data.budget);
+        } else if (data.type === 'wallet') {
+            addMessage(data.message, 'bot');
+            fetchWalletInfo();
+        } else if (data.type === 'coupons') {
+            addMessage(data.message, 'bot');
+            fetchCoupons();
+        } else if (data.type === 'contact') {
+            addMessage(data.message, 'bot');
+            fetchContactInfo();
+        } else if (data.type === 'orders') {
+            addMessage(data.message, 'bot');
+            fetchOrders();
+        }
+    }
+    
+    // Fetch products by budget
+    function fetchProductsByBudget(budget) {
+        fetch('/chatbot/products_by_budget', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ budget: budget })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.products && data.products.length > 0) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'chatbot-message bot';
+                
+                const bubble = document.createElement('div');
+                bubble.className = 'message-bubble';
+                bubble.innerHTML = `Found ${data.count} products within ₹${budget}:`;
+                
+                messageDiv.appendChild(bubble);
+                messagesContainer.appendChild(messageDiv);
+                
+                data.products.forEach(product => {
+                    const card = createProductCard(product);
+                    messagesContainer.appendChild(card);
+                });
+            } else {
+                addMessage(`No products found within ₹${budget}. Try increasing your budget!`, 'bot');
+            }
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        })
+        .catch(err => {
+            addMessage('Failed to fetch products. Please try again.', 'bot');
+            console.error(err);
+        });
+    }
+    
+    // Create product card
+    function createProductCard(product) {
+        const card = document.createElement('div');
+        card.className = 'chatbot-message bot';
+        card.innerHTML = `
+            <div class="chat-product-card" onclick="window.location.href='/product/${product.id}'">
+                <img src="${product.image_url}" alt="${product.name}" class="chat-product-img">
+                <div class="chat-product-info">
+                    <div class="chat-product-name">${product.name}</div>
+                    <div class="chat-product-price">₹${product.price.toLocaleString()}</div>
+                </div>
+            </div>
+        `;
+        return card;
+    }
+    
+    // Fetch wallet info
+    function fetchWalletInfo() {
+        fetch('/chatbot/wallet_info')
+        .then(res => res.json())
+        .then(data => {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'chatbot-message bot';
+            messageDiv.innerHTML = `
+                <div class="chat-wallet-info">
+                    <div class="chat-wallet-balance">₹${data.balance.toLocaleString()}</div>
+                    <div class="chat-wallet-stats">
+                        <div>Earned: ₹${data.total_earned.toLocaleString()}</div>
+                        <div>Spent: ₹${data.total_spent.toLocaleString()}</div>
+                    </div>
+                </div>
+            `;
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        })
+        .catch(err => {
+            addMessage('Failed to fetch wallet info. Please try again.', 'bot');
+            console.error(err);
+        });
+    }
+    
+    // Fetch coupons
+    function fetchCoupons() {
+        fetch('/chatbot/coupons')
+        .then(res => res.json())
+        .then(data => {
+            const totalCoupons = data.personal.length + data.referral.length + data.bonus.length;
+            
+            if (totalCoupons === 0) {
+                addMessage('You don\'t have any active coupons right now.', 'bot');
+                return;
+            }
+            
+            if (data.personal.length > 0) {
+                addMessage('Your Personal Coupons:', 'bot');
+                data.personal.forEach(coupon => {
+                    messagesContainer.appendChild(createCouponCard(coupon));
+                });
+            }
+            
+            if (data.referral.length > 0) {
+                addMessage('Your Referral Coupons:', 'bot');
+                data.referral.forEach(coupon => {
+                    messagesContainer.appendChild(createCouponCard(coupon));
+                });
+            }
+            
+            if (data.bonus.length > 0) {
+                addMessage('Bonus Coupons:', 'bot');
+                data.bonus.forEach(coupon => {
+                    messagesContainer.appendChild(createCouponCard(coupon));
+                });
+            }
+            
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        })
+        .catch(err => {
+            addMessage('Failed to fetch coupons. Please try again.', 'bot');
+            console.error(err);
+        });
+    }
+    
+    // Create coupon card
+    function createCouponCard(coupon) {
+        const card = document.createElement('div');
+        card.className = 'chatbot-message bot';
+        card.innerHTML = `
+            <div class="chat-coupon-card">
+                <div class="chat-coupon-code">${coupon.code}</div>
+                <div class="chat-coupon-details">
+                    ${coupon.discount_percent}% OFF
+                    ${coupon.min_order_value > 0 ? `<br>Min order: ₹${coupon.min_order_value}` : ''}
+                    ${coupon.max_discount ? `<br>Max discount: ₹${coupon.max_discount}` : ''}
+                    <br>Valid until: ${new Date(coupon.valid_until).toLocaleDateString()}
+                </div>
+            </div>
+        `;
+        return card;
+    }
+    
+    // Fetch contact info
+    function fetchContactInfo() {
+        fetch('/chatbot/contact_info')
+        .then(res => res.json())
+        .then(data => {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'chatbot-message bot';
+            messageDiv.innerHTML = `
+                <div class="chat-contact-info">
+                    <div class="chat-contact-item">
+                        <span class="chat-contact-icon">📞</span>
+                        <span class="chat-contact-text">${data.phone}</span>
+                    </div>
+                    <div class="chat-contact-item">
+                        <span class="chat-contact-icon">📧</span>
+                        <span class="chat-contact-text">${data.email}</span>
+                    </div>
+                    <div class="chat-contact-item">
+                        <span class="chat-contact-icon">📍</span>
+                        <span class="chat-contact-text">${data.address}</span>
+                    </div>
+                    <div class="chat-contact-item">
+                        <span class="chat-contact-icon">⏰</span>
+                        <span class="chat-contact-text">${data.support_hours}</span>
+                    </div>
+                    <div class="chat-contact-item">
+                        <span class="chat-contact-icon">💬</span>
+                        <span class="chat-contact-text">WhatsApp: ${data.whatsapp}</span>
+                    </div>
+                </div>
+            `;
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        })
+        .catch(err => {
+            addMessage('Failed to fetch contact info. Please try again.', 'bot');
+            console.error(err);
+        });
+    }
+    
+    // Fetch orders
+    function fetchOrders() {
+        fetch('/chatbot/orders')
+        .then(res => res.json())
+        .then(data => {
+            if (data.orders && data.orders.length > 0) {
+                addMessage('Your Recent Orders:', 'bot');
+                data.orders.forEach(order => {
+                    messagesContainer.appendChild(createOrderCard(order));
+                });
+            } else {
+                addMessage('You don\'t have any orders yet.', 'bot');
+            }
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        })
+        .catch(err => {
+            addMessage('Failed to fetch orders. Please try again.', 'bot');
+            console.error(err);
+        });
+    }
+    
+    // Create order card
+    function createOrderCard(order) {
+        const card = document.createElement('div');
+        card.className = 'chatbot-message bot';
+        card.innerHTML = `
+            <div class="chat-order-card">
+                <div class="chat-order-id">Order #${order.order_id}</div>
+                <div>Amount: ₹${order.total_amount.toLocaleString()}</div>
+                <div>Date: ${new Date(order.created_at).toLocaleDateString()}</div>
+                <span class="chat-order-status ${order.status.toLowerCase()}">${order.status}</span>
+            </div>
+        `;
+        return card;
+    }
+    
+    // Typing indicator
+    function showTypingIndicator() {
+        const indicator = document.createElement('div');
+        indicator.className = 'chatbot-message bot';
+        indicator.id = 'typingIndicator';
+        indicator.innerHTML = `
+            <div class="typing-indicator">
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+            </div>
+        `;
+        messagesContainer.appendChild(indicator);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+    
+    function removeTypingIndicator() {
+        const indicator = document.getElementById('typingIndicator');
+        if (indicator) indicator.remove();
+    }
+})();
+</script>

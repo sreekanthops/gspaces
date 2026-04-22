@@ -234,29 +234,50 @@ def add_chatbot_routes(app, connect_to_db):
     @app.route('/chatbot/orders', methods=['GET'])
     @login_required
     def chatbot_orders():
-        """Get user's recent orders"""
+        """Get user's orders with smart filtering"""
         try:
+            # Get filter parameters
+            filter_type = request.args.get('filter', 'recent')  # recent, current_month, last_20_days, pending
+            offset = int(request.args.get('offset', 0))
+            limit = int(request.args.get('limit', 5))
+            
             conn = connect_to_db()
             cursor = conn.cursor(cursor_factory=RealDictCursor)
             
-            # Get all orders
-            cursor.execute("""
+            # Build query based on filter
+            base_query = """
                 SELECT id, razorpay_order_id, total_amount, status, order_date
                 FROM orders
                 WHERE user_id = %s
-                ORDER BY order_date DESC
-            """, (current_user.id,))
+            """
+            params = [current_user.id]
             
+            if filter_type == 'pending':
+                base_query += " AND status = 'Pending'"
+            elif filter_type == 'current_month':
+                base_query += " AND DATE_TRUNC('month', order_date) = DATE_TRUNC('month', CURRENT_DATE)"
+            elif filter_type == 'last_20_days':
+                base_query += " AND order_date >= CURRENT_DATE - INTERVAL '20 days'"
+            
+            # Get total count for this filter
+            count_query = f"SELECT COUNT(*) as total FROM ({base_query}) as filtered"
+            cursor.execute(count_query, params)
+            total_count = cursor.fetchone()['total']
+            
+            # Get paginated orders
+            base_query += " ORDER BY order_date DESC LIMIT %s OFFSET %s"
+            params.extend([limit, offset])
+            cursor.execute(base_query, params)
             orders = cursor.fetchall()
             
-            # Count pending orders
+            # Count pending orders (always)
             cursor.execute("""
                 SELECT COUNT(*) as pending_count
                 FROM orders
                 WHERE user_id = %s AND status = 'Pending'
             """, (current_user.id,))
-            
             pending_count = cursor.fetchone()['pending_count']
+            
             conn.close()
             
             # Format orders
@@ -271,10 +292,15 @@ def add_chatbot_routes(app, connect_to_db):
                     'is_pending': order['status'] == 'Pending'
                 })
             
+            has_more = (offset + limit) < total_count
+            
             return jsonify({
                 'orders': formatted_orders,
                 'pending_count': pending_count,
-                'total_count': len(formatted_orders)
+                'total_count': total_count,
+                'has_more': has_more,
+                'next_offset': offset + limit if has_more else None,
+                'filter_type': filter_type
             })
             
         except Exception as e:
@@ -465,13 +491,28 @@ def add_chatbot_routes(app, connect_to_db):
                 'quick_replies': ['Show products', 'Check coupons', 'What is GSpaces?']
             }
         
-        # Order tracking
+        # Order tracking with smart filtering
         if any(word in message for word in ['order', 'track', 'delivery', 'shipping', 'status']):
             if current_user.is_authenticated:
+                # Detect filter type from message
+                filter_type = 'recent'
+                filter_message = 'Let me fetch your recent orders...'
+                
+                if any(word in message for word in ['pending', 'not delivered', 'undelivered']):
+                    filter_type = 'pending'
+                    filter_message = 'Fetching your pending orders...'
+                elif any(word in message for word in ['current month', 'this month', 'monthly']):
+                    filter_type = 'current_month'
+                    filter_message = 'Fetching orders from current month...'
+                elif any(word in message for word in ['last 20 days', '20 days', 'recent 20']):
+                    filter_type = 'last_20_days'
+                    filter_message = 'Fetching orders from last 20 days...'
+                
                 return {
                     'type': 'orders',
-                    'message': 'Let me fetch your recent orders...',
-                    'quick_replies': ['Wallet balance', 'Check coupons', 'Contact us']
+                    'message': filter_message,
+                    'filter_type': filter_type,
+                    'quick_replies': ['Show all orders', 'Pending only', 'Current month', 'Wallet balance']
                 }
             else:
                 return {

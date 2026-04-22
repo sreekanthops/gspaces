@@ -230,7 +230,7 @@ document.addEventListener("DOMContentLoaded", initCountdownFromServer);
                 <button class="quick-reply-btn" onclick="sendQuickReply('Show coupons')">🎫 Coupons</button>
                 <button class="quick-reply-btn" onclick="sendQuickReply('Wallet balance')">💳 Wallet</button>
                 <button class="quick-reply-btn" onclick="sendQuickReply('Products under 30k')">💰 Under 30k</button>
-                <button class="quick-reply-btn" onclick="sendQuickReply('What is GSpaces?')">ℹ️ About</button>
+                <button class="quick-reply-btn" onclick="sendQuickReply('My orders')">📦 Orders</button>
                 <button class="quick-reply-btn" onclick="sendQuickReply('Contact us')">📞 Contact</button>
             </div>
         </div>
@@ -394,7 +394,8 @@ document.addEventListener('DOMContentLoaded', function() {
             fetchContactInfo(quickReplies);
         } else if (data.type === 'orders') {
             addMessage(data.message, 'bot', quickReplies);
-            fetchOrders(quickReplies);
+            const filterType = data.filter_type || 'recent';
+            fetchOrders(quickReplies, filterType, 0);
         }
     }
     
@@ -452,7 +453,26 @@ document.addEventListener('DOMContentLoaded', function() {
         replies.forEach(reply => {
             const btn = document.createElement('button');
             btn.className = 'quick-reply-btn';
-            btn.textContent = reply;
+            
+            // Add emojis to common replies
+            if (reply.toLowerCase().includes('coupon')) {
+                btn.textContent = '🎫 ' + reply;
+            } else if (reply.toLowerCase().includes('wallet')) {
+                btn.textContent = '💳 ' + reply;
+            } else if (reply.toLowerCase().includes('order')) {
+                btn.textContent = '📦 ' + reply;
+            } else if (reply.toLowerCase().includes('contact')) {
+                btn.textContent = '📞 ' + reply;
+            } else if (reply.toLowerCase().includes('product') || reply.toLowerCase().includes('setup')) {
+                btn.textContent = '💰 ' + reply;
+            } else if (reply.toLowerCase().includes('pending')) {
+                btn.textContent = '⚠️ ' + reply;
+            } else if (reply.toLowerCase().includes('month')) {
+                btn.textContent = '📅 ' + reply;
+            } else {
+                btn.textContent = reply;
+            }
+            
             btn.onclick = () => sendQuickReply(reply);
             quickRepliesDiv.appendChild(btn);
         });
@@ -603,35 +623,62 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Fetch orders
-    function fetchOrders(quickReplies) {
-        fetch('/chatbot/orders')
+    // Fetch orders with pagination and filtering
+    function fetchOrders(quickReplies, filterType = 'recent', offset = 0, isLoadMore = false) {
+        const url = `/chatbot/orders?filter=${filterType}&offset=${offset}&limit=5`;
+        
+        fetch(url)
         .then(res => res.json())
         .then(data => {
             if (data.orders && data.orders.length > 0) {
-                let message = `You have ${data.total_count} order(s)`;
-                if (data.pending_count > 0) {
-                    message += ` (${data.pending_count} pending)`;
+                // Only show summary message on first load
+                if (!isLoadMore) {
+                    let filterLabel = filterType === 'pending' ? 'pending' :
+                                    filterType === 'current_month' ? 'from current month' :
+                                    filterType === 'last_20_days' ? 'from last 20 days' : 'recent';
+                    
+                    let message = `Showing ${data.orders.length} of ${data.total_count} ${filterLabel} order(s)`;
+                    if (data.pending_count > 0 && filterType !== 'pending') {
+                        message += ` (${data.pending_count} pending)`;
+                    }
+                    addMessage(message + ':', 'bot');
                 }
-                addMessage(message + ':', 'bot');
                 
+                // Display orders
                 data.orders.forEach(order => {
                     messagesContainer.appendChild(createOrderCard(order));
                 });
                 
-                // Add link to add more
-                const actionDiv = document.createElement('div');
-                actionDiv.className = 'chatbot-message bot';
-                actionDiv.innerHTML = `
-                    <div class="message-bubble" style="background: #f3f4f6; color: #333;">
-                        Want to add one more setup? <a href="/?section=products" style="color: #667eea; font-weight: 600;">Browse All Setups →</a>
-                    </div>
-                `;
-                messagesContainer.appendChild(actionDiv);
+                // Show "Show More" button if there are more orders
+                if (data.has_more) {
+                    const showMoreDiv = document.createElement('div');
+                    showMoreDiv.className = 'chatbot-message bot';
+                    showMoreDiv.innerHTML = `
+                        <button class="show-more-btn" onclick="loadMoreOrders('${filterType}', ${data.next_offset})">
+                            📦 Show More Orders (${data.total_count - data.next_offset} remaining)
+                        </button>
+                    `;
+                    messagesContainer.appendChild(showMoreDiv);
+                }
                 
-                if (quickReplies) addQuickReplies(quickReplies);
+                // Add action message and quick replies only on first load
+                if (!isLoadMore) {
+                    const actionDiv = document.createElement('div');
+                    actionDiv.className = 'chatbot-message bot';
+                    actionDiv.innerHTML = `
+                        <div class="message-bubble" style="background: #f3f4f6; color: #333;">
+                            Want to add one more setup? <a href="/?section=products" style="color: #667eea; font-weight: 600;">Browse All Setups →</a>
+                        </div>
+                    `;
+                    messagesContainer.appendChild(actionDiv);
+                    
+                    if (quickReplies) addQuickReplies(quickReplies);
+                }
             } else {
-                addMessage('You don\'t have any orders yet. Browse our products to get started!', 'bot', quickReplies);
+                const filterLabel = filterType === 'pending' ? 'pending' :
+                                  filterType === 'current_month' ? 'from current month' :
+                                  filterType === 'last_20_days' ? 'from last 20 days' : '';
+                addMessage(`You don't have any ${filterLabel} orders yet. Browse our products to get started!`, 'bot', quickReplies);
             }
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         })
@@ -639,6 +686,16 @@ document.addEventListener('DOMContentLoaded', function() {
             addMessage('Failed to fetch orders. Please try again.', 'bot');
             console.error(err);
         });
+    }
+    
+    // Load more orders (global function for onclick)
+    window.loadMoreOrders = function(filterType, offset) {
+        // Remove the "Show More" button
+        const showMoreBtns = document.querySelectorAll('.show-more-btn');
+        showMoreBtns.forEach(btn => btn.parentElement.remove());
+        
+        // Fetch next batch
+        fetchOrders(null, filterType, offset, true);
     }
     
     // Create order card

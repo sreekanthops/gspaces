@@ -49,7 +49,7 @@ def add_chatbot_routes(app, connect_to_db):
             cursor.execute("""
                 SELECT id, name, price, image_url, description
                 FROM products
-                WHERE price <= %s AND stock > 0
+                WHERE price <= %s
                 ORDER BY price ASC
                 LIMIT 10
             """, (max_price,))
@@ -114,37 +114,37 @@ def add_chatbot_routes(app, connect_to_db):
             
             # Get personal coupons
             cursor.execute("""
-                SELECT code, discount_percent, min_order_value, max_discount, 
+                SELECT code, discount_value as discount_percent, min_order_value, max_discount,
                        valid_from, valid_until, usage_limit, times_used
                 FROM coupons
-                WHERE user_id = %s 
+                WHERE user_id = %s
                 AND valid_until >= CURRENT_DATE
                 AND (usage_limit IS NULL OR times_used < usage_limit)
-                ORDER BY discount_percent DESC
+                ORDER BY discount_value DESC
             """, (current_user.id,))
             personal_coupons = cursor.fetchall()
             
             # Get referral coupons
             cursor.execute("""
-                SELECT code, discount_percent, min_order_value, max_discount,
+                SELECT code, discount_value as discount_percent, min_order_value, max_discount,
                        valid_from, valid_until, usage_limit, times_used
                 FROM referral_coupons
                 WHERE user_id = %s
                 AND valid_until >= CURRENT_DATE
                 AND (usage_limit IS NULL OR times_used < usage_limit)
-                ORDER BY discount_percent DESC
+                ORDER BY discount_value DESC
             """, (current_user.id,))
             referral_coupons = cursor.fetchall()
             
             # Get bonus/public coupons
             cursor.execute("""
-                SELECT code, discount_percent, min_order_value, max_discount,
+                SELECT code, discount_value as discount_percent, min_order_value, max_discount,
                        valid_from, valid_until, usage_limit, times_used
                 FROM coupons
                 WHERE user_id IS NULL
                 AND valid_until >= CURRENT_DATE
                 AND (usage_limit IS NULL OR times_used < usage_limit)
-                ORDER BY discount_percent DESC
+                ORDER BY discount_value DESC
             """)
             bonus_coupons = cursor.fetchall()
             
@@ -177,11 +177,11 @@ def add_chatbot_routes(app, connect_to_db):
     def chatbot_contact_info():
         """Get contact information"""
         return jsonify({
-            'phone': '+91 9390933399',
-            'email': 'support@gspaces.in',
+            'phone': '+91 7075077384',
+            'email': 'sreekanth.chityala@gspaces.in',
             'address': 'Hyderabad, Telangana, India',
             'support_hours': 'Monday - Saturday: 9:00 AM - 6:00 PM IST',
-            'whatsapp': '+91 9390933399'
+            'whatsapp': '+91 7075077384'
         })
     
     @app.route('/chatbot/orders', methods=['GET'])

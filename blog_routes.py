@@ -64,7 +64,7 @@ def sanitize_html(content):
         tags=ALLOWED_TAGS,
         attributes=ALLOWED_ATTRIBUTES,
         css_sanitizer=css_sanitizer,
-        strip=True
+        strip=False  # Keep allowed tags, remove disallowed ones
     )
 
 def add_blog_routes(app, connect_to_db):

@@ -62,8 +62,13 @@ def add_chatbot_routes(app, connect_to_db):
                 product['price'] = float(product['price'])
                 # Fix image URL to include /static/ prefix if needed
                 if product['image_url']:
-                    if product['image_url'].startswith('/img/'):
+                    # If it starts with img/, replace with /static/img/
+                    if product['image_url'].startswith('img/'):
+                        product['image_url'] = '/static/' + product['image_url']
+                    # If it starts with /img/, replace with /static/img/
+                    elif product['image_url'].startswith('/img/'):
                         product['image_url'] = product['image_url'].replace('/img/', '/static/img/')
+                    # If it doesn't start with /static/ or http, add /static/img/Products/
                     elif not product['image_url'].startswith('/static/') and not product['image_url'].startswith('http'):
                         product['image_url'] = '/static/img/Products/' + product['image_url']
             

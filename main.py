@@ -1917,7 +1917,10 @@ def product_detail(product_id):
         """, (product_id,))
         reviews_data = cur.fetchall()
         for r in reviews_data:
-            r['created_at'] = r['created_at'].strftime('%d %b %Y')
+            # Store both datetime object and formatted string
+            created_at_obj = r['created_at']
+            r['created_at_formatted'] = created_at_obj.strftime('%d %b %Y')
+            # Keep created_at as datetime for schema.org structured data
             # Also add 'comment' key for backward compatibility with template
             r['comment'] = r['review_text']
             

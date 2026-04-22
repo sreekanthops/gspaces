@@ -635,6 +635,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (!isLoadMore) {
                     let filterLabel = filterType === 'pending' ? 'pending' :
                                     filterType === 'current_month' ? 'from current month' :
+                                    filterType === 'previous_month' ? 'from previous month' :
                                     filterType === 'last_20_days' ? 'from last 20 days' : 'recent';
                     
                     let message = `Showing ${data.orders.length} of ${data.total_count} ${filterLabel} order(s)`;
@@ -677,6 +678,7 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 const filterLabel = filterType === 'pending' ? 'pending' :
                                   filterType === 'current_month' ? 'from current month' :
+                                  filterType === 'previous_month' ? 'from previous month' :
                                   filterType === 'last_20_days' ? 'from last 20 days' : '';
                 addMessage(`You don't have any ${filterLabel} orders yet. Browse our products to get started!`, 'bot', quickReplies);
             }

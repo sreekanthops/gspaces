@@ -237,7 +237,7 @@ def add_chatbot_routes(app, connect_to_db):
         """Get user's orders with smart filtering"""
         try:
             # Get filter parameters
-            filter_type = request.args.get('filter', 'recent')  # recent, current_month, last_20_days, pending
+            filter_type = request.args.get('filter', 'recent')  # recent, current_month, previous_month, last_20_days, pending
             offset = int(request.args.get('offset', 0))
             limit = int(request.args.get('limit', 5))
             
@@ -257,6 +257,8 @@ def add_chatbot_routes(app, connect_to_db):
                 base_query += " AND status != 'Delivered'"
             elif filter_type == 'current_month':
                 base_query += " AND DATE_TRUNC('month', order_date) = DATE_TRUNC('month', CURRENT_DATE)"
+            elif filter_type == 'previous_month':
+                base_query += " AND DATE_TRUNC('month', order_date) = DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 month')"
             elif filter_type == 'last_20_days':
                 base_query += " AND order_date >= CURRENT_DATE - INTERVAL '20 days'"
             
@@ -415,8 +417,8 @@ def add_chatbot_routes(app, connect_to_db):
                 'quick_replies': ['Show coupons', 'Wallet balance', 'Products under 30k', 'My orders', 'Contact us']
             }
         
-        # Budget range search (between X to Y)
-        range_match = re.search(r'between\s+(\d+(?:\.\d+)?)\s*k?\s*(?:to|and|-)\s*(\d+(?:\.\d+)?)\s*k?', message, re.IGNORECASE)
+        # Budget range search (between/b/w X to Y)
+        range_match = re.search(r'(?:between|b/w|bw)\s+(\d+(?:\.\d+)?)\s*k?\s*(?:to|and|-)\s*(\d+(?:\.\d+)?)\s*k?', message, re.IGNORECASE)
         if range_match:
             min_budget = float(range_match.group(1))
             max_budget = float(range_match.group(2))
@@ -493,7 +495,7 @@ def add_chatbot_routes(app, connect_to_db):
             }
         
         # Order tracking with smart filtering
-        if any(word in message for word in ['order', 'track', 'delivery', 'shipping', 'status', 'pending only', 'current month', 'show all orders']):
+        if any(word in message for word in ['order', 'track', 'delivery', 'shipping', 'status', 'pending only', 'current month', 'show all orders', 'previous month', 'last month']):
             if current_user.is_authenticated:
                 # Detect filter type from message
                 filter_type = 'recent'
@@ -506,6 +508,9 @@ def add_chatbot_routes(app, connect_to_db):
                 elif 'current month' in message.lower():
                     filter_type = 'current_month'
                     filter_message = 'Fetching orders from current month...'
+                elif 'previous month' in message.lower() or 'last month' in message.lower():
+                    filter_type = 'previous_month'
+                    filter_message = 'Fetching orders from previous month...'
                 elif 'show all orders' in message.lower():
                     filter_type = 'recent'
                     filter_message = 'Fetching all your orders...'
@@ -524,7 +529,7 @@ def add_chatbot_routes(app, connect_to_db):
                     'type': 'orders',
                     'message': filter_message,
                     'filter_type': filter_type,
-                    'quick_replies': ['Show all orders', 'Pending only', 'Current month', 'Wallet balance']
+                    'quick_replies': ['Show all orders', 'Pending only', 'Current month', 'Previous month']
                 }
             else:
                 return {

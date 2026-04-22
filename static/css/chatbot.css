@@ -5,28 +5,39 @@
     position: fixed;
     bottom: 30px;
     right: 30px;
-    width: 60px;
-    height: 60px;
+    width: 65px;
+    height: 65px;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.5);
     z-index: 1000;
     transition: all 0.3s ease;
+    animation: pulse 2s infinite;
 }
 
 .chatbot-float-btn:hover {
-    transform: scale(1.1);
-    box-shadow: 0 6px 30px rgba(102, 126, 234, 0.6);
+    transform: scale(1.15);
+    box-shadow: 0 8px 35px rgba(102, 126, 234, 0.7);
+    animation: none;
 }
 
 .chatbot-float-btn svg {
-    width: 30px;
-    height: 30px;
+    width: 32px;
+    height: 32px;
     fill: white;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        box-shadow: 0 4px 20px rgba(102, 126, 234, 0.5);
+    }
+    50% {
+        box-shadow: 0 4px 30px rgba(102, 126, 234, 0.8);
+    }
 }
 
 /* Chat Modal */

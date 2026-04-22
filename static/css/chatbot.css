@@ -12,12 +12,12 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    cursor: pointer;
+    cursor: pointer !important;
     box-shadow: 0 4px 20px rgba(102, 126, 234, 0.5);
-    z-index: 9999;
+    z-index: 999999 !important;
     transition: all 0.3s ease;
     animation: pulse 2s infinite;
-    pointer-events: auto;
+    pointer-events: auto !important;
 }
 
 .chatbot-float-btn:hover {
@@ -54,7 +54,7 @@
     background: white;
     border-radius: 20px;
     box-shadow: 0 10px 50px rgba(0, 0, 0, 0.2);
-    z-index: 10000;
+    z-index: 1000000 !important;
     flex-direction: column;
     overflow: hidden;
 }

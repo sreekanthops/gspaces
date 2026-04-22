@@ -114,8 +114,8 @@ def add_chatbot_routes(app, connect_to_db):
             
             # Get personal coupons
             cursor.execute("""
-                SELECT code, discount_value as discount_percent, min_order_value, max_discount,
-                       valid_from, valid_until, usage_limit, times_used
+                SELECT code, discount_value as discount_percent, min_order_amount as min_order_value,
+                       max_discount_amount as max_discount, valid_from, valid_until, usage_limit, times_used
                 FROM coupons
                 WHERE user_id = %s
                 AND valid_until >= CURRENT_DATE
@@ -126,8 +126,8 @@ def add_chatbot_routes(app, connect_to_db):
             
             # Get referral coupons
             cursor.execute("""
-                SELECT code, discount_value as discount_percent, min_order_value, max_discount,
-                       valid_from, valid_until, usage_limit, times_used
+                SELECT code, discount_value as discount_percent, min_order_amount as min_order_value,
+                       max_discount_amount as max_discount, valid_from, valid_until, usage_limit, times_used
                 FROM referral_coupons
                 WHERE user_id = %s
                 AND valid_until >= CURRENT_DATE
@@ -138,8 +138,8 @@ def add_chatbot_routes(app, connect_to_db):
             
             # Get bonus/public coupons
             cursor.execute("""
-                SELECT code, discount_value as discount_percent, min_order_value, max_discount,
-                       valid_from, valid_until, usage_limit, times_used
+                SELECT code, discount_value as discount_percent, min_order_amount as min_order_value,
+                       max_discount_amount as max_discount, valid_from, valid_until, usage_limit, times_used
                 FROM coupons
                 WHERE user_id IS NULL
                 AND valid_until >= CURRENT_DATE
@@ -276,14 +276,24 @@ def add_chatbot_routes(app, connect_to_db):
                           'How can I assist you today?'
             }
         
-        # Budget/price search
+        # Budget/price search - handle k/K for thousands
+        budget_match = re.search(r'(\d+(?:\.\d+)?)\s*k\b', message, re.IGNORECASE)
+        if budget_match and any(word in message for word in ['budget', 'price', 'under', 'within', 'afford', 'cost', 'setup', 'setups']):
+            budget = float(budget_match.group(1)) * 1000
+            return {
+                'type': 'budget_search',
+                'budget': budget,
+                'message': f'Let me find products within ₹{budget:,.0f} for you...'
+            }
+        
+        # Regular budget search without 'k'
         budget_match = re.search(r'(\d+)\s*(rupees?|rs\.?|inr|₹)?', message)
         if budget_match and any(word in message for word in ['budget', 'price', 'under', 'within', 'afford', 'cost']):
             budget = float(budget_match.group(1))
             return {
                 'type': 'budget_search',
                 'budget': budget,
-                'message': f'Let me find products within ₹{budget} for you...'
+                'message': f'Let me find products within ₹{budget:,.0f} for you...'
             }
         
         # Wallet inquiry

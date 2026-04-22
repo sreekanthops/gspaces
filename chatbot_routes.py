@@ -253,7 +253,8 @@ def add_chatbot_routes(app, connect_to_db):
             params = [current_user.id]
             
             if filter_type == 'pending':
-                base_query += " AND status = 'Pending'"
+                # Pending = NOT Delivered (includes Pending, Confirmed, Shipped, etc.)
+                base_query += " AND status != 'Delivered'"
             elif filter_type == 'current_month':
                 base_query += " AND DATE_TRUNC('month', order_date) = DATE_TRUNC('month', CURRENT_DATE)"
             elif filter_type == 'last_20_days':
@@ -270,11 +271,11 @@ def add_chatbot_routes(app, connect_to_db):
             cursor.execute(base_query, params)
             orders = cursor.fetchall()
             
-            # Count pending orders (always)
+            # Count pending orders (not delivered)
             cursor.execute("""
                 SELECT COUNT(*) as pending_count
                 FROM orders
-                WHERE user_id = %s AND status = 'Pending'
+                WHERE user_id = %s AND status != 'Delivered'
             """, (current_user.id,))
             pending_count = cursor.fetchone()['pending_count']
             
@@ -289,7 +290,7 @@ def add_chatbot_routes(app, connect_to_db):
                     'total_amount': float(order['total_amount']),
                     'status': order['status'],
                     'created_at': str(order['order_date']),
-                    'is_pending': order['status'] == 'Pending'
+                    'is_pending': order['status'] != 'Delivered'  # Pending = not delivered
                 })
             
             has_more = (offset + limit) < total_count
@@ -492,16 +493,27 @@ def add_chatbot_routes(app, connect_to_db):
             }
         
         # Order tracking with smart filtering
-        if any(word in message for word in ['order', 'track', 'delivery', 'shipping', 'status']):
+        if any(word in message for word in ['order', 'track', 'delivery', 'shipping', 'status', 'pending only', 'current month', 'show all orders']):
             if current_user.is_authenticated:
                 # Detect filter type from message
                 filter_type = 'recent'
                 filter_message = 'Let me fetch your recent orders...'
                 
-                if any(word in message for word in ['pending', 'not delivered', 'undelivered']):
+                # Check for exact button text matches first
+                if 'pending only' in message.lower():
                     filter_type = 'pending'
                     filter_message = 'Fetching your pending orders...'
-                elif any(word in message for word in ['current month', 'this month', 'monthly']):
+                elif 'current month' in message.lower():
+                    filter_type = 'current_month'
+                    filter_message = 'Fetching orders from current month...'
+                elif 'show all orders' in message.lower():
+                    filter_type = 'recent'
+                    filter_message = 'Fetching all your orders...'
+                # Then check for natural language patterns
+                elif any(word in message for word in ['pending', 'not delivered', 'undelivered']):
+                    filter_type = 'pending'
+                    filter_message = 'Fetching your pending orders...'
+                elif any(word in message for word in ['this month', 'monthly']):
                     filter_type = 'current_month'
                     filter_message = 'Fetching orders from current month...'
                 elif any(word in message for word in ['last 20 days', '20 days', 'recent 20']):

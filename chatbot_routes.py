@@ -37,22 +37,33 @@ def add_chatbot_routes(app, connect_to_db):
         try:
             data = request.get_json()
             budget = float(data.get('budget', 0))
-            
-            if budget <= 0:
-                return jsonify({'error': 'Invalid budget'}), 400
+            min_budget = float(data.get('min_budget', 0))
+            max_budget = float(data.get('max_budget', 0))
             
             conn = connect_to_db()
             cursor = conn.cursor(cursor_factory=RealDictCursor)
             
-            # Find products within budget (with 10% margin)
-            max_price = budget * 1.1
-            cursor.execute("""
-                SELECT id, name, price, image_url, description
-                FROM products
-                WHERE price <= %s
-                ORDER BY price ASC
-                LIMIT 10
-            """, (max_price,))
+            # Handle range search
+            if min_budget > 0 and max_budget > 0:
+                cursor.execute("""
+                    SELECT id, name, price, image_url, description
+                    FROM products
+                    WHERE price BETWEEN %s AND %s
+                    ORDER BY price ASC
+                    LIMIT 10
+                """, (min_budget, max_budget))
+            # Handle single budget with 10% margin
+            elif budget > 0:
+                max_price = budget * 1.1
+                cursor.execute("""
+                    SELECT id, name, price, image_url, description
+                    FROM products
+                    WHERE price <= %s
+                    ORDER BY price ASC
+                    LIMIT 10
+                """, (max_price,))
+            else:
+                return jsonify({'error': 'Invalid budget'}), 400
             
             products = cursor.fetchall()
             conn.close()
@@ -89,20 +100,32 @@ def add_chatbot_routes(app, connect_to_db):
             conn = connect_to_db()
             cursor = conn.cursor(cursor_factory=RealDictCursor)
             
+            # Get wallet balance
             cursor.execute("""
-                SELECT balance, total_earned, total_spent
+                SELECT balance
                 FROM wallets
                 WHERE user_id = %s
             """, (current_user.id,))
             
             wallet = cursor.fetchone()
+            
+            # Calculate total earned and spent from transactions
+            cursor.execute("""
+                SELECT
+                    COALESCE(SUM(CASE WHEN amount > 0 THEN amount ELSE 0 END), 0) as total_earned,
+                    COALESCE(SUM(CASE WHEN amount < 0 THEN ABS(amount) ELSE 0 END), 0) as total_spent
+                FROM wallet_transactions
+                WHERE user_id = %s
+            """, (current_user.id,))
+            
+            transactions = cursor.fetchone()
             conn.close()
             
             if wallet:
                 return jsonify({
                     'balance': float(wallet['balance']),
-                    'total_earned': float(wallet['total_earned']),
-                    'total_spent': float(wallet['total_spent'])
+                    'total_earned': float(transactions['total_earned']) if transactions else 0.0,
+                    'total_spent': float(transactions['total_spent']) if transactions else 0.0
                 })
             else:
                 return jsonify({
@@ -296,18 +319,86 @@ def add_chatbot_routes(app, connect_to_db):
                           '🎫 Checking available coupons\n' +
                           '💳 Viewing your wallet balance\n' +
                           '📦 Tracking your orders\n' +
-                          '📞 Getting contact information\n\n' +
-                          'How can I assist you today?'
+                          '📞 Getting contact information\n' +
+                          'ℹ️ Learning about GSpaces\n\n' +
+                          'How can I assist you today?',
+                'quick_replies': ['Show coupons', 'Wallet balance', 'Products under 30k', 'Contact us', 'What is GSpaces?']
+            }
+        
+        # About GSpaces / What is GSpaces
+        if any(word in message for word in ['what is gspaces', 'about gspaces', 'why gspaces', 'tell me about']):
+            return {
+                'type': 'text',
+                'message': '🏢 **About GSpaces**\n\n' +
+                          'GSpaces is India\'s premier destination for complete desk setup solutions! 🎯\n\n' +
+                          '✨ **Why Choose GSpaces?**\n' +
+                          '• Complete ready-to-use desk setups\n' +
+                          '• Premium ergonomic furniture\n' +
+                          '• Free installation & setup\n' +
+                          '• Perfect for WFH, office & home\n' +
+                          '• Starting from just ₹20,000\n' +
+                          '• Transform your workspace into a dream setup!\n\n' +
+                          '🎁 **Special Benefits:**\n' +
+                          '• Exclusive coupons & discounts\n' +
+                          '• Wallet cashback rewards\n' +
+                          '• Fast delivery across India\n' +
+                          '• Quality guaranteed products\n\n' +
+                          'Ready to upgrade your workspace? 🚀',
+                'quick_replies': ['Show products', 'Check coupons', 'Contact details']
+            }
+        
+        # Help command
+        if message == 'help' or 'help' in message:
+            return {
+                'type': 'text',
+                'message': '🤖 **How can I help you?**\n\n' +
+                          '💰 **Budget Search:**\n' +
+                          '   • "Show setups under 30k"\n' +
+                          '   • "Products between 20k to 40k"\n\n' +
+                          '🎫 **Coupons & Offers:**\n' +
+                          '   • "Show coupons"\n' +
+                          '   • "Available offers"\n\n' +
+                          '💳 **Wallet:**\n' +
+                          '   • "Wallet balance"\n' +
+                          '   • "My wallet"\n\n' +
+                          '📦 **Orders:**\n' +
+                          '   • "My orders"\n' +
+                          '   • "Track order"\n\n' +
+                          '📞 **Contact:**\n' +
+                          '   • "Contact details"\n' +
+                          '   • "Support"\n\n' +
+                          'ℹ️ **About:**\n' +
+                          '   • "What is GSpaces?"\n' +
+                          '   • "Why GSpaces?"',
+                'quick_replies': ['Show coupons', 'Wallet balance', 'Products under 30k', 'My orders', 'Contact us']
+            }
+        
+        # Budget range search (between X to Y)
+        range_match = re.search(r'between\s+(\d+(?:\.\d+)?)\s*k?\s*(?:to|and|-)\s*(\d+(?:\.\d+)?)\s*k?', message, re.IGNORECASE)
+        if range_match:
+            min_budget = float(range_match.group(1))
+            max_budget = float(range_match.group(2))
+            # Handle 'k' suffix
+            if 'k' in message.lower():
+                min_budget *= 1000
+                max_budget *= 1000
+            return {
+                'type': 'budget_range',
+                'min_budget': min_budget,
+                'max_budget': max_budget,
+                'message': f'Searching for products between ₹{min_budget:,.0f} and ₹{max_budget:,.0f}...',
+                'quick_replies': ['Show more', 'Check coupons', 'Contact us']
             }
         
         # Budget/price search - handle k/K for thousands
         budget_match = re.search(r'(\d+(?:\.\d+)?)\s*k\b', message, re.IGNORECASE)
-        if budget_match and any(word in message for word in ['budget', 'price', 'under', 'within', 'afford', 'cost', 'setup', 'setups']):
+        if budget_match and any(word in message for word in ['budget', 'price', 'under', 'within', 'afford', 'cost', 'setup', 'setups', 'show', 'find']):
             budget = float(budget_match.group(1)) * 1000
             return {
                 'type': 'budget_search',
                 'budget': budget,
-                'message': f'Let me find products within ₹{budget:,.0f} for you...'
+                'message': f'Let me find products within ₹{budget:,.0f} for you...',
+                'quick_replies': ['Show more', 'Check coupons', 'Wallet balance']
             }
         
         # Regular budget search without 'k'
@@ -317,7 +408,8 @@ def add_chatbot_routes(app, connect_to_db):
             return {
                 'type': 'budget_search',
                 'budget': budget,
-                'message': f'Let me find products within ₹{budget:,.0f} for you...'
+                'message': f'Let me find products within ₹{budget:,.0f} for you...',
+                'quick_replies': ['Show more', 'Check coupons', 'Contact us']
             }
         
         # Wallet inquiry
@@ -325,12 +417,14 @@ def add_chatbot_routes(app, connect_to_db):
             if current_user.is_authenticated:
                 return {
                     'type': 'wallet',
-                    'message': 'Fetching your wallet information...'
+                    'message': 'Fetching your wallet information...',
+                    'quick_replies': ['Check coupons', 'My orders', 'Products under 30k']
                 }
             else:
                 return {
                     'type': 'text',
-                    'message': 'Please log in to view your wallet balance.'
+                    'message': 'Please log in to view your wallet balance.',
+                    'quick_replies': ['Show products', 'Contact us']
                 }
         
         # Coupon inquiry
@@ -338,19 +432,22 @@ def add_chatbot_routes(app, connect_to_db):
             if current_user.is_authenticated:
                 return {
                     'type': 'coupons',
-                    'message': 'Here are your available coupons...'
+                    'message': 'Here are your available coupons...',
+                    'quick_replies': ['Wallet balance', 'Products under 30k', 'My orders']
                 }
             else:
                 return {
                     'type': 'text',
-                    'message': 'Please log in to view your coupons.'
+                    'message': 'Please log in to view your coupons.',
+                    'quick_replies': ['Show products', 'Contact us']
                 }
         
         # Contact inquiry
-        if any(word in message for word in ['contact', 'phone', 'email', 'address', 'reach', 'support', 'help']):
+        if any(word in message for word in ['contact', 'phone', 'email', 'address', 'reach', 'support']):
             return {
                 'type': 'contact',
-                'message': 'Here\'s how you can reach us...'
+                'message': 'Here\'s how you can reach us...',
+                'quick_replies': ['Show products', 'Check coupons', 'What is GSpaces?']
             }
         
         # Order tracking
@@ -358,23 +455,26 @@ def add_chatbot_routes(app, connect_to_db):
             if current_user.is_authenticated:
                 return {
                     'type': 'orders',
-                    'message': 'Let me fetch your recent orders...'
+                    'message': 'Let me fetch your recent orders...',
+                    'quick_replies': ['Wallet balance', 'Check coupons', 'Contact us']
                 }
             else:
                 return {
                     'type': 'text',
-                    'message': 'Please log in to view your orders.'
+                    'message': 'Please log in to view your orders.',
+                    'quick_replies': ['Show products', 'Contact us']
                 }
         
         # Product inquiry
-        if any(word in message for word in ['product', 'desk', 'chair', 'setup', 'furniture', 'office']):
+        if any(word in message for word in ['product', 'desk', 'chair', 'setup', 'furniture', 'office', 'show']):
             return {
                 'type': 'text',
                 'message': 'We offer a wide range of office furniture and setups! You can:\n\n' +
                           '• Browse our products section\n' +
                           '• Tell me your budget to find suitable options\n' +
                           '• Check available discounts and offers\n\n' +
-                          'What would you like to know more about?'
+                          'What would you like to know more about?',
+                'quick_replies': ['Products under 30k', 'Between 20k to 40k', 'Check coupons', 'Contact us']
             }
         
         # Default response
@@ -385,8 +485,10 @@ def add_chatbot_routes(app, connect_to_db):
                       '🎫 Available coupons and discounts\n' +
                       '💳 Your wallet balance\n' +
                       '📦 Order tracking\n' +
-                      '📞 Contact information\n\n' +
-                      'What would you like to know?'
+                      '📞 Contact information\n' +
+                      'ℹ️ About GSpaces\n\n' +
+                      'Type "help" for more options!',
+            'quick_replies': ['Show coupons', 'Wallet balance', 'Products under 30k', 'Contact us', 'Help']
         }
 
 # Made with Bob

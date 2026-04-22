@@ -257,7 +257,14 @@
   // Sync before submit and validate
   document.querySelector('form').addEventListener('submit', function(e) {
     // Get content from whichever mode is active
-    const content = isSourceMode ? contentSource.value : contentDiv.innerHTML;
+    let content;
+    if (isSourceMode) {
+      // In source mode, use the raw HTML from textarea
+      content = contentSource.value;
+    } else {
+      // In visual mode, use innerHTML from contenteditable
+      content = contentDiv.innerHTML;
+    }
     hiddenTextarea.value = content;
     
     // Validate minimum length

@@ -47,13 +47,7 @@ def add_chatbot_routes(app, connect_to_db):
             # Find products within budget (with 10% margin)
             max_price = budget * 1.1
             cursor.execute("""
-                SELECT id, name, price,
-                       CASE
-                           WHEN image_url LIKE '/img/%' THEN REPLACE(image_url, '/img/', '/static/img/')
-                           WHEN image_url NOT LIKE '/static/%' AND image_url NOT LIKE 'http%' THEN '/static/img/Products/' || image_url
-                           ELSE image_url
-                       END as image_url,
-                       description
+                SELECT id, name, price, image_url, description
                 FROM products
                 WHERE price <= %s
                 ORDER BY price ASC
@@ -63,9 +57,15 @@ def add_chatbot_routes(app, connect_to_db):
             products = cursor.fetchall()
             conn.close()
             
-            # Convert Decimal to float for JSON
+            # Convert Decimal to float and fix image URLs
             for product in products:
                 product['price'] = float(product['price'])
+                # Fix image URL to include /static/ prefix if needed
+                if product['image_url']:
+                    if product['image_url'].startswith('/img/'):
+                        product['image_url'] = product['image_url'].replace('/img/', '/static/img/')
+                    elif not product['image_url'].startswith('/static/') and not product['image_url'].startswith('http'):
+                        product['image_url'] = '/static/img/Products/' + product['image_url']
             
             return jsonify({
                 'products': products,
@@ -121,10 +121,13 @@ def add_chatbot_routes(app, connect_to_db):
             # Get personal coupons
             cursor.execute("""
                 SELECT code, discount_value as discount_percent, min_order_amount as min_order_value,
-                       max_discount_amount as max_discount, valid_from, valid_until, usage_limit, times_used
+                       max_discount_amount as max_discount, created_at as valid_from,
+                       COALESCE(valid_until, created_at + INTERVAL '30 days') as valid_until,
+                       usage_limit, times_used
                 FROM coupons
                 WHERE user_id = %s
-                AND valid_until >= CURRENT_DATE
+                AND is_active = true
+                AND (valid_until IS NULL OR valid_until >= CURRENT_DATE)
                 AND (usage_limit IS NULL OR times_used < usage_limit)
                 ORDER BY discount_value DESC
             """, (current_user.id,))
@@ -152,10 +155,13 @@ def add_chatbot_routes(app, connect_to_db):
             # Get bonus/public coupons
             cursor.execute("""
                 SELECT code, discount_value as discount_percent, min_order_amount as min_order_value,
-                       max_discount_amount as max_discount, valid_from, valid_until, usage_limit, times_used
+                       max_discount_amount as max_discount, created_at as valid_from,
+                       COALESCE(valid_until, created_at + INTERVAL '30 days') as valid_until,
+                       usage_limit, times_used
                 FROM coupons
                 WHERE user_id IS NULL
-                AND valid_until >= CURRENT_DATE
+                AND is_active = true
+                AND (valid_until IS NULL OR valid_until >= CURRENT_DATE)
                 AND (usage_limit IS NULL OR times_used < usage_limit)
                 ORDER BY discount_value DESC
             """)

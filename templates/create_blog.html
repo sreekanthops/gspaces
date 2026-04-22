@@ -233,6 +233,7 @@
   
   contentSource.addEventListener('input', function() {
     if (isSourceMode) {
+      // In source mode, always use the raw value from textarea
       hiddenTextarea.value = this.value;
     }
   });
@@ -246,11 +247,15 @@
       contentSource.value = contentDiv.innerHTML;
       contentDiv.style.display = 'none';
       contentSource.style.display = 'block';
+      // Update hidden field immediately with raw HTML
+      hiddenTextarea.value = contentSource.value;
     } else {
       // Switch back to visual mode
       contentDiv.innerHTML = contentSource.value;
       contentSource.style.display = 'none';
       contentDiv.style.display = 'block';
+      // Update hidden field with innerHTML
+      hiddenTextarea.value = contentDiv.innerHTML;
     }
   }
   

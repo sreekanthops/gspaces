@@ -47,7 +47,13 @@ def add_chatbot_routes(app, connect_to_db):
             # Find products within budget (with 10% margin)
             max_price = budget * 1.1
             cursor.execute("""
-                SELECT id, name, price, image_url, description
+                SELECT id, name, price,
+                       CASE
+                           WHEN image_url LIKE '/img/%' THEN REPLACE(image_url, '/img/', '/static/img/')
+                           WHEN image_url NOT LIKE '/static/%' AND image_url NOT LIKE 'http%' THEN '/static/img/Products/' || image_url
+                           ELSE image_url
+                       END as image_url,
+                       description
                 FROM products
                 WHERE price <= %s
                 ORDER BY price ASC
@@ -124,15 +130,22 @@ def add_chatbot_routes(app, connect_to_db):
             """, (current_user.id,))
             personal_coupons = cursor.fetchall()
             
-            # Get referral coupons
+            # Get referral coupons (uses coupon_code instead of code)
             cursor.execute("""
-                SELECT code, discount_value as discount_percent, min_order_amount as min_order_value,
-                       max_discount_amount as max_discount, valid_from, valid_until, usage_limit, times_used
+                SELECT coupon_code as code,
+                       COALESCE(discount_amount, discount_percentage) as discount_percent,
+                       COALESCE(min_order_amount, 0) as min_order_value,
+                       max_discount_amount as max_discount,
+                       created_at as valid_from,
+                       expires_at as valid_until,
+                       usage_limit,
+                       times_used
                 FROM referral_coupons
                 WHERE user_id = %s
-                AND valid_until >= CURRENT_DATE
+                AND (expires_at IS NULL OR expires_at >= CURRENT_DATE)
+                AND is_active = true
                 AND (usage_limit IS NULL OR times_used < usage_limit)
-                ORDER BY discount_value DESC
+                ORDER BY COALESCE(discount_amount, discount_percentage) DESC
             """, (current_user.id,))
             referral_coupons = cursor.fetchall()
             

@@ -282,10 +282,10 @@ def add_chatbot_routes(app, connect_to_db):
             cursor = conn.cursor(cursor_factory=RealDictCursor)
             
             cursor.execute("""
-                SELECT id, order_id, total_amount, status, created_at, 
-                       shipping_address, payment_method
+                SELECT id, razorpay_order_id, total_amount, status, order_date,
+                       shipping_address_line_1, shipping_city, shipping_state
                 FROM orders
-                WHERE order_id = %s AND user_id = %s
+                WHERE razorpay_order_id = %s AND user_id = %s
             """, (order_id, current_user.id))
             
             order = cursor.fetchone()
@@ -294,13 +294,14 @@ def add_chatbot_routes(app, connect_to_db):
             if not order:
                 return jsonify({'error': 'Order not found'}), 404
             
+            shipping_address = f"{order['shipping_address_line_1']}, {order['shipping_city']}, {order['shipping_state']}"
+            
             return jsonify({
-                'order_id': order['order_id'],
+                'order_id': order['razorpay_order_id'],
                 'total_amount': float(order['total_amount']),
                 'status': order['status'],
-                'created_at': str(order['created_at']),
-                'shipping_address': order['shipping_address'],
-                'payment_method': order['payment_method']
+                'created_at': str(order['order_date']),
+                'shipping_address': shipping_address
             })
             
         except Exception as e:

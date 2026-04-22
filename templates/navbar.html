@@ -338,6 +338,47 @@ document.addEventListener('DOMContentLoaded', function() {
         messageDiv.className = `chatbot-message ${msg.sender}`;
         messageDiv.innerHTML = msg.html;
         messagesContainer.appendChild(messageDiv);
+        
+        // Re-attach event listeners to quick reply buttons
+        const quickReplyBtns = messageDiv.querySelectorAll('.quick-reply-btn');
+        quickReplyBtns.forEach(btn => {
+            const text = btn.textContent.replace(/^[🎫💳📦📞💰⚠️📅]\s*/, ''); // Remove emoji
+            btn.onclick = () => sendQuickReply(text);
+        });
+        
+        // Re-attach event listeners to show more buttons
+        const showMoreBtns = messageDiv.querySelectorAll('.show-more-btn');
+        showMoreBtns.forEach(btn => {
+            const onclickAttr = btn.getAttribute('onclick');
+            if (onclickAttr) {
+                // Extract function call from onclick attribute
+                btn.onclick = function() {
+                    eval(onclickAttr);
+                };
+            }
+        });
+        
+        // Re-attach event listeners to product cards
+        const productCards = messageDiv.querySelectorAll('.chat-product-card');
+        productCards.forEach(card => {
+            const onclickAttr = card.getAttribute('onclick');
+            if (onclickAttr) {
+                card.onclick = function() {
+                    eval(onclickAttr);
+                };
+            }
+        });
+        
+        // Re-attach event listeners to order cards
+        const orderCards = messageDiv.querySelectorAll('.chat-order-card');
+        orderCards.forEach(card => {
+            const onclickAttr = card.getAttribute('onclick');
+            if (onclickAttr) {
+                card.onclick = function() {
+                    eval(onclickAttr);
+                };
+            }
+        });
     }
     
     // Clear chat history

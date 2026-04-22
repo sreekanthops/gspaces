@@ -239,15 +239,24 @@ def add_chatbot_routes(app, connect_to_db):
             conn = connect_to_db()
             cursor = conn.cursor(cursor_factory=RealDictCursor)
             
+            # Get all orders
             cursor.execute("""
-                SELECT id, order_id, total_amount, status, created_at
+                SELECT id, razorpay_order_id, total_amount, status, order_date
                 FROM orders
                 WHERE user_id = %s
-                ORDER BY created_at DESC
-                LIMIT 5
+                ORDER BY order_date DESC
             """, (current_user.id,))
             
             orders = cursor.fetchall()
+            
+            # Count pending orders
+            cursor.execute("""
+                SELECT COUNT(*) as pending_count
+                FROM orders
+                WHERE user_id = %s AND status = 'Pending'
+            """, (current_user.id,))
+            
+            pending_count = cursor.fetchone()['pending_count']
             conn.close()
             
             # Format orders
@@ -255,13 +264,18 @@ def add_chatbot_routes(app, connect_to_db):
             for order in orders:
                 formatted_orders.append({
                     'id': order['id'],
-                    'order_id': order['order_id'],
+                    'order_id': order['razorpay_order_id'],
                     'total_amount': float(order['total_amount']),
                     'status': order['status'],
-                    'created_at': str(order['created_at'])
+                    'created_at': str(order['order_date']),
+                    'is_pending': order['status'] == 'Pending'
                 })
             
-            return jsonify({'orders': formatted_orders})
+            return jsonify({
+                'orders': formatted_orders,
+                'pending_count': pending_count,
+                'total_count': len(formatted_orders)
+            })
             
         except Exception as e:
             print(f"Orders fetch error: {e}")

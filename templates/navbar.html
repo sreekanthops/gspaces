@@ -609,7 +609,12 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(res => res.json())
         .then(data => {
             if (data.orders && data.orders.length > 0) {
-                addMessage(`You have ${data.orders.length} order(s):`, 'bot');
+                let message = `You have ${data.total_count} order(s)`;
+                if (data.pending_count > 0) {
+                    message += ` (${data.pending_count} pending)`;
+                }
+                addMessage(message + ':', 'bot');
+                
                 data.orders.forEach(order => {
                     messagesContainer.appendChild(createOrderCard(order));
                 });
@@ -641,9 +646,13 @@ document.addEventListener('DOMContentLoaded', function() {
         const card = document.createElement('div');
         card.className = 'chatbot-message bot';
         const statusClass = order.status.toLowerCase().replace(' ', '-');
+        const isPending = order.is_pending;
+        const borderStyle = isPending ? 'border-left: 4px solid #f59e0b;' : '';
+        const pendingBadge = isPending ? '<span style="background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 10px; font-size: 11px; margin-left: 8px;">⚠️ Pending</span>' : '';
+        
         card.innerHTML = `
-            <div class="chat-order-card" onclick="window.location.href='/profile#orders'" style="cursor: pointer;">
-                <div class="chat-order-id">Order #${order.order_id}</div>
+            <div class="chat-order-card" onclick="window.location.href='/profile#orders'" style="cursor: pointer; ${borderStyle}">
+                <div class="chat-order-id">Order #${order.order_id} ${pendingBadge}</div>
                 <div>Amount: ₹${order.total_amount.toLocaleString()}</div>
                 <div>Date: ${new Date(order.created_at).toLocaleDateString()}</div>
                 <span class="chat-order-status ${statusClass}">${order.status}</span>

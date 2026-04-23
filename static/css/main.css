@@ -1595,9 +1595,9 @@ colors
 --------------------------------------------------------------*/
 .floating-contact-buttons {
   position: fixed !important;
-  right: 18px !important;
+  right: 30px !important;
   left: auto !important;
-  bottom: 18px !important;
+  bottom: 110px !important;
   z-index: 1100;
   display: flex;
   flex-direction: column;

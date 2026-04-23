@@ -293,6 +293,16 @@
       <h2>Create your account</h2>
       <p class="subtitle">Get started with your free account and ₹500 bonus</p>
 
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }}" style="padding: 12px; margin-bottom: 20px; border-radius: 8px; {% if category == 'error' %}background: #fee; color: #c00; border: 1px solid #fcc;{% else %}background: #efe; color: #060; border: 1px solid #cfc;{% endif %}">
+              {{ message }}
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
       <div class="bonus-badge">
         <i class="bi bi-gift-fill"></i>
         Get ₹500 bonus instantly!

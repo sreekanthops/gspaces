@@ -164,7 +164,10 @@ document.addEventListener("DOMContentLoaded", initCountdownFromServer);
                 <li class="nav-item"><a class="nav-link js-scroll-link" href="{{ url_for('index', section='corporate') }}" data-section="corporate">Corporate Tie-ups</a></li>
                 <li class="nav-item"><a class="nav-link js-scroll-link" href="{{ url_for('index', section='products') }}" data-section="products">Setups</a></li>
                 
-                <!-- Hardcoded Categories (7 new categories) -->
+                <!-- Hardcoded Categories (All + 7 categories) -->
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('index', section='products') }}">All</a>
+                </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('index', section='products', category='basic') }}">Basic</a>
                 </li>

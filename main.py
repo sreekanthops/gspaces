@@ -1052,9 +1052,14 @@ def index():
             cursor.execute(query, params)
             product_list = cursor.fetchall()
             
-            # Get unique categories for filter
-            cursor.execute("SELECT DISTINCT category FROM products WHERE category IS NOT NULL ORDER BY category")
-            categories = [row['category'] for row in cursor.fetchall()]
+            # Get categories from categories table
+            cursor.execute("""
+                SELECT id, name, slug, display_order
+                FROM categories
+                WHERE is_active = TRUE
+                ORDER BY display_order, name
+            """)
+            categories = cursor.fetchall()
             
         except Error as e:
             print(f"Error fetching products: {e}")

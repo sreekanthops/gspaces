@@ -633,19 +633,10 @@ Services Section END -->
       <!-- Filters -->
       <ul class="products-filters isotope-filters" data-aos="fade-up" data-aos-delay="100">
         <li data-filter="*" class="filter-active">All</li>
-        {% set has_categories = categories and categories is iterable and categories|length > 0 %}
-        {% if has_categories %}
+        {% if categories and categories|length > 0 %}
           {% for category in categories %}
           <li data-filter=".filter-{{ category.slug }}">{{ category.name }}</li>
           {% endfor %}
-        {% else %}
-          <li data-filter=".filter-basic">Basic</li>
-          <li data-filter=".filter-storage">Storage</li>
-          <li data-filter=".filter-elegant">Elegant</li>
-          <li data-filter=".filter-greenery">Greenery</li>
-          <li data-filter=".filter-couple">Couple</li>
-          <li data-filter=".filter-luxury">Luxury</li>
-          <li data-filter=".filter-studio">Studio</li>
         {% endif %}
       </ul><!-- End Product Filters -->
 

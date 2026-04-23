@@ -35,15 +35,14 @@ psql -U postgres -d gspaces -f create_categories_table.sql
 psql -U postgres -d gspaces -c "SELECT * FROM categories ORDER BY display_order;"
 ```
 
-You should see 8 categories:
-1. Ergonomic
-2. Minimalist
-3. Executive
+You should see 7 categories:
+1. Basic
+2. Storage
+3. Elegant
 4. Greenery
-5. Couple Studio
-6. Basic Storage
-7. Elegant
-8. Luxury Studio
+5. Couple
+6. Luxury
+7. Studio
 
 ### 3. Update main.py
 

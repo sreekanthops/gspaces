@@ -9,20 +9,18 @@ CREATE TABLE IF NOT EXISTS categories (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Insert existing categories first (preserve current data)
-INSERT INTO categories (name, slug, display_order, is_active) VALUES
-('Ergonomic', 'ergonomic', 1, TRUE),
-('Minimalist', 'minimalist', 2, TRUE),
-('Executive', 'executive', 3, TRUE)
-ON CONFLICT (name) DO NOTHING;
+-- Delete old categories (Ergonomic, Minimalist, Executive)
+DELETE FROM categories WHERE name IN ('Ergonomic', 'Minimalist', 'Executive');
 
--- Add new categories
+-- Insert new 7 categories in the correct order
 INSERT INTO categories (name, slug, display_order, is_active) VALUES
+('Basic', 'basic', 1, TRUE),
+('Storage', 'storage', 2, TRUE),
+('Elegant', 'elegant', 3, TRUE),
 ('Greenery', 'greenery', 4, TRUE),
-('Couple Studio', 'couple-studio', 5, TRUE),
-('Basic Storage', 'basic-storage', 6, TRUE),
-('Elegant', 'elegant', 7, TRUE),
-('Luxury Studio', 'luxury-studio', 8, TRUE)
+('Couple', 'couple', 5, TRUE),
+('Luxury', 'luxury', 6, TRUE),
+('Studio', 'studio', 7, TRUE)
 ON CONFLICT (name) DO NOTHING;
 
 -- Create index for faster lookups

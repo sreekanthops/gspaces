@@ -31,11 +31,11 @@ echo ""
 echo -e "${YELLOW}Step 2: Verifying categories...${NC}"
 CATEGORY_COUNT=$(psql -U postgres -d gspaces -t -c "SELECT COUNT(*) FROM categories;")
 
-if [ "$CATEGORY_COUNT" -ge 8 ]; then
+if [ "$CATEGORY_COUNT" -ge 7 ]; then
     echo -e "${GREEN}✓ Found $CATEGORY_COUNT categories in database${NC}"
     psql -U postgres -d gspaces -c "SELECT name, slug, is_active FROM categories ORDER BY display_order;"
 else
-    echo -e "${RED}✗ Expected at least 8 categories, found $CATEGORY_COUNT${NC}"
+    echo -e "${RED}✗ Expected at least 7 categories, found $CATEGORY_COUNT${NC}"
     exit 1
 fi
 
@@ -88,19 +88,18 @@ echo "=========================================="
 echo -e "${GREEN}Deployment Summary${NC}"
 echo "=========================================="
 echo ""
-echo "✓ Database migrated with 8 categories"
-echo "✓ Existing products preserved"
+echo "✓ Database migrated with 7 categories"
+echo "✓ Old categories deleted (Ergonomic, Minimalist, Executive)"
 echo "✓ Admin interface available at: /admin/categories"
 echo ""
-echo "New Categories Added:"
-echo "  1. Ergonomic (existing)"
-echo "  2. Minimalist (existing)"
-echo "  3. Executive (existing)"
-echo "  4. Greenery (new)"
-echo "  5. Couple Studio (new)"
-echo "  6. Basic Storage (new)"
-echo "  7. Elegant (new)"
-echo "  8. Luxury Studio (new)"
+echo "New Categories (in order):"
+echo "  1. Basic"
+echo "  2. Storage"
+echo "  3. Elegant"
+echo "  4. Greenery"
+echo "  5. Couple"
+echo "  6. Luxury"
+echo "  7. Studio"
 echo ""
 echo "Next Steps:"
 echo "1. Login to admin panel"

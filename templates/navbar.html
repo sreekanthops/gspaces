@@ -164,48 +164,6 @@ document.addEventListener("DOMContentLoaded", initCountdownFromServer);
                 <li class="nav-item"><a class="nav-link js-scroll-link" href="{{ url_for('index', section='corporate') }}" data-section="corporate">Corporate Tie-ups</a></li>
                 <li class="nav-item"><a class="nav-link js-scroll-link" href="{{ url_for('index', section='products') }}" data-section="products">Setups</a></li>
                 
-                <!-- Hardcoded Categories (All + 7 categories) -->
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('index', section='products') }}">All</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('index', section='products', category='basic') }}">Basic</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('index', section='products', category='storage') }}">Storage</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('index', section='products', category='elegant') }}">Elegant</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('index', section='products', category='greenery') }}">Greenery</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('index', section='products', category='couple') }}">Couple</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('index', section='products', category='luxury') }}">Luxury</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('index', section='products', category='studio') }}">Studio</a>
-                </li>
-                
-                <!-- Keep dynamic code for future (commented out) -->
-                {% if false %}
-                    {% if categories|length > 7 %}
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="moreCategories" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            More
-                        </a>
-                        <ul class="dropdown-menu" aria-labelledby="moreCategories">
-                            {% for category in categories[7:] %}
-                            <li><a class="dropdown-item" href="{{ url_for('index', section='products', category=category.slug) }}">{{ category.name }}</a></li>
-                            {% endfor %}
-                        </ul>
-                    </li>
-                    {% endif %}
-                {% endif %}
-                
                 <li class="nav-item {% if request.endpoint == 'blogs' or request.endpoint == 'blog_detail' %}active{% endif %}">
                     <a class="nav-link" href="{{ url_for('blogs') }}">Blogs</a>
                 </li>

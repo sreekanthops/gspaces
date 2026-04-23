@@ -303,13 +303,13 @@
 
     <!-- Form Section -->
     <div class="form-section">
-      <div class="brand-header">
+      <div class="brand-header" style="justify-content: center; margin-bottom: 30px;">
         <img src="{{ url_for('static', filename='img/gspaces-logo.png') }}" alt="GSPACES" style="height: 45px; margin-right: 12px;">
         <div class="brand-name">GSPACES</div>
       </div>
 
-      <h2>Create your account</h2>
-      <p class="subtitle">Get started with your free account and ₹500 bonus</p>
+      <h2 style="text-align: center;">Join the GSPACES Family</h2>
+      <p class="subtitle" style="text-align: center;">Get started with your free account and ₹500 bonus</p>
 
       {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}

@@ -561,12 +561,19 @@ Services Section END -->
           <label for="category" class="form-label">Category</label>
           <select name="category" required>
             <option value="">Select category</option>
-            <option value="Ergonomic">Ergonomic</option>
-            <option value="minimalist">Minimalist</option>
-            <option value="couple">Couple</option>
-            <option value="Executive">Executive</option>
-            <option value="greenary">Greenary</option>
-            <option value="studio">Studio</option>
+            {% if categories %}
+              {% for category in categories %}
+              <option value="{{ category.name }}">{{ category.name }}</option>
+              {% endfor %}
+            {% else %}
+              <option value="Basic">Basic</option>
+              <option value="Storage">Storage</option>
+              <option value="Elegant">Elegant</option>
+              <option value="Greenery">Greenery</option>
+              <option value="Couple">Couple</option>
+              <option value="Luxury">Luxury</option>
+              <option value="Studio">Studio</option>
+            {% endif %}
           </select>
         </div>
         <div class="mb-3">
@@ -625,12 +632,19 @@ Services Section END -->
       <!-- Filters -->
       <ul class="products-filters isotope-filters" data-aos="fade-up" data-aos-delay="100">
         <li data-filter="*" class="filter-active">All</li>
-        <li data-filter=".filter-ergonomic">Ergonomic</li>
-        <li data-filter=".filter-minimalist">Minimalist</li>
-        <li data-filter=".filter-executive">Executive</li>
-        <li data-filter=".filter-greenary">Greenary</li>
-        <li data-filter=".filter-couple">Couple</li>
-        <li data-filter=".filter-studio">Studio</li>
+        {% if categories %}
+          {% for category in categories %}
+          <li data-filter=".filter-{{ category.slug }}">{{ category.name }}</li>
+          {% endfor %}
+        {% else %}
+          <li data-filter=".filter-basic">Basic</li>
+          <li data-filter=".filter-storage">Storage</li>
+          <li data-filter=".filter-elegant">Elegant</li>
+          <li data-filter=".filter-greenery">Greenery</li>
+          <li data-filter=".filter-couple">Couple</li>
+          <li data-filter=".filter-luxury">Luxury</li>
+          <li data-filter=".filter-studio">Studio</li>
+        {% endif %}
       </ul><!-- End Product Filters -->
 
       <!-- Catalogue Download Dropdown -->

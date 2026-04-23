@@ -76,9 +76,14 @@
     <div class="mb-3">
       <label class="form-label">Category</label>
       <select name="category" class="form-select" required>
-        {% for cat in ['Executive', 'Minimalist', 'Luxury', 'Greenary', 'Studio', 'Couple', 'Ergonomic'] %}
-        <option value="{{ cat }}" {% if product.category == cat %}selected{% endif %}>{{ cat.capitalize() }}</option>
-        {% endfor %}
+        {% if categories and categories|length > 0 %}
+          {% for category in categories %}
+          <option value="{{ category.name }}" {% if product.category == category.name %}selected{% endif %}>{{ category.name }}</option>
+          {% endfor %}
+        {% else %}
+          <!-- Fallback if categories not loaded -->
+          <option value="{{ product.category }}" selected>{{ product.category }}</option>
+        {% endif %}
       </select>
     </div>
 

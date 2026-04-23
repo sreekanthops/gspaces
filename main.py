@@ -1655,7 +1655,17 @@ def edit_product(product_id):
         if not product:
             flash("Product not found.", "warning")
             return redirect(url_for('index'))
-        return render_template('edit_product.html', product=product)
+        
+        # Fetch categories from database
+        cur.execute("""
+            SELECT id, name, slug, display_order
+            FROM categories
+            WHERE is_active = TRUE
+            ORDER BY display_order, name
+        """)
+        categories = cur.fetchall()
+        
+        return render_template('edit_product.html', product=product, categories=categories)
     except Exception as e:
         print(f"Fetch product error: {e}")
         flash("Error fetching product.", "error")

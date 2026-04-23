@@ -1617,10 +1617,15 @@ def edit_product(product_id):
         image_file = request.files.get('image')
         image_url = None
         if image_file and image_file.filename:
-            filename = secure_filename(image_file.filename)
-            image_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            # Create product-specific folder
+            product_folder = os.path.join(app.config['UPLOAD_FOLDER'], str(product_id))
+            os.makedirs(product_folder, exist_ok=True)
+            
+            # Save with product ID as filename
+            filename = f"{product_id}.jpg"
+            image_path = os.path.join(product_folder, filename)
             image_file.save(image_path)
-            image_url = f'img/Products/{filename}'
+            image_url = f'img/Products/{product_id}/{filename}'
         try:
             if image_url:
                 cur.execute("""

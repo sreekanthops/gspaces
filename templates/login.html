@@ -283,6 +283,17 @@
     filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.3));
   }
   
+  /* Desktop: Ensure sign-up is hidden by default */
+  @media (min-width: 769px) {
+    .sign-up-container {
+      pointer-events: none;
+    }
+    
+    .container.right-panel-active .sign-up-container {
+      pointer-events: auto;
+    }
+  }
+  
   @media (max-width: 768px) {
     .container {
       min-height: 100vh;
@@ -311,6 +322,7 @@
       display: flex;
       opacity: 1;
       transform: none;
+      pointer-events: auto;
     }
     
     .mobile-toggle {

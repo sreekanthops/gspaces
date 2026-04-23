@@ -561,7 +561,8 @@ Services Section END -->
           <label for="category" class="form-label">Category</label>
           <select name="category" required>
             <option value="">Select category</option>
-            {% if categories and categories|length > 0 %}
+            {% set has_categories = categories and categories is iterable and categories|length > 0 %}
+            {% if has_categories %}
               {% for category in categories %}
               <option value="{{ category.name }}">{{ category.name }}</option>
               {% endfor %}
@@ -632,7 +633,8 @@ Services Section END -->
       <!-- Filters -->
       <ul class="products-filters isotope-filters" data-aos="fade-up" data-aos-delay="100">
         <li data-filter="*" class="filter-active">All</li>
-        {% if categories and categories|length > 0 %}
+        {% set has_categories = categories and categories is iterable and categories|length > 0 %}
+        {% if has_categories %}
           {% for category in categories %}
           <li data-filter=".filter-{{ category.slug }}">{{ category.name }}</li>
           {% endfor %}

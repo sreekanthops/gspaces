@@ -248,6 +248,14 @@ document.addEventListener("DOMContentLoaded", initCountdownFromServer);
             </svg>
         </button>
     </div>
+    
+    <!-- Floating Minimize Button (Mobile Only) -->
+    <button class="chatbot-minimize-btn" id="chatbotMinimizeBtn" title="Minimize chat">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="white">
+            <path d="M19 13H5v-2h14v2z"/>
+        </svg>
+        <span>Minimize</span>
+    </button>
 </div>
 
 <!-- Chatbot JavaScript -->
@@ -457,6 +465,16 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (closeBtn && modal) {
         closeBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            closeChatbot();
+        });
+    }
+    
+    // Minimize button (mobile)
+    const minimizeBtn = document.getElementById('chatbotMinimizeBtn');
+    if (minimizeBtn && modal) {
+        minimizeBtn.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
             closeChatbot();

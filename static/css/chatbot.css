@@ -372,6 +372,48 @@
     cursor: not-allowed;
 }
 
+/* Floating Minimize Button (Mobile Only) */
+.chatbot-minimize-btn {
+    display: none;
+    position: fixed;
+    bottom: 80px;
+    right: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: 2px solid white;
+    border-radius: 30px;
+    padding: 12px 24px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.5);
+    z-index: 10000000;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+}
+
+.chatbot-minimize-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+.chatbot-minimize-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 25px rgba(102, 126, 234, 0.7);
+}
+
+.chatbot-minimize-btn:active {
+    transform: scale(0.95);
+}
+
+/* Show minimize button only on mobile when chatbot is active */
+@media (max-width: 768px) {
+    .chatbot-modal.active ~ .chatbot-minimize-btn {
+        display: flex;
+    }
+}
+
 /* Typing Indicator */
 .typing-indicator {
     display: flex;

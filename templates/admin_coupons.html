@@ -139,7 +139,9 @@
                                         {% endif %}
                                     </td>
                                     <td>
-                                        {% if coupon.is_active %}
+                                        {% if coupon.is_expired %}
+                                            <span class="badge-inactive">Expired</span>
+                                        {% elif coupon.is_active %}
                                             <span class="badge-active">Active</span>
                                         {% else %}
                                             <span class="badge-inactive">Inactive</span>

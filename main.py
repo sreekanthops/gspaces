@@ -2664,10 +2664,17 @@ def admin_coupons():
         try:
             cur = conn.cursor(cursor_factory=RealDictCursor)
             cur.execute("""
-                SELECT id, code, discount_type, discount_value, description, 
-                       min_order_amount, max_discount_amount, is_active, 
-                       usage_limit, times_used, valid_from, valid_until, created_at
-                FROM coupons 
+                SELECT id, code, discount_type, discount_value, description,
+                       min_order_amount, max_discount_amount, is_active,
+                       usage_limit, times_used, valid_from, valid_until, created_at,
+                       coupon_type, expiry_type,
+                       CASE
+                           WHEN expiry_type = 'non_expiry' THEN false
+                           WHEN valid_until IS NULL THEN false
+                           WHEN valid_until < CURRENT_DATE THEN true
+                           ELSE false
+                       END as is_expired
+                FROM coupons
                 ORDER BY created_at DESC
             """)
             coupons = cur.fetchall()
@@ -2695,6 +2702,8 @@ def add_coupon():
         max_discount_amount = request.form.get('max_discount_amount')
         usage_limit = request.form.get('usage_limit')
         valid_until = request.form.get('valid_until')
+        coupon_type = request.form.get('coupon_type', 'order')  # New field
+        expiry_type = request.form.get('expiry_type', 'expiry')  # New field
         
         if not code or not discount_type or discount_value <= 0:
             flash("Invalid coupon data. Code, type, and value are required.", "danger")
@@ -2705,15 +2714,17 @@ def add_coupon():
             try:
                 cur = conn.cursor()
                 cur.execute("""
-                    INSERT INTO coupons 
-                    (code, discount_type, discount_value, description, min_order_amount, 
-                     max_discount_amount, usage_limit, valid_until, created_by)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    INSERT INTO coupons
+                    (code, discount_type, discount_value, description, min_order_amount,
+                     max_discount_amount, usage_limit, valid_until, created_by, coupon_type, expiry_type)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """, (code, discount_type, discount_value, description, min_order_amount,
                       max_discount_amount if max_discount_amount else None,
                       usage_limit if usage_limit else None,
                       valid_until if valid_until else None,
-                      current_user.email))
+                      current_user.email,
+                      coupon_type,
+                      expiry_type))
                 conn.commit()
                 flash(f"Coupon '{code}' added successfully!", "success")
             except Exception as e:

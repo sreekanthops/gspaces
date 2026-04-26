@@ -252,16 +252,55 @@ document.addEventListener("DOMContentLoaded", initCountdownFromServer);
 
 <!-- Chatbot JavaScript -->
 <script>
-// Global function for onclick
-function toggleChatbot() {
+// Global chatbot control functions
+let chatbotStateAdded = false;
+
+function openChatbot() {
     const modal = document.getElementById('chatbotModal');
     const input = document.getElementById('chatbotInput');
     if (modal) {
-        modal.classList.toggle('active');
-        console.log('Chatbot toggled via onclick, active:', modal.classList.contains('active'));
-        if (modal.classList.contains('active') && input) {
-            input.focus();
+        modal.classList.add('active');
+        if (input) input.focus();
+        
+        // Add history state for mobile back button handling
+        if (!chatbotStateAdded) {
+            history.pushState({ chatbotOpen: true }, '', window.location.href);
+            chatbotStateAdded = true;
         }
+        
+        // Prevent body scroll on mobile when chatbot is open
+        if (window.innerWidth <= 768) {
+            document.body.style.overflow = 'hidden';
+        }
+    }
+}
+
+function closeChatbot() {
+    const modal = document.getElementById('chatbotModal');
+    if (modal) {
+        modal.classList.remove('active');
+        
+        // Restore body scroll
+        document.body.style.overflow = '';
+        
+        // Go back in history if we added a state
+        if (chatbotStateAdded && window.history.state && window.history.state.chatbotOpen) {
+            chatbotStateAdded = false;
+            history.back();
+        }
+    }
+}
+
+// Global function for onclick
+function toggleChatbot() {
+    const modal = document.getElementById('chatbotModal');
+    if (modal) {
+        if (modal.classList.contains('active')) {
+            closeChatbot();
+        } else {
+            openChatbot();
+        }
+        console.log('Chatbot toggled via onclick, active:', modal.classList.contains('active'));
     }
 }
 
@@ -393,22 +432,43 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load history on page load
     loadChatHistory();
     
+    // Handle browser back button
+    window.addEventListener('popstate', function(event) {
+        if (modal && modal.classList.contains('active')) {
+            modal.classList.remove('active');
+            chatbotStateAdded = false;
+            document.body.style.overflow = '';
+        }
+    });
+    
     // Toggle modal
     if (floatBtn && modal) {
         floatBtn.addEventListener('click', function(e) {
             e.preventDefault();
             console.log('Float button clicked');
-            modal.classList.toggle('active');
-            console.log('Modal active:', modal.classList.contains('active'));
             if (modal.classList.contains('active')) {
-                input.focus();
+                closeChatbot();
+            } else {
+                openChatbot();
             }
+            console.log('Modal active:', modal.classList.contains('active'));
         });
     }
     
     if (closeBtn && modal) {
-        closeBtn.addEventListener('click', function() {
-            modal.classList.remove('active');
+        closeBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            closeChatbot();
+        });
+    }
+    
+    // Close on outside click (desktop only)
+    if (modal) {
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal && window.innerWidth > 768) {
+                closeChatbot();
+            }
         });
     }
     

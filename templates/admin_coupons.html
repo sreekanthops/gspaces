@@ -102,13 +102,14 @@
                         <thead>
                             <tr>
                                 <th>Code</th>
-                                <th>Type</th>
+                                <th>Discount Type</th>
                                 <th>Value</th>
+                                <th>Coupon Type</th>
                                 <th>Description</th>
                                 <th>Min Order</th>
                                 <th>Usage</th>
                                 <th>Status</th>
-                                <th>Valid Until</th>
+                                <th>Expiry</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -123,6 +124,11 @@
                                         {% else %}
                                             ₹{{ coupon.discount_value }}
                                         {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge" style="background: {% if coupon.coupon_type == 'wallet' %}#10b981{% elif coupon.coupon_type == 'order' %}#3b82f6{% else %}#8b5cf6{% endif %}; color: white; padding: 4px 8px; border-radius: 8px; font-size: 11px;">
+                                            {{ coupon.coupon_type|default('order')|upper }}
+                                        </span>
                                     </td>
                                     <td>{{ coupon.description or '-' }}</td>
                                     <td>₹{{ coupon.min_order_amount }}</td>
@@ -140,7 +146,9 @@
                                         {% endif %}
                                     </td>
                                     <td>
-                                        {% if coupon.valid_until %}
+                                        {% if coupon.expiry_type == 'non_expiry' %}
+                                            <span style="color: #10b981; font-weight: 600;">Never</span>
+                                        {% elif coupon.valid_until %}
                                             {{ coupon.valid_until.strftime('%Y-%m-%d') }}
                                         {% else %}
                                             No expiry
@@ -188,6 +196,15 @@
                                 <input type="text" name="code" class="form-control" required maxlength="50" placeholder="e.g., SUMMER2024" style="text-transform: uppercase;">
                             </div>
                             <div class="col-md-6">
+                                <label class="form-label">Coupon Type *</label>
+                                <select name="coupon_type" class="form-select" required>
+                                    <option value="order">Order (Cart Discount)</option>
+                                    <option value="wallet">Wallet (Add to Balance)</option>
+                                    <option value="both">Both (Order & Wallet)</option>
+                                </select>
+                                <small class="text-muted">Choose where this coupon can be used</small>
+                            </div>
+                            <div class="col-md-6">
                                 <label class="form-label">Discount Type *</label>
                                 <select name="discount_type" class="form-select" required id="discountType">
                                     <option value="percentage">Percentage</option>
@@ -198,6 +215,18 @@
                                 <label class="form-label">Discount Value *</label>
                                 <input type="number" name="discount_value" class="form-control" required step="0.01" min="0" placeholder="e.g., 10">
                                 <small class="text-muted" id="discountHint">Enter percentage (e.g., 10 for 10%)</small>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Expiry Type *</label>
+                                <select name="expiry_type" class="form-select" required id="expiryType">
+                                    <option value="expiry">Has Expiry Date</option>
+                                    <option value="non_expiry">Never Expires</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Valid Until</label>
+                                <input type="date" name="valid_until" class="form-control" id="validUntilField">
+                                <small class="text-muted">Required if expiry type is "Has Expiry Date"</small>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Minimum Order Amount</label>
@@ -211,13 +240,9 @@
                                 <label class="form-label">Usage Limit (Optional)</label>
                                 <input type="number" name="usage_limit" class="form-control" min="1" placeholder="Leave empty for unlimited">
                             </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Valid Until (Optional)</label>
-                                <input type="date" name="valid_until" class="form-control">
-                            </div>
                             <div class="col-12">
                                 <label class="form-label">Description</label>
-                                <textarea name="description" class="form-control" rows="2" placeholder="e.g., Summer sale discount"></textarea>
+                                <textarea name="description" class="form-control" rows="2" placeholder="e.g., Summer sale discount or Instagram follower bonus"></textarea>
                             </div>
                         </div>
                     </div>

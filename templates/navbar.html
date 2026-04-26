@@ -750,11 +750,17 @@ document.addEventListener('DOMContentLoaded', function() {
     function createCouponCard(coupon) {
         const card = document.createElement('div');
         card.className = 'chatbot-message bot';
+        
+        // Determine discount display based on type
+        const discountDisplay = coupon.discount_type === 'fixed'
+            ? `₹${Math.round(coupon.discount_percent)} OFF`
+            : `${coupon.discount_percent}% OFF`;
+        
         card.innerHTML = `
             <div class="chat-coupon-card">
                 <div class="chat-coupon-code">${coupon.code}</div>
                 <div class="chat-coupon-details">
-                    ${coupon.discount_percent}% OFF
+                    ${discountDisplay}
                     ${coupon.min_order_value > 0 ? `<br>Min order: ₹${coupon.min_order_value}` : ''}
                     ${coupon.max_discount ? `<br>Max discount: ₹${coupon.max_discount}` : ''}
                     <br>Valid until: ${new Date(coupon.valid_until).toLocaleDateString()}

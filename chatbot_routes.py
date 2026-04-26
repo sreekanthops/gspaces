@@ -148,7 +148,7 @@ def add_chatbot_routes(app, connect_to_db):
             
             # Get personal coupons
             cursor.execute("""
-                SELECT code, discount_value as discount_percent, min_order_amount as min_order_value,
+                SELECT code, discount_type, discount_value as discount_percent, min_order_amount as min_order_value,
                        max_discount_amount as max_discount, created_at as valid_from,
                        COALESCE(valid_until, created_at + INTERVAL '30 days') as valid_until,
                        usage_limit, times_used
@@ -164,6 +164,7 @@ def add_chatbot_routes(app, connect_to_db):
             # Get referral coupons (uses coupon_code instead of code)
             cursor.execute("""
                 SELECT coupon_code as code,
+                       discount_type,
                        COALESCE(discount_amount, discount_percentage) as discount_percent,
                        COALESCE(min_order_amount, 0) as min_order_value,
                        max_discount_amount as max_discount,
@@ -182,7 +183,7 @@ def add_chatbot_routes(app, connect_to_db):
             
             # Get bonus/public coupons
             cursor.execute("""
-                SELECT code, discount_value as discount_percent, min_order_amount as min_order_value,
+                SELECT code, discount_type, discount_value as discount_percent, min_order_amount as min_order_value,
                        max_discount_amount as max_discount, created_at as valid_from,
                        COALESCE(valid_until, created_at + INTERVAL '30 days') as valid_until,
                        usage_limit, times_used
@@ -201,6 +202,7 @@ def add_chatbot_routes(app, connect_to_db):
             def format_coupon(c):
                 return {
                     'code': c['code'],
+                    'discount_type': c['discount_type'],
                     'discount_percent': float(c['discount_percent']),
                     'min_order_value': float(c['min_order_value']) if c['min_order_value'] else 0,
                     'max_discount': float(c['max_discount']) if c['max_discount'] else None,

@@ -100,6 +100,83 @@
         </div>
     </div>
 
+    <!-- Redeem Coupon Section -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card wallet-card">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-ticket-alt"></i> Redeem Coupon Code
+                    </h4>
+                </div>
+                <div class="card-body">
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                {% if 'coupon' in message.lower() %}
+                                <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show" role="alert">
+                                    <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-circle' }}"></i>
+                                    {{ message }}
+                                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                </div>
+                                {% endif %}
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+
+                    <div class="row">
+                        <div class="col-md-8">
+                            <form method="POST" action="{{ url_for('redeem_wallet_coupon') }}" id="redeemCouponForm">
+                                <div class="form-group">
+                                    <label for="couponCode"><strong>Enter Coupon Code</strong></label>
+                                    <div class="input-group">
+                                        <input type="text"
+                                               class="form-control form-control-lg"
+                                               id="couponCode"
+                                               name="coupon_code"
+                                               placeholder="e.g., GSPACES_DESKS_FOLLOW"
+                                               required
+                                               style="text-transform: uppercase;">
+                                        <div class="input-group-append">
+                                            <button class="btn btn-success btn-lg" type="submit">
+                                                <i class="fas fa-gift"></i> Redeem
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <small class="form-text text-muted">
+                                        Enter a valid wallet coupon code to add balance to your wallet
+                                    </small>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6 class="text-muted mb-3">
+                                        <i class="fas fa-info-circle"></i> How to Redeem
+                                    </h6>
+                                    <ul class="small mb-0">
+                                        <li>Enter your coupon code above</li>
+                                        <li>Click "Redeem" button</li>
+                                        <li>Balance will be added instantly</li>
+                                        <li>Each coupon can be used once</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-warning mt-3">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>Note:</strong> Some coupons may require verification (e.g., following our Instagram @gspaces_desks). Make sure you meet all requirements before redeeming.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Referral Section -->
     {% if referral_stats %}
     <div class="row mt-4">

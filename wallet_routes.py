@@ -171,6 +171,127 @@ def add_wallet_routes(app, connect_to_db):
             return f"Error loading wallet: {e}", 500
         finally:
             conn.close()
+    
+    @app.route('/wallet/redeem_coupon', methods=['POST'])
+    @login_required
+    def redeem_wallet_coupon():
+        """Redeem a wallet coupon code to add balance"""
+        from flask import flash, redirect, url_for
+        from psycopg2.extras import RealDictCursor
+        
+        coupon_code = request.form.get('coupon_code', '').strip().upper()
+        
+        if not coupon_code:
+            flash('Please enter a coupon code', 'error')
+            return redirect(url_for('wallet'))
+        
+        conn = connect_to_db()
+        if not conn:
+            flash('Database connection failed. Please try again.', 'error')
+            return redirect(url_for('wallet'))
+        
+        try:
+            cur = conn.cursor(cursor_factory=RealDictCursor)
+            
+            # 1. Check if coupon exists and is valid
+            cur.execute("""
+                SELECT
+                    id, code, discount_amount, coupon_type, expiry_type,
+                    valid_until, is_active, user_id
+                FROM coupons
+                WHERE UPPER(code) = %s
+            """, (coupon_code,))
+            
+            coupon = cur.fetchone()
+            
+            if not coupon:
+                flash('Invalid coupon code', 'error')
+                return redirect(url_for('wallet'))
+            
+            # 2. Check if coupon is active
+            if not coupon['is_active']:
+                flash('This coupon is no longer active', 'error')
+                return redirect(url_for('wallet'))
+            
+            # 3. Check coupon type (must be 'wallet' or 'both')
+            if coupon['coupon_type'] not in ['wallet', 'both']:
+                flash('This coupon cannot be used for wallet redemption', 'error')
+                return redirect(url_for('wallet'))
+            
+            # 4. Check if coupon is private (user_id bound)
+            if coupon['user_id'] is not None and coupon['user_id'] != current_user.id:
+                flash('This is a private coupon and can only be used by the assigned user', 'error')
+                return redirect(url_for('wallet'))
+            
+            # 5. Check expiry (only if expiry_type is 'expiry')
+            if coupon['expiry_type'] == 'expiry' and coupon['valid_until']:
+                if datetime.now().date() > coupon['valid_until']:
+                    flash('This coupon has expired', 'error')
+                    return redirect(url_for('wallet'))
+            
+            # 6. Check if user has already used this coupon
+            cur.execute("""
+                SELECT id FROM coupon_usage
+                WHERE coupon_code = %s AND user_id = %s
+            """, (coupon_code, current_user.id))
+            
+            if cur.fetchone():
+                flash('You have already used this coupon', 'error')
+                return redirect(url_for('wallet'))
+            
+            # 7. Special verification for GSPACES_DESKS_FOLLOW coupon
+            if coupon_code == 'GSPACES_DESKS_FOLLOW':
+                # Check if user follows @gspaces_desks on Instagram
+                # For now, we'll add a simple check - in production, integrate with Instagram API
+                # or add a manual verification step
+                
+                # Get user's Instagram handle if stored
+                cur.execute("""
+                    SELECT instagram_handle FROM users WHERE id = %s
+                """, (current_user.id,))
+                user_data = cur.fetchone()
+                
+                # For now, we'll assume verification is required but allow redemption
+                # In production, implement proper Instagram follow verification
+                flash('Please make sure you are following @gspaces_desks on Instagram to use this coupon', 'warning')
+            
+            # 8. Add amount to wallet
+            wallet = WalletSystem(conn)
+            amount = Decimal(str(coupon['discount_amount']))
+            
+            result = wallet.add_transaction(
+                user_id=current_user.id,
+                transaction_type='bonus',
+                amount=amount,
+                description=f"Coupon redeemed: {coupon_code}",
+                reference_type='coupon',
+                reference_id=coupon['id'],
+                metadata={'coupon_code': coupon_code, 'coupon_type': 'wallet'}
+            )
+            
+            if not result['success']:
+                flash(f"Failed to add balance: {result.get('error', 'Unknown error')}", 'error')
+                return redirect(url_for('wallet'))
+            
+            # 9. Record coupon usage
+            cur.execute("""
+                INSERT INTO coupon_usage
+                (coupon_code, user_id, discount_amount, used_at, usage_type)
+                VALUES (%s, %s, %s, %s, %s)
+            """, (coupon_code, current_user.id, amount, datetime.now(), 'wallet'))
+            
+            conn.commit()
+            
+            flash(f'Coupon redeemed successfully! ₹{amount} added to your wallet', 'success')
+            return redirect(url_for('wallet'))
+            
+        except Exception as e:
+            conn.rollback()
+            print(f"Error redeeming coupon: {e}")
+            flash('An error occurred while redeeming the coupon. Please try again.', 'error')
+            return redirect(url_for('wallet'))
+        finally:
+            conn.close()
 
 
 def integrate_wallet_with_signup(cursor, conn, user_id, user_name):

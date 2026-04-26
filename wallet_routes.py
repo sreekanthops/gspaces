@@ -196,7 +196,7 @@ def add_wallet_routes(app, connect_to_db):
             # 1. Check if coupon exists and is valid
             cur.execute("""
                 SELECT
-                    id, code, discount_amount, coupon_type, expiry_type,
+                    id, code, discount_type, discount_value, coupon_type, expiry_type,
                     valid_until, is_active, user_id
                 FROM coupons
                 WHERE UPPER(code) = %s
@@ -257,7 +257,7 @@ def add_wallet_routes(app, connect_to_db):
             
             # 8. Add amount to wallet
             wallet = WalletSystem(conn)
-            amount = Decimal(str(coupon['discount_amount']))
+            amount = Decimal(str(coupon['discount_value']))
             
             result = wallet.add_transaction(
                 user_id=current_user.id,

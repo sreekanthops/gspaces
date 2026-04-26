@@ -105,7 +105,7 @@ echo ""
 # Step 7: Display coupon details
 echo "Step 7: Sample Coupon Details..."
 echo "-----------------------------------"
-psql -U "$DB_USER" -d "$DB_NAME" -c "SELECT code, discount_amount, coupon_type, expiry_type, is_active FROM coupons WHERE code = 'GSPACES_DESKS_FOLLOW';"
+psql -U "$DB_USER" -d "$DB_NAME" -c "SELECT code, discount_value, coupon_type, expiry_type, is_active FROM coupons WHERE code = 'GSPACES_DESKS_FOLLOW';"
 echo ""
 
 # Step 8: Restart application (if needed)

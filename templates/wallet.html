@@ -113,7 +113,24 @@
                     {% with messages = get_flashed_messages(with_categories=true) %}
                         {% if messages %}
                             {% for category, message in messages %}
-                                {% if 'coupon' in message.lower() %}
+                                {% if category == 'coupon_success' %}
+                                <div class="alert alert-dismissible fade show" role="alert" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4); animation: celebrateBounce 0.6s ease;">
+                                    <div style="text-align: center; padding: 20px;">
+                                        <div style="font-size: 3rem; margin-bottom: 10px;">🎉 ⭐ 🎊 ✨</div>
+                                        <h4 style="font-weight: 700; margin-bottom: 10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.2);">{{ message }}</h4>
+                                        <div style="font-size: 2rem; margin-top: 10px;">💰 🌟 💎</div>
+                                    </div>
+                                    <button type="button" class="close" data-dismiss="alert" aria-label="Close" style="color: white; opacity: 1;">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                </div>
+                                <style>
+                                    @keyframes celebrateBounce {
+                                        0%, 100% { transform: scale(1); }
+                                        50% { transform: scale(1.05); }
+                                    }
+                                </style>
+                                {% elif 'coupon' in message.lower() %}
                                 <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show" role="alert">
                                     <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-circle' }}"></i>
                                     {{ message }}

@@ -270,9 +270,8 @@ def add_wallet_routes(app, connect_to_db):
             # 7. Special verification for GSPACES_DESKS_FOLLOW coupon
             instagram_warning = None
             if coupon_code == 'GSPACES_DESKS_FOLLOW':
-                # Show reminder to follow on Instagram
-                # In production, implement proper Instagram follow verification via API
-                instagram_warning = 'Please make sure you are following @gspaces_desks on Instagram to use this coupon'
+                # Show reminder to follow on Instagram with clickable link and icon
+                instagram_warning = 'Please make sure you are following <a href="https://www.instagram.com/gspaces_desks/" target="_blank" style="color: #E1306C; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;"><i class="bi bi-instagram" style="font-size: 1.2rem;"></i> @gspaces_desks</a> on Instagram to use this coupon'
                 if not is_ajax:
                     flash(instagram_warning, 'warning')
             

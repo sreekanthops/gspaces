@@ -250,18 +250,8 @@ def add_wallet_routes(app, connect_to_db):
             
             # 7. Special verification for GSPACES_DESKS_FOLLOW coupon
             if coupon_code == 'GSPACES_DESKS_FOLLOW':
-                # Check if user follows @gspaces_desks on Instagram
-                # For now, we'll add a simple check - in production, integrate with Instagram API
-                # or add a manual verification step
-                
-                # Get user's Instagram handle if stored
-                cur.execute("""
-                    SELECT instagram_handle FROM users WHERE id = %s
-                """, (current_user.id,))
-                user_data = cur.fetchone()
-                
-                # For now, we'll assume verification is required but allow redemption
-                # In production, implement proper Instagram follow verification
+                # Show reminder to follow on Instagram
+                # In production, implement proper Instagram follow verification via API
                 flash('Please make sure you are following @gspaces_desks on Instagram to use this coupon', 'warning')
             
             # 8. Add amount to wallet

@@ -3529,7 +3529,7 @@ def validate_coupon():
         cur.execute("""
             SELECT id, code, discount_type, discount_value, description,
                    min_order_amount, max_discount_amount, is_active,
-                   usage_limit, times_used, valid_until
+                   usage_limit, times_used, valid_until, user_id
             FROM coupons
             WHERE code = %s
         """, (code,))
@@ -3593,6 +3593,10 @@ def validate_coupon():
         # Validate regular coupon
         if not coupon['is_active']:
             return jsonify({"status": "error", "message": "This coupon is no longer active"})
+        
+        # Check if coupon is user-specific
+        if coupon.get('user_id') and coupon['user_id'] != current_user.id:
+            return jsonify({"status": "error", "message": "This coupon is not available for your account"})
         
         if coupon['valid_until'] and datetime.now() > coupon['valid_until']:
             return jsonify({"status": "error", "message": "This coupon has expired"})

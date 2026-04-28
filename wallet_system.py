@@ -305,6 +305,19 @@ class WalletSystem:
             # Convert to list of dicts with proper formatting
             result = []
             for txn in transactions:
+                # Handle metadata - it might be a string or already a dict
+                metadata = txn['metadata']
+                if metadata:
+                    if isinstance(metadata, str):
+                        try:
+                            metadata = json.loads(metadata)
+                        except:
+                            metadata = {}
+                    elif not isinstance(metadata, dict):
+                        metadata = {}
+                else:
+                    metadata = {}
+                
                 result.append({
                     'id': txn['id'],
                     'type': txn['transaction_type'],
@@ -314,7 +327,7 @@ class WalletSystem:
                     'reference_type': txn['reference_type'],
                     'reference_id': txn['reference_id'],
                     'date': txn['created_at'].strftime('%Y-%m-%d %H:%M:%S'),
-                    'metadata': json.loads(txn['metadata']) if txn['metadata'] else {}
+                    'metadata': metadata
                 })
             
             return result

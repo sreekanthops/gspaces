@@ -281,8 +281,9 @@ def add_wallet_routes(app, connect_to_db):
             
             conn.commit()
             
-            flash(f'Coupon redeemed successfully! ₹{amount} added to your wallet', 'success')
-            return redirect(url_for('wallet'))
+            # Create a celebratory success message
+            flash(f'🎉 Congratulations! You earned ₹{amount} from coupon "{coupon_code}"! Your wallet has been credited. 🌟', 'coupon_success')
+            return redirect(url_for('profile'))
             
         except Exception as e:
             conn.rollback()

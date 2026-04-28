@@ -1334,9 +1334,9 @@ def profile():
             cursor = conn.cursor(cursor_factory=RealDictCursor)
             cursor.execute("""
                 SELECT code, discount_type, discount_value, description,
-                       valid_until, is_active, created_at
+                       valid_until, is_active, created_at, coupon_type
                 FROM coupons
-                WHERE user_id = %s AND is_personal = TRUE
+                WHERE user_id = %s AND is_active = TRUE
                 ORDER BY created_at DESC
             """, (user_id,))
             bonus_coupons = cursor.fetchall()
@@ -2667,7 +2667,7 @@ def admin_coupons():
                 SELECT id, code, discount_type, discount_value, description,
                        min_order_amount, max_discount_amount, is_active,
                        usage_limit, times_used, valid_from, valid_until, created_at,
-                       coupon_type, expiry_type,
+                       coupon_type, expiry_type, user_id,
                        CASE
                            WHEN expiry_type = 'non_expiry' THEN false
                            WHEN valid_until IS NULL THEN false
@@ -2702,11 +2702,17 @@ def add_coupon():
         max_discount_amount = request.form.get('max_discount_amount')
         usage_limit = request.form.get('usage_limit')
         valid_until = request.form.get('valid_until')
-        coupon_type = request.form.get('coupon_type', 'order')  # New field
-        expiry_type = request.form.get('expiry_type', 'expiry')  # New field
+        coupon_type = request.form.get('coupon_type', 'order')
+        expiry_type = request.form.get('expiry_type', 'expiry')
+        coupon_scope = request.form.get('coupon_scope', 'public')
+        user_id = request.form.get('user_id') if coupon_scope == 'user_specific' else None
         
         if not code or not discount_type or discount_value <= 0:
             flash("Invalid coupon data. Code, type, and value are required.", "danger")
+            return redirect(url_for('admin_coupons'))
+        
+        if coupon_scope == 'user_specific' and not user_id:
+            flash("Please select a customer for user-specific coupon.", "danger")
             return redirect(url_for('admin_coupons'))
         
         conn = connect_to_db()
@@ -2716,17 +2722,20 @@ def add_coupon():
                 cur.execute("""
                     INSERT INTO coupons
                     (code, discount_type, discount_value, description, min_order_amount,
-                     max_discount_amount, usage_limit, valid_until, created_by, coupon_type, expiry_type)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                     max_discount_amount, usage_limit, valid_until, created_by, coupon_type, expiry_type, user_id)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """, (code, discount_type, discount_value, description, min_order_amount,
                       max_discount_amount if max_discount_amount else None,
                       usage_limit if usage_limit else None,
                       valid_until if valid_until else None,
                       current_user.email,
                       coupon_type,
-                      expiry_type))
+                      expiry_type,
+                      user_id))
                 conn.commit()
-                flash(f"Coupon '{code}' added successfully!", "success")
+                
+                scope_msg = f" (User-Specific)" if user_id else " (Public)"
+                flash(f"Coupon '{code}'{scope_msg} added successfully!", "success")
             except Exception as e:
                 print(f"Error adding coupon: {e}")
                 flash(f"Error adding coupon: {str(e)}", "danger")
@@ -2775,9 +2784,15 @@ def edit_coupon(coupon_id):
         max_discount_amount = request.form.get('max_discount_amount')
         usage_limit = request.form.get('usage_limit')
         valid_until = request.form.get('valid_until')
+        coupon_scope = request.form.get('coupon_scope', 'public')
+        user_id = request.form.get('user_id') if coupon_scope == 'user_specific' else None
         
         if not code or not discount_type or discount_value <= 0:
             flash("Invalid coupon data. Code, type, and value are required.", "danger")
+            return redirect(url_for('admin_coupons'))
+        
+        if coupon_scope == 'user_specific' and not user_id:
+            flash("Please select a customer for user-specific coupon.", "danger")
             return redirect(url_for('admin_coupons'))
         
         conn = connect_to_db()
@@ -2785,18 +2800,21 @@ def edit_coupon(coupon_id):
             try:
                 cur = conn.cursor()
                 cur.execute("""
-                    UPDATE coupons 
-                    SET code = %s, discount_type = %s, discount_value = %s, 
-                        description = %s, min_order_amount = %s, 
-                        max_discount_amount = %s, usage_limit = %s, valid_until = %s
+                    UPDATE coupons
+                    SET code = %s, discount_type = %s, discount_value = %s,
+                        description = %s, min_order_amount = %s,
+                        max_discount_amount = %s, usage_limit = %s, valid_until = %s, user_id = %s
                     WHERE id = %s
                 """, (code, discount_type, discount_value, description, min_order_amount,
                       max_discount_amount if max_discount_amount else None,
                       usage_limit if usage_limit else None,
                       valid_until if valid_until else None,
+                      user_id,
                       coupon_id))
                 conn.commit()
-                flash(f"Coupon '{code}' updated successfully!", "success")
+                
+                scope_msg = f" (User-Specific)" if user_id else " (Public)"
+                flash(f"Coupon '{code}'{scope_msg} updated successfully!", "success")
             except Exception as e:
                 print(f"Error updating coupon: {e}")
                 flash(f"Error updating coupon: {str(e)}", "danger")
@@ -2820,8 +2838,8 @@ def get_coupon(coupon_id):
             cur = conn.cursor(cursor_factory=RealDictCursor)
             cur.execute("""
                 SELECT id, code, discount_type, discount_value, description,
-                       min_order_amount, max_discount_amount, usage_limit, 
-                       valid_until
+                       min_order_amount, max_discount_amount, usage_limit,
+                       valid_until, user_id
                 FROM coupons WHERE id = %s
             """, (coupon_id,))
             coupon = cur.fetchone()
@@ -3392,6 +3410,35 @@ def admin_bulk_delete_customers():
         conn.close()
     
     return redirect(url_for('admin_customers'))
+@app.route('/admin/customers/list')
+@login_required
+def get_customers_list():
+    """API endpoint to get list of customers for dropdowns"""
+    if current_user.email not in ADMIN_EMAILS:
+        return jsonify({"status": "error", "message": "Access denied"}), 403
+    
+    conn = connect_to_db()
+    if not conn:
+        return jsonify({"status": "error", "message": "Database connection error"}), 500
+    
+    try:
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute("""
+            SELECT id, name, email 
+            FROM users 
+            ORDER BY name ASC
+        """)
+        customers = cur.fetchall()
+        return jsonify({
+            "status": "success",
+            "customers": [dict(c) for c in customers]
+        })
+    except Exception as e:
+        print(f"Error fetching customers: {e}")
+        return jsonify({"status": "error", "message": str(e)}), 500
+    finally:
+        conn.close()
+
 
 @app.route('/admin/customers/<int:customer_id>')
 @login_required

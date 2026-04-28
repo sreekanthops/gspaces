@@ -105,6 +105,7 @@
                                 <th>Discount Type</th>
                                 <th>Value</th>
                                 <th>Coupon Type</th>
+                                <th>Scope</th>
                                 <th>Description</th>
                                 <th>Min Order</th>
                                 <th>Usage</th>
@@ -129,6 +130,17 @@
                                         <span class="badge" style="background: {% if coupon.coupon_type == 'wallet' %}#10b981{% elif coupon.coupon_type == 'order' %}#3b82f6{% else %}#8b5cf6{% endif %}; color: white; padding: 4px 8px; border-radius: 8px; font-size: 11px;">
                                             {{ coupon.coupon_type|default('order')|upper }}
                                         </span>
+                                    </td>
+                                    <td>
+                                        {% if coupon.user_id %}
+                                            <span class="badge" style="background: #f59e0b; color: white; padding: 4px 8px; border-radius: 8px; font-size: 11px;">
+                                                👤 User-Specific
+                                            </span>
+                                        {% else %}
+                                            <span class="badge" style="background: #6b7280; color: white; padding: 4px 8px; border-radius: 8px; font-size: 11px;">
+                                                🌐 Public
+                                            </span>
+                                        {% endif %}
                                     </td>
                                     <td>{{ coupon.description or '-' }}</td>
                                     <td>₹{{ coupon.min_order_amount }}</td>
@@ -207,6 +219,21 @@
                                 <small class="text-muted">Choose where this coupon can be used</small>
                             </div>
                             <div class="col-md-6">
+                                <label class="form-label">Coupon Scope *</label>
+                                <select name="coupon_scope" id="couponScope" class="form-select" required>
+                                    <option value="public">Public (All Users)</option>
+                                    <option value="user_specific">User-Specific</option>
+                                </select>
+                                <small class="text-muted">Who can use this coupon?</small>
+                            </div>
+                            <div class="col-md-6" id="userSelectContainer" style="display: none;">
+                                <label class="form-label">Select Customer *</label>
+                                <select name="user_id" id="userSelect" class="form-select">
+                                    <option value="">Loading customers...</option>
+                                </select>
+                                <small class="text-muted">Only this customer can use the coupon</small>
+                            </div>
+                            <div class="col-md-6">
                                 <label class="form-label">Discount Type *</label>
                                 <select name="discount_type" class="form-select" required id="discountType">
                                     <option value="percentage">Percentage</option>
@@ -273,6 +300,21 @@
                                 <input type="text" name="code" id="edit_code" class="form-control" required maxlength="50" style="text-transform: uppercase;">
                             </div>
                             <div class="col-md-6">
+                                <label class="form-label">Coupon Scope *</label>
+                                <select name="coupon_scope" id="editCouponScope" class="form-select" required>
+                                    <option value="public">Public (All Users)</option>
+                                    <option value="user_specific">User-Specific</option>
+                                </select>
+                                <small class="text-muted">Who can use this coupon?</small>
+                            </div>
+                            <div class="col-md-6" id="editUserSelectContainer" style="display: none;">
+                                <label class="form-label">Select Customer *</label>
+                                <select name="user_id" id="editUserSelect" class="form-select">
+                                    <option value="">Loading customers...</option>
+                                </select>
+                                <small class="text-muted">Only this customer can use the coupon</small>
+                            </div>
+                            <div class="col-md-6">
                                 <label class="form-label">Discount Type *</label>
                                 <select name="discount_type" id="edit_discount_type" class="form-select" required>
                                     <option value="percentage">Percentage</option>
@@ -316,6 +358,55 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // Load customers list
+        let customersCache = null;
+        async function loadCustomers() {
+            if (customersCache) {
+                return customersCache;
+            }
+            try {
+                const response = await fetch('/admin/customers/list');
+                const data = await response.json();
+                if (data.status === 'success') {
+                    customersCache = data.customers;
+                    return customersCache;
+                }
+            } catch (error) {
+                console.error('Error loading customers:', error);
+            }
+            return [];
+        }
+
+        // Populate customer dropdown
+        async function populateCustomerDropdown(selectElement, selectedUserId = null) {
+            const customers = await loadCustomers();
+            selectElement.innerHTML = '<option value="">-- Select Customer --</option>';
+            customers.forEach(customer => {
+                const option = document.createElement('option');
+                option.value = customer.id;
+                option.textContent = `${customer.name} (${customer.email})`;
+                if (selectedUserId && customer.id == selectedUserId) {
+                    option.selected = true;
+                }
+                selectElement.appendChild(option);
+            });
+        }
+
+        // Handle coupon scope change in Add Modal
+        document.getElementById('couponScope').addEventListener('change', async function() {
+            const userContainer = document.getElementById('userSelectContainer');
+            const userSelect = document.getElementById('userSelect');
+            
+            if (this.value === 'user_specific') {
+                userContainer.style.display = 'block';
+                userSelect.required = true;
+                await populateCustomerDropdown(userSelect);
+            } else {
+                userContainer.style.display = 'none';
+                userSelect.required = false;
+            }
+        });
+
         // Update hint text based on discount type
         document.getElementById('discountType').addEventListener('change', function() {
             const hint = document.getElementById('discountHint');
@@ -323,6 +414,21 @@
                 hint.textContent = 'Enter percentage (e.g., 10 for 10%)';
             } else {
                 hint.textContent = 'Enter fixed amount (e.g., 100 for ₹100 off)';
+            }
+        });
+
+        // Handle coupon scope change in Edit Modal
+        document.getElementById('editCouponScope').addEventListener('change', async function() {
+            const userContainer = document.getElementById('editUserSelectContainer');
+            const userSelect = document.getElementById('editUserSelect');
+            
+            if (this.value === 'user_specific') {
+                userContainer.style.display = 'block';
+                userSelect.required = true;
+                await populateCustomerDropdown(userSelect);
+            } else {
+                userContainer.style.display = 'none';
+                userSelect.required = false;
             }
         });
 
@@ -344,6 +450,22 @@
                     document.getElementById('edit_usage_limit').value = coupon.usage_limit || '';
                     document.getElementById('edit_valid_until').value = coupon.valid_until || '';
                     document.getElementById('edit_description').value = coupon.description || '';
+                    
+                    // Handle coupon scope and user selection
+                    const editCouponScope = document.getElementById('editCouponScope');
+                    const editUserContainer = document.getElementById('editUserSelectContainer');
+                    const editUserSelect = document.getElementById('editUserSelect');
+                    
+                    if (coupon.user_id) {
+                        editCouponScope.value = 'user_specific';
+                        editUserContainer.style.display = 'block';
+                        editUserSelect.required = true;
+                        await populateCustomerDropdown(editUserSelect, coupon.user_id);
+                    } else {
+                        editCouponScope.value = 'public';
+                        editUserContainer.style.display = 'none';
+                        editUserSelect.required = false;
+                    }
                     
                     // Set form action
                     document.getElementById('editCouponForm').action = `/admin/coupons/edit/${couponId}`;

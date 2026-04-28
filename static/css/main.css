@@ -1601,7 +1601,7 @@ colors
   transform: translateY(-50%);
   bottom: auto !important;
   z-index: 100;
-  display: flex;
+  display: none;
   flex-direction: column;
   gap: 12px;
   pointer-events: none;
@@ -1643,6 +1643,7 @@ colors
 
 @media (max-width: 767px) {
   .floating-contact-buttons {
+    display: flex;
     left: auto;
     right: 12px;
     bottom: 12px;

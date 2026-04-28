@@ -232,7 +232,9 @@ def add_wallet_routes(app, connect_to_db):
             
             # 5. Check expiry (only if expiry_type is 'expiry')
             if coupon['expiry_type'] == 'expiry' and coupon['valid_until']:
-                if datetime.now().date() > coupon['valid_until']:
+                # Convert both to date objects for comparison
+                valid_until_date = coupon['valid_until'].date() if hasattr(coupon['valid_until'], 'date') else coupon['valid_until']
+                if datetime.now().date() > valid_until_date:
                     flash('This coupon has expired', 'error')
                     return redirect(url_for('wallet'))
             

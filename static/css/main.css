@@ -1597,7 +1597,9 @@ colors
   position: fixed !important;
   left: 20px !important;
   right: auto !important;
-  bottom: 120px !important;
+  top: 50% !important;
+  transform: translateY(-50%);
+  bottom: auto !important;
   z-index: 100;
   display: flex;
   flex-direction: column;
@@ -1606,8 +1608,8 @@ colors
 }
 
 .floating-contact-btn {
-  width: 56px;
-  height: 56px;
+  width: 48px;
+  height: 48px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1615,7 +1617,7 @@ colors
   border-radius: 50%;
   color: #ffffff !important;
   text-decoration: none;
-  box-shadow: 0 12px 30px rgba(17, 24, 39, 0.22);
+  box-shadow: 0 8px 20px rgba(17, 24, 39, 0.18);
   transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
   pointer-events: auto;
 }
@@ -1641,8 +1643,11 @@ colors
 
 @media (max-width: 767px) {
   .floating-contact-buttons {
+    left: auto;
     right: 12px;
     bottom: 12px;
+    top: auto;
+    transform: none;
     gap: 10px;
   }
 

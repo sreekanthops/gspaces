@@ -186,14 +186,21 @@ def add_wallet_routes(app, connect_to_db):
         from flask import flash, redirect, url_for
         from psycopg2.extras import RealDictCursor
         
+        # Check if this is an AJAX request
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+        
         coupon_code = request.form.get('coupon_code', '').strip().upper()
         
         if not coupon_code:
+            if is_ajax:
+                return jsonify({'success': False, 'message': 'Please enter a coupon code'})
             flash('Please enter a coupon code', 'error')
             return redirect(url_for('wallet'))
         
         conn = connect_to_db()
         if not conn:
+            if is_ajax:
+                return jsonify({'success': False, 'message': 'Database connection failed. Please try again.'})
             flash('Database connection failed. Please try again.', 'error')
             return redirect(url_for('wallet'))
         
@@ -212,21 +219,29 @@ def add_wallet_routes(app, connect_to_db):
             coupon = cur.fetchone()
             
             if not coupon:
+                if is_ajax:
+                    return jsonify({'success': False, 'message': 'Invalid coupon code'})
                 flash('Invalid coupon code', 'error')
                 return redirect(url_for('wallet'))
             
             # 2. Check if coupon is active
             if not coupon['is_active']:
+                if is_ajax:
+                    return jsonify({'success': False, 'message': 'This coupon is no longer active'})
                 flash('This coupon is no longer active', 'error')
                 return redirect(url_for('wallet'))
             
             # 3. Check coupon type (must be 'wallet' or 'both')
             if coupon['coupon_type'] not in ['wallet', 'both']:
+                if is_ajax:
+                    return jsonify({'success': False, 'message': 'This coupon cannot be used for wallet redemption'})
                 flash('This coupon cannot be used for wallet redemption', 'error')
                 return redirect(url_for('wallet'))
             
             # 4. Check if coupon is private (user_id bound)
             if coupon['user_id'] is not None and coupon['user_id'] != current_user.id:
+                if is_ajax:
+                    return jsonify({'success': False, 'message': 'This is a private coupon and can only be used by the assigned user'})
                 flash('This is a private coupon and can only be used by the assigned user', 'error')
                 return redirect(url_for('wallet'))
             
@@ -235,6 +250,8 @@ def add_wallet_routes(app, connect_to_db):
                 # Convert both to date objects for comparison
                 valid_until_date = coupon['valid_until'].date() if hasattr(coupon['valid_until'], 'date') else coupon['valid_until']
                 if datetime.now().date() > valid_until_date:
+                    if is_ajax:
+                        return jsonify({'success': False, 'message': 'This coupon has expired'})
                     flash('This coupon has expired', 'error')
                     return redirect(url_for('wallet'))
             
@@ -245,14 +262,19 @@ def add_wallet_routes(app, connect_to_db):
             """, (coupon_code, current_user.id))
             
             if cur.fetchone():
+                if is_ajax:
+                    return jsonify({'success': False, 'message': 'You have already used this coupon'})
                 flash('You have already used this coupon', 'error')
                 return redirect(url_for('wallet'))
             
             # 7. Special verification for GSPACES_DESKS_FOLLOW coupon
+            instagram_warning = None
             if coupon_code == 'GSPACES_DESKS_FOLLOW':
                 # Show reminder to follow on Instagram
                 # In production, implement proper Instagram follow verification via API
-                flash('Please make sure you are following @gspaces_desks on Instagram to use this coupon', 'warning')
+                instagram_warning = 'Please make sure you are following @gspaces_desks on Instagram to use this coupon'
+                if not is_ajax:
+                    flash(instagram_warning, 'warning')
             
             # 8. Add amount to wallet
             wallet = WalletSystem(conn)
@@ -281,14 +303,33 @@ def add_wallet_routes(app, connect_to_db):
             
             conn.commit()
             
-            # Create a celebratory success message
-            flash(f'🎉 Congratulations! You earned ₹{amount} from coupon "{coupon_code}"! Your wallet has been credited. 🌟', 'coupon_success')
-            return redirect(url_for('wallet'))
+            # Get updated balance
+            wallet = WalletSystem(conn)
+            new_balance = wallet.get_wallet_balance(current_user.id)
+            
+            # Return JSON for AJAX or redirect for regular form
+            if is_ajax:
+                response_data = {
+                    'success': True,
+                    'message': f'🎉 Congratulations! You earned ₹{amount} from coupon "{coupon_code}"! Your wallet has been credited. 🌟',
+                    'amount': float(amount),
+                    'new_balance': float(new_balance),
+                    'coupon_code': coupon_code
+                }
+                if instagram_warning:
+                    response_data['warning'] = instagram_warning
+                return jsonify(response_data)
+            else:
+                flash(f'🎉 Congratulations! You earned ₹{amount} from coupon "{coupon_code}"! Your wallet has been credited. 🌟', 'coupon_success')
+                return redirect(url_for('wallet'))
             
         except Exception as e:
             conn.rollback()
             print(f"Error redeeming coupon: {e}")
-            flash('An error occurred while redeeming the coupon. Please try again.', 'error')
+            error_msg = 'An error occurred while redeeming the coupon. Please try again.'
+            if is_ajax:
+                return jsonify({'success': False, 'message': error_msg})
+            flash(error_msg, 'error')
             return redirect(url_for('wallet'))
         finally:
             conn.close()

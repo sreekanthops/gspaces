@@ -528,6 +528,9 @@
                                 {% endif %}
                             {% endwith %}
                             
+                            <!-- Message container for AJAX responses -->
+                            <div id="couponMessageContainer"></div>
+                            
                             <div class="row align-items-center">
                                 <div class="col-md-8">
                                     <form method="POST" action="{{ url_for('redeem_wallet_coupon') }}" id="redeemCouponForm">
@@ -847,6 +850,93 @@
             
             document.body.removeChild(textArea);
         }
+
+        // Handle coupon redemption with AJAX (no page redirect)
+        document.getElementById('redeemCouponForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const form = this;
+            const formData = new FormData(form);
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalBtnText = submitBtn.innerHTML;
+            const messageContainer = document.getElementById('couponMessageContainer');
+            
+            // Disable button and show loading
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Redeeming...';
+            
+            // Clear previous messages
+            messageContainer.innerHTML = '';
+            
+            fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Show celebration message
+                    messageContainer.innerHTML = `
+                        <div class="alert alert-dismissible fade show" role="alert" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4); animation: celebrateBounce 0.6s ease; margin-bottom: 20px;">
+                            <div style="text-align: center; padding: 20px;">
+                                <div style="font-size: 3rem; margin-bottom: 10px;">🎉 ⭐ 🎊 ✨</div>
+                                <h4 style="font-weight: 700; margin-bottom: 10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.2);">${data.message}</h4>
+                                <div style="font-size: 2rem; margin-top: 10px;">💰 🌟 💎</div>
+                            </div>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    `;
+                    
+                    // Show warning if present
+                    if (data.warning) {
+                        messageContainer.innerHTML += `
+                            <div class="alert alert-warning alert-dismissible fade show" role="alert" style="color: #333; margin-bottom: 20px;">
+                                <i class="bi bi-exclamation-triangle-fill me-2"></i>${data.warning}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        `;
+                    }
+                    
+                    // Update balance in sidebar if element exists
+                    const balanceBadge = document.querySelector('a[href="#wallet"] .badge');
+                    if (balanceBadge && data.new_balance) {
+                        balanceBadge.textContent = '₹' + data.new_balance.toFixed(2);
+                    }
+                    
+                    // Clear form
+                    form.reset();
+                    
+                    // Scroll to message
+                    messageContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                } else {
+                    // Show error message
+                    messageContainer.innerHTML = `
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert" style="margin-bottom: 20px;">
+                            <i class="bi bi-exclamation-circle-fill me-2"></i>${data.message}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    `;
+                    messageContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+            })
+            .catch(error => {
+                messageContainer.innerHTML = `
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert" style="margin-bottom: 20px;">
+                        <i class="bi bi-exclamation-circle-fill me-2"></i>An error occurred. Please try again.
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                `;
+                console.error('Error:', error);
+            })
+            .finally(() => {
+                // Re-enable button
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnText;
+            });
+        });
     </script>
 </body>
 </html>

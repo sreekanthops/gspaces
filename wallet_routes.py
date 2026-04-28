@@ -275,9 +275,9 @@ def add_wallet_routes(app, connect_to_db):
             # 9. Record coupon usage
             cur.execute("""
                 INSERT INTO coupon_usage
-                (coupon_id, coupon_code, user_id, discount_amount, used_at, usage_type)
-                VALUES (%s, %s, %s, %s, %s, %s)
-            """, (coupon['id'], coupon_code, current_user.id, amount, datetime.now(), 'wallet'))
+                (coupon_id, coupon_code, user_id, discount_amount, discount_applied, used_at, usage_type)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+            """, (coupon['id'], coupon_code, current_user.id, amount, amount, datetime.now(), 'wallet'))
             
             conn.commit()
             

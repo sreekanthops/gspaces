@@ -150,7 +150,7 @@ def add_wallet_routes(app, connect_to_db):
     
     @app.route('/wallet')
     @login_required
-    def wallet_page():
+    def wallet():
         """Wallet page showing balance and transactions"""
         conn = connect_to_db()
         if not conn:
@@ -162,10 +162,17 @@ def add_wallet_routes(app, connect_to_db):
             transactions = wallet.get_transaction_history(current_user.id, 50)
             referral_stats = wallet.get_referral_stats(current_user.id)
             
+            # Referral benefits info for display
+            referral_benefits = {
+                'friend_discount': '5% off',
+                'owner_bonus': '5% bonus'
+            }
+            
             return render_template('wallet.html',
                                  balance=float(balance),
                                  transactions=transactions,
                                  referral_stats=referral_stats,
+                                 referral_benefits=referral_benefits,
                                  max_bonus_per_order=float(WalletSystem.MAX_BONUS_PER_ORDER))
         except Exception as e:
             return f"Error loading wallet: {e}", 500

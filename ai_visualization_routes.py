@@ -140,8 +140,9 @@ def register_ai_routes(app):
             # Generate AI visualization using Hugging Face (FREE!)
             # Using Stable Diffusion via Hugging Face Inference API
             import requests
+            import base64
             
-            API_URL = "https://api-inference.huggingface.co/models/runwayml/stable-diffusion-v1-5"
+            API_URL = "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-2-1"
             HF_TOKEN = os.environ.get('HUGGINGFACE_TOKEN', '')
             
             if not HF_TOKEN:
@@ -149,27 +150,29 @@ def register_ai_routes(app):
             
             headers = {"Authorization": f"Bearer {HF_TOKEN}"}
             
-            # Read and encode the room image
-            with open(room_path, "rb") as f:
-                room_image_data = f.read()
+            # Create prompt for AI - text-to-image generation
+            prompt = f"A professional {product['category']} desk setup in a modern room, realistic lighting, natural placement, high quality furniture, modern interior design, photorealistic, 4k, detailed"
             
-            # Create prompt for AI
-            prompt = f"A professional {product['category']} desk setup placed in this room, realistic lighting, natural placement, high quality furniture, modern interior design, photorealistic"
-            
-            # Call Hugging Face API (FREE!)
+            # Call Hugging Face API (FREE!) - Text to Image
             payload = {
                 "inputs": prompt,
                 "parameters": {
-                    "negative_prompt": "blurry, distorted, unrealistic, low quality, cartoon, painting, drawing",
-                    "num_inference_steps": 30,
-                    "guidance_scale": 7.5
+                    "negative_prompt": "blurry, distorted, unrealistic, low quality, cartoon, painting, drawing, ugly, bad anatomy",
+                    "num_inference_steps": 25,
+                    "guidance_scale": 7.5,
+                    "width": 512,
+                    "height": 512
                 }
             }
             
+            print(f"🎨 Calling Hugging Face API...")
             response = requests.post(API_URL, headers=headers, json=payload)
             
+            print(f"📊 API Response Status: {response.status_code}")
+            
             if response.status_code != 200:
-                raise Exception(f"Hugging Face API error: {response.text}")
+                print(f"❌ API Error: {response.text}")
+                raise Exception(f"Hugging Face API error (status {response.status_code}): {response.text[:200]}")
             
             # Save result image
             result_filename = f"result_{current_user.id}_{timestamp}.jpg"
@@ -177,6 +180,8 @@ def register_ai_routes(app):
             
             with open(result_path, 'wb') as f:
                 f.write(response.content)
+            
+            print(f"✅ Image saved to {result_path}")
             
             # Save to database
             cur.execute("""

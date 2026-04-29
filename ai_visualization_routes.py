@@ -46,21 +46,28 @@ def register_ai_routes(app):
     def visualize_product(product_id):
         print(f"📸 Visualize route called for product {product_id}")
         """Show visualization page for a product"""
-        conn = get_db_connection()
-        cur = conn.cursor(cursor_factory=RealDictCursor)
-        
-        # Get product details
-        cur.execute("""
-            SELECT id, name, description, price, image_url, category
-            FROM products
-            WHERE id = %s
-        """, (product_id,))
-        product = cur.fetchone()
-        
-        if not product:
-            cur.close()
-            conn.close()
-            return "Product not found", 404
+        try:
+            conn = get_db_connection()
+            cur = conn.cursor(cursor_factory=RealDictCursor)
+            
+            # Get product details
+            cur.execute("""
+                SELECT id, name, description, price, image_url, category
+                FROM products
+                WHERE id = %s
+            """, (product_id,))
+            product = cur.fetchone()
+            
+            print(f"🔍 Product query result: {product}")
+            
+            if not product:
+                print(f"❌ Product {product_id} not found in database")
+                cur.close()
+                conn.close()
+                return "Product not found", 404
+        except Exception as e:
+            print(f"❌ Database error: {e}")
+            return f"Database error: {e}", 500
         
         # Get user's previous visualizations for this product
         cur.execute("""
@@ -130,28 +137,39 @@ def register_ai_routes(app):
             if product_image_path.startswith('static/'):
                 product_image_path = product_image_path[7:]  # Remove 'static/' prefix
             
-            # Generate AI visualization using Replicate
-            # Using Stable Diffusion Inpainting model
-            output = replicate.run(
-                "stability-ai/stable-diffusion:db21e45d3f7023abc2a46ee38a23973f6dce16bb082a930b0c49861f96d1e5bf",
-                input={
-                    "image": open(room_path, "rb"),
-                    "prompt": f"professional {product['category']} desk setup in room, realistic lighting, natural placement, high quality furniture, modern interior design",
+            # Generate AI visualization using Hugging Face (FREE!)
+            # Using Stable Diffusion via Hugging Face Inference API
+            import requests
+            
+            API_URL = "https://api-inference.huggingface.co/models/runwayml/stable-diffusion-v1-5"
+            headers = {"Authorization": f"Bearer hf_YOUR_TOKEN_HERE"}  # Get free token from huggingface.co
+            
+            # Read and encode the room image
+            with open(room_path, "rb") as f:
+                room_image_data = f.read()
+            
+            # Create prompt for AI
+            prompt = f"A professional {product['category']} desk setup placed in this room, realistic lighting, natural placement, high quality furniture, modern interior design, photorealistic"
+            
+            # Call Hugging Face API (FREE!)
+            payload = {
+                "inputs": prompt,
+                "parameters": {
                     "negative_prompt": "blurry, distorted, unrealistic, low quality, cartoon, painting, drawing",
-                    "num_outputs": 1,
-                    "guidance_scale": 7.5,
-                    "num_inference_steps": 50
+                    "num_inference_steps": 30,
+                    "guidance_scale": 7.5
                 }
-            )
+            }
+            
+            response = requests.post(API_URL, headers=headers, json=payload)
+            
+            if response.status_code != 200:
+                raise Exception(f"Hugging Face API error: {response.text}")
             
             # Save result image
             result_filename = f"result_{current_user.id}_{timestamp}.jpg"
             result_path = os.path.join(UPLOAD_FOLDER, result_filename)
             
-            # Download and save the result
-            import requests
-            result_url = output[0] if isinstance(output, list) else output
-            response = requests.get(result_url)
             with open(result_path, 'wb') as f:
                 f.write(response.content)
             

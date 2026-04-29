@@ -8,12 +8,12 @@ CREATE TABLE IF NOT EXISTS room_visualizations (
     product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
     room_image_url VARCHAR(500) NOT NULL,
     result_image_url VARCHAR(500) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
-    -- Indexes for performance
-    INDEX idx_user_visualizations (user_id, created_at DESC),
-    INDEX idx_product_visualizations (product_id, created_at DESC)
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Create indexes for performance
+CREATE INDEX IF NOT EXISTS idx_user_visualizations ON room_visualizations(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_product_visualizations ON room_visualizations(product_id, created_at DESC);
 
 -- Add comments
 COMMENT ON TABLE room_visualizations IS 'Stores AI-generated room visualizations for products';
@@ -37,10 +37,10 @@ GROUP BY p.id, p.name, p.category;
 
 COMMENT ON VIEW visualization_stats IS 'Statistics about product visualizations';
 
--- Grant permissions
-GRANT SELECT, INSERT, DELETE ON room_visualizations TO gspaces_user;
-GRANT USAGE, SELECT ON SEQUENCE room_visualizations_id_seq TO gspaces_user;
-GRANT SELECT ON visualization_stats TO gspaces_user;
+-- Grant permissions (adjust user name as needed)
+-- GRANT SELECT, INSERT, DELETE ON room_visualizations TO gspaces_user;
+-- GRANT USAGE, SELECT ON SEQUENCE room_visualizations_id_seq TO gspaces_user;
+-- GRANT SELECT ON visualization_stats TO gspaces_user;
 
 -- Success message
 DO $$

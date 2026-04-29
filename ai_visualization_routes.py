@@ -146,7 +146,8 @@ def register_ai_routes(app):
                     raise Exception("HUGGINGFACE_TOKEN not set. Get free token from huggingface.co")
                 
                 print(f"🎨 Initializing Hugging Face client...")
-                client = InferenceClient(api_key=HF_TOKEN)
+                # InferenceClient uses token parameter, not api_key
+                client = InferenceClient(token=HF_TOKEN)
                 
                 # Load the room image
                 with open(room_path, "rb") as f:

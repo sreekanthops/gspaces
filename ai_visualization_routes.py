@@ -99,9 +99,47 @@ def register_ai_routes(app):
             
             # Configure Gemini
             genai.configure(api_key=GEMINI_API_KEY)
-            model = genai.GenerativeModel('gemini-1.5-pro')
             
-            print(f"🤖 Calling Gemini 1.5 Pro...")
+            # List available models for debugging
+            print(f"📋 Checking available Gemini models...")
+            try:
+                available_models = []
+                for m in genai.list_models():
+                    if 'generateContent' in m.supported_generation_methods:
+                        available_models.append(m.name)
+                        print(f"  ✓ {m.name}")
+                
+                if not available_models:
+                    print(f"⚠️  No models found. Using default.")
+            except Exception as e:
+                print(f"⚠️  Could not list models: {e}")
+            
+            # Try models in order of preference (use -latest suffix)
+            model_names_to_try = [
+                'gemini-1.5-pro-latest',  # Latest Pro version
+                'gemini-1.5-flash-latest',  # Latest Flash version
+                'gemini-1.5-flash',  # Stable Flash
+                'gemini-pro-vision',  # Fallback vision model
+            ]
+            
+            model = None
+            model_name = None
+            
+            for name in model_names_to_try:
+                try:
+                    print(f"🔍 Trying model: {name}")
+                    model = genai.GenerativeModel(name)
+                    model_name = name
+                    print(f"✅ Successfully loaded: {name}")
+                    break
+                except Exception as e:
+                    print(f"❌ {name} failed: {str(e)[:100]}")
+                    continue
+            
+            if not model:
+                raise Exception("No Gemini model available. Check your API key and access.")
+            
+            print(f"🤖 Using Gemini model: {model_name}")
             
             # Generate content with both images
             response = model.generate_content([prompt, ref_img, target_img])

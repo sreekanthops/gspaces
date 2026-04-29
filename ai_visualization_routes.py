@@ -137,23 +137,27 @@ def register_ai_routes(app):
             if product_image_path.startswith('static/'):
                 product_image_path = product_image_path[7:]  # Remove 'static/' prefix
             
-            # Generate AI visualization using Pixazo API
+            # Generate AI visualization using Leonardo.ai (FREE TIER AVAILABLE!)
             try:
                 import requests
                 from PIL import Image
+                import time
                 
-                PIXAZO_API_KEY = os.environ.get('PIXAZO_API_KEY', '')
-                if not PIXAZO_API_KEY:
-                    raise Exception("PIXAZO_API_KEY not set. Get your key from Pixazo")
+                LEONARDO_API_KEY = os.environ.get('LEONARDO_API_KEY', '')
+                if not LEONARDO_API_KEY:
+                    raise Exception("LEONARDO_API_KEY not set. Get free key from https://leonardo.ai")
                 
-                print(f"🎨 Using Pixazo API for AI image generation...")
+                print(f"🎨 Using Leonardo.ai for AI image generation (FREE tier available!)...")
                 
                 # Load the room image
                 print(f"📸 Loading room image...")
                 base_image = Image.open(room_path)
                 
-                # Resize if too large
+                # Resize if needed (Leonardo works well with 768-1024)
                 max_size = 1024
+                new_width = base_image.width
+                new_height = base_image.height
+                
                 if base_image.width > max_size or base_image.height > max_size:
                     if base_image.width > base_image.height:
                         new_width = max_size
@@ -167,66 +171,111 @@ def register_ai_routes(app):
                 if base_image.mode != 'RGB':
                     base_image = base_image.convert('RGB')
                 
-                # Create transformation prompt
-                prompt = f"""A modern, professional {product['category']} setup featuring a {product['name']}
-                in this room. Photorealistic interior design with proper lighting, shadows, and perspective.
-                High resolution, detailed, naturally integrated into the existing space."""
+                # Save as JPG for Leonardo upload
+                base_image.save(room_path, format="JPEG", quality=90)
                 
-                print(f"🎨 Generating AI transformation with Pixazo...")
+                # Create transformation prompt
+                prompt = f"""Transform this room into a professional {product['category']} setup with a modern {product['name']},
+                cinematic lighting, photorealistic, high quality interior design, realistic shadows and reflections,
+                naturally integrated furniture"""
+                
+                print(f"🎨 Generating AI transformation with Leonardo.ai...")
                 print(f"📝 Prompt: {prompt[:100]}...")
                 
-                # Upload image to get public URL (Pixazo needs public URL)
-                # For now, we'll use the local path and convert to base64 or use a different approach
-                # Let's use the static URL that's accessible
-                room_image_url = f"{request.url_root}static/uploads/visualizations/{os.path.basename(room_path)}"
-                
-                # Pixazo API configuration
-                PIXAZO_URL = "https://gateway.pixazo.ai/gpt-image-2-image-to-image/v1/gpt-image-2-image-to-image/generate"
-                
+                # Leonardo API headers
                 headers = {
-                    "Content-Type": "application/json",
-                    "Ocp-Apim-Subscription-Key": PIXAZO_API_KEY
+                    "accept": "application/json",
+                    "content-type": "application/json",
+                    "authorization": f"Bearer {LEONARDO_API_KEY}"
                 }
                 
-                data = {
+                # STEP 1: Get upload URL
+                print(f"📤 Step 1: Requesting upload slot...")
+                upload_url_endpoint = "https://cloud.leonardo.ai/api/rest/v1/init-image"
+                upload_payload = {"extension": "jpg"}
+                upload_response = requests.post(upload_url_endpoint, json=upload_payload, headers=headers).json()
+                
+                if 'uploadInitImage' not in upload_response:
+                    raise Exception(f"Failed to get upload URL: {upload_response}")
+                
+                upload_url = upload_response['uploadInitImage']['url']
+                image_id = upload_response['uploadInitImage']['id']
+                print(f"✅ Got upload URL and image ID: {image_id}")
+                
+                # STEP 2: Upload image to S3
+                print(f"📤 Step 2: Uploading image...")
+                with open(room_path, "rb") as f:
+                    upload_result = requests.put(upload_url, data=f, headers={"Content-Type": "image/jpeg"})
+                
+                if upload_result.status_code not in [200, 204]:
+                    raise Exception(f"Failed to upload image: {upload_result.status_code}")
+                print(f"✅ Image uploaded successfully")
+                
+                # STEP 3: Trigger generation
+                print(f"🎨 Step 3: Starting AI transformation...")
+                gen_url = "https://cloud.leonardo.ai/api/rest/v1/generations"
+                gen_payload = {
+                    "height": new_height if 'new_height' in locals() else base_image.height,
+                    "width": new_width if 'new_width' in locals() else base_image.width,
+                    "modelId": "6bef9f1b-29cb-40c7-b9df-cd93b0fab2ec",  # Leonardo Vision XL
                     "prompt": prompt,
-                    "input_images": [room_image_url],
-                    "model": "flux-schnell",  # Fast and high quality
-                    "strength": 0.6  # Balance between original and transformation
+                    "init_image_id": image_id,
+                    "init_strength": 0.4,  # Balance between original and transformation
+                    "num_images": 1
                 }
                 
-                print(f"🎨 Calling Pixazo API...")
-                print(f"📸 Image URL: {room_image_url}")
+                gen_response = requests.post(gen_url, json=gen_payload, headers=headers).json()
                 
-                api_response = requests.post(PIXAZO_URL, json=data, headers=headers, timeout=60)
+                if 'sdGenerationJob' not in gen_response:
+                    raise Exception(f"Failed to start generation: {gen_response}")
                 
-                if api_response.status_code != 200:
-                    error_msg = f"Pixazo API failed: {api_response.status_code} - {api_response.text}"
-                    print(f"❌ {error_msg}")
-                    raise Exception(error_msg)
+                generation_id = gen_response['sdGenerationJob']['generationId']
+                print(f"✅ Generation started with ID: {generation_id}")
                 
-                result_data = api_response.json()
-                print(f"✅ AI transformation complete!")
-                print(f"📊 Response: {result_data}")
+                # STEP 4: Poll for completion
+                print(f"⏳ Step 4: Waiting for image to process...")
+                status_url = f"https://cloud.leonardo.ai/api/rest/v1/generations/{generation_id}"
                 
-                # Get the generated image URL from response
-                if 'output_images' in result_data and len(result_data['output_images']) > 0:
-                    generated_image_url = result_data['output_images'][0]
-                elif 'image_url' in result_data:
-                    generated_image_url = result_data['image_url']
-                elif 'images' in result_data and len(result_data['images']) > 0:
-                    generated_image_url = result_data['images'][0]
-                else:
-                    raise Exception(f"No image URL in Pixazo response: {result_data}")
+                max_attempts = 60  # 3 minutes max
+                attempt = 0
+                generated_image_url = None
+                
+                while attempt < max_attempts:
+                    time.sleep(3)
+                    attempt += 1
+                    
+                    status_response = requests.get(status_url, headers=headers).json()
+                    
+                    if 'generations_by_pk' not in status_response:
+                        print(f"⚠️  Unexpected response: {status_response}")
+                        continue
+                    
+                    job = status_response['generations_by_pk']
+                    status = job.get('status', 'UNKNOWN')
+                    
+                    if status == "COMPLETE":
+                        if 'generated_images' in job and len(job['generated_images']) > 0:
+                            generated_image_url = job['generated_images'][0]['url']
+                            print(f"✅ AI transformation complete!")
+                            print(f"📥 Downloading from: {generated_image_url}")
+                            break
+                        else:
+                            raise Exception("Generation complete but no images found")
+                    elif status == "FAILED":
+                        raise Exception(f"Generation failed: {job.get('message', 'Unknown error')}")
+                    else:
+                        print(f".", end="", flush=True)
+                
+                if attempt >= max_attempts or generated_image_url is None:
+                    raise Exception("Generation timed out after 3 minutes")
                 
                 # Download the generated image
-                print(f"📥 Downloading generated image from: {generated_image_url}")
                 image_response = requests.get(generated_image_url, timeout=30)
                 
                 if image_response.status_code != 200:
                     raise Exception(f"Failed to download generated image: {image_response.status_code}")
                 
-                successful_model = "pixazo-flux-schnell"
+                successful_model = "leonardo-vision-xl"
                 
                 # Save the edited image from Pixazo response
                 result_filename = f"result_{current_user.id}_{timestamp}.png"

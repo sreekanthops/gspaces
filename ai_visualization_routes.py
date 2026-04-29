@@ -137,17 +137,17 @@ def register_ai_routes(app):
             if product_image_path.startswith('static/'):
                 product_image_path = product_image_path[7:]  # Remove 'static/' prefix
             
-            # Generate AI visualization using Leonardo.ai (FREE TIER AVAILABLE!)
+            # Generate AI visualization using ModelsLab (Image-guided editing!)
             try:
                 import requests
                 from PIL import Image
                 import time
                 
-                LEONARDO_API_KEY = os.environ.get('LEONARDO_API_KEY', '')
-                if not LEONARDO_API_KEY:
-                    raise Exception("LEONARDO_API_KEY not set. Get free key from https://leonardo.ai")
+                MODELSLAB_API_KEY = os.environ.get('MODELSLAB_API_KEY', '')
+                if not MODELSLAB_API_KEY:
+                    raise Exception("MODELSLAB_API_KEY not set. Get key from https://modelslab.com")
                 
-                print(f"🎨 Using Leonardo.ai for AI image generation (FREE tier available!)...")
+                print(f"🎨 Using ModelsLab for AI image generation with control_image!")
                 
                 # Load the room image
                 print(f"📸 Loading room image...")
@@ -171,228 +171,89 @@ def register_ai_routes(app):
                 if base_image.mode != 'RGB':
                     base_image = base_image.convert('RGB')
                 
-                # Save as JPG for Leonardo upload
+                # Save as JPG
                 base_image.save(room_path, format="JPEG", quality=90)
                 
-                # Create transformation prompt - be very specific about adding furniture
-                prompt = f"""Interior design visualization: Add a {product['name']} desk/furniture from the {product['category']} category
-                into this empty room. Place the furniture prominently against the wall or in the center.
-                The furniture should be clearly visible, modern style, realistic wood/metal textures,
-                professional lighting with natural shadows. High quality photorealistic render.
-                Make the {product['category']} the focal point of the room."""
+                # Get product image URL
+                product_image_url = f"{request.url_root}static/{product['image_url']}" if not product['image_url'].startswith('http') else product['image_url']
+                room_image_url = f"{request.url_root}static/uploads/visualizations/{os.path.basename(room_path)}"
+                
+                # Create transformation prompt
+                prompt = f"""Apply the furniture and desk setup from the reference image to this empty room.
+                Place a {product['name']} ({product['category']}) in the room with realistic lighting,
+                shadows, and perspective. Professional interior design, photorealistic, high quality."""
                 
                 print(f"\n{'='*60}")
-                print(f"🎨 AI VISUALIZATION DEBUG INFO")
+                print(f"🎨 MODELSLAB AI VISUALIZATION")
                 print(f"{'='*60}")
-                print(f"📦 Product Details:")
-                print(f"   - ID: {product['id']}")
-                print(f"   - Name: {product['name']}")
-                print(f"   - Category: {product['category']}")
-                print(f"   - Image: {product.get('image_url', 'N/A')}")
-                print(f"\n📸 Room Image:")
-                print(f"   - Path: {room_path}")
-                print(f"   - Size: {new_width}x{new_height}")
-                print(f"\n🤖 AI Settings:")
-                print(f"   - Model: Leonardo Kino XL")
-                print(f"   - Init Strength: 0.7 (70% transformation)")
-                print(f"   - Guidance Scale: 7")
-                print(f"   - Steps: 30")
-                print(f"\n📝 Prompt:")
-                print(f"   {prompt}")
+                print(f"📦 Product: {product['name']}")
+                print(f"📸 Room Image: {room_image_url}")
+                print(f"🖼️  Control Image (Product): {product_image_url}")
+                print(f"📝 Prompt: {prompt}")
                 print(f"{'='*60}\n")
                 
-                # Leonardo API headers
-                headers = {
-                    "accept": "application/json",
-                    "content-type": "application/json",
-                    "authorization": f"Bearer {LEONARDO_API_KEY}"
-                }
+                # ModelsLab API call
+                print(f"🎨 Calling ModelsLab API...")
+                MODELSLAB_URL = "https://modelslab.com/api/v6/image_editing/img2img"
                 
-                # STEP 1: Get upload URL
-                print(f"📤 Step 1: Requesting upload slot...")
-                upload_url_endpoint = "https://cloud.leonardo.ai/api/rest/v1/init-image"
-                upload_payload = {"extension": "jpg"}
-                upload_response = requests.post(upload_url_endpoint, json=upload_payload, headers=headers).json()
-                
-                if 'uploadInitImage' not in upload_response:
-                    raise Exception(f"Failed to get upload URL: {upload_response}")
-                
-                upload_data = upload_response['uploadInitImage']
-                upload_url = upload_data['url']
-                image_id = upload_data['id']
-                upload_fields = upload_data.get('fields', {})
-                
-                print(f"✅ Got upload URL and image ID: {image_id}")
-                print(f"📋 Upload fields: {upload_fields}")
-                
-                # STEP 2: Upload image to S3
-                print(f"📤 Step 2: Uploading image...")
-                with open(room_path, "rb") as f:
-                    image_data = f.read()
-                
-                # If there are fields, use POST with multipart/form-data
-                if upload_fields:
-                    print(f"🔄 Using POST with form fields...")
-                    # Convert fields to proper format (not JSON string)
-                    form_data = {}
-                    if isinstance(upload_fields, str):
-                        import json
-                        form_data = json.loads(upload_fields)
-                    else:
-                        form_data = upload_fields
-                    
-                    files = {'file': ('image.jpg', image_data, 'image/jpeg')}
-                    upload_result = requests.post(upload_url, data=form_data, files=files)
-                else:
-                    # Otherwise use PUT
-                    print(f"🔄 Using PUT...")
-                    upload_headers = {"Content-Type": "image/jpeg"}
-                    upload_result = requests.put(upload_url, data=image_data, headers=upload_headers)
-                
-                if upload_result.status_code not in [200, 201, 204]:
-                    print(f"⚠️  Upload failed with status {upload_result.status_code}")
-                    print(f"⚠️  Response: {upload_result.text[:500]}")
-                    raise Exception(f"Failed to upload image: {upload_result.status_code}")
-                print(f"✅ Room image uploaded successfully")
-                
-                # STEP 2.5: Upload product image as reference
-                print(f"📤 Step 2.5: Uploading product image as reference...")
-                
-                # Get product image path
-                product_image_path = os.path.join('static', product['image_url']) if product['image_url'].startswith('/') else os.path.join('static', product['image_url'])
-                
-                if not os.path.exists(product_image_path):
-                    print(f"⚠️  Product image not found at: {product_image_path}")
-                    product_image_id = None
-                else:
-                    # Request upload URL for product image
-                    product_upload_response = requests.post(upload_url_endpoint, json={"extension": "jpg"}, headers=headers).json()
-                    
-                    if 'uploadInitImage' in product_upload_response:
-                        product_upload_data = product_upload_response['uploadInitImage']
-                        product_upload_url = product_upload_data['url']
-                        product_image_id = product_upload_data['id']
-                        product_upload_fields = product_upload_data.get('fields', {})
-                        
-                        # Read and upload product image
-                        with open(product_image_path, "rb") as f:
-                            product_image_data = f.read()
-                        
-                        if product_upload_fields:
-                            if isinstance(product_upload_fields, str):
-                                import json
-                                product_form_data = json.loads(product_upload_fields)
-                            else:
-                                product_form_data = product_upload_fields
-                            
-                            files = {'file': ('product.jpg', product_image_data, 'image/jpeg')}
-                            product_upload_result = requests.post(product_upload_url, data=product_form_data, files=files)
-                        else:
-                            product_upload_result = requests.put(product_upload_url, data=product_image_data, headers={"Content-Type": "image/jpeg"})
-                        
-                        if product_upload_result.status_code in [200, 201, 204]:
-                            print(f"✅ Product image uploaded successfully as reference (ID: {product_image_id})")
-                        else:
-                            print(f"⚠️  Product image upload failed, continuing without reference")
-                            product_image_id = None
-                    else:
-                        print(f"⚠️  Could not get product upload URL")
-                        product_image_id = None
-                
-                # STEP 3: Trigger generation with product reference
-                print(f"🎨 Step 3: Starting AI transformation with product reference...")
-                gen_url = "https://cloud.leonardo.ai/api/rest/v1/generations"
-                
-                # Try different model IDs (Leonardo updates models frequently)
-                model_ids_to_try = [
-                    "aa77f04e-3eec-4034-9c07-d0f619684628",  # Leonardo Kino XL (latest)
-                    "6bef9f1b-29cb-40c7-b9df-cd93b0fab2ec",  # Leonardo Vision XL
-                    "1e60896f-3c26-4296-8ecc-53e2afecc132",  # Leonardo Diffusion XL
-                ]
-                
-                # Build generation payload with product reference
-                gen_payload = {
-                    "height": new_height,
-                    "width": new_width,
-                    "modelId": model_ids_to_try[0],  # Use latest model
+                payload = {
+                    "key": MODELSLAB_API_KEY,
+                    "model_id": "sdxl",  # Stable Diffusion XL
                     "prompt": prompt,
-                    "init_image_id": image_id,  # Room image
-                    "init_strength": 0.85,  # VERY HIGH = major transformation
-                    "num_images": 1,
-                    "guidance_scale": 8,
-                    "num_inference_steps": 40
+                    "init_image": room_image_url,  # Destination image (empty room)
+                    "control_image": product_image_url,  # Reference image (product)
+                    "strength": 0.7,  # How much to change
+                    "seed": None,
+                    "webhook": None,
+                    "track_id": None
                 }
                 
-                # ControlNet is complex and may not work in free tier
-                # For now, disable it and rely on strong init_strength + detailed prompt
-                if product_image_id:
-                    print(f"✅ Product image uploaded (ID: {product_image_id})")
-                    print(f"⚠️  ControlNet disabled - using init_strength=0.85 with detailed prompt")
-                    print(f"💡 The AI will use the prompt to generate furniture matching: {product['name']}")
-                else:
-                    print(f"⚠️  No product reference - using prompt only")
+                print(f"📤 Sending request to ModelsLab...")
+                api_response = requests.post(MODELSLAB_URL, json=payload, timeout=120)
                 
-                # Note: To enable ControlNet, you need the correct preprocessorId for your Leonardo plan
-                # Common IDs: 1 (Canny), 2 (Depth), but these vary by plan
+                if api_response.status_code != 200:
+                    raise Exception(f"ModelsLab API failed: {api_response.status_code} - {api_response.text}")
                 
-                print(f"📤 Sending generation request to Leonardo...")
-                print(f"📊 Payload: {gen_payload}")
+                result_data = api_response.json()
+                print(f"📥 Response: {result_data}")
                 
-                gen_response = requests.post(gen_url, json=gen_payload, headers=headers).json()
-                
-                print(f"📥 Generation response: {gen_response}")
-                
-                if 'sdGenerationJob' not in gen_response:
-                    raise Exception(f"Failed to start generation: {gen_response}")
-                
-                generation_id = gen_response['sdGenerationJob']['generationId']
-                print(f"✅ Generation started with ID: {generation_id}")
-                print(f"⏳ This will take 20-40 seconds with init_strength=0.85...")
-                
-                # STEP 4: Poll for completion
-                print(f"⏳ Step 4: Waiting for image to process...")
-                status_url = f"https://cloud.leonardo.ai/api/rest/v1/generations/{generation_id}"
-                
-                max_attempts = 60  # 3 minutes max
-                attempt = 0
-                generated_image_url = None
-                
-                while attempt < max_attempts:
-                    time.sleep(3)
-                    attempt += 1
+                # Get generated image URL
+                if result_data.get('status') == 'success' and 'output' in result_data:
+                    generated_image_url = result_data['output'][0] if isinstance(result_data['output'], list) else result_data['output']
+                    print(f"✅ AI transformation complete!")
+                elif 'future_links' in result_data:
+                    # Image is processing, need to poll
+                    fetch_url = result_data['future_links'][0]
+                    print(f"⏳ Image processing, polling for result...")
                     
-                    status_response = requests.get(status_url, headers=headers).json()
-                    
-                    if 'generations_by_pk' not in status_response:
-                        print(f"⚠️  Unexpected response: {status_response}")
-                        continue
-                    
-                    job = status_response['generations_by_pk']
-                    status = job.get('status', 'UNKNOWN')
-                    
-                    if status == "COMPLETE":
-                        if 'generated_images' in job and len(job['generated_images']) > 0:
-                            generated_image_url = job['generated_images'][0]['url']
+                    max_attempts = 30
+                    for attempt in range(max_attempts):
+                        time.sleep(3)
+                        fetch_response = requests.get(fetch_url)
+                        fetch_data = fetch_response.json()
+                        
+                        if fetch_data.get('status') == 'success' and 'output' in fetch_data:
+                            generated_image_url = fetch_data['output'][0] if isinstance(fetch_data['output'], list) else fetch_data['output']
                             print(f"✅ AI transformation complete!")
-                            print(f"📥 Downloading from: {generated_image_url}")
                             break
+                        elif fetch_data.get('status') == 'failed':
+                            raise Exception(f"Generation failed: {fetch_data.get('message', 'Unknown error')}")
                         else:
-                            raise Exception("Generation complete but no images found")
-                    elif status == "FAILED":
-                        raise Exception(f"Generation failed: {job.get('message', 'Unknown error')}")
+                            print(f".", end="", flush=True)
                     else:
-                        print(f".", end="", flush=True)
+                        raise Exception("Generation timed out")
+                else:
+                    raise Exception(f"Unexpected response: {result_data}")
                 
-                if attempt >= max_attempts or generated_image_url is None:
-                    raise Exception("Generation timed out after 3 minutes")
-                
-                # Download the generated image
+                # Download generated image
+                print(f"📥 Downloading from: {generated_image_url}")
                 image_response = requests.get(generated_image_url, timeout=30)
                 
                 if image_response.status_code != 200:
-                    raise Exception(f"Failed to download generated image: {image_response.status_code}")
+                    raise Exception(f"Failed to download: {image_response.status_code}")
                 
-                successful_model = "leonardo-vision-xl"
+                successful_model = "modelslab-sdxl"
+                
                 
                 # Save the edited image from Pixazo response
                 result_filename = f"result_{current_user.id}_{timestamp}.png"
@@ -420,7 +281,7 @@ def register_ai_routes(app):
             
             # Save to database
             cur.execute("""
-                INSERT INTO room_visualizations 
+                INSERT INTO room_visualizations
                 (user_id, product_id, room_image_url, result_image_url, created_at)
                 VALUES (%s, %s, %s, %s, NOW())
                 RETURNING id
@@ -430,7 +291,11 @@ def register_ai_routes(app):
                 f"uploads/visualizations/{room_filename}",
                 f"uploads/visualizations/{result_filename}"
             ))
-            visualization_id = cur.fetchone()['id']
+            result = cur.fetchone()
+            visualization_id = result['id'] if result else None
+            
+            if not visualization_id:
+                raise Exception("Failed to save visualization to database")
             
             conn.commit()
             cur.close()

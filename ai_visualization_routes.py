@@ -6,7 +6,6 @@ Uses Replicate API for AI image generation
 
 from flask import Blueprint, request, jsonify, render_template, session
 from flask_login import login_required, current_user
-import replicate
 import os
 from PIL import Image
 import io
@@ -14,6 +13,14 @@ import base64
 from datetime import datetime
 import psycopg2
 from psycopg2.extras import RealDictCursor
+
+# Try to import replicate, but don't fail if not installed
+try:
+    import replicate
+    REPLICATE_AVAILABLE = True
+except ImportError:
+    REPLICATE_AVAILABLE = False
+    print("⚠️  Warning: replicate module not installed. Install with: pip install replicate")
 
 # Configuration
 REPLICATE_API_TOKEN = os.environ.get('REPLICATE_API_TOKEN', '')  # Set in environment
@@ -32,9 +39,12 @@ def get_db_connection():
 def register_ai_routes(app):
     """Register all AI visualization routes"""
     
+    print("🎨 Registering AI visualization routes...")
+    
     @app.route('/visualize/<int:product_id>')
     @login_required
     def visualize_product(product_id):
+        print(f"📸 Visualize route called for product {product_id}")
         """Show visualization page for a product"""
         conn = get_db_connection()
         cur = conn.cursor(cursor_factory=RealDictCursor)

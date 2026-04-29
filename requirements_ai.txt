@@ -1,4 +1,4 @@
 # AI Room Visualization Dependencies
-huggingface_hub==0.20.3
+google-genai==0.2.2
 Pillow==10.2.0
 requests==2.31.0

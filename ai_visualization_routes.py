@@ -137,124 +137,69 @@ def register_ai_routes(app):
             if product_image_path.startswith('static/'):
                 product_image_path = product_image_path[7:]  # Remove 'static/' prefix
             
-            # Generate AI visualization using Google Gemini API (FREE!)
+            # Generate AI visualization using Google GenAI SDK (TRUE AI IMAGE EDITING!)
             try:
-                import requests
-                import base64
+                from google import genai
                 from PIL import Image
-                import io
                 
                 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
                 if not GEMINI_API_KEY:
                     raise Exception("GEMINI_API_KEY not set. Get free key from https://makersuite.google.com/app/apikey")
                 
-                print(f"🎨 Initializing Google Gemini AI...")
+                print(f"🎨 Initializing Google GenAI client...")
+                client = genai.Client(api_key=GEMINI_API_KEY)
                 
-                # Load and resize the room image
-                room_img = Image.open(room_path)
+                # Load the room image
+                print(f"📸 Loading room image...")
+                base_image = Image.open(room_path)
+                
+                # Resize if too large
                 max_size = 1024
-                if room_img.width > max_size or room_img.height > max_size:
-                    if room_img.width > room_img.height:
+                if base_image.width > max_size or base_image.height > max_size:
+                    if base_image.width > base_image.height:
                         new_width = max_size
-                        new_height = int(room_img.height * (max_size / room_img.width))
+                        new_height = int(base_image.height * (max_size / base_image.width))
                     else:
                         new_height = max_size
-                        new_width = int(room_img.width * (max_size / room_img.height))
-                    room_img = room_img.resize((new_width, new_height), Image.Resampling.LANCZOS)
+                        new_width = int(base_image.width * (max_size / base_image.height))
+                    base_image = base_image.resize((new_width, new_height), Image.Resampling.LANCZOS)
+                    print(f"✅ Resized to {new_width}x{new_height}")
                 
-                if room_img.mode != 'RGB':
-                    room_img = room_img.convert('RGB')
+                if base_image.mode != 'RGB':
+                    base_image = base_image.convert('RGB')
                 
-                # Convert image to base64
-                img_byte_arr = io.BytesIO()
-                room_img.save(img_byte_arr, format='JPEG', quality=85)
-                img_byte_arr = img_byte_arr.getvalue()
-                image_base64 = base64.b64encode(img_byte_arr).decode('utf-8')
+                # Create transformation prompt
+                prompt = f"""Transform this room to include a professional {product['category']} desk setup.
+                Add a modern {product['name']} in the center of the room with realistic lighting,
+                shadows, and perspective. Make it look photorealistic and naturally integrated into the space.
+                Keep the room's existing style and lighting."""
                 
-                print(f"🎨 Generating AI visualization with Gemini...")
+                print(f"🎨 Generating AI transformation with Gemini...")
+                print(f"📝 Prompt: {prompt[:100]}...")
                 
-                # Create prompt for Gemini
-                prompt = f"""Analyze this room image and describe how to add a professional {product['category']} desk setup.
-                Describe the placement, lighting, and how it would look in this specific room.
-                Be detailed about the desk position, size relative to the room, and realistic integration."""
+                # Call Gemini for TRUE image editing
+                response = client.models.generate_content(
+                    model="gemini-2.0-flash-exp",  # Latest model with image editing
+                    contents=[prompt, base_image]
+                )
                 
-                # Call Gemini API for image analysis
-                # Using gemini-pro-vision for image analysis (free tier)
-                url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent?key={GEMINI_API_KEY}"
-                headers = {
-                    'Content-Type': 'application/json'
-                }
+                print(f"✅ AI transformation complete!")
                 
-                payload = {
-                    "contents": [{
-                        "parts": [
-                            {"text": prompt},
-                            {
-                                "inline_data": {
-                                    "mime_type": "image/jpeg",
-                                    "data": image_base64
-                                }
-                            }
-                        ]
-                    }]
-                }
+                # Save the edited image
+                result_filename = f"result_{current_user.id}_{timestamp}.jpg"
+                result_path = os.path.join(UPLOAD_FOLDER, result_filename)
                 
-                response = requests.post(url, headers=headers, json=payload, timeout=30)
-                response.raise_for_status()
-                
-                result = response.json()
-                ai_description = result['candidates'][0]['content']['parts'][0]['text']
-                
-                print(f"✅ Gemini analysis: {ai_description[:100]}...")
-                
-                # Now create composite with AI-guided placement
-                # Load product image
-                product_image_path = os.path.join('static', product['image_url'])
-                if os.path.exists(product_image_path):
-                    product_img = Image.open(product_image_path)
-                    
-                    # Resize product to fit in room
-                    product_width = room_img.width // 3
-                    aspect_ratio = product_img.height / product_img.width
-                    product_height = int(product_width * aspect_ratio)
-                    product_img = product_img.resize((product_width, product_height), Image.Resampling.LANCZOS)
-                    
-                    # Create composite
-                    result_img = room_img.copy()
-                    x_pos = (room_img.width - product_width) // 2
-                    y_pos = room_img.height - product_height - 50
-                    
-                    # Paste product
-                    if product_img.mode == 'RGBA':
-                        result_img.paste(product_img, (x_pos, y_pos), product_img)
-                    else:
-                        result_img.paste(product_img, (x_pos, y_pos))
-                    
-                    # Add AI description as watermark
-                    from PIL import ImageDraw, ImageFont
-                    draw = ImageDraw.Draw(result_img)
-                    try:
-                        font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 16)
-                    except:
-                        font = ImageFont.load_default()
-                    
-                    # Add AI analysis text
-                    text_lines = ai_description[:200].split('. ')[:2]  # First 2 sentences
-                    y_offset = 20
-                    for line in text_lines:
-                        if line:
-                            draw.text((20, y_offset), line + '.', fill=(255, 255, 255), font=font,
-                                    stroke_width=2, stroke_fill=(0, 0, 0))
-                            y_offset += 25
-                    
-                    # Save result
-                    result_filename = f"result_{current_user.id}_{timestamp}.jpg"
-                    result_path = os.path.join(UPLOAD_FOLDER, result_filename)
-                    result_img.save(result_path, 'JPEG', quality=90)
-                    
-                    print(f"✅ AI-enhanced visualization created: {result_path}")
+                # Extract and save the generated image
+                for part in response.candidates[0].content.parts:
+                    if part.inline_data:
+                        with open(result_path, "wb") as f:
+                            f.write(part.inline_data.data)
+                        print(f"✅ AI-edited image saved: {result_path}")
+                        break
                 else:
-                    raise Exception("Product image not found")
+                    # If no image returned, fall back to text response
+                    print(f"⚠️  No image returned, using composite fallback...")
+                    raise Exception("No image in response")
                 
             except ImportError:
                 print("⚠️  huggingface_hub not installed, using fallback...")

@@ -207,16 +207,15 @@ def register_ai_routes(app):
                 with open(room_path, "rb") as f:
                     image_data = f.read()
                 
-                # Upload with proper headers for S3
+                # Upload to S3 (no ACL header - bucket has Block Public Access enabled)
                 upload_headers = {
-                    "Content-Type": "image/jpeg",
-                    "x-amz-acl": "public-read"
+                    "Content-Type": "image/jpeg"
                 }
                 upload_result = requests.put(upload_url, data=image_data, headers=upload_headers)
                 
                 if upload_result.status_code not in [200, 204]:
                     print(f"⚠️  Upload failed with status {upload_result.status_code}")
-                    print(f"⚠️  Response: {upload_result.text}")
+                    print(f"⚠️  Response: {upload_result.text[:500]}")
                     raise Exception(f"Failed to upload image: {upload_result.status_code}")
                 print(f"✅ Image uploaded successfully")
                 

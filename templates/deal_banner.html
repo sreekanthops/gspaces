@@ -1,0 +1,183 @@
+<!-- Professional Deal Banner Component -->
+<style>
+    .deal-banner {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 16px 0;
+        position: sticky;
+        top: 0;
+        z-index: 998;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    
+    .deal-banner-content {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+    
+    .deal-icon {
+        font-size: 24px;
+        animation: pulse 2s infinite;
+    }
+    
+    .deal-text {
+        font-size: 16px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        text-align: center;
+    }
+    
+    .deal-countdown {
+        background: rgba(255,255,255,0.2);
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-family: 'Courier New', monospace;
+        font-size: 18px;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        backdrop-filter: blur(10px);
+    }
+    
+    .deal-countdown-label {
+        font-size: 12px;
+        opacity: 0.9;
+        font-weight: 500;
+    }
+    
+    .deal-cta {
+        background: white;
+        color: #667eea;
+        padding: 8px 20px;
+        border-radius: 20px;
+        text-decoration: none;
+        font-weight: 700;
+        font-size: 14px;
+        transition: transform 0.2s, box-shadow 0.2s;
+        display: inline-block;
+    }
+    
+    .deal-cta:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        color: #667eea;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+    }
+    
+    @media (max-width: 768px) {
+        .deal-banner {
+            padding: 12px 0;
+        }
+        
+        .deal-text {
+            font-size: 14px;
+        }
+        
+        .deal-countdown {
+            font-size: 16px;
+            padding: 6px 12px;
+        }
+        
+        .deal-cta {
+            font-size: 13px;
+            padding: 6px 16px;
+        }
+    }
+</style>
+
+<div class="deal-banner" id="dealBanner" style="display: none;">
+    <div class="container">
+        <div class="deal-banner-content">
+            <span class="deal-icon">🎉</span>
+            <div class="deal-text" id="dealBannerText">
+                Limited Time Offer - Exclusive Discounts on Premium Desk Setups
+            </div>
+            <div class="deal-countdown" id="dealCountdown" style="display: none;">
+                <span class="deal-countdown-label">Ends in:</span>
+                <span id="countdownTimer">00:00:00</span>
+            </div>
+            <a href="/?section=products" class="deal-cta">Shop Now</a>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    let countdownInterval = null;
+    let remainingSeconds = 0;
+    
+    // Fetch active deal information
+    async function loadActiveDeal() {
+        try {
+            const response = await fetch('/api/deals/active');
+            const data = await response.json();
+            
+            if (data.status === 'success' && data.has_active_deal) {
+                // Show banner
+                document.getElementById('dealBanner').style.display = 'block';
+                
+                // Update banner text
+                if (data.banner_text) {
+                    document.getElementById('dealBannerText').textContent = data.banner_text;
+                }
+                
+                // Start countdown if available
+                if (data.countdown_remaining && data.countdown_remaining > 0) {
+                    remainingSeconds = data.countdown_remaining;
+                    document.getElementById('dealCountdown').style.display = 'inline-flex';
+                    startCountdown();
+                }
+            }
+        } catch (error) {
+            console.error('Error loading deal:', error);
+        }
+    }
+    
+    function startCountdown() {
+        // Clear any existing interval
+        if (countdownInterval) {
+            clearInterval(countdownInterval);
+        }
+        
+        function updateCountdown() {
+            if (remainingSeconds <= 0) {
+                document.getElementById('countdownTimer').textContent = 'Deal Ended';
+                clearInterval(countdownInterval);
+                // Optionally hide the banner after deal ends
+                setTimeout(() => {
+                    document.getElementById('dealBanner').style.display = 'none';
+                }, 5000);
+                return;
+            }
+            
+            const hours = Math.floor(remainingSeconds / 3600);
+            const minutes = Math.floor((remainingSeconds % 3600) / 60);
+            const seconds = remainingSeconds % 60;
+            
+            document.getElementById('countdownTimer').textContent = 
+                `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            
+            remainingSeconds--;
+        }
+        
+        updateCountdown();
+        countdownInterval = setInterval(updateCountdown, 1000);
+    }
+    
+    // Load deal on page load
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', loadActiveDeal);
+    } else {
+        loadActiveDeal();
+    }
+})();
+</script>

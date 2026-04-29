@@ -137,17 +137,21 @@ def register_ai_routes(app):
             if product_image_path.startswith('static/'):
                 product_image_path = product_image_path[7:]  # Remove 'static/' prefix
             
-            # Generate AI visualization using composite approach
+            # Generate AI visualization using Google Gemini API (FREE!)
             try:
-                from PIL import Image, ImageDraw, ImageFont, ImageFilter
+                import requests
+                import base64
+                from PIL import Image
                 import io
                 
-                print(f"🎨 Creating visualization composite...")
+                GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
+                if not GEMINI_API_KEY:
+                    raise Exception("GEMINI_API_KEY not set. Get free key from https://makersuite.google.com/app/apikey")
                 
-                # Load the room image
+                print(f"🎨 Initializing Google Gemini AI...")
+                
+                # Load and resize the room image
                 room_img = Image.open(room_path)
-                
-                # Resize to reasonable size
                 max_size = 1024
                 if room_img.width > max_size or room_img.height > max_size:
                     if room_img.width > room_img.height:
@@ -158,71 +162,97 @@ def register_ai_routes(app):
                         new_width = int(room_img.width * (max_size / room_img.height))
                     room_img = room_img.resize((new_width, new_height), Image.Resampling.LANCZOS)
                 
-                # Convert to RGB if needed
                 if room_img.mode != 'RGB':
                     room_img = room_img.convert('RGB')
                 
+                # Convert image to base64
+                img_byte_arr = io.BytesIO()
+                room_img.save(img_byte_arr, format='JPEG', quality=85)
+                img_byte_arr = img_byte_arr.getvalue()
+                image_base64 = base64.b64encode(img_byte_arr).decode('utf-8')
+                
+                print(f"🎨 Generating AI visualization with Gemini...")
+                
+                # Create prompt for Gemini
+                prompt = f"""Analyze this room image and describe how to add a professional {product['category']} desk setup.
+                Describe the placement, lighting, and how it would look in this specific room.
+                Be detailed about the desk position, size relative to the room, and realistic integration."""
+                
+                # Call Gemini API for image analysis
+                url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
+                headers = {
+                    'Content-Type': 'application/json',
+                    'x-goog-api-key': GEMINI_API_KEY
+                }
+                
+                payload = {
+                    "contents": [{
+                        "parts": [
+                            {"text": prompt},
+                            {
+                                "inline_data": {
+                                    "mime_type": "image/jpeg",
+                                    "data": image_base64
+                                }
+                            }
+                        ]
+                    }]
+                }
+                
+                response = requests.post(url, headers=headers, json=payload, timeout=30)
+                response.raise_for_status()
+                
+                result = response.json()
+                ai_description = result['candidates'][0]['content']['parts'][0]['text']
+                
+                print(f"✅ Gemini analysis: {ai_description[:100]}...")
+                
+                # Now create composite with AI-guided placement
                 # Load product image
                 product_image_path = os.path.join('static', product['image_url'])
                 if os.path.exists(product_image_path):
                     product_img = Image.open(product_image_path)
                     
-                    # Resize product to fit in room (about 1/3 of room width)
+                    # Resize product to fit in room
                     product_width = room_img.width // 3
                     aspect_ratio = product_img.height / product_img.width
                     product_height = int(product_width * aspect_ratio)
                     product_img = product_img.resize((product_width, product_height), Image.Resampling.LANCZOS)
                     
-                    # Create a copy of room image for compositing
+                    # Create composite
                     result_img = room_img.copy()
-                    
-                    # Position product in center-bottom of room
                     x_pos = (room_img.width - product_width) // 2
                     y_pos = room_img.height - product_height - 50
                     
-                    # Add subtle shadow effect
-                    shadow = Image.new('RGBA', product_img.size, (0, 0, 0, 0))
-                    shadow_draw = ImageDraw.Draw(shadow)
-                    shadow_draw.rectangle([0, 0, product_img.size[0], product_img.size[1]], fill=(0, 0, 0, 100))
-                    shadow = shadow.filter(ImageFilter.GaussianBlur(15))
-                    
-                    # Paste shadow first
-                    if shadow.mode == 'RGBA':
-                        result_img.paste(shadow, (x_pos + 10, y_pos + 10), shadow)
-                    
-                    # Paste product image
+                    # Paste product
                     if product_img.mode == 'RGBA':
                         result_img.paste(product_img, (x_pos, y_pos), product_img)
                     else:
                         result_img.paste(product_img, (x_pos, y_pos))
                     
-                    # Add watermark text
+                    # Add AI description as watermark
+                    from PIL import ImageDraw, ImageFont
                     draw = ImageDraw.Draw(result_img)
                     try:
-                        font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 24)
+                        font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 16)
                     except:
                         font = ImageFont.load_default()
                     
-                    watermark_text = f"Visualized: {product['name']}"
-                    text_bbox = draw.textbbox((0, 0), watermark_text, font=font)
-                    text_width = text_bbox[2] - text_bbox[0]
-                    text_height = text_bbox[3] - text_bbox[1]
-                    
-                    # Draw text with background
-                    text_x = 20
-                    text_y = 20
-                    padding = 10
-                    draw.rectangle([text_x - padding, text_y - padding,
-                                  text_x + text_width + padding, text_y + text_height + padding],
-                                 fill=(0, 0, 0, 180))
-                    draw.text((text_x, text_y), watermark_text, fill=(255, 255, 255), font=font)
+                    # Add AI analysis text
+                    text_lines = ai_description[:200].split('. ')[:2]  # First 2 sentences
+                    y_offset = 20
+                    for line in text_lines:
+                        if line:
+                            draw.text((20, y_offset), line + '.', fill=(255, 255, 255), font=font,
+                                    stroke_width=2, stroke_fill=(0, 0, 0))
+                            y_offset += 25
                     
                     # Save result
                     result_filename = f"result_{current_user.id}_{timestamp}.jpg"
                     result_path = os.path.join(UPLOAD_FOLDER, result_filename)
                     result_img.save(result_path, 'JPEG', quality=90)
                     
-                    print(f"✅ Visualization composite created: {result_path}")
+                    print(f"✅ AI-enhanced visualization created: {result_path}")
                 else:
                     raise Exception("Product image not found")
                 

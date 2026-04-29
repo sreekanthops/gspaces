@@ -219,8 +219,7 @@ def register_ai_routes(app):
                             image=base_image,
                             prompt=prompt,
                             config=types.GenerateImageConfig(
-                                number_of_images=1,
-                                include_rai_reasoning=True
+                                number_of_images=1
                             )
                         )
                         

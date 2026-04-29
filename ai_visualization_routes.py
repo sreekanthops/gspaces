@@ -205,9 +205,18 @@ def register_ai_routes(app):
                 # STEP 2: Upload image to S3
                 print(f"📤 Step 2: Uploading image...")
                 with open(room_path, "rb") as f:
-                    upload_result = requests.put(upload_url, data=f, headers={"Content-Type": "image/jpeg"})
+                    image_data = f.read()
+                
+                # Upload with proper headers for S3
+                upload_headers = {
+                    "Content-Type": "image/jpeg",
+                    "x-amz-acl": "public-read"
+                }
+                upload_result = requests.put(upload_url, data=image_data, headers=upload_headers)
                 
                 if upload_result.status_code not in [200, 204]:
+                    print(f"⚠️  Upload failed with status {upload_result.status_code}")
+                    print(f"⚠️  Response: {upload_result.text}")
                     raise Exception(f"Failed to upload image: {upload_result.status_code}")
                 print(f"✅ Image uploaded successfully")
                 

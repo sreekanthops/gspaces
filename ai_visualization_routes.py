@@ -324,14 +324,18 @@ def register_ai_routes(app):
                 }
                 
                 # Add product image as ControlNet reference if available
+                # Note: ControlNet may not be available in all Leonardo plans
                 if product_image_id:
-                    gen_payload["controlnets"] = [{
-                        "initImageId": product_image_id,
-                        "initImageType": "UPLOADED",  # Must be 'UPLOADED' or 'GENERATED'
-                        "preprocessorId": 68,  # Canny edge detection for structure
-                        "weight": 0.8  # Strong influence from product image
-                    }]
-                    print(f"✅ Using product image as ControlNet reference (weight: 0.8)")
+                    try:
+                        # Try without preprocessorId - let Leonardo auto-detect
+                        gen_payload["controlnets"] = [{
+                            "initImageId": product_image_id,
+                            "initImageType": "UPLOADED",
+                            "weight": 0.8
+                        }]
+                        print(f"✅ Using product image as ControlNet reference (weight: 0.8)")
+                    except:
+                        print(f"⚠️  ControlNet not available, using prompt only")
                 else:
                     print(f"⚠️  No product reference - using prompt only")
                 

@@ -149,10 +149,24 @@ def register_ai_routes(app):
                 print(f"🎨 Initializing Google GenAI client...")
                 client = genai.Client(api_key=GEMINI_API_KEY)
                 
-                # Debug: List available models (uncomment to see what's available)
-                # print("📋 Available models:")
-                # for model in client.models.list():
-                #     print(f"  - {model.name}")
+                # List available models to find image generation support
+                print("📋 Checking available models for your API key...")
+                try:
+                    available_models = []
+                    for model in client.models.list():
+                        model_name = model.name
+                        available_models.append(model_name)
+                        # Check if model supports image generation
+                        if 'image' in model_name.lower() or 'imagen' in model_name.lower():
+                            print(f"  ✅ {model_name} (supports image generation)")
+                        else:
+                            print(f"  📝 {model_name}")
+                    
+                    if not available_models:
+                        print("⚠️  No models found. Check API key permissions.")
+                except Exception as e:
+                    print(f"⚠️  Could not list models: {e}")
+                    available_models = []
                 
                 # Load the room image
                 print(f"📸 Loading room image...")
@@ -183,16 +197,22 @@ def register_ai_routes(app):
                 print(f"📝 Prompt: {prompt[:100]}...")
                 
                 # Call Gemini API for image generation
-                # Try multiple model IDs in order of preference
-                models_to_try = [
-                    "gemini-3.1-flash-image-preview",  # Latest image generation model
-                    "gemini-flash-latest",              # Generic latest alias
-                    "gemini-3-pro-image-preview",       # Alternative preview model
-                    "gemini-1.5-flash"                  # Fallback stable model
+                # Filter available models to only those that support image generation
+                image_models = [m for m in available_models if 'image' in m.lower() or 'imagen' in m.lower()]
+                
+                # Fallback list if no image models found
+                models_to_try = image_models if image_models else [
+                    "imagen-3.0-generate-001",
+                    "gemini-3.1-flash-image-preview",
+                    "gemini-3-pro-image-preview",
+                    "gemini-1.5-flash"
                 ]
+                
+                print(f"🎨 Will try these models: {models_to_try}")
                 
                 response = None
                 last_error = None
+                successful_model = None
                 
                 for model_id in models_to_try:
                     try:
@@ -201,15 +221,33 @@ def register_ai_routes(app):
                             model=model_id,
                             contents=[prompt, base_image]
                         )
-                        print(f"✅ Successfully used model: {model_id}")
-                        break
+                        
+                        # Check if response has image data
+                        has_image = False
+                        if response.candidates:
+                            for part in response.candidates[0].content.parts:
+                                if hasattr(part, 'inline_data') and part.inline_data:
+                                    has_image = True
+                                    break
+                        
+                        if has_image:
+                            print(f"✅ Successfully generated image with model: {model_id}")
+                            successful_model = model_id
+                            break
+                        else:
+                            print(f"⚠️  Model {model_id} responded but no image data returned")
+                            last_error = Exception(f"No image data in response from {model_id}")
+                            continue
+                            
                     except Exception as e:
-                        print(f"⚠️  Model {model_id} failed: {str(e)[:100]}")
+                        print(f"⚠️  Model {model_id} failed: {str(e)[:150]}")
                         last_error = e
                         continue
                 
-                if response is None:
-                    raise Exception(f"All models failed. Last error: {last_error}")
+                if response is None or successful_model is None:
+                    error_msg = f"All models failed to generate image. Last error: {last_error}"
+                    print(f"❌ {error_msg}")
+                    raise Exception(error_msg)
                 
                 print(f"✅ AI transformation complete!")
                 

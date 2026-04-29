@@ -137,51 +137,30 @@ def register_ai_routes(app):
             if product_image_path.startswith('static/'):
                 product_image_path = product_image_path[7:]  # Remove 'static/' prefix
             
-            # Generate AI visualization using Hugging Face (FREE!)
-            # Using Stable Diffusion via Hugging Face Inference API
-            import requests
-            import base64
+            # For now, use the product image as the "visualization"
+            # TODO: Integrate real AI image generation when API is properly configured
+            import shutil
             
-            API_URL = "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-2-1"
-            HF_TOKEN = os.environ.get('HUGGINGFACE_TOKEN', '')
+            print(f"🎨 Creating visualization preview...")
             
-            if not HF_TOKEN:
-                raise Exception("HUGGINGFACE_TOKEN environment variable not set. Get free token from huggingface.co")
-            
-            headers = {"Authorization": f"Bearer {HF_TOKEN}"}
-            
-            # Create prompt for AI - text-to-image generation
-            prompt = f"A professional {product['category']} desk setup in a modern room, realistic lighting, natural placement, high quality furniture, modern interior design, photorealistic, 4k, detailed"
-            
-            # Call Hugging Face API (FREE!) - Text to Image
-            payload = {
-                "inputs": prompt,
-                "parameters": {
-                    "negative_prompt": "blurry, distorted, unrealistic, low quality, cartoon, painting, drawing, ugly, bad anatomy",
-                    "num_inference_steps": 25,
-                    "guidance_scale": 7.5,
-                    "width": 512,
-                    "height": 512
-                }
-            }
-            
-            print(f"🎨 Calling Hugging Face API...")
-            response = requests.post(API_URL, headers=headers, json=payload)
-            
-            print(f"📊 API Response Status: {response.status_code}")
-            
-            if response.status_code != 200:
-                print(f"❌ API Error: {response.text}")
-                raise Exception(f"Hugging Face API error (status {response.status_code}): {response.text[:200]}")
-            
-            # Save result image
+            # Copy product image as the result for now
+            product_image_path = os.path.join('static', product['image_url'])
             result_filename = f"result_{current_user.id}_{timestamp}.jpg"
             result_path = os.path.join(UPLOAD_FOLDER, result_filename)
             
-            with open(result_path, 'wb') as f:
-                f.write(response.content)
-            
-            print(f"✅ Image saved to {result_path}")
+            # Copy product image to result
+            if os.path.exists(product_image_path):
+                shutil.copy(product_image_path, result_path)
+                print(f"✅ Preview created: {result_path}")
+            else:
+                # If product image doesn't exist, create a placeholder
+                from PIL import Image, ImageDraw, ImageFont
+                img = Image.new('RGB', (512, 512), color=(240, 240, 240))
+                draw = ImageDraw.Draw(img)
+                text = f"{product['name']}\nVisualization Preview"
+                draw.text((256, 256), text, fill=(100, 100, 100), anchor="mm")
+                img.save(result_path)
+                print(f"✅ Placeholder created: {result_path}")
             
             # Save to database
             cur.execute("""

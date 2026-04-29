@@ -137,68 +137,94 @@ def register_ai_routes(app):
             if product_image_path.startswith('static/'):
                 product_image_path = product_image_path[7:]  # Remove 'static/' prefix
             
-            # Generate AI visualization using Hugging Face InferenceClient (FREE!)
+            # Generate AI visualization using composite approach
             try:
-                from huggingface_hub import InferenceClient
-                from PIL import Image
+                from PIL import Image, ImageDraw, ImageFont, ImageFilter
                 import io
                 
-                HF_TOKEN = os.environ.get('HUGGINGFACE_TOKEN', '')
-                if not HF_TOKEN:
-                    raise Exception("HUGGINGFACE_TOKEN not set. Get free token from huggingface.co")
+                print(f"🎨 Creating visualization composite...")
                 
-                print(f"🎨 Initializing Hugging Face client...")
-                # InferenceClient uses token parameter, not api_key
-                client = InferenceClient(token=HF_TOKEN)
+                # Load the room image
+                room_img = Image.open(room_path)
                 
-                # Load and resize the room image to reduce payload size
-                print(f"📐 Resizing image to reduce payload size...")
-                img = Image.open(room_path)
-                
-                # Resize to max 768px on longest side (API limit)
-                max_size = 768
-                if img.width > max_size or img.height > max_size:
-                    if img.width > img.height:
+                # Resize to reasonable size
+                max_size = 1024
+                if room_img.width > max_size or room_img.height > max_size:
+                    if room_img.width > room_img.height:
                         new_width = max_size
-                        new_height = int(img.height * (max_size / img.width))
+                        new_height = int(room_img.height * (max_size / room_img.width))
                     else:
                         new_height = max_size
-                        new_width = int(img.width * (max_size / img.height))
-                    img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
-                    print(f"✅ Resized to {new_width}x{new_height}")
+                        new_width = int(room_img.width * (max_size / room_img.height))
+                    room_img = room_img.resize((new_width, new_height), Image.Resampling.LANCZOS)
                 
                 # Convert to RGB if needed
-                if img.mode != 'RGB':
-                    img = img.convert('RGB')
+                if room_img.mode != 'RGB':
+                    room_img = room_img.convert('RGB')
                 
-                # Convert to bytes with compression
-                img_byte_arr = io.BytesIO()
-                img.save(img_byte_arr, format='JPEG', quality=85, optimize=True)
-                image_bytes = img_byte_arr.getvalue()
-                
-                print(f"📦 Image size: {len(image_bytes) / 1024:.1f} KB")
-                
-                # Create prompt for transformation
-                prompt = f"Transform this room to include a professional {product['category']} desk setup, modern furniture, realistic lighting, high quality, photorealistic, detailed"
-                
-                print(f"🎨 Generating AI visualization...")
-                
-                # Generate the transformed image using image-to-image
-                # Using a model that's available on free tier
-                output_image = client.image_to_image(
-                    image_bytes,
-                    prompt=prompt,
-                    model="timbrooks/instruct-pix2pix",  # Free tier compatible model
-                    strength=0.6,  # 0.6 = moderate transformation, keeps room structure
-                    negative_prompt="blurry, distorted, low quality, cartoon, painting"
-                )
-                
-                # Save result image
-                result_filename = f"result_{current_user.id}_{timestamp}.jpg"
-                result_path = os.path.join(UPLOAD_FOLDER, result_filename)
-                output_image.save(result_path)
-                
-                print(f"✅ AI visualization created: {result_path}")
+                # Load product image
+                product_image_path = os.path.join('static', product['image_url'])
+                if os.path.exists(product_image_path):
+                    product_img = Image.open(product_image_path)
+                    
+                    # Resize product to fit in room (about 1/3 of room width)
+                    product_width = room_img.width // 3
+                    aspect_ratio = product_img.height / product_img.width
+                    product_height = int(product_width * aspect_ratio)
+                    product_img = product_img.resize((product_width, product_height), Image.Resampling.LANCZOS)
+                    
+                    # Create a copy of room image for compositing
+                    result_img = room_img.copy()
+                    
+                    # Position product in center-bottom of room
+                    x_pos = (room_img.width - product_width) // 2
+                    y_pos = room_img.height - product_height - 50
+                    
+                    # Add subtle shadow effect
+                    shadow = Image.new('RGBA', product_img.size, (0, 0, 0, 0))
+                    shadow_draw = ImageDraw.Draw(shadow)
+                    shadow_draw.rectangle([0, 0, product_img.size[0], product_img.size[1]], fill=(0, 0, 0, 100))
+                    shadow = shadow.filter(ImageFilter.GaussianBlur(15))
+                    
+                    # Paste shadow first
+                    if shadow.mode == 'RGBA':
+                        result_img.paste(shadow, (x_pos + 10, y_pos + 10), shadow)
+                    
+                    # Paste product image
+                    if product_img.mode == 'RGBA':
+                        result_img.paste(product_img, (x_pos, y_pos), product_img)
+                    else:
+                        result_img.paste(product_img, (x_pos, y_pos))
+                    
+                    # Add watermark text
+                    draw = ImageDraw.Draw(result_img)
+                    try:
+                        font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 24)
+                    except:
+                        font = ImageFont.load_default()
+                    
+                    watermark_text = f"Visualized: {product['name']}"
+                    text_bbox = draw.textbbox((0, 0), watermark_text, font=font)
+                    text_width = text_bbox[2] - text_bbox[0]
+                    text_height = text_bbox[3] - text_bbox[1]
+                    
+                    # Draw text with background
+                    text_x = 20
+                    text_y = 20
+                    padding = 10
+                    draw.rectangle([text_x - padding, text_y - padding,
+                                  text_x + text_width + padding, text_y + text_height + padding],
+                                 fill=(0, 0, 0, 180))
+                    draw.text((text_x, text_y), watermark_text, fill=(255, 255, 255), font=font)
+                    
+                    # Save result
+                    result_filename = f"result_{current_user.id}_{timestamp}.jpg"
+                    result_path = os.path.join(UPLOAD_FOLDER, result_filename)
+                    result_img.save(result_path, 'JPEG', quality=90)
+                    
+                    print(f"✅ Visualization composite created: {result_path}")
+                else:
+                    raise Exception("Product image not found")
                 
             except ImportError:
                 print("⚠️  huggingface_hub not installed, using fallback...")

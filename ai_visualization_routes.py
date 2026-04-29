@@ -1,7 +1,7 @@
 """
 AI Room Visualization Routes
 Allows users to upload their room photo and see desk setups placed in their space
-Uses Replicate API for AI image generation
+Uses ModelsLab API for AI image generation
 """
 
 from flask import Blueprint, request, jsonify, render_template, session
@@ -10,6 +10,7 @@ import os
 from PIL import Image
 import io
 import base64
+import json
 from datetime import datetime
 import psycopg2
 from psycopg2.extras import RealDictCursor
@@ -192,24 +193,29 @@ def register_ai_routes(app):
                 print(f"📝 Prompt: {prompt}")
                 print(f"{'='*60}\n")
                 
-                # ModelsLab API call
-                print(f"🎨 Calling ModelsLab API...")
-                MODELSLAB_URL = "https://modelslab.com/api/v6/image_editing/img2img"
+                # ModelsLab API call - v7 image-to-image endpoint
+                print(f"🎨 Calling ModelsLab API v7...")
+                MODELSLAB_URL = "https://modelslab.com/api/v7/images/image-to-image"
                 
-                payload = {
-                    "key": MODELSLAB_API_KEY,
-                    "model_id": "sdxl",  # Stable Diffusion XL
-                    "prompt": prompt,
-                    "init_image": room_image_url,  # Destination image (empty room)
-                    "control_image": product_image_url,  # Reference image (product)
-                    "strength": 0.7,  # How much to change
-                    "seed": None,
-                    "webhook": None,
-                    "track_id": None
+                headers = {
+                    "Content-Type": "application/json"
                 }
                 
-                print(f"📤 Sending request to ModelsLab...")
-                api_response = requests.post(MODELSLAB_URL, json=payload, timeout=120)
+                # Use both images: room as base, product as reference
+                payload = {
+                    "init_image": [
+                        room_image_url,      # Base image (empty room)
+                        product_image_url    # Reference image (product to add)
+                    ],
+                    "prompt": prompt,
+                    "model_id": "gpt-image-2-i2i",  # GPT Image 2 model for image-to-image
+                    "size": f"{new_width}x{new_height}",
+                    "key": MODELSLAB_API_KEY
+                }
+                
+                print(f"📤 Sending request to ModelsLab v7...")
+                print(f"📊 Payload: {json.dumps(payload, indent=2)}")
+                api_response = requests.post(MODELSLAB_URL, headers=headers, json=payload, timeout=120)
                 
                 if api_response.status_code != 200:
                     raise Exception(f"ModelsLab API failed: {api_response.status_code} - {api_response.text}")

@@ -58,6 +58,7 @@ from wallet_routes import add_wallet_routes, integrate_wallet_with_signup, integ
 from admin_referral_routes import add_admin_referral_routes
 from blog_routes import add_blog_routes
 from chatbot_routes import add_chatbot_routes
+from deals_routes import register_deals_routes
 
 # --- DISPOSABLE EMAIL DOMAINS BLACKLIST ---
 DISPOSABLE_EMAIL_DOMAINS = {
@@ -471,6 +472,9 @@ add_blog_routes(app, connect_to_db)
 
 # Initialize chatbot routes
 add_chatbot_routes(app, connect_to_db)
+
+# Initialize deals routes
+register_deals_routes(app)
 
 def get_catalogue_files():
     """Get list of files from the catalogue directory"""

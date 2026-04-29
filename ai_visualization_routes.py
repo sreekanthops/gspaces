@@ -149,6 +149,11 @@ def register_ai_routes(app):
                 print(f"🎨 Initializing Google GenAI client...")
                 client = genai.Client(api_key=GEMINI_API_KEY)
                 
+                # Debug: List available models (uncomment to see what's available)
+                # print("📋 Available models:")
+                # for model in client.models.list():
+                #     print(f"  - {model.name}")
+                
                 # Load the room image
                 print(f"📸 Loading room image...")
                 base_image = Image.open(room_path)
@@ -178,12 +183,33 @@ def register_ai_routes(app):
                 print(f"📝 Prompt: {prompt[:100]}...")
                 
                 # Call Gemini API for image generation
-                # Use gemini-1.5-flash which supports multimodal input and image generation
-                print(f"🎨 Using Gemini 1.5 Flash for image generation...")
-                response = client.models.generate_content(
-                    model="gemini-1.5-flash",
-                    contents=[prompt, base_image]
-                )
+                # Try multiple model IDs in order of preference
+                models_to_try = [
+                    "gemini-3.1-flash-image-preview",  # Latest image generation model
+                    "gemini-flash-latest",              # Generic latest alias
+                    "gemini-3-pro-image-preview",       # Alternative preview model
+                    "gemini-1.5-flash"                  # Fallback stable model
+                ]
+                
+                response = None
+                last_error = None
+                
+                for model_id in models_to_try:
+                    try:
+                        print(f"🎨 Trying model: {model_id}...")
+                        response = client.models.generate_content(
+                            model=model_id,
+                            contents=[prompt, base_image]
+                        )
+                        print(f"✅ Successfully used model: {model_id}")
+                        break
+                    except Exception as e:
+                        print(f"⚠️  Model {model_id} failed: {str(e)[:100]}")
+                        last_error = e
+                        continue
+                
+                if response is None:
+                    raise Exception(f"All models failed. Last error: {last_error}")
                 
                 print(f"✅ AI transformation complete!")
                 

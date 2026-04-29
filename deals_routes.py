@@ -9,11 +9,8 @@ from psycopg2.extras import RealDictCursor
 from datetime import datetime, timedelta
 import os
 
-# Admin emails - should match main.py
-ADMIN_EMAILS = [
-    'sreekanth.chityala@gspaces.in',
-    'gspaces2025@gmail.com'
-]
+# Admin emails - must match main.py
+ADMIN_EMAILS = {"sri.chityala501@gmail.com", "srichityala501@gmail.com", "sreekanth.chityala@gspaces.com"}
 
 def get_db_connection():
     """Get database connection"""

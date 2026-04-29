@@ -175,13 +175,31 @@ def register_ai_routes(app):
                 base_image.save(room_path, format="JPEG", quality=90)
                 
                 # Create transformation prompt - be very specific about adding furniture
-                prompt = f"""A photorealistic interior design image showing a {product['name']} ({product['category']})
-                placed prominently in this room. The furniture should be clearly visible, modern design, professional setup,
-                realistic lighting and shadows, high quality render, detailed textures, naturally integrated into the space.
-                The {product['category']} should be the main focus of the image."""
+                prompt = f"""Interior design visualization: Add a {product['name']} desk/furniture from the {product['category']} category
+                into this empty room. Place the furniture prominently against the wall or in the center.
+                The furniture should be clearly visible, modern style, realistic wood/metal textures,
+                professional lighting with natural shadows. High quality photorealistic render.
+                Make the {product['category']} the focal point of the room."""
                 
-                print(f"🎨 Generating AI transformation with Leonardo.ai...")
-                print(f"📝 Prompt: {prompt[:100]}...")
+                print(f"\n{'='*60}")
+                print(f"🎨 AI VISUALIZATION DEBUG INFO")
+                print(f"{'='*60}")
+                print(f"📦 Product Details:")
+                print(f"   - ID: {product['id']}")
+                print(f"   - Name: {product['name']}")
+                print(f"   - Category: {product['category']}")
+                print(f"   - Image: {product.get('image_url', 'N/A')}")
+                print(f"\n📸 Room Image:")
+                print(f"   - Path: {room_path}")
+                print(f"   - Size: {new_width}x{new_height}")
+                print(f"\n🤖 AI Settings:")
+                print(f"   - Model: Leonardo Kino XL")
+                print(f"   - Init Strength: 0.7 (70% transformation)")
+                print(f"   - Guidance Scale: 7")
+                print(f"   - Steps: 30")
+                print(f"\n📝 Prompt:")
+                print(f"   {prompt}")
+                print(f"{'='*60}\n")
                 
                 # Leonardo API headers
                 headers = {
@@ -254,19 +272,25 @@ def register_ai_routes(app):
                     "modelId": model_ids_to_try[0],  # Use latest model
                     "prompt": prompt,
                     "init_image_id": image_id,
-                    "init_strength": 0.7,  # Higher = more transformation (0.7 = strong change while keeping room structure)
+                    "init_strength": 0.85,  # VERY HIGH = major transformation, adds furniture clearly
                     "num_images": 1,
-                    "guidance_scale": 7,  # How closely to follow the prompt
-                    "num_inference_steps": 30  # More steps = better quality
+                    "guidance_scale": 8,  # Higher = follow prompt more strictly
+                    "num_inference_steps": 40  # More steps = better quality
                 }
                 
+                print(f"📤 Sending generation request to Leonardo...")
+                print(f"📊 Payload: {gen_payload}")
+                
                 gen_response = requests.post(gen_url, json=gen_payload, headers=headers).json()
+                
+                print(f"📥 Generation response: {gen_response}")
                 
                 if 'sdGenerationJob' not in gen_response:
                     raise Exception(f"Failed to start generation: {gen_response}")
                 
                 generation_id = gen_response['sdGenerationJob']['generationId']
                 print(f"✅ Generation started with ID: {generation_id}")
+                print(f"⏳ This will take 20-40 seconds with init_strength=0.85...")
                 
                 # STEP 4: Poll for completion
                 print(f"⏳ Step 4: Waiting for image to process...")

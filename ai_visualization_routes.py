@@ -214,14 +214,26 @@ def register_ai_routes(app):
                         print(f"🎨 Trying Imagen model: {model_id}...")
                         
                         # Use edit_image method for Imagen (correct API)
-                        response = client.models.edit_image(
-                            model=model_id,
-                            image=base_image,
-                            prompt=prompt,
-                            config=types.GenerateImageConfig(
-                                number_of_images=1
+                        # Try different parameter names as API signature varies
+                        try:
+                            response = client.models.edit_image(
+                                model=model_id,
+                                reference_image=base_image,
+                                prompt=prompt,
+                                config=types.GenerateImageConfig(
+                                    number_of_images=1
+                                )
                             )
-                        )
+                        except TypeError:
+                            # Try alternative parameter name
+                            response = client.models.edit_image(
+                                model=model_id,
+                                source_image=base_image,
+                                prompt=prompt,
+                                config=types.GenerateImageConfig(
+                                    number_of_images=1
+                                )
+                            )
                         
                         # Check if we got images
                         if response.generated_images and len(response.generated_images) > 0:

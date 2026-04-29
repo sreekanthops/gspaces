@@ -1,4 +1,4 @@
-<!-- Professional Deal Banner Component -->
+<!-- Professional Deal Banner Component with Auto-Reset Daily Countdown -->
 <style>
     .deal-banner {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -94,18 +94,18 @@
     }
 </style>
 
-<div class="deal-banner" id="dealBanner" style="display: none;">
+<div class="deal-banner" id="dealBanner">
     <div class="container">
         <div class="deal-banner-content">
-            <span class="deal-icon">🎉</span>
+            <span class="deal-icon">🔥</span>
             <div class="deal-text" id="dealBannerText">
                 Limited Time Offer - Exclusive Discounts on Premium Desk Setups
             </div>
-            <div class="deal-countdown" id="dealCountdown" style="display: none;">
-                <span class="deal-countdown-label">Ends in:</span>
+            <div class="deal-countdown">
+                <span class="deal-countdown-label">Deal Ends in:</span>
                 <span id="countdownTimer">00:00:00</span>
             </div>
-            <a href="/?section=products" class="deal-cta">Shop Now</a>
+            <a href="/?section=products" class="deal-cta">Shop Now →</a>
         </div>
     </div>
 </div>
@@ -113,36 +113,51 @@
 <script>
 (function() {
     let countdownInterval = null;
-    let remainingSeconds = 0;
     
-    // Fetch active deal information
+    // Calculate seconds until midnight (12 AM)
+    function getSecondsUntilMidnight() {
+        const now = new Date();
+        const midnight = new Date(now);
+        midnight.setHours(24, 0, 0, 0); // Next midnight
+        return Math.floor((midnight - now) / 1000);
+    }
+    
+    // Fetch active deal information from database
     async function loadActiveDeal() {
         try {
             const response = await fetch('/api/deals/active');
             const data = await response.json();
             
             if (data.status === 'success' && data.has_active_deal) {
-                // Show banner
-                document.getElementById('dealBanner').style.display = 'block';
-                
-                // Update banner text
+                // Update banner text if available from database
                 if (data.banner_text) {
                     document.getElementById('dealBannerText').textContent = data.banner_text;
                 }
                 
-                // Start countdown if available
+                // Use database countdown if available, otherwise use daily reset
+                let remainingSeconds;
                 if (data.countdown_remaining && data.countdown_remaining > 0) {
                     remainingSeconds = data.countdown_remaining;
-                    document.getElementById('dealCountdown').style.display = 'inline-flex';
-                    startCountdown();
+                } else {
+                    // Default: countdown to midnight (auto-reset daily)
+                    remainingSeconds = getSecondsUntilMidnight();
                 }
+                
+                startCountdown(remainingSeconds);
+            } else {
+                // No active deal in database, show default daily countdown
+                startCountdown(getSecondsUntilMidnight());
             }
         } catch (error) {
             console.error('Error loading deal:', error);
+            // Fallback: show daily countdown even if API fails
+            startCountdown(getSecondsUntilMidnight());
         }
     }
     
-    function startCountdown() {
+    function startCountdown(initialSeconds) {
+        let remainingSeconds = initialSeconds;
+        
         // Clear any existing interval
         if (countdownInterval) {
             clearInterval(countdownInterval);
@@ -150,12 +165,10 @@
         
         function updateCountdown() {
             if (remainingSeconds <= 0) {
-                document.getElementById('countdownTimer').textContent = 'Deal Ended';
-                clearInterval(countdownInterval);
-                // Optionally hide the banner after deal ends
-                setTimeout(() => {
-                    document.getElementById('dealBanner').style.display = 'none';
-                }, 5000);
+                // Reset to next day's countdown
+                remainingSeconds = getSecondsUntilMidnight();
+                // Optionally reload deal info from database
+                loadActiveDeal();
                 return;
             }
             

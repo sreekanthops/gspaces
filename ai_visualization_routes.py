@@ -174,10 +174,11 @@ def register_ai_routes(app):
                 # Save as JPG for Leonardo upload
                 base_image.save(room_path, format="JPEG", quality=90)
                 
-                # Create transformation prompt
-                prompt = f"""Transform this room into a professional {product['category']} setup with a modern {product['name']},
-                cinematic lighting, photorealistic, high quality interior design, realistic shadows and reflections,
-                naturally integrated furniture"""
+                # Create transformation prompt - be very specific about adding furniture
+                prompt = f"""A photorealistic interior design image showing a {product['name']} ({product['category']})
+                placed prominently in this room. The furniture should be clearly visible, modern design, professional setup,
+                realistic lighting and shadows, high quality render, detailed textures, naturally integrated into the space.
+                The {product['category']} should be the main focus of the image."""
                 
                 print(f"🎨 Generating AI transformation with Leonardo.ai...")
                 print(f"📝 Prompt: {prompt[:100]}...")
@@ -253,8 +254,10 @@ def register_ai_routes(app):
                     "modelId": model_ids_to_try[0],  # Use latest model
                     "prompt": prompt,
                     "init_image_id": image_id,
-                    "init_strength": 0.4,  # Balance between original and transformation
-                    "num_images": 1
+                    "init_strength": 0.7,  # Higher = more transformation (0.7 = strong change while keeping room structure)
+                    "num_images": 1,
+                    "guidance_scale": 7,  # How closely to follow the prompt
+                    "num_inference_steps": 30  # More steps = better quality
                 }
                 
                 gen_response = requests.post(gen_url, json=gen_payload, headers=headers).json()

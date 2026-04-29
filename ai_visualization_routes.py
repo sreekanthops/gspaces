@@ -114,12 +114,13 @@ def register_ai_routes(app):
             except Exception as e:
                 print(f"⚠️  Could not list models: {e}")
             
-            # Try models in order of preference (use -latest suffix)
+            # Try models in order of preference (use actual available model names)
             model_names_to_try = [
-                'gemini-1.5-pro-latest',  # Latest Pro version
-                'gemini-1.5-flash-latest',  # Latest Flash version
-                'gemini-1.5-flash',  # Stable Flash
-                'gemini-pro-vision',  # Fallback vision model
+                'gemini-2.5-pro',  # Latest Pro version (from list above)
+                'gemini-pro-latest',  # Pro latest
+                'gemini-2.5-flash',  # Latest Flash version
+                'gemini-flash-latest',  # Flash latest
+                'gemini-2.0-flash',  # Stable Flash 2.0
             ]
             
             model = None

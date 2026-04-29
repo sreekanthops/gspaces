@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Image Transformation Test | GSpaces</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet"/>
+    
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        body {
+            background: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 40px 20px;
+        }
+        
+        .test-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+            text-align: center;
+        }
+        
+        .header h1 {
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+        
+        .upload-section {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+        }
+        
+        .image-upload-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .upload-box {
+            border: 3px dashed #667eea;
+            border-radius: 12px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #f8f9ff;
+            min-height: 300px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .upload-box:hover {
+            border-color: #764ba2;
+            background: #f0f2ff;
+        }
+        
+        .upload-box.has-image {
+            border-color: #28a745;
+            background: #f0fff4;
+        }
+        
+        .upload-icon {
+            font-size: 48px;
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+        
+        .preview-img {
+            max-width: 100%;
+            max-height: 250px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .prompt-section {
+            margin-bottom: 30px;
+        }
+        
+        .prompt-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 16px;
+            resize: vertical;
+            min-height: 120px;
+        }
+        
+        .prompt-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .generate-btn {
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            padding: 15px 50px;
+            border-radius: 30px;
+            font-weight: 700;
+            font-size: 18px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            width: 100%;
+        }
+        
+        .generate-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .generate-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .result-section {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+            display: none;
+        }
+        
+        .result-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            margin-top: 30px;
+        }
+        
+        .result-item {
+            text-align: center;
+        }
+        
+        .result-item img {
+            width: 100%;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            margin-bottom: 15px;
+        }
+        
+        .result-item h4 {
+            color: #2c3e50;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        
+        .loading-content {
+            background: white;
+            padding: 40px;
+            border-radius: 16px;
+            text-align: center;
+            max-width: 400px;
+        }
+        
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .example-prompts {
+            background: #f8f9ff;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 15px;
+        }
+        
+        .example-prompt {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 10px 15px;
+            margin: 8px 0;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .example-prompt:hover {
+            border-color: #667eea;
+            background: #f0f2ff;
+        }
+        
+        @media (max-width: 768px) {
+            .image-upload-grid,
+            .result-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🎨 AI Image Transformation Test</h1>
+            <p class="lead">Upload 2 images and write a custom prompt to test Gemini 1.5 Pro</p>
+            <p class="text-muted">Reference Image + Target Image → AI Transformation</p>
+        </div>
+        
+        <!-- Upload Section -->
+        <div class="upload-section">
+            <h2 class="mb-4">Step 1: Upload Images</h2>
+            
+            <div class="image-upload-grid">
+                <!-- Reference Image -->
+                <div>
+                    <h5 class="mb-3">📸 Reference Image (Image 1)</h5>
+                    <div class="upload-box" id="refUploadBox">
+                        <div class="upload-icon">
+                            <i class="bi bi-image"></i>
+                        </div>
+                        <h5>Click to Upload</h5>
+                        <p class="text-muted">The style/object to copy</p>
+                        <input type="file" id="refImageInput" accept="image/*" style="display: none;">
+                    </div>
+                    <div id="refPreview" style="display: none; text-align: center; margin-top: 15px;">
+                        <img id="refPreviewImg" class="preview-img" alt="Reference">
+                        <button class="btn btn-sm btn-outline-secondary" onclick="clearRef()">
+                            <i class="bi bi-x"></i> Clear
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Target Image -->
+                <div>
+                    <h5 class="mb-3">🎯 Target Image (Image 2)</h5>
+                    <div class="upload-box" id="targetUploadBox">
+                        <div class="upload-icon">
+                            <i class="bi bi-image"></i>
+                        </div>
+                        <h5>Click to Upload</h5>
+                        <p class="text-muted">The image to update</p>
+                        <input type="file" id="targetImageInput" accept="image/*" style="display: none;">
+                    </div>
+                    <div id="targetPreview" style="display: none; text-align: center; margin-top: 15px;">
+                        <img id="targetPreviewImg" class="preview-img" alt="Target">
+                        <button class="btn btn-sm btn-outline-secondary" onclick="clearTarget()">
+                            <i class="bi bi-x"></i> Clear
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Prompt Section -->
+            <div class="prompt-section">
+                <h2 class="mb-3">Step 2: Write Your Prompt</h2>
+                <textarea 
+                    id="promptInput" 
+                    class="prompt-input" 
+                    placeholder="Example: Using the furniture from image 1, place it in the room from image 2 with realistic lighting and shadows"
+                >Using the style and features from the first image (reference), update the second image by applying those elements naturally.</textarea>
+                
+                <div class="example-prompts">
+                    <h6><i class="bi bi-lightbulb"></i> Example Prompts (Click to use):</h6>
+                    <div class="example-prompt" onclick="setPrompt(this.textContent)">
+                        Using the furniture and desk setup from image 1, place it in the empty room from image 2 with realistic lighting, shadows, and perspective
+                    </div>
+                    <div class="example-prompt" onclick="setPrompt(this.textContent)">
+                        Take the product from image 1 and add it to the room in image 2, making it look natural and professionally placed
+                    </div>
+                    <div class="example-prompt" onclick="setPrompt(this.textContent)">
+                        Apply the style and color scheme from image 1 to transform image 2, keeping the room layout but changing the aesthetics
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Generate Button -->
+            <button class="generate-btn" id="generateBtn" disabled>
+                <i class="bi bi-magic"></i> Generate AI Transformation
+            </button>
+        </div>
+        
+        <!-- Result Section -->
+        <div class="result-section" id="resultSection">
+            <h2 class="mb-4">✨ Result</h2>
+            <div class="result-grid">
+                <div class="result-item">
+                    <img id="resultRef" alt="Reference">
+                    <h4>Reference Image</h4>
+                    <p class="text-muted">Source style/object</p>
+                </div>
+                <div class="result-item">
+                    <img id="resultTarget" alt="Target">
+                    <h4>Target Image</h4>
+                    <p class="text-muted">Original</p>
+                </div>
+                <div class="result-item">
+                    <img id="resultFinal" alt="Result">
+                    <h4>AI Result</h4>
+                    <p class="text-muted">Transformed</p>
+                </div>
+            </div>
+            
+            <div class="text-center mt-4">
+                <button class="btn btn-primary btn-lg" onclick="tryAgain()">
+                    <i class="bi bi-arrow-repeat"></i> Try Again
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <h4>🎨 AI is Working...</h4>
+            <p class="text-muted">Gemini 1.5 Pro is analyzing your images</p>
+            <p class="text-muted">This may take 10-30 seconds</p>
+        </div>
+    </div>
+    
+    <script>
+        let refFile = null;
+        let targetFile = null;
+        
+        // Reference image upload
+        document.getElementById('refUploadBox').addEventListener('click', () => {
+            document.getElementById('refImageInput').click();
+        });
+        
+        document.getElementById('refImageInput').addEventListener('change', (e) => {
+            handleRefFile(e.target.files[0]);
+        });
+        
+        // Target image upload
+        document.getElementById('targetUploadBox').addEventListener('click', () => {
+            document.getElementById('targetImageInput').click();
+        });
+        
+        document.getElementById('targetImageInput').addEventListener('change', (e) => {
+            handleTargetFile(e.target.files[0]);
+        });
+        
+        function handleRefFile(file) {
+            if (!file || !file.type.startsWith('image/')) {
+                alert('Please select a valid image file');
+                return;
+            }
+            
+            refFile = file;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                document.getElementById('refPreviewImg').src = e.target.result;
+                document.getElementById('refUploadBox').style.display = 'none';
+                document.getElementById('refPreview').style.display = 'block';
+                document.getElementById('refUploadBox').classList.add('has-image');
+                checkReady();
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        function handleTargetFile(file) {
+            if (!file || !file.type.startsWith('image/')) {
+                alert('Please select a valid image file');
+                return;
+            }
+            
+            targetFile = file;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                document.getElementById('targetPreviewImg').src = e.target.result;
+                document.getElementById('targetUploadBox').style.display = 'none';
+                document.getElementById('targetPreview').style.display = 'block';
+                document.getElementById('targetUploadBox').classList.add('has-image');
+                checkReady();
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        function clearRef() {
+            refFile = null;
+            document.getElementById('refUploadBox').style.display = 'flex';
+            document.getElementById('refPreview').style.display = 'none';
+            document.getElementById('refImageInput').value = '';
+            checkReady();
+        }
+        
+        function clearTarget() {
+            targetFile = null;
+            document.getElementById('targetUploadBox').style.display = 'flex';
+            document.getElementById('targetPreview').style.display = 'none';
+            document.getElementById('targetImageInput').value = '';
+            checkReady();
+        }
+        
+        function checkReady() {
+            const generateBtn = document.getElementById('generateBtn');
+            const prompt = document.getElementById('promptInput').value.trim();
+            generateBtn.disabled = !(refFile && targetFile && prompt);
+        }
+        
+        document.getElementById('promptInput').addEventListener('input', checkReady);
+        
+        function setPrompt(text) {
+            document.getElementById('promptInput').value = text;
+            checkReady();
+        }
+        
+        // Generate transformation
+        document.getElementById('generateBtn').addEventListener('click', async () => {
+            if (!refFile || !targetFile) return;
+            
+            const formData = new FormData();
+            formData.append('reference_image', refFile);
+            formData.append('target_image', targetFile);
+            formData.append('prompt', document.getElementById('promptInput').value);
+            
+            document.getElementById('loadingOverlay').style.display = 'flex';
+            document.getElementById('generateBtn').disabled = true;
+            
+            try {
+                const response = await fetch('/api/visualize/test-generate', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    // Show results
+                    document.getElementById('resultRef').src = document.getElementById('refPreviewImg').src;
+                    document.getElementById('resultTarget').src = document.getElementById('targetPreviewImg').src;
+                    document.getElementById('resultFinal').src = data.result_image_url;
+                    document.getElementById('resultSection').style.display = 'block';
+                    document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth' });
+                } else {
+                    alert(data.message || 'Failed to generate transformation');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to generate transformation. Please try again.');
+            } finally {
+                document.getElementById('loadingOverlay').style.display = 'none';
+                document.getElementById('generateBtn').disabled = false;
+            }
+        });
+        
+        function tryAgain() {
+            document.getElementById('resultSection').style.display = 'none';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -42,6 +42,94 @@ def register_ai_routes(app):
     
     print("🎨 Registering AI visualization routes...")
     
+    @app.route('/visualize/test')
+    @login_required
+    def visualize_test():
+        """Test page for AI image transformation with custom prompts"""
+        return render_template('visualize_test.html')
+    
+    @app.route('/api/visualize/test-generate', methods=['POST'])
+    @login_required
+    def test_generate_visualization():
+        """Test API endpoint using Gemini 1.5 Pro with custom prompt"""
+        try:
+            import google.generativeai as genai
+            import PIL.Image
+            import requests
+            
+            # Get API key
+            GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
+            if not GEMINI_API_KEY:
+                return jsonify({
+                    'status': 'error',
+                    'message': 'GEMINI_API_KEY not set. Get free key from https://makersuite.google.com/app/apikey'
+                }), 500
+            
+            # Get form data
+            reference_image = request.files.get('reference_image')
+            target_image = request.files.get('target_image')
+            prompt = request.form.get('prompt', '')
+            
+            if not reference_image or not target_image or not prompt:
+                return jsonify({
+                    'status': 'error',
+                    'message': 'Missing required fields: reference_image, target_image, and prompt'
+                }), 400
+            
+            print(f"\n{'='*60}")
+            print(f"🎨 GEMINI 1.5 PRO TEST")
+            print(f"{'='*60}")
+            print(f"📝 Prompt: {prompt}")
+            print(f"{'='*60}\n")
+            
+            # Save uploaded images temporarily
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            ref_filename = f"test_ref_{current_user.id}_{timestamp}.jpg"
+            target_filename = f"test_target_{current_user.id}_{timestamp}.jpg"
+            
+            ref_path = os.path.join(UPLOAD_FOLDER, ref_filename)
+            target_path = os.path.join(UPLOAD_FOLDER, target_filename)
+            
+            reference_image.save(ref_path)
+            target_image.save(target_path)
+            
+            # Load images with PIL
+            ref_img = PIL.Image.open(ref_path)
+            target_img = PIL.Image.open(target_path)
+            
+            # Configure Gemini
+            genai.configure(api_key=GEMINI_API_KEY)
+            model = genai.GenerativeModel('gemini-1.5-pro')
+            
+            print(f"🤖 Calling Gemini 1.5 Pro...")
+            
+            # Generate content with both images
+            response = model.generate_content([prompt, ref_img, target_img])
+            
+            print(f"📥 Gemini Response:")
+            print(response.text)
+            
+            # Note: Gemini 1.5 Pro returns TEXT description, not an image
+            # For actual image generation, we need to use the description with an image model
+            # For now, return the text response
+            
+            return jsonify({
+                'status': 'success',
+                'message': 'Gemini analysis complete',
+                'gemini_response': response.text,
+                'note': 'Gemini 1.5 Pro provides text analysis. For image generation, we need to use an image generation model with this description.',
+                'result_image_url': f"/static/uploads/visualizations/{target_filename}"  # Return target for now
+            })
+            
+        except Exception as e:
+            print(f"❌ Error: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return jsonify({
+                'status': 'error',
+                'message': f'Failed to generate: {str(e)}'
+            }), 500
+    
     @app.route('/visualize/<int:product_id>')
     @login_required
     def visualize_product(product_id):

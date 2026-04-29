@@ -1,0 +1,4 @@
+# Gemini AI SDK for image analysis
+google-generativeai>=0.3.0
+pillow>=10.0.0
+requests>=2.31.0

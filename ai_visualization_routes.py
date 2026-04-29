@@ -214,8 +214,16 @@ def register_ai_routes(app):
                 # If there are fields, use POST with multipart/form-data
                 if upload_fields:
                     print(f"🔄 Using POST with form fields...")
+                    # Convert fields to proper format (not JSON string)
+                    form_data = {}
+                    if isinstance(upload_fields, str):
+                        import json
+                        form_data = json.loads(upload_fields)
+                    else:
+                        form_data = upload_fields
+                    
                     files = {'file': ('image.jpg', image_data, 'image/jpeg')}
-                    upload_result = requests.post(upload_url, data=upload_fields, files=files)
+                    upload_result = requests.post(upload_url, data=form_data, files=files)
                 else:
                     # Otherwise use PUT
                     print(f"🔄 Using PUT...")

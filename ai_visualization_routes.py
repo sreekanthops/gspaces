@@ -253,10 +253,54 @@ def register_ai_routes(app):
                     print(f"⚠️  Upload failed with status {upload_result.status_code}")
                     print(f"⚠️  Response: {upload_result.text[:500]}")
                     raise Exception(f"Failed to upload image: {upload_result.status_code}")
-                print(f"✅ Image uploaded successfully")
+                print(f"✅ Room image uploaded successfully")
                 
-                # STEP 3: Trigger generation
-                print(f"🎨 Step 3: Starting AI transformation...")
+                # STEP 2.5: Upload product image as reference
+                print(f"📤 Step 2.5: Uploading product image as reference...")
+                
+                # Get product image path
+                product_image_path = os.path.join('static', product['image_url']) if product['image_url'].startswith('/') else os.path.join('static', product['image_url'])
+                
+                if not os.path.exists(product_image_path):
+                    print(f"⚠️  Product image not found at: {product_image_path}")
+                    product_image_id = None
+                else:
+                    # Request upload URL for product image
+                    product_upload_response = requests.post(upload_url_endpoint, json={"extension": "jpg"}, headers=headers).json()
+                    
+                    if 'uploadInitImage' in product_upload_response:
+                        product_upload_data = product_upload_response['uploadInitImage']
+                        product_upload_url = product_upload_data['url']
+                        product_image_id = product_upload_data['id']
+                        product_upload_fields = product_upload_data.get('fields', {})
+                        
+                        # Read and upload product image
+                        with open(product_image_path, "rb") as f:
+                            product_image_data = f.read()
+                        
+                        if product_upload_fields:
+                            if isinstance(product_upload_fields, str):
+                                import json
+                                product_form_data = json.loads(product_upload_fields)
+                            else:
+                                product_form_data = product_upload_fields
+                            
+                            files = {'file': ('product.jpg', product_image_data, 'image/jpeg')}
+                            product_upload_result = requests.post(product_upload_url, data=product_form_data, files=files)
+                        else:
+                            product_upload_result = requests.put(product_upload_url, data=product_image_data, headers={"Content-Type": "image/jpeg"})
+                        
+                        if product_upload_result.status_code in [200, 201, 204]:
+                            print(f"✅ Product image uploaded successfully as reference (ID: {product_image_id})")
+                        else:
+                            print(f"⚠️  Product image upload failed, continuing without reference")
+                            product_image_id = None
+                    else:
+                        print(f"⚠️  Could not get product upload URL")
+                        product_image_id = None
+                
+                # STEP 3: Trigger generation with product reference
+                print(f"🎨 Step 3: Starting AI transformation with product reference...")
                 gen_url = "https://cloud.leonardo.ai/api/rest/v1/generations"
                 
                 # Try different model IDs (Leonardo updates models frequently)
@@ -266,17 +310,30 @@ def register_ai_routes(app):
                     "1e60896f-3c26-4296-8ecc-53e2afecc132",  # Leonardo Diffusion XL
                 ]
                 
+                # Build generation payload with product reference
                 gen_payload = {
                     "height": new_height,
                     "width": new_width,
                     "modelId": model_ids_to_try[0],  # Use latest model
                     "prompt": prompt,
-                    "init_image_id": image_id,
-                    "init_strength": 0.85,  # VERY HIGH = major transformation, adds furniture clearly
+                    "init_image_id": image_id,  # Room image
+                    "init_strength": 0.85,  # VERY HIGH = major transformation
                     "num_images": 1,
-                    "guidance_scale": 8,  # Higher = follow prompt more strictly
-                    "num_inference_steps": 40  # More steps = better quality
+                    "guidance_scale": 8,
+                    "num_inference_steps": 40
                 }
+                
+                # Add product image as ControlNet reference if available
+                if product_image_id:
+                    gen_payload["controlnets"] = [{
+                        "initImageId": product_image_id,
+                        "initImageType": "POSE",  # Use product as style/content reference
+                        "preprocessorId": 68,  # Canny edge detection
+                        "weight": 0.8  # Strong influence from product image
+                    }]
+                    print(f"✅ Using product image as ControlNet reference")
+                else:
+                    print(f"⚠️  No product reference - using prompt only")
                 
                 print(f"📤 Sending generation request to Leonardo...")
                 print(f"📊 Payload: {gen_payload}")

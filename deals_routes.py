@@ -2,11 +2,18 @@
 Deals Management Routes
 Handles admin panel for deals, discounts, and promotional campaigns
 """
-from flask import render_template, request, redirect, url_for, flash, jsonify, session
+from flask import render_template, request, redirect, url_for, flash, jsonify
+from flask_login import login_required, current_user
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from datetime import datetime, timedelta
 import os
+
+# Admin emails - should match main.py
+ADMIN_EMAILS = [
+    'sreekanth.chityala@gspaces.in',
+    'gspaces2025@gmail.com'
+]
 
 def get_db_connection():
     """Get database connection"""
@@ -108,10 +115,12 @@ def register_deals_routes(app):
     """Register all deals management routes"""
     
     @app.route('/admin/deals')
+    @login_required
     def admin_deals():
         """Display deals management page"""
-        if 'admin_logged_in' not in session:
-            return redirect(url_for('admin_login'))
+        if current_user.email not in ADMIN_EMAILS:
+            flash("Access denied. Admin privileges required.", "danger")
+            return redirect(url_for('index'))
         
         conn = get_db_connection()
         cur = conn.cursor(cursor_factory=RealDictCursor)
@@ -168,10 +177,12 @@ def register_deals_routes(app):
             conn.close()
     
     @app.route('/admin/deals/campaign/create', methods=['POST'])
+    @login_required
     def create_campaign():
         """Create a new deal campaign"""
-        if 'admin_logged_in' not in session:
-            return redirect(url_for('admin_login'))
+        if current_user.email not in ADMIN_EMAILS:
+            flash("Access denied. Admin privileges required.", "danger")
+            return redirect(url_for('index'))
         
         name = request.form.get('name', '').strip()
         description = request.form.get('description', '').strip()
@@ -213,9 +224,10 @@ def register_deals_routes(app):
         return redirect(url_for('admin_deals'))
     
     @app.route('/admin/deals/campaign/<int:campaign_id>/deactivate', methods=['POST'])
+    @login_required
     def deactivate_campaign(campaign_id):
         """Deactivate a campaign"""
-        if 'admin_logged_in' not in session:
+        if current_user.email not in ADMIN_EMAILS:
             return jsonify({'status': 'error', 'message': 'Unauthorized'}), 401
         
         conn = get_db_connection()
@@ -233,10 +245,12 @@ def register_deals_routes(app):
             conn.close()
     
     @app.route('/admin/deals/global-discount', methods=['POST'])
+    @login_required
     def update_global_discount():
         """Update global discount settings"""
-        if 'admin_logged_in' not in session:
-            return redirect(url_for('admin_login'))
+        if current_user.email not in ADMIN_EMAILS:
+            flash("Access denied. Admin privileges required.", "danger")
+            return redirect(url_for('index'))
         
         discount_percent = float(request.form.get('discount_percent', 0))
         priority = int(request.form.get('priority', 1))
@@ -280,10 +294,12 @@ def register_deals_routes(app):
         return redirect(url_for('admin_deals'))
     
     @app.route('/admin/deals/category-discount/add', methods=['POST'])
+    @login_required
     def add_category_discount():
         """Add category-specific discount"""
-        if 'admin_logged_in' not in session:
-            return redirect(url_for('admin_login'))
+        if current_user.email not in ADMIN_EMAILS:
+            flash("Access denied. Admin privileges required.", "danger")
+            return redirect(url_for('index'))
         
         category_id = request.form.get('category_id')
         discount_percent = float(request.form.get('discount_percent', 0))
@@ -341,9 +357,10 @@ def register_deals_routes(app):
         return redirect(url_for('admin_deals'))
     
     @app.route('/admin/deals/category-discount/<int:discount_id>/delete', methods=['POST'])
+    @login_required
     def delete_category_discount(discount_id):
         """Delete category discount"""
-        if 'admin_logged_in' not in session:
+        if current_user.email not in ADMIN_EMAILS:
             return jsonify({'status': 'error', 'message': 'Unauthorized'}), 401
         
         conn = get_db_connection()
@@ -361,10 +378,12 @@ def register_deals_routes(app):
             conn.close()
     
     @app.route('/admin/deals/countdown', methods=['POST'])
+    @login_required
     def start_countdown():
         """Start or update countdown timer"""
-        if 'admin_logged_in' not in session:
-            return redirect(url_for('admin_login'))
+        if current_user.email not in ADMIN_EMAILS:
+            flash("Access denied. Admin privileges required.", "danger")
+            return redirect(url_for('index'))
         
         duration_minutes = int(request.form.get('duration_minutes', 1440))
         

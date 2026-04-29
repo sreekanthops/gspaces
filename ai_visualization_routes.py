@@ -239,10 +239,18 @@ def register_ai_routes(app):
                 # STEP 3: Trigger generation
                 print(f"🎨 Step 3: Starting AI transformation...")
                 gen_url = "https://cloud.leonardo.ai/api/rest/v1/generations"
+                
+                # Try different model IDs (Leonardo updates models frequently)
+                model_ids_to_try = [
+                    "aa77f04e-3eec-4034-9c07-d0f619684628",  # Leonardo Kino XL (latest)
+                    "6bef9f1b-29cb-40c7-b9df-cd93b0fab2ec",  # Leonardo Vision XL
+                    "1e60896f-3c26-4296-8ecc-53e2afecc132",  # Leonardo Diffusion XL
+                ]
+                
                 gen_payload = {
-                    "height": new_height if 'new_height' in locals() else base_image.height,
-                    "width": new_width if 'new_width' in locals() else base_image.width,
-                    "modelId": "6bef9f1b-29cb-40c7-b9df-cd93b0fab2ec",  # Leonardo Vision XL
+                    "height": new_height,
+                    "width": new_width,
+                    "modelId": model_ids_to_try[0],  # Use latest model
                     "prompt": prompt,
                     "init_image_id": image_id,
                     "init_strength": 0.4,  # Balance between original and transformation

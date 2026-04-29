@@ -4,249 +4,258 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Deals Management - GSpaces Admin</title>
+    <link href="{{ url_for('static', filename='img/favicon.svg') }}" rel="icon">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/main.css') }}" rel="stylesheet">
     <style>
         body {
-            background: #f8f9fa;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #f7f8fc;
         }
-        .admin-header {
+        .admin-container {
+            margin-top: 96px;
+            padding-bottom: 56px;
+        }
+        .admin-card {
+            background: #fff;
+            border-radius: 24px;
+            box-shadow: 0 18px 40px rgba(17, 24, 39, 0.08);
+            padding: 32px;
+            margin-bottom: 24px;
+        }
+        .admin-nav {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+        .admin-nav-btn {
+            padding: 10px 20px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .admin-nav-btn.active {
+            background: #d4af37;
+            color: #111827;
+        }
+        .admin-nav-btn:not(.active) {
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+        .admin-nav-btn:not(.active):hover {
+            background: #e5e7eb;
+        }
+        .quick-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .stat-card {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 2rem 0;
-            margin-bottom: 2rem;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 20px;
+            border-radius: 16px;
+            text-align: center;
         }
-        .card {
-            border: none;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            margin-bottom: 1.5rem;
+        .stat-card.green {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
         }
-        .card-header {
-            background: white;
-            border-bottom: 2px solid #f0f0f0;
-            font-weight: 600;
-            padding: 1.25rem;
+        .stat-card.orange {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
         }
-        .discount-badge {
-            display: inline-block;
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            font-weight: 600;
-            font-size: 0.9rem;
-        }
-        .discount-active {
-            background: #d1fae5;
-            color: #065f46;
-        }
-        .discount-inactive {
-            background: #fee2e2;
-            color: #991b1b;
-        }
-        .category-row {
-            padding: 1rem;
-            border-bottom: 1px solid #f0f0f0;
-            transition: background 0.2s;
-        }
-        .category-row:hover {
-            background: #f8f9fa;
-        }
-        .category-row:last-child {
-            border-bottom: none;
-        }
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border: none;
-        }
-        .btn-primary:hover {
-            background: linear-gradient(135deg, #5568d3 0%, #6a3f8f 100%);
-        }
-        .countdown-display {
-            font-size: 2rem;
+        .stat-number {
+            font-size: 32px;
             font-weight: 700;
-            color: #667eea;
-            font-family: 'Courier New', monospace;
+            margin-bottom: 4px;
+        }
+        .stat-label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: #111827;
         }
         .deal-preview {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 1.5rem;
-            border-radius: 12px;
+            padding: 24px;
+            border-radius: 16px;
             text-align: center;
-            font-weight: 600;
-            margin-bottom: 1rem;
+            margin-bottom: 24px;
         }
-        .form-label {
-            font-weight: 600;
-            color: #374151;
-            margin-bottom: 0.5rem;
+        .countdown-display {
+            font-size: 2rem;
+            font-weight: 700;
+            font-family: 'Courier New', monospace;
+            margin-top: 12px;
         }
-        .input-group-text {
-            background: #f3f4f6;
-            border-color: #d1d5db;
+        .category-item {
+            padding: 16px;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .discount-badge {
+            background: #d1fae5;
+            color: #065f46;
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .discount-badge.inactive {
+            background: #fee2e2;
+            color: #991b1b;
         }
     </style>
 </head>
 <body>
-    <div class="admin-header">
-        <div class="container">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h1 class="mb-1"><i class="bi bi-percent"></i> Deals Management</h1>
-                    <p class="mb-0 opacity-75">Manage discounts, campaigns, and promotional offers</p>
-                </div>
-                <a href="/admin/dashboard" class="btn btn-light">
-                    <i class="bi bi-arrow-left"></i> Back to Dashboard
-                </a>
-            </div>
-        </div>
-    </div>
+    {% include 'navbar.html' %}
 
-    <div class="container">
-        <!-- Flash Messages -->
+    <div class="container admin-container">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                {% endfor %}
+                <div class="mb-4">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                </div>
             {% endif %}
         {% endwith %}
 
-        <div class="row">
-            <!-- Active Campaign Overview -->
-            <div class="col-lg-8">
-                <div class="card">
-                    <div class="card-header">
-                        <i class="bi bi-megaphone"></i> Active Campaign
-                    </div>
-                    <div class="card-body">
-                        {% if active_campaign %}
-                            <div class="deal-preview">
-                                {{ active_campaign.banner_text }}
-                                {% if countdown_remaining > 0 %}
-                                    <div class="countdown-display mt-3" id="countdown-display">
-                                        Loading...
-                                    </div>
-                                {% endif %}
-                            </div>
-                            
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <strong>Campaign Name:</strong> {{ active_campaign.name }}
-                                </div>
-                                <div class="col-md-6">
-                                    <strong>Status:</strong> 
-                                    <span class="discount-badge discount-active">
-                                        <i class="bi bi-check-circle"></i> Active
-                                    </span>
-                                </div>
-                                <div class="col-md-6">
-                                    <strong>Start Time:</strong> {{ active_campaign.start_time or 'Immediate' }}
-                                </div>
-                                <div class="col-md-6">
-                                    <strong>End Time:</strong> {{ active_campaign.end_time or 'No expiry' }}
-                                </div>
-                            </div>
+        <!-- Admin Navigation -->
+        <div class="admin-nav">
+            <a href="{{ url_for('admin_orders') }}" class="admin-nav-btn">📦 Orders</a>
+            <a href="{{ url_for('admin_coupons') }}" class="admin-nav-btn">🎁 Coupons</a>
+            <a href="{{ url_for('admin_referral_coupons') }}" class="admin-nav-btn">🎯 Referral Coupons</a>
+            <a href="{{ url_for('admin_reviews') }}" class="admin-nav-btn">⭐ Reviews</a>
+            <a href="{{ url_for('admin_gst_settings') }}" class="admin-nav-btn">💰 GST Settings</a>
+            <a href="{{ url_for('admin_customers') }}" class="admin-nav-btn">👤 Customers</a>
+            <a href="{{ url_for('admin_blogs') }}" class="admin-nav-btn">📝 Blogs</a>
+            <a href="{{ url_for('admin_deals') }}" class="admin-nav-btn active">🔥 Deals</a>
+        </div>
 
-                            <div class="mt-4">
-                                <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#editCampaignModal">
-                                    <i class="bi bi-pencil"></i> Edit Campaign
-                                </button>
-                                <button class="btn btn-danger" onclick="deactivateCampaign({{ active_campaign.id }})">
-                                    <i class="bi bi-stop-circle"></i> Deactivate
-                                </button>
+        <div class="admin-card">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="mb-2">Deals Management</h2>
+                    <p class="text-muted mb-0">Manage discounts, campaigns, and promotional offers</p>
+                </div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="quick-stats">
+                <div class="stat-card">
+                    <div class="stat-number">{% if active_campaign %}Active{% else %}Inactive{% endif %}</div>
+                    <div class="stat-label">Campaign Status</div>
+                </div>
+                <div class="stat-card green">
+                    <div class="stat-number">{% if global_discount and global_discount.is_active %}{{ global_discount.discount_percent }}%{% else %}0%{% endif %}</div>
+                    <div class="stat-label">Global Discount</div>
+                </div>
+                <div class="stat-card orange">
+                    <div class="stat-number">{{ category_discounts|length }}</div>
+                    <div class="stat-label">Category Discounts</div>
+                </div>
+            </div>
+
+            <!-- Active Campaign Preview -->
+            {% if active_campaign %}
+            <div class="deal-preview">
+                <h4>{{ active_campaign.banner_text }}</h4>
+                {% if countdown_remaining > 0 %}
+                    <div class="countdown-display" id="countdown-display">Loading...</div>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <div class="row">
+                <!-- Left Column: Campaign & Category Discounts -->
+                <div class="col-lg-8">
+                    <!-- Campaign Management -->
+                    <div class="mb-4">
+                        <div class="section-title">Campaign Management</div>
+                        {% if active_campaign %}
+                            <div class="category-item">
+                                <div>
+                                    <strong>{{ active_campaign.name }}</strong>
+                                    <div class="text-muted small">{{ active_campaign.description or 'No description' }}</div>
+                                </div>
+                                <div>
+                                    <button class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#editCampaignModal">Edit</button>
+                                    <button class="btn btn-sm btn-danger" onclick="deactivateCampaign({{ active_campaign.id }})">Deactivate</button>
+                                </div>
                             </div>
                         {% else %}
-                            <div class="text-center py-5">
-                                <i class="bi bi-inbox" style="font-size: 3rem; color: #d1d5db;"></i>
-                                <p class="text-muted mt-3">No active campaign</p>
-                                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createCampaignModal">
-                                    <i class="bi bi-plus-circle"></i> Create Campaign
-                                </button>
+                            <div class="text-center py-4">
+                                <p class="text-muted">No active campaign</p>
+                                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createCampaignModal">Create Campaign</button>
                             </div>
                         {% endif %}
                     </div>
-                </div>
 
-                <!-- Category Discounts -->
-                <div class="card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <span><i class="bi bi-tags"></i> Category Discounts</span>
-                        <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addCategoryDiscountModal">
-                            <i class="bi bi-plus"></i> Add Category
-                        </button>
-                    </div>
-                    <div class="card-body p-0">
+                    <!-- Category Discounts -->
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div class="section-title mb-0">Category Discounts</div>
+                            <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addCategoryModal">+ Add Category</button>
+                        </div>
                         {% if category_discounts %}
                             {% for discount in category_discounts %}
-                                <div class="category-row">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <h6 class="mb-1">{{ discount.category_name }}</h6>
-                                            <small class="text-muted">Category ID: {{ discount.category_id or 'All' }}</small>
-                                        </div>
-                                        <div class="d-flex align-items-center gap-3">
-                                            <span class="discount-badge {% if discount.is_active %}discount-active{% else %}discount-inactive{% endif %}">
-                                                {{ discount.discount_percent }}% OFF
-                                            </span>
-                                            <div class="btn-group">
-                                                <button class="btn btn-sm btn-outline-primary" onclick="editCategoryDiscount({{ discount.id }}, '{{ discount.category_name }}', {{ discount.discount_percent }})">
-                                                    <i class="bi bi-pencil"></i>
-                                                </button>
-                                                <button class="btn btn-sm btn-outline-danger" onclick="deleteCategoryDiscount({{ discount.id }})">
-                                                    <i class="bi bi-trash"></i>
-                                                </button>
-                                            </div>
-                                        </div>
+                                <div class="category-item">
+                                    <div>
+                                        <strong>{{ discount.category_name }}</strong>
+                                        <span class="discount-badge {% if not discount.is_active %}inactive{% endif %}">
+                                            {{ discount.discount_percent }}% OFF
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <button class="btn btn-sm btn-outline-danger" onclick="deleteCategoryDiscount({{ discount.id }})">Delete</button>
                                     </div>
                                 </div>
                             {% endfor %}
                         {% else %}
-                            <div class="text-center py-4">
-                                <p class="text-muted mb-0">No category discounts configured</p>
+                            <div class="text-center py-3 text-muted">
+                                No category discounts configured
                             </div>
                         {% endif %}
                     </div>
                 </div>
-            </div>
 
-            <!-- Global Discount & Quick Actions -->
-            <div class="col-lg-4">
-                <!-- Global Discount -->
-                <div class="card">
-                    <div class="card-header">
-                        <i class="bi bi-globe"></i> Global Discount
-                    </div>
-                    <div class="card-body">
+                <!-- Right Column: Global Discount & Countdown -->
+                <div class="col-lg-4">
+                    <!-- Global Discount -->
+                    <div class="mb-4">
+                        <div class="section-title">Global Discount</div>
                         <form method="POST" action="/admin/deals/global-discount">
                             <div class="mb-3">
-                                <label class="form-label">Discount Percentage</label>
-                                <div class="input-group">
-                                    <input type="number" class="form-control" name="discount_percent" 
-                                           value="{{ global_discount.discount_percent if global_discount else 5 }}" 
-                                           min="0" max="100" step="0.01" required>
-                                    <span class="input-group-text">%</span>
-                                </div>
-                                <small class="text-muted">Applies to all products</small>
+                                <label class="form-label">Discount %</label>
+                                <input type="number" class="form-control" name="discount_percent" 
+                                       value="{{ global_discount.discount_percent if global_discount else 5 }}" 
+                                       min="0" max="100" step="0.01" required>
                             </div>
-                            
                             <div class="mb-3">
                                 <label class="form-label">Priority</label>
                                 <select class="form-select" name="priority">
                                     <option value="0" {% if global_discount and global_discount.priority == 0 %}selected{% endif %}>
-                                        Low (Category discounts take precedence)
+                                        Low (Category first)
                                     </option>
                                     <option value="1" {% if not global_discount or global_discount.priority == 1 %}selected{% endif %}>
-                                        High (Override category discounts)
+                                        High (Override categories)
                                     </option>
                                 </select>
                             </div>
-
                             <div class="form-check mb-3">
                                 <input class="form-check-input" type="checkbox" name="is_active" id="globalActive"
                                        {% if global_discount and global_discount.is_active %}checked{% endif %}>
@@ -254,20 +263,13 @@
                                     Enable Global Discount
                                 </label>
                             </div>
-
-                            <button type="submit" class="btn btn-primary w-100">
-                                <i class="bi bi-save"></i> Save Global Discount
-                            </button>
+                            <button type="submit" class="btn btn-primary w-100">Save</button>
                         </form>
                     </div>
-                </div>
 
-                <!-- Countdown Timer -->
-                <div class="card">
-                    <div class="card-header">
-                        <i class="bi bi-clock"></i> Countdown Timer
-                    </div>
-                    <div class="card-body">
+                    <!-- Countdown Timer -->
+                    <div class="mb-4">
+                        <div class="section-title">Countdown Timer</div>
                         <form method="POST" action="/admin/deals/countdown">
                             <div class="mb-3">
                                 <label class="form-label">Duration (minutes)</label>
@@ -275,31 +277,8 @@
                                        value="1440" min="1" required>
                                 <small class="text-muted">Default: 1440 min (24 hours)</small>
                             </div>
-                            <button type="submit" class="btn btn-primary w-100">
-                                <i class="bi bi-play-circle"></i> Start Countdown
-                            </button>
+                            <button type="submit" class="btn btn-primary w-100">Start Countdown</button>
                         </form>
-                    </div>
-                </div>
-
-                <!-- Quick Stats -->
-                <div class="card">
-                    <div class="card-header">
-                        <i class="bi bi-graph-up"></i> Quick Stats
-                    </div>
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between mb-2">
-                            <span>Active Discounts:</span>
-                            <strong>{{ category_discounts|length }}</strong>
-                        </div>
-                        <div class="d-flex justify-content-between mb-2">
-                            <span>Global Discount:</span>
-                            <strong>{% if global_discount and global_discount.is_active %}{{ global_discount.discount_percent }}%{% else %}Inactive{% endif %}</strong>
-                        </div>
-                        <div class="d-flex justify-content-between">
-                            <span>Campaign Status:</span>
-                            <strong>{% if active_campaign %}Active{% else %}Inactive{% endif %}</strong>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -311,7 +290,7 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title"><i class="bi bi-plus-circle"></i> Create New Campaign</h5>
+                    <h5 class="modal-title">Create New Campaign</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <form method="POST" action="/admin/deals/campaign/create">
@@ -350,11 +329,11 @@
     </div>
 
     <!-- Add Category Discount Modal -->
-    <div class="modal fade" id="addCategoryDiscountModal" tabindex="-1">
+    <div class="modal fade" id="addCategoryModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title"><i class="bi bi-tags"></i> Add Category Discount</h5>
+                    <h5 class="modal-title">Add Category Discount</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <form method="POST" action="/admin/deals/category-discount/add">
@@ -370,11 +349,8 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Discount Percentage</label>
-                            <div class="input-group">
-                                <input type="number" class="form-control" name="discount_percent" 
-                                       min="0" max="100" step="0.01" required>
-                                <span class="input-group-text">%</span>
-                            </div>
+                            <input type="number" class="form-control" name="discount_percent" 
+                                   min="0" max="100" step="0.01" required>
                         </div>
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" name="is_active" id="categoryActive" checked>
@@ -450,11 +426,6 @@
                     }
                 });
             }
-        }
-
-        function editCategoryDiscount(id, name, percent) {
-            // Implement edit functionality
-            alert('Edit functionality coming soon');
         }
     </script>
 </body>

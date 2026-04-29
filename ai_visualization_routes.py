@@ -184,10 +184,11 @@ def register_ai_routes(app):
                 print(f"🎨 Generating AI visualization...")
                 
                 # Generate the transformed image using image-to-image
+                # Using a model that's available on free tier
                 output_image = client.image_to_image(
                     image_bytes,
                     prompt=prompt,
-                    model="stabilityai/stable-diffusion-xl-refiner-1.0",
+                    model="timbrooks/instruct-pix2pix",  # Free tier compatible model
                     strength=0.6,  # 0.6 = moderate transformation, keeps room structure
                     negative_prompt="blurry, distorted, low quality, cartoon, painting"
                 )

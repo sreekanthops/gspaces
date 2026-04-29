@@ -137,41 +137,22 @@ def register_ai_routes(app):
             if product_image_path.startswith('static/'):
                 product_image_path = product_image_path[7:]  # Remove 'static/' prefix
             
-            # Generate AI visualization using Google GenAI SDK with Imagen (TRUE AI IMAGE EDITING!)
+            # Generate AI visualization using Pixazo API
             try:
-                from google import genai
-                from google.genai import types
+                import requests
                 from PIL import Image
                 
-                GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
-                if not GEMINI_API_KEY:
-                    raise Exception("GEMINI_API_KEY not set. Get free key from https://makersuite.google.com/app/apikey")
+                PIXAZO_API_KEY = os.environ.get('PIXAZO_API_KEY', '')
+                if not PIXAZO_API_KEY:
+                    raise Exception("PIXAZO_API_KEY not set. Get your key from Pixazo")
                 
-                print(f"🎨 Initializing Google GenAI client...")
-                client = genai.Client(api_key=GEMINI_API_KEY)
-                
-                # List available Imagen models
-                print("📋 Checking available Imagen models...")
-                try:
-                    imagen_models = []
-                    for model in client.models.list():
-                        model_name = model.name
-                        if 'image' in model_name.lower() or 'imagen' in model_name.lower():
-                            methods = getattr(model, 'supported_generation_methods', [])
-                            print(f"  ✅ {model_name} | Methods: {methods}")
-                            imagen_models.append(model_name)
-                    
-                    if not imagen_models:
-                        print("⚠️  No Imagen models found. Check API key permissions.")
-                except Exception as e:
-                    print(f"⚠️  Could not list models: {e}")
-                    imagen_models = []
+                print(f"🎨 Using Pixazo API for AI image generation...")
                 
                 # Load the room image
                 print(f"📸 Loading room image...")
                 base_image = Image.open(room_path)
                 
-                # Resize if too large (Imagen works best with reasonable sizes)
+                # Resize if too large
                 max_size = 1024
                 if base_image.width > max_size or base_image.height > max_size:
                     if base_image.width > base_image.height:
@@ -187,78 +168,74 @@ def register_ai_routes(app):
                     base_image = base_image.convert('RGB')
                 
                 # Create transformation prompt
-                prompt = f"""Transform this room to include a professional {product['category']} desk setup.
-                Add a modern {product['name']} in the center of the room with realistic lighting,
-                shadows, and perspective. Make it look photorealistic and naturally integrated into the space.
-                Keep the room's existing style and lighting."""
+                prompt = f"""A modern, professional {product['category']} setup featuring a {product['name']}
+                in this room. Photorealistic interior design with proper lighting, shadows, and perspective.
+                High resolution, detailed, naturally integrated into the existing space."""
                 
-                print(f"🎨 Generating AI transformation with Imagen...")
+                print(f"🎨 Generating AI transformation with Pixazo...")
                 print(f"📝 Prompt: {prompt[:100]}...")
                 
-                # Try Imagen models for image editing
-                models_to_try = imagen_models if imagen_models else [
-                    "imagen-3.0-capability-001",
-                    "imagen-3.0-generate-001",
-                    "models/imagen-3.0-capability-001",
-                    "models/imagen-3.0-generate-001"
-                ]
+                # Upload image to get public URL (Pixazo needs public URL)
+                # For now, we'll use the local path and convert to base64 or use a different approach
+                # Let's use the static URL that's accessible
+                room_image_url = f"{request.url_root}static/uploads/visualizations/{os.path.basename(room_path)}"
                 
-                print(f"🎨 Will try these Imagen models: {models_to_try}")
+                # Pixazo API configuration
+                PIXAZO_URL = "https://gateway.pixazo.ai/gpt-image-2-image-to-image/v1/gpt-image-2-image-to-image/generate"
                 
-                response = None
-                last_error = None
-                successful_model = None
+                headers = {
+                    "Content-Type": "application/json",
+                    "Ocp-Apim-Subscription-Key": PIXAZO_API_KEY
+                }
                 
-                for model_id in models_to_try:
-                    try:
-                        print(f"🎨 Trying Imagen model: {model_id}...")
-                        
-                        # Use edit_image method for Imagen
-                        # The correct signature based on google-genai SDK
-                        response = client.models.edit_image(
-                            model=model_id,
-                            prompt=prompt,
-                            reference_images=[base_image],  # Pass as list
-                            config=types.GenerateImageConfig(
-                                number_of_images=1
-                            )
-                        )
-                        
-                        # Check if we got images
-                        if response.generated_images and len(response.generated_images) > 0:
-                            print(f"✅ Successfully generated image with model: {model_id}")
-                            successful_model = model_id
-                            break
-                        else:
-                            print(f"⚠️  Model {model_id} responded but no images generated")
-                            last_error = Exception(f"No images in response from {model_id}")
-                            continue
-                            
-                    except Exception as e:
-                        error_str = str(e)
-                        print(f"⚠️  Model {model_id} failed: {error_str[:200]}")
-                        last_error = e
-                        continue
+                data = {
+                    "prompt": prompt,
+                    "input_images": [room_image_url],
+                    "model": "flux-schnell",  # Fast and high quality
+                    "strength": 0.6  # Balance between original and transformation
+                }
                 
-                if response is None or successful_model is None:
-                    error_msg = f"All Imagen models failed. Last error: {last_error}"
+                print(f"🎨 Calling Pixazo API...")
+                print(f"📸 Image URL: {room_image_url}")
+                
+                api_response = requests.post(PIXAZO_URL, json=data, headers=headers, timeout=60)
+                
+                if api_response.status_code != 200:
+                    error_msg = f"Pixazo API failed: {api_response.status_code} - {api_response.text}"
                     print(f"❌ {error_msg}")
                     raise Exception(error_msg)
                 
+                result_data = api_response.json()
                 print(f"✅ AI transformation complete!")
+                print(f"📊 Response: {result_data}")
                 
-                # Save the edited image from Imagen response
+                # Get the generated image URL from response
+                if 'output_images' in result_data and len(result_data['output_images']) > 0:
+                    generated_image_url = result_data['output_images'][0]
+                elif 'image_url' in result_data:
+                    generated_image_url = result_data['image_url']
+                elif 'images' in result_data and len(result_data['images']) > 0:
+                    generated_image_url = result_data['images'][0]
+                else:
+                    raise Exception(f"No image URL in Pixazo response: {result_data}")
+                
+                # Download the generated image
+                print(f"📥 Downloading generated image from: {generated_image_url}")
+                image_response = requests.get(generated_image_url, timeout=30)
+                
+                if image_response.status_code != 200:
+                    raise Exception(f"Failed to download generated image: {image_response.status_code}")
+                
+                successful_model = "pixazo-flux-schnell"
+                
+                # Save the edited image from Pixazo response
                 result_filename = f"result_{current_user.id}_{timestamp}.png"
                 result_path = os.path.join(UPLOAD_FOLDER, result_filename)
                 
-                # Save the first generated image
-                if response.generated_images and len(response.generated_images) > 0:
-                    generated_image = response.generated_images[0].image
-                    generated_image.save(result_path)
-                    print(f"✅ AI-edited image saved: {result_path}")
-                else:
-                    print(f"⚠️  No image returned, using composite fallback...")
-                    raise Exception("No image in response")
+                # Save the downloaded image
+                with open(result_path, 'wb') as f:
+                    f.write(image_response.content)
+                print(f"✅ AI-edited image saved: {result_path}")
                 
             except ImportError:
                 print("⚠️  huggingface_hub not installed, using fallback...")

@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visualize {{ product.name }} in Your Room | GSpaces</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet"/>
+    <link href="{{ url_for('static', filename='css/main.css') }}" rel="stylesheet"/>
+    
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --accent-color: #667eea;
+        }
+        
+        body {
+            background: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .visualize-container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+        
+        .product-header {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+            display: flex;
+            align-items: center;
+            gap: 30px;
+        }
+        
+        .product-header img {
+            width: 150px;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 12px;
+        }
+        
+        .upload-section {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+        }
+        
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 12px;
+            padding: 60px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #f8f9ff;
+        }
+        
+        .upload-area:hover {
+            border-color: #764ba2;
+            background: #f0f2ff;
+        }
+        
+        .upload-area.dragover {
+            border-color: #764ba2;
+            background: #e8ebff;
+            transform: scale(1.02);
+        }
+        
+        .upload-icon {
+            font-size: 64px;
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+        
+        .preview-image {
+            max-width: 100%;
+            max-height: 400px;
+            border-radius: 12px;
+            margin-top: 20px;
+        }
+        
+        .generate-btn {
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 30px;
+            font-weight: 700;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .generate-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .generate-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .result-section {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+            display: none;
+        }
+        
+        .comparison-view {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 30px;
+        }
+        
+        .comparison-item {
+            text-align: center;
+        }
+        
+        .comparison-item img {
+            width: 100%;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .comparison-item h4 {
+            margin-top: 15px;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+        
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        
+        .loading-content {
+            background: white;
+            padding: 40px;
+            border-radius: 16px;
+            text-align: center;
+            max-width: 400px;
+        }
+        
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .history-section {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+        }
+        
+        .history-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .history-item {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .history-item:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        }
+        
+        .history-item img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+        
+        .history-date {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 8px;
+            font-size: 12px;
+            text-align: center;
+        }
+        
+        @media (max-width: 768px) {
+            .comparison-view {
+                grid-template-columns: 1fr;
+            }
+            
+            .product-header {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    {% include 'navbar.html' %}
+    
+    <div class="visualize-container">
+        <!-- Product Header -->
+        <div class="product-header">
+            <img src="{{ url_for('static', filename=product.image_url) }}" alt="{{ product.name }}">
+            <div>
+                <h1>Visualize in Your Room</h1>
+                <h3>{{ product.name }}</h3>
+                <p class="text-muted">{{ product.category }} | ₹{{ product.price|int }}</p>
+                <p>See how this setup looks in your actual space before you buy!</p>
+            </div>
+        </div>
+        
+        <!-- Upload Section -->
+        <div class="upload-section">
+            <h2 class="mb-4">Upload Your Room Photo</h2>
+            <p class="text-muted mb-4">Take a photo of your empty room where you want to place the desk setup</p>
+            
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">
+                    <i class="bi bi-cloud-upload"></i>
+                </div>
+                <h4>Drag & Drop or Click to Upload</h4>
+                <p class="text-muted">Supported formats: JPG, PNG (Max 10MB)</p>
+                <input type="file" id="roomImageInput" accept="image/*" style="display: none;">
+            </div>
+            
+            <div id="previewSection" style="display: none;">
+                <img id="previewImage" class="preview-image" alt="Room preview">
+                <div class="text-center mt-4">
+                    <button class="generate-btn" id="generateBtn">
+                        <i class="bi bi-magic"></i> Generate Visualization
+                    </button>
+                    <button class="btn btn-outline-secondary ms-2" id="changeImageBtn">
+                        <i class="bi bi-arrow-repeat"></i> Change Image
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Result Section -->
+        <div class="result-section" id="resultSection">
+            <h2 class="mb-4">Your Visualization</h2>
+            <div class="comparison-view">
+                <div class="comparison-item">
+                    <img id="originalImage" alt="Original room">
+                    <h4>Your Room</h4>
+                </div>
+                <div class="comparison-item">
+                    <img id="resultImage" alt="With setup">
+                    <h4>With {{ product.name }}</h4>
+                </div>
+            </div>
+            <div class="text-center mt-4">
+                <a href="{{ url_for('cart') }}" class="btn btn-success btn-lg">
+                    <i class="bi bi-cart-plus"></i> Add to Cart
+                </a>
+                <button class="btn btn-outline-primary btn-lg ms-2" id="tryAgainBtn">
+                    <i class="bi bi-arrow-repeat"></i> Try Another Photo
+                </button>
+            </div>
+        </div>
+        
+        <!-- Previous Visualizations -->
+        {% if previous_visualizations %}
+        <div class="history-section">
+            <h2 class="mb-4">Your Previous Visualizations</h2>
+            <div class="history-grid">
+                {% for viz in previous_visualizations %}
+                <div class="history-item" onclick="showVisualization('{{ viz.result_image_url }}', '{{ viz.room_image_url }}')">
+                    <img src="{{ url_for('static', filename=viz.result_image_url) }}" alt="Visualization">
+                    <div class="history-date">
+                        {{ viz.created_at.strftime('%b %d, %Y') }}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <h4>Generating Your Visualization</h4>
+            <p class="text-muted">This may take 10-30 seconds...</p>
+            <p class="text-muted">Our AI is placing the setup in your room</p>
+        </div>
+    </div>
+    
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const roomImageInput = document.getElementById('roomImageInput');
+        const previewSection = document.getElementById('previewSection');
+        const previewImage = document.getElementById('previewImage');
+        const generateBtn = document.getElementById('generateBtn');
+        const changeImageBtn = document.getElementById('changeImageBtn');
+        const resultSection = document.getElementById('resultSection');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const tryAgainBtn = document.getElementById('tryAgainBtn');
+        
+        let selectedFile = null;
+        
+        // Upload area click
+        uploadArea.addEventListener('click', () => {
+            roomImageInput.click();
+        });
+        
+        // File input change
+        roomImageInput.addEventListener('change', (e) => {
+            handleFile(e.target.files[0]);
+        });
+        
+        // Drag and drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            handleFile(e.dataTransfer.files[0]);
+        });
+        
+        // Handle file selection
+        function handleFile(file) {
+            if (!file || !file.type.startsWith('image/')) {
+                alert('Please select a valid image file');
+                return;
+            }
+            
+            if (file.size > 10 * 1024 * 1024) {
+                alert('File size must be less than 10MB');
+                return;
+            }
+            
+            selectedFile = file;
+            
+            // Show preview
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                previewImage.src = e.target.result;
+                uploadArea.style.display = 'none';
+                previewSection.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        // Change image button
+        changeImageBtn.addEventListener('click', () => {
+            uploadArea.style.display = 'block';
+            previewSection.style.display = 'none';
+            selectedFile = null;
+            roomImageInput.value = '';
+        });
+        
+        // Generate visualization
+        generateBtn.addEventListener('click', async () => {
+            if (!selectedFile) return;
+            
+            const formData = new FormData();
+            formData.append('product_id', '{{ product.id }}');
+            formData.append('room_image', selectedFile);
+            
+            loadingOverlay.style.display = 'flex';
+            generateBtn.disabled = true;
+            
+            try {
+                const response = await fetch('/api/visualize/generate', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    // Show result
+                    document.getElementById('originalImage').src = previewImage.src;
+                    document.getElementById('resultImage').src = data.result_image_url;
+                    resultSection.style.display = 'block';
+                    
+                    // Scroll to result
+                    resultSection.scrollIntoView({ behavior: 'smooth' });
+                } else {
+                    alert(data.message || 'Failed to generate visualization');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to generate visualization. Please try again.');
+            } finally {
+                loadingOverlay.style.display = 'none';
+                generateBtn.disabled = false;
+            }
+        });
+        
+        // Try again button
+        tryAgainBtn.addEventListener('click', () => {
+            resultSection.style.display = 'none';
+            uploadArea.style.display = 'block';
+            previewSection.style.display = 'none';
+            selectedFile = null;
+            roomImageInput.value = '';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+        
+        // Show previous visualization
+        function showVisualization(resultUrl, roomUrl) {
+            document.getElementById('originalImage').src = '/static/' + roomUrl;
+            document.getElementById('resultImage').src = '/static/' + resultUrl;
+            resultSection.style.display = 'block';
+            resultSection.scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

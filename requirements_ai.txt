@@ -1,0 +1,16 @@
+# AI Room Visualization Requirements
+# Install with: pip install -r requirements_ai.txt
+
+# Core AI library
+replicate==0.22.0
+
+# Image processing
+Pillow==10.2.0
+
+# HTTP requests for downloading AI results
+requests==2.31.0
+
+# Already in main requirements (no need to reinstall):
+# Flask
+# psycopg2-binary
+# Flask-Login

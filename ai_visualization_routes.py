@@ -142,7 +142,12 @@ def register_ai_routes(app):
             import requests
             
             API_URL = "https://api-inference.huggingface.co/models/runwayml/stable-diffusion-v1-5"
-            headers = {"Authorization": f"Bearer hf_YOUR_TOKEN_HERE"}  # Get free token from huggingface.co
+            HF_TOKEN = os.environ.get('HUGGINGFACE_TOKEN', '')
+            
+            if not HF_TOKEN:
+                raise Exception("HUGGINGFACE_TOKEN environment variable not set. Get free token from huggingface.co")
+            
+            headers = {"Authorization": f"Bearer {HF_TOKEN}"}
             
             # Read and encode the room image
             with open(room_path, "rb") as f:

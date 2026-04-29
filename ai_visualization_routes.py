@@ -327,11 +327,11 @@ def register_ai_routes(app):
                 if product_image_id:
                     gen_payload["controlnets"] = [{
                         "initImageId": product_image_id,
-                        "initImageType": "POSE",  # Use product as style/content reference
-                        "preprocessorId": 68,  # Canny edge detection
+                        "initImageType": "UPLOADED",  # Must be 'UPLOADED' or 'GENERATED'
+                        "preprocessorId": 68,  # Canny edge detection for structure
                         "weight": 0.8  # Strong influence from product image
                     }]
-                    print(f"✅ Using product image as ControlNet reference")
+                    print(f"✅ Using product image as ControlNet reference (weight: 0.8)")
                 else:
                     print(f"⚠️  No product reference - using prompt only")
                 

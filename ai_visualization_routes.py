@@ -179,7 +179,8 @@ def register_ai_routes(app):
                 Be detailed about the desk position, size relative to the room, and realistic integration."""
                 
                 # Call Gemini API for image analysis
-                url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
+                # Using gemini-pro-vision for image analysis (free tier)
+                url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent?key={GEMINI_API_KEY}"
                 headers = {
                     'Content-Type': 'application/json'
                 }

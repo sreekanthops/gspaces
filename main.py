@@ -43,6 +43,8 @@ import razorpay
 from datetime import datetime
 
 # Notification system import
+# AI Visualization routes import
+from ai_visualization_routes import register_ai_routes
 from notifications import notify_new_order, notify_order_status_update, send_custom_email_to_customer
 
 # --- CONFIGURATION ---
@@ -4141,6 +4143,11 @@ def serve_sitemap():
         return send_from_directory(app.root_path, 'sitemap.xml')
     else:
         return redirect(url_for('static', filename='sitemap.xml'), code=301)
+
+
+# --- AI VISUALIZATION ROUTES ---
+# Register AI room visualization routes
+register_ai_routes(app)
 
 
 # --- APPLICATION BOOTSTRAP ---

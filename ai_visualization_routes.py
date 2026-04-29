@@ -137,30 +137,56 @@ def register_ai_routes(app):
             if product_image_path.startswith('static/'):
                 product_image_path = product_image_path[7:]  # Remove 'static/' prefix
             
-            # For now, use the product image as the "visualization"
-            # TODO: Integrate real AI image generation when API is properly configured
-            import shutil
-            
-            print(f"🎨 Creating visualization preview...")
-            
-            # Copy product image as the result for now
-            product_image_path = os.path.join('static', product['image_url'])
-            result_filename = f"result_{current_user.id}_{timestamp}.jpg"
-            result_path = os.path.join(UPLOAD_FOLDER, result_filename)
-            
-            # Copy product image to result
-            if os.path.exists(product_image_path):
-                shutil.copy(product_image_path, result_path)
-                print(f"✅ Preview created: {result_path}")
-            else:
-                # If product image doesn't exist, create a placeholder
-                from PIL import Image, ImageDraw, ImageFont
-                img = Image.new('RGB', (512, 512), color=(240, 240, 240))
-                draw = ImageDraw.Draw(img)
-                text = f"{product['name']}\nVisualization Preview"
-                draw.text((256, 256), text, fill=(100, 100, 100), anchor="mm")
-                img.save(result_path)
-                print(f"✅ Placeholder created: {result_path}")
+            # Generate AI visualization using Hugging Face InferenceClient (FREE!)
+            try:
+                from huggingface_hub import InferenceClient
+                
+                HF_TOKEN = os.environ.get('HUGGINGFACE_TOKEN', '')
+                if not HF_TOKEN:
+                    raise Exception("HUGGINGFACE_TOKEN not set. Get free token from huggingface.co")
+                
+                print(f"🎨 Initializing Hugging Face client...")
+                client = InferenceClient(api_key=HF_TOKEN)
+                
+                # Load the room image
+                with open(room_path, "rb") as f:
+                    image_bytes = f.read()
+                
+                # Create prompt for transformation
+                prompt = f"Transform this room to include a professional {product['category']} desk setup, modern furniture, realistic lighting, high quality, photorealistic, detailed"
+                
+                print(f"🎨 Generating AI visualization...")
+                
+                # Generate the transformed image using image-to-image
+                output_image = client.image_to_image(
+                    image_bytes,
+                    prompt=prompt,
+                    model="stabilityai/stable-diffusion-xl-refiner-1.0",
+                    strength=0.6,  # 0.6 = moderate transformation, keeps room structure
+                    negative_prompt="blurry, distorted, low quality, cartoon, painting"
+                )
+                
+                # Save result image
+                result_filename = f"result_{current_user.id}_{timestamp}.jpg"
+                result_path = os.path.join(UPLOAD_FOLDER, result_filename)
+                output_image.save(result_path)
+                
+                print(f"✅ AI visualization created: {result_path}")
+                
+            except ImportError:
+                print("⚠️  huggingface_hub not installed, using fallback...")
+                # Fallback: use product image
+                import shutil
+                product_image_path = os.path.join('static', product['image_url'])
+                result_filename = f"result_{current_user.id}_{timestamp}.jpg"
+                result_path = os.path.join(UPLOAD_FOLDER, result_filename)
+                if os.path.exists(product_image_path):
+                    shutil.copy(product_image_path, result_path)
+                else:
+                    raise Exception("Product image not found")
+            except Exception as e:
+                print(f"❌ AI generation failed: {e}")
+                raise
             
             # Save to database
             cur.execute("""

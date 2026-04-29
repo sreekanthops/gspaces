@@ -178,8 +178,9 @@ def register_ai_routes(app):
                 print(f"📝 Prompt: {prompt[:100]}...")
                 
                 # Call Gemini for TRUE image editing
+                # Using gemini-1.5-flash which supports image input
                 response = client.models.generate_content(
-                    model="gemini-2.0-flash-exp",  # Latest model with image editing
+                    model="gemini-1.5-flash",
                     contents=[prompt, base_image]
                 )
                 

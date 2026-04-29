@@ -198,22 +198,31 @@ def register_ai_routes(app):
                 if 'uploadInitImage' not in upload_response:
                     raise Exception(f"Failed to get upload URL: {upload_response}")
                 
-                upload_url = upload_response['uploadInitImage']['url']
-                image_id = upload_response['uploadInitImage']['id']
+                upload_data = upload_response['uploadInitImage']
+                upload_url = upload_data['url']
+                image_id = upload_data['id']
+                upload_fields = upload_data.get('fields', {})
+                
                 print(f"✅ Got upload URL and image ID: {image_id}")
+                print(f"📋 Upload fields: {upload_fields}")
                 
                 # STEP 2: Upload image to S3
                 print(f"📤 Step 2: Uploading image...")
                 with open(room_path, "rb") as f:
                     image_data = f.read()
                 
-                # Upload to S3 (no ACL header - bucket has Block Public Access enabled)
-                upload_headers = {
-                    "Content-Type": "image/jpeg"
-                }
-                upload_result = requests.put(upload_url, data=image_data, headers=upload_headers)
+                # If there are fields, use POST with multipart/form-data
+                if upload_fields:
+                    print(f"🔄 Using POST with form fields...")
+                    files = {'file': ('image.jpg', image_data, 'image/jpeg')}
+                    upload_result = requests.post(upload_url, data=upload_fields, files=files)
+                else:
+                    # Otherwise use PUT
+                    print(f"🔄 Using PUT...")
+                    upload_headers = {"Content-Type": "image/jpeg"}
+                    upload_result = requests.put(upload_url, data=image_data, headers=upload_headers)
                 
-                if upload_result.status_code not in [200, 204]:
+                if upload_result.status_code not in [200, 201, 204]:
                     print(f"⚠️  Upload failed with status {upload_result.status_code}")
                     print(f"⚠️  Response: {upload_result.text[:500]}")
                     raise Exception(f"Failed to upload image: {upload_result.status_code}")

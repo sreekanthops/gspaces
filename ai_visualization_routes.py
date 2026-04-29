@@ -140,6 +140,8 @@ def register_ai_routes(app):
             # Generate AI visualization using Hugging Face InferenceClient (FREE!)
             try:
                 from huggingface_hub import InferenceClient
+                from PIL import Image
+                import io
                 
                 HF_TOKEN = os.environ.get('HUGGINGFACE_TOKEN', '')
                 if not HF_TOKEN:
@@ -149,9 +151,32 @@ def register_ai_routes(app):
                 # InferenceClient uses token parameter, not api_key
                 client = InferenceClient(token=HF_TOKEN)
                 
-                # Load the room image
-                with open(room_path, "rb") as f:
-                    image_bytes = f.read()
+                # Load and resize the room image to reduce payload size
+                print(f"📐 Resizing image to reduce payload size...")
+                img = Image.open(room_path)
+                
+                # Resize to max 768px on longest side (API limit)
+                max_size = 768
+                if img.width > max_size or img.height > max_size:
+                    if img.width > img.height:
+                        new_width = max_size
+                        new_height = int(img.height * (max_size / img.width))
+                    else:
+                        new_height = max_size
+                        new_width = int(img.width * (max_size / img.height))
+                    img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
+                    print(f"✅ Resized to {new_width}x{new_height}")
+                
+                # Convert to RGB if needed
+                if img.mode != 'RGB':
+                    img = img.convert('RGB')
+                
+                # Convert to bytes with compression
+                img_byte_arr = io.BytesIO()
+                img.save(img_byte_arr, format='JPEG', quality=85, optimize=True)
+                image_bytes = img_byte_arr.getvalue()
+                
+                print(f"📦 Image size: {len(image_bytes) / 1024:.1f} KB")
                 
                 # Create prompt for transformation
                 prompt = f"Transform this room to include a professional {product['category']} desk setup, modern furniture, realistic lighting, high quality, photorealistic, detailed"

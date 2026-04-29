@@ -323,21 +323,17 @@ def register_ai_routes(app):
                     "num_inference_steps": 40
                 }
                 
-                # Add product image as ControlNet reference if available
-                # Note: ControlNet may not be available in all Leonardo plans
+                # ControlNet is complex and may not work in free tier
+                # For now, disable it and rely on strong init_strength + detailed prompt
                 if product_image_id:
-                    try:
-                        # Try without preprocessorId - let Leonardo auto-detect
-                        gen_payload["controlnets"] = [{
-                            "initImageId": product_image_id,
-                            "initImageType": "UPLOADED",
-                            "weight": 0.8
-                        }]
-                        print(f"✅ Using product image as ControlNet reference (weight: 0.8)")
-                    except:
-                        print(f"⚠️  ControlNet not available, using prompt only")
+                    print(f"✅ Product image uploaded (ID: {product_image_id})")
+                    print(f"⚠️  ControlNet disabled - using init_strength=0.85 with detailed prompt")
+                    print(f"💡 The AI will use the prompt to generate furniture matching: {product['name']}")
                 else:
                     print(f"⚠️  No product reference - using prompt only")
+                
+                # Note: To enable ControlNet, you need the correct preprocessorId for your Leonardo plan
+                # Common IDs: 1 (Canny), 2 (Depth), but these vary by plan
                 
                 print(f"📤 Sending generation request to Leonardo...")
                 print(f"📊 Payload: {gen_payload}")

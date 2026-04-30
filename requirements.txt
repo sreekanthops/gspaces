@@ -1,0 +1,2 @@
+flask-compress>=1.13
+Pillow>=10.0.0

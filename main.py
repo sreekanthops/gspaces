@@ -4179,11 +4179,16 @@ def contact():
         flash('Thank you for contacting GSpaces! We will get back to you within 24 hours.', 'success')
         return redirect(url_for('contact'))
     
-    return render_template('contact.html')
+    return render_template('contact_new.html')
 
 @app.route('/services')
 def services():
     """Services page with detailed offerings"""
+
+@app.route('/corporate')
+def corporate():
+    """Corporate tie-ups page"""
+    return render_template('corporate_new.html')
     return render_template('services.html')
 
 

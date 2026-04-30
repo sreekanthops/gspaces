@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>Desk Setups & Products - GSpaces | Premium WFH & Office Setup Solutions</title>
+  <meta name="description" content="Browse GSpaces complete desk setup collection. Premium ergonomic, minimalist, and executive desk setups with chairs, lighting & accessories. Free installation across India.">
+  <meta name="keywords" content="desk setup products, wfh setup, office desk setup, ergonomic desk, minimalist desk, executive desk, desk and chair, complete desk setup, desk accessories, workspace products">
+  
+  <!-- Favicon -->
+  <link href="{{ url_for('static', filename='img/favicon.svg') }}" rel="icon">
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Mozilla+Text:wght@200..700&display=swap" rel="stylesheet">
+  
+  <!-- CSS Files -->
+  <link href="{{ url_for('static', filename='css/main.css') }}" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="{{ url_for('static', filename='vendor/bootstrap-icons/bootstrap-icons.css') }}" rel="stylesheet">
+  <link href="{{ url_for('static', filename='vendor/aos/aos.css') }}" rel="stylesheet">
+  
+  <!-- Canonical URL -->
+  <link rel="canonical" href="https://gspaces.in/products" />
+  
+  <!-- Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "name": "Desk Setups & Products",
+    "description": "Complete desk setup solutions including ergonomic chairs, desks, lighting, and accessories for WFH and office spaces",
+    "url": "https://gspaces.in/products"
+  }
+  </script>
+</head>
+
+<body class="products-page">
+
+{% include 'navbar.html' %}
+
+<main class="main">
+  
+  <!-- Page Title -->
+  <div class="page-title" data-aos="fade">
+    <div class="container">
+      <nav class="breadcrumbs">
+        <ol>
+          <li><a href="{{ url_for('index') }}">Home</a></li>
+          <li class="current">Products</li>
+        </ol>
+      </nav>
+      <h1>Our Desk Setup Collection</h1>
+      <p>Premium desk setups for WFH, office, and creative spaces</p>
+    </div>
+  </div>
+
+  <!-- Products Section -->
+  <section id="products" class="products section">
+    <div class="container">
+      
+      <div class="isotope-layout" data-default-filter="*" data-layout="masonry" data-sort="original-order">
+        
+        <!-- Filters -->
+        <ul class="products-filters isotope-filters" data-aos="fade-up" data-aos-delay="100">
+          <li data-filter="*" class="filter-active">All</li>
+          {% if categories and categories|length > 0 %}
+            {% for category in categories %}
+            <li data-filter=".filter-{{ category.slug }}">{{ category.name }}</li>
+            {% endfor %}
+          {% endif %}
+        </ul>
+        
+        <!-- Catalogue Download Dropdown -->
+        <div class="text-end mb-3" data-aos="fade-up" data-aos-delay="150">
+          {% if catalogue_files and catalogue_files|length > 0 %}
+          <div class="dropdown d-inline-block">
+            <button class="btn btn-primary dropdown-toggle" type="button" id="catalogueDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="bi bi-file-earmark-pdf"></i> Download Catalogue
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="catalogueDropdown">
+              {% for file in catalogue_files %}
+              <li>
+                <a class="dropdown-item" href="{{ url_for('download_catalogue', filename=file.name) }}" download>
+                  <i class="bi bi-download"></i> {{ file.display_name }}
+                </a>
+              </li>
+              {% endfor %}
+            </ul>
+          </div>
+          {% endif %}
+        </div>
+        
+        <!-- Products Grid -->
+        <div class="row gy-4 isotope-container" data-aos="fade-up" data-aos-delay="200">
+          
+          {% for product in products %}
+          <div class="col-lg-3 col-md-6 products-item isotope-item filter-{{ product.category | lower }}">
+            
+            <div class="hover-animate product-block" onclick="location.href='{{ url_for('product_detail', product_id=product.id) }}'">
+              
+              <div class="products-content">
+                <a href="{{ url_for('product_detail', product_id=product.id) }}">
+                  <img src="{{ url_for('static', filename=product.image_url) }}" class="product-img img-fluid" alt="{{ product.name }}" width="400" height="300" loading="lazy">
+                </a>
+              </div>
+              
+              <div class="product-meta text-center mt-3">
+                <h5 class="fw-bold mb-1">
+                  <a href="{{ url_for('product_detail', product_id=product.id) }}" class="text-decoration-none text-dark">
+                    {{ product.name }}
+                  </a>
+                </h5>
+                
+                {% if product.description %}
+                <p class="text-muted small mb-2">{{ product.description }}</p>
+                {% endif %}
+                
+                <p class="text-warning mb-1">
+                  {% for i in range(product.rating|default(0)|int) %}
+                    <i class="bi bi-star-fill"></i>
+                  {% endfor %}
+                </p>
+                <p class="text-dark fw-semibold mb-1">₹ {{ product.price | inr }}</p>
+                <p class="text-secondary small">Category: {{ product.category }}</p>
+                
+                <a href="{{ url_for('add_to_cart', product_id=product.id) }}" class="details-link" title="Add to Cart">
+                  <i class="bi bi-cart-plus"></i> Add to Cart
+                </a>
+                
+                {% if is_admin %}
+                <div class="d-flex justify-content-center gap-2 mt-2">
+                  <form action="/delete_product/{{ product.id }}" method="POST" onsubmit="return confirm('Are you sure?');">
+                    <button type="submit" class="btn btn-outline-danger btn-sm" onclick="event.stopPropagation();">
+                      <i class="bi bi-trash"></i> Delete
+                    </button>
+                  </form>
+                  <a href="{{ url_for('edit_product', product_id=product.id) }}" class="btn btn-outline-primary btn-sm">
+                    <i class="bi bi-pencil-square"></i> Edit
+                  </a>
+                </div>
+                {% endif %}
+              </div>
+              
+            </div>
+          </div>
+          {% endfor %}
+          
+        </div>
+        
+      </div>
+      
+    </div>
+  </section>
+
+</main>
+
+{% include 'footer.html' %}
+
+<!-- Scroll Top -->
+<a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
+
+<!-- Preloader -->
+<div id="preloader"></div>
+
+<!-- Vendor JS Files -->
+<script src="{{ url_for('static', filename='vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+<script src="{{ url_for('static', filename='vendor/aos/aos.js') }}"></script>
+<script src="{{ url_for('static', filename='vendor/imagesloaded/imagesloaded.pkgd.min.js') }}"></script>
+<script src="{{ url_for('static', filename='vendor/isotope-layout/isotope.pkgd.min.js') }}"></script>
+
+<!-- GSAP for animations -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+<!-- Main JS File -->
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
+<style>
+.product-block {
+  background: #fff;
+  border-radius: 15px;
+  border: 5px solid white;
+  padding: 15px;
+  text-align: center;
+  cursor: pointer;
+  overflow: hidden;
+  will-change: transform;
+}
+
+.product-block:hover {
+  box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+}
+
+.product-img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+.product-name {
+  font-size: 18px;
+  font-weight: bold;
+  color: #333;
+}
+
+.product-description {
+  font-size: 14px;
+  color: #666;
+  height: 40px;
+  overflow: hidden;
+}
+
+.product-price {
+  font-weight: bold;
+  font-size: 16px;
+  margin: 5px 0;
+}
+
+.product-category {
+  font-size: 12px;
+  color: #555;
+}
+
+.product-rating i {
+  color: #ffc107;
+}
+
+.hover-animate {
+  display: block;
+}
+
+.hover-animate:hover {
+  box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+}
+
+/* Catalogue Dropdown Styles */
+#catalogueDropdown {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  padding: 10px 20px;
+  font-weight: 600;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  transition: all 0.3s ease;
+}
+
+#catalogueDropdown:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+}
+
+.dropdown-menu {
+  border: none;
+  box-shadow: 0 5px 25px rgba(0,0,0,0.15);
+  border-radius: 10px;
+  padding: 10px 0;
+  min-width: 250px;
+}
+
+.dropdown-item {
+  padding: 12px 20px;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.dropdown-item:hover {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  transform: translateX(5px);
+}
+
+.dropdown-item i {
+  margin-right: 8px;
+}
+</style>
+
+<script>
+document.querySelectorAll('.hover-animate').forEach(block => {
+  block.addEventListener('mouseenter', (e) => {
+    gsap.to(block, {
+      scale: 1.05,
+      ease: 'power2.out',
+      duration: 0.4
+    });
+    block.style.zIndex = 10;
+  });
+
+  block.addEventListener('mouseleave', (e) => {
+    gsap.to(block, {
+      scale: 1,
+      ease: 'elastic.out(1.2, 0.4)',
+      duration: 0.7
+    });
+    block.style.zIndex = 1;
+  });
+});
+</script>
+
+</body>
+</html>

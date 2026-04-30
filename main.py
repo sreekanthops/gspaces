@@ -4181,14 +4181,55 @@ def contact():
     
     return render_template('contact_new.html')
 
-@app.route('/services')
-def services():
-    """Services page with detailed offerings"""
+@app.route('/about')
+def about():
+    """About page with company information"""
+    return render_template('about_new.html')
+
+@app.route('/products')
+def products():
+    """Products page with all desk setups"""
+    conn = get_db_connection()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+    
+    # Get all products
+    cursor.execute('SELECT * FROM products ORDER BY created_at DESC')
+    products = cursor.fetchall()
+    
+    # Get categories
+    cursor.execute('SELECT * FROM categories ORDER BY name')
+    categories = cursor.fetchall()
+    
+    # Get catalogue files
+    catalogue_dir = os.path.join(app.root_path, 'catalogue')
+    catalogue_files = []
+    if os.path.exists(catalogue_dir):
+        for filename in os.listdir(catalogue_dir):
+            if filename.endswith('.pdf'):
+                catalogue_files.append({
+                    'name': filename,
+                    'display_name': filename.replace('_', ' ').replace('.pdf', '')
+                })
+    
+    cursor.close()
+    conn.close()
+    
+    is_admin = session.get('is_admin', False)
+    
+    return render_template('products_new.html',
+                         products=products,
+                         categories=categories,
+                         catalogue_files=catalogue_files,
+                         is_admin=is_admin)
 
 @app.route('/corporate')
 def corporate():
     """Corporate tie-ups page"""
     return render_template('corporate_new.html')
+
+@app.route('/services')
+def services():
+    """Services page with detailed offerings"""
     return render_template('services.html')
 
 

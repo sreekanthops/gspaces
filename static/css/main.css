@@ -668,17 +668,7 @@ h6 {
 # Scroll Top Button
 --------------------------------------------------------------*/
 .scroll-top {
-  position: fixed;
-  visibility: hidden;
-  opacity: 0;
-  right: 15px;
-  bottom: 15px;
-  z-index: 99999;
-  background-color: var(--accent-color);
-  width: 40px;
-  height: 40px;
-  border-radius: 4px;
-  transition: all 0.4s;
+    display: none !important;
 }
 
 .scroll-top i {
@@ -762,7 +752,7 @@ section,
 .section {
   color: var(--default-color);
   background-color: var(--background-color);
-  padding: 60px 0;
+  padding: 20px 0;
   scroll-margin-top: 90px;
   overflow: clip;
 }
@@ -770,7 +760,7 @@ section,
 @media (max-width: 1199px) {
   section,
   .section {
-    scroll-margin-top: 76px;
+    scroll-margin-top: 20px;
   }
 }
 
@@ -868,7 +858,7 @@ section,
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(135deg, rgba(74, 95, 127, 0.75) 0%, rgba(61, 79, 107, 0.75) 100%);
+    background: linear-gradient(135deg, rgba(74, 95, 127, 0.3) 0%, rgba(61, 79, 107, 0.3) 100%);
     pointer-events: none;
 }
 
@@ -1008,6 +998,10 @@ section,
 /*--------------------------------------------------------------
 # About Section
 --------------------------------------------------------------*/
+.about {
+    margin-top: 100px;
+}
+
 .about h3 {
   font-family: 'Roboto', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   font-weight: 700;

@@ -4192,7 +4192,7 @@ def products():
     cursor = conn.cursor(cursor_factory=RealDictCursor)
     
     # Get all products
-    cursor.execute('SELECT * FROM products ORDER BY created_at DESC')
+    cursor.execute('SELECT * FROM products ORDER BY id DESC')
     products = cursor.fetchall()
     
     # Get categories

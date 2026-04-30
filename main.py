@@ -4155,6 +4155,37 @@ def serve_sitemap():
     else:
         return redirect(url_for('static', filename='sitemap.xml'), code=301)
 
+# --- SEO PAGES ---
+@app.route('/about')
+def about():
+    """About Us page with SEO optimization"""
+    return render_template('about.html')
+
+@app.route('/contact', methods=['GET', 'POST'])
+def contact():
+    """Contact Us page with form handling"""
+    if request.method == 'POST':
+        # Handle contact form submission
+        name = request.form.get('name')
+        email = request.form.get('email')
+        phone = request.form.get('phone')
+        setup_type = request.form.get('setup_type')
+        budget = request.form.get('budget')
+        message = request.form.get('message')
+        newsletter = request.form.get('newsletter')
+        
+        # TODO: Store in database or send email notification
+        # For now, just flash a success message
+        flash('Thank you for contacting GSpaces! We will get back to you within 24 hours.', 'success')
+        return redirect(url_for('contact'))
+    
+    return render_template('contact.html')
+
+@app.route('/services')
+def services():
+    """Services page with detailed offerings"""
+    return render_template('services.html')
+
 
 # --- AI VISUALIZATION ROUTES ---
 # Register AI room visualization routes

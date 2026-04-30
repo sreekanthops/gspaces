@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>About Us - GSpaces | Premium Desk Setup Solutions India</title>
+  <meta name="description" content="Learn about GSpaces - India's leading provider of complete desk setup solutions. We transform workspaces with premium WFH setups, office desk setups, and dream workspace solutions with free installation.">
+  <meta name="keywords" content="about gspaces, desk setup company, office furniture india, wfh setup provider, workspace solutions india">
+  
+  <!-- Favicon -->
+  <link href="{{ url_for('static', filename='img/favicon.svg') }}" rel="icon">
+  
+  <!-- Preload critical resources -->
+  <link rel="preload" href="{{ url_for('static', filename='css/main.css') }}" as="style">
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Mozilla+Text:wght@200..700&display=swap" rel="stylesheet">
+  
+  <!-- CSS -->
+  <link href="{{ url_for('static', filename='css/main.css') }}" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  
+  <!-- Canonical -->
+  <link rel="canonical" href="https://gspaces.in/about" />
+  
+  <!-- Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "AboutPage",
+    "mainEntity": {
+      "@type": "Organization",
+      "@id": "https://gspaces.in/#organization",
+      "name": "GSpaces",
+      "url": "https://gspaces.in",
+      "logo": "https://gspaces.in/static/img/logo-gspaces1.svg",
+      "description": "GSpaces is India's premier provider of complete desk setup solutions, specializing in WFH setups, office desk setups, and dream workspace transformations with free professional installation.",
+      "foundingDate": "2024",
+      "founder": {
+        "@type": "Person",
+        "name": "GSpaces Team"
+      },
+      "areaServed": {
+        "@type": "Country",
+        "name": "India"
+      },
+      "slogan": "Transform Your Workspace, Transform Your Life"
+    },
+    "breadcrumb": {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://gspaces.in/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "About Us",
+          "item": "https://gspaces.in/about"
+        }
+      ]
+    }
+  }
+  </script>
+</head>
+
+<body>
+{% include 'navbar.html' %}
+
+<main class="main">
+  <!-- Page Title -->
+  <div class="page-title" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 80px 0;">
+    <div class="container">
+      <h1 style="color: white; font-size: 3rem; font-weight: 700;">About GSpaces</h1>
+      <p style="color: white; font-size: 1.2rem;">Transforming Workspaces Across India</p>
+    </div>
+  </div>
+
+  <!-- About Section -->
+  <section class="about section" style="padding: 80px 0;">
+    <div class="container">
+      <div class="row align-items-center gy-4">
+        <div class="col-lg-6">
+          <h2 style="font-size: 2.5rem; color: #273d4e; margin-bottom: 20px;">Who We Are</h2>
+          <p style="font-size: 1.1rem; line-height: 1.8; color: #444;">
+            <strong>GSpaces</strong> is India's leading provider of complete desk setup solutions. We specialize in transforming empty spaces into fully functional, aesthetically pleasing workspaces that boost productivity and inspire creativity.
+          </p>
+          <p style="font-size: 1.1rem; line-height: 1.8; color: #444;">
+            Founded with a vision to revolutionize how Indians work from home and in offices, we've helped thousands of professionals, entrepreneurs, and businesses create their dream workspaces.
+          </p>
+        </div>
+        <div class="col-lg-6">
+          <img src="{{ url_for('static', filename='img/about.jpg') }}" class="img-fluid rounded-4" alt="GSpaces Office" width="600" height="400" loading="lazy">
+        </div>
+      </div>
+
+      <!-- Mission & Vision -->
+      <div class="row mt-5">
+        <div class="col-lg-6 mb-4">
+          <div style="background: #f8f9fa; padding: 40px; border-radius: 10px; height: 100%;">
+            <h3 style="color: #ff4a17; margin-bottom: 20px;">Our Mission</h3>
+            <p style="font-size: 1.1rem; line-height: 1.8;">
+              To provide complete, ready-to-use desk setup solutions that combine functionality, aesthetics, and ergonomics, making professional workspaces accessible to everyone across India.
+            </p>
+          </div>
+        </div>
+        <div class="col-lg-6 mb-4">
+          <div style="background: #f8f9fa; padding: 40px; border-radius: 10px; height: 100%;">
+            <h3 style="color: #ff4a17; margin-bottom: 20px;">Our Vision</h3>
+            <p style="font-size: 1.1rem; line-height: 1.8;">
+              To become India's most trusted brand for workspace solutions, helping millions create productive, inspiring work environments that enhance their professional and personal lives.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- What Makes Us Different -->
+      <div class="row mt-5">
+        <div class="col-12">
+          <h2 style="font-size: 2.5rem; color: #273d4e; margin-bottom: 40px; text-align: center;">What Makes Us Different</h2>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-4">
+          <div style="text-align: center; padding: 30px;">
+            <div style="font-size: 3rem; color: #ff4a17; margin-bottom: 20px;">✓</div>
+            <h4 style="color: #273d4e; margin-bottom: 15px;">Complete Solutions</h4>
+            <p>Everything you need in one package - desk, chair, lighting, accessories, and more.</p>
+          </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-4">
+          <div style="text-align: center; padding: 30px;">
+            <div style="font-size: 3rem; color: #ff4a17; margin-bottom: 20px;">🚚</div>
+            <h4 style="color: #273d4e; margin-bottom: 15px;">Free Installation</h4>
+            <p>Professional installation included at no extra cost across India.</p>
+          </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-4">
+          <div style="text-align: center; padding: 30px;">
+            <div style="font-size: 3rem; color: #ff4a17; margin-bottom: 20px;">🎨</div>
+            <h4 style="color: #273d4e; margin-bottom: 15px;">Curated Designs</h4>
+            <p>Professionally matched furniture and accessories for perfect aesthetics.</p>
+          </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-4">
+          <div style="text-align: center; padding: 30px;">
+            <div style="font-size: 3rem; color: #ff4a17; margin-bottom: 20px;">💯</div>
+            <h4 style="color: #273d4e; margin-bottom: 15px;">Quality Guaranteed</h4>
+            <p>Premium materials, ergonomic designs, and manufacturer warranties.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Our Services -->
+      <div class="row mt-5">
+        <div class="col-12">
+          <h2 style="font-size: 2.5rem; color: #273d4e; margin-bottom: 40px; text-align: center;">Our Services</h2>
+        </div>
+        <div class="col-lg-4 mb-4">
+          <div style="background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); height: 100%;">
+            <h4 style="color: #ff4a17; margin-bottom: 15px;">WFH Desk Setups</h4>
+            <p>Complete work from home solutions with ergonomic furniture, proper lighting, and cable management for maximum productivity.</p>
+          </div>
+        </div>
+        <div class="col-lg-4 mb-4">
+          <div style="background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); height: 100%;">
+            <h4 style="color: #ff4a17; margin-bottom: 15px;">Office Desk Setups</h4>
+            <p>Professional office solutions for businesses, startups, and corporate spaces with bulk pricing and customization options.</p>
+          </div>
+        </div>
+        <div class="col-lg-4 mb-4">
+          <div style="background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); height: 100%;">
+            <h4 style="color: #ff4a17; margin-bottom: 15px;">Executive Setups</h4>
+            <p>Premium executive desk setups with luxury furniture, sophisticated designs, and high-end accessories.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- CTA -->
+      <div class="row mt-5">
+        <div class="col-12 text-center">
+          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 60px 40px; border-radius: 15px;">
+            <h2 style="color: white; font-size: 2.5rem; margin-bottom: 20px;">Ready to Transform Your Workspace?</h2>
+            <p style="color: white; font-size: 1.2rem; margin-bottom: 30px;">Get started with GSpaces today and create your dream desk setup.</p>
+            <a href="/" class="btn btn-light btn-lg" style="padding: 15px 40px; font-size: 1.1rem;">Explore Our Setups</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+{% include 'footer.html' %}
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

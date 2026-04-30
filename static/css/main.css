@@ -250,9 +250,13 @@ h6 {
   align-items: center;
 }
 
+.custom-navbar .custom-navbar-cta .nav-link {
+  padding: 0 !important;
+}
+
 .custom-navbar .custom-navbar-cta .btn-get-started {
   background: #5ec4e8;
-  color: #ffffff;
+  color: #ffffff !important;
   padding: 10px 28px;
   border-radius: 50px;
   font-weight: 600;
@@ -267,6 +271,7 @@ h6 {
   background: #4ab3d6;
   transform: translateY(-2px);
   box-shadow: 0 8px 20px rgba(94, 196, 232, 0.4);
+  color: #ffffff !important;
 }
 
 .custom-navbar .custom-navbar-cta img {
@@ -834,7 +839,7 @@ section,
 # home Section
 --------------------------------------------------------------*/
 .home {
-    background: url('/static/img/hero-bg.jpg') center center/cover no-repeat;
+    background: url('../img/hero-bg.jpg') center center/cover no-repeat;
     padding: 0;
     color: #ffffff;
     min-height: 100vh;

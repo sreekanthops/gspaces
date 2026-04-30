@@ -553,7 +553,7 @@ def shipping_policy():
 @app.route('/instagram-welcome')
 def instagram_welcome():
     """Landing page for Instagram campaign visitors"""
-    return render_template('instagram_welcome.html')
+    return render_template('instagram_welcome_v2.html')
 
 # --- AUTHENTICATION ROUTES (Email/Password & Google) ---
 @app.route('/login', methods=['GET', 'POST'])

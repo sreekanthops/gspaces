@@ -548,12 +548,13 @@ def refund_policy():
 
 @app.route('/shipping')
 def shipping_policy():
+    return render_template('shipping.html')
+
 @app.route('/instagram-welcome')
 def instagram_welcome():
     """Landing page for Instagram campaign visitors"""
     return render_template('instagram_welcome.html')
 
-    return render_template('shipping.html')
 # --- AUTHENTICATION ROUTES (Email/Password & Google) ---
 @app.route('/login', methods=['GET', 'POST'])
 def login():

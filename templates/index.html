@@ -60,6 +60,142 @@
   <!-- This should dynamically output the full HTTPS URL of the current page -->
   <link rel="canonical" href="https://gspaces.in{{ request.path if request.path != '/' else '/' }}" />
 
+  <!-- Structured Data (Schema.org) for Rich Search Results -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://gspaces.in/#organization",
+        "name": "GSpaces",
+        "url": "https://gspaces.in",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://gspaces.in/static/img/logo-gspaces1.svg",
+          "width": 250,
+          "height": 60
+        },
+        "description": "GSpaces offers complete desk setup solutions for WFH, office, and home. Premium ergonomic, minimalist & executive desk setups with free installation across India.",
+        "sameAs": [
+          "https://www.instagram.com/gspaces.in/",
+          "https://www.facebook.com/gspaces.in/",
+          "https://www.linkedin.com/company/gspaces/"
+        ],
+        "contactPoint": {
+          "@type": "ContactPoint",
+          "telephone": "+91-XXXXXXXXXX",
+          "contactType": "Customer Service",
+          "areaServed": "IN",
+          "availableLanguage": ["English", "Hindi"]
+        }
+      },
+      {
+        "@type": "LocalBusiness",
+        "@id": "https://gspaces.in/#localbusiness",
+        "name": "GSpaces - Premium Desk Setup Solutions",
+        "image": "https://gspaces.in/static/img/banner.jpg",
+        "description": "Transform your workspace with complete desk setup solutions. Premium WFH setups, office desk setups, and dream workspace solutions with free installation.",
+        "address": {
+          "@type": "PostalAddress",
+          "addressLocality": "India",
+          "addressCountry": "IN"
+        },
+        "geo": {
+          "@type": "GeoCoordinates",
+          "latitude": 28.6139,
+          "longitude": 77.2090
+        },
+        "url": "https://gspaces.in",
+        "telephone": "+91-XXXXXXXXXX",
+        "priceRange": "₹₹₹",
+        "openingHoursSpecification": {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+          "opens": "09:00",
+          "closes": "18:00"
+        },
+        "aggregateRating": {
+          "@type": "AggregateRating",
+          "ratingValue": "4.8",
+          "reviewCount": "150"
+        }
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://gspaces.in/#website",
+        "url": "https://gspaces.in",
+        "name": "GSpaces - Premium Desk Setup Solutions",
+        "description": "Complete desk setup solutions for WFH, office, and home with free installation",
+        "publisher": {
+          "@id": "https://gspaces.in/#organization"
+        },
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": {
+            "@type": "EntryPoint",
+            "urlTemplate": "https://gspaces.in/search?q={search_term_string}"
+          },
+          "query-input": "required name=search_term_string"
+        }
+      },
+      {
+        "@type": "BreadcrumbList",
+        "@id": "https://gspaces.in/#breadcrumb",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://gspaces.in/"
+          }
+        ]
+      },
+      {
+        "@type": "Service",
+        "serviceType": "Desk Setup Solutions",
+        "provider": {
+          "@id": "https://gspaces.in/#organization"
+        },
+        "areaServed": {
+          "@type": "Country",
+          "name": "India"
+        },
+        "hasOfferCatalog": {
+          "@type": "OfferCatalog",
+          "name": "Desk Setup Services",
+          "itemListElement": [
+            {
+              "@type": "Offer",
+              "itemOffered": {
+                "@type": "Service",
+                "name": "WFH Desk Setup",
+                "description": "Complete work from home desk setup with ergonomic furniture and accessories"
+              }
+            },
+            {
+              "@type": "Offer",
+              "itemOffered": {
+                "@type": "Service",
+                "name": "Office Desk Setup",
+                "description": "Professional office desk setup solutions for businesses"
+              }
+            },
+            {
+              "@type": "Offer",
+              "itemOffered": {
+                "@type": "Service",
+                "name": "Executive Desk Setup",
+                "description": "Premium executive desk setup with luxury furniture"
+              }
+            }
+          ]
+        }
+      }
+    ]
+  }
+  </script>
+
 </head>
 
 <body class="index-page ">

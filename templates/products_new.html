@@ -66,7 +66,6 @@
         <!-- Filters -->
         <ul class="products-filters isotope-filters" data-aos="fade-up" data-aos-delay="100">
           <li data-filter="*" class="filter-active">All</li>
-          <!-- Hardcoded categories to match the screenshot -->
           <li data-filter=".filter-basic">Basic</li>
           <li data-filter=".filter-couple">Couple</li>
           <li data-filter=".filter-elegant">Elegant</li>
@@ -74,12 +73,6 @@
           <li data-filter=".filter-luxury">Luxury</li>
           <li data-filter=".filter-storage">Storage</li>
           <li data-filter=".filter-studio">Studio</li>
-          <!-- Dynamic categories from database -->
-          {% if categories and categories|length > 0 %}
-            {% for category in categories %}
-            <li data-filter=".filter-{{ category.name | lower | replace(' ', '-') | replace('&', 'and') }}">{{ category.name }}</li>
-            {% endfor %}
-          {% endif %}
         </ul>
         
         <!-- Catalogue Download Dropdown -->
@@ -177,6 +170,7 @@
 <div id="preloader"></div>
 
 <!-- Vendor JS Files -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="{{ url_for('static', filename='vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
 <script src="{{ url_for('static', filename='vendor/aos/aos.js') }}"></script>
 <script src="{{ url_for('static', filename='vendor/imagesloaded/imagesloaded.pkgd.min.js') }}"></script>
@@ -187,6 +181,28 @@
 
 <!-- Main JS File -->
 <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
+<!-- Custom Isotope Initialization -->
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Isotope after all images are loaded
+    var $grid = $('.isotope-container').isotope({
+      itemSelector: '.isotope-item',
+      layoutMode: 'fitRows',
+      filter: '*'
+    });
+
+    // Filter items when filter link is clicked
+    $('.isotope-filters').on('click', 'li', function() {
+      var filterValue = $(this).attr('data-filter');
+      $grid.isotope({ filter: filterValue });
+
+      // Update active class
+      $('.isotope-filters li').removeClass('filter-active');
+      $(this).addClass('filter-active');
+    });
+  });
+</script>
 
 <style>
 .product-block {

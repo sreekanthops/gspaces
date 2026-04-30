@@ -4184,7 +4184,11 @@ def contact():
 @app.route('/products')
 def products():
     """Products page with all desk setups"""
-    conn = get_db_connection()
+    conn = connect_to_db()
+    if not conn:
+        flash('Database connection error', 'error')
+        return redirect(url_for('index'))
+    
     cursor = conn.cursor(cursor_factory=RealDictCursor)
     
     # Get all products

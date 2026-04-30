@@ -1,12 +1,11 @@
-<!-- Urgency Banner -->
-<div id="urgency-banner" 
-     style="background:#272424; color:#fff; font-weight:700; font-size:16px; text-align:center; padding:12px; position:sticky; top:0; z-index:999; letter-spacing:0.5px; border-bottom:2px solid #f5d76e;">
-  🔥 Deal Ending Soon! Don’t Miss Out!
-  <span id="countdown" style="display:none;"></span>
-</div>
-
 <!-- Admin Controls -->
 {% if current_user.is_authenticated and current_user.is_admin %}
+<!-- Urgency Banner -->
+<div id="urgency-banner"
+     style="background:#272424; color:#fff; font-weight:700; font-size:16px; text-align:center; padding:12px; position:sticky; top:0; z-index:999; letter-spacing:0.5px; border-bottom:2px solid #f5d76e;">
+  🔥 Deal Ending Soon! Don't Miss Out!
+  <span id="countdown" style="display:none;"></span>
+</div>
 <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 15px; text-align:center; display:flex; gap:10px; justify-content:center; flex-wrap:wrap; align-items:center;">
   
   <!-- Admin Panel Link -->
@@ -189,9 +188,6 @@ document.addEventListener("DOMContentLoaded", initCountdownFromServer);
                     <a class="nav-link" href="{{ url_for('profile') }}">
                         <img src="{{ url_for('static', filename='img/user.svg') }}" alt="User">
                     </a>
-                </li>
-                <li>
-                    <a href="{{ url_for('contact') }}" class="btn-get-started">Get Started</a>
                 </li>
             </ul>
         </div>

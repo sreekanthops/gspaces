@@ -66,9 +66,18 @@
         <!-- Filters -->
         <ul class="products-filters isotope-filters" data-aos="fade-up" data-aos-delay="100">
           <li data-filter="*" class="filter-active">All</li>
+          <!-- Hardcoded categories to match the screenshot -->
+          <li data-filter=".filter-basic">Basic</li>
+          <li data-filter=".filter-couple">Couple</li>
+          <li data-filter=".filter-elegant">Elegant</li>
+          <li data-filter=".filter-greenery">Greenery</li>
+          <li data-filter=".filter-luxury">Luxury</li>
+          <li data-filter=".filter-storage">Storage</li>
+          <li data-filter=".filter-studio">Studio</li>
+          <!-- Dynamic categories from database -->
           {% if categories and categories|length > 0 %}
             {% for category in categories %}
-            <li data-filter=".filter-{{ category.slug }}">{{ category.name }}</li>
+            <li data-filter=".filter-{{ category.name | lower | replace(' ', '-') | replace('&', 'and') }}">{{ category.name }}</li>
             {% endfor %}
           {% endif %}
         </ul>
@@ -97,9 +106,10 @@
         <div class="row gy-4 isotope-container" data-aos="fade-up" data-aos-delay="200">
           
           {% for product in products %}
-          <div class="col-lg-3 col-md-6 products-item isotope-item filter-{{ product.category | lower }}">
+          <div class="col-lg-3 col-md-6 products-item isotope-item filter-{{ product.category | lower | replace(' ', '-') | replace('&', 'and') }}">
             
-            <div class="hover-animate product-block" onclick="location.href='{{ url_for('product_detail', product_id=product.id) }}'">
+            <a href="{{ url_for('product_detail', product_id=product.id) }}" class="product-link">
+              <div class="hover-animate product-block">
               
               <div class="products-content">
                 <a href="{{ url_for('product_detail', product_id=product.id) }}">
@@ -146,6 +156,7 @@
               
             </div>
           </div>
+        </a>
           {% endfor %}
           
         </div>

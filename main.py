@@ -61,6 +61,7 @@ from admin_referral_routes import add_admin_referral_routes
 from blog_routes import add_blog_routes
 from chatbot_routes import add_chatbot_routes
 from deals_routes import register_deals_routes
+from performance_config import configure_performance
 
 # --- DISPOSABLE EMAIL DOMAINS BLACKLIST ---
 DISPOSABLE_EMAIL_DOMAINS = {
@@ -156,6 +157,10 @@ def clean_expired_otps(conn):
 
 # Flask App Configuration
 app = Flask(__name__)
+
+# Configure performance optimizations (compression, caching)
+configure_performance(app)
+
 app.config['SECRET_KEY'] = os.getenv('FLASK_APP_SECRET_KEY', 'your_super_secret_fallback_key') # Replace with a strong, random key
 app.config['SESSION_COOKIE_SECURE'] = os.getenv('SESSION_COOKIE_SECURE', 'False').lower() == 'true' # True in production
 app.config['SESSION_COOKIE_HTTPONLY'] = True

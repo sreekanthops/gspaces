@@ -12,17 +12,30 @@
   <!-- Favicon -->
   <link href="{{ url_for('static', filename='img/favicon.svg') }}" rel="icon">
   <link href="{{ url_for('static', filename='img/apple-touch-icon.png') }}" rel="apple-touch-icon">
-<!-- Preload critical resources -->
+  
+  <!-- Preload critical resources for LCP -->
+  <link rel="preload" href="{{ url_for('static', filename='img/banner.jpg') }}" as="image">
   <link rel="preload" href="{{ url_for('static', filename='css/main.css') }}" as="style">
-  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Mozilla+Text:wght@200..700&display=swap" as="style">
+  <link rel="preload" href="https://fonts.gstatic.com/s/mozillatext/v1/xyz.woff2" as="font" type="font/woff2" crossorigin>
+  
+  <!-- DNS prefetch for external resources -->
+  <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+  <link rel="dns-prefetch" href="https://fonts.gstatic.com">
+  <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
+  <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
   
   <!-- Fonts with font-display: swap for better performance -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Mozilla+Text:wght@200..700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <link href="https://fonts.googleapis.com/css2?family=Mozilla+Text:wght@200..700&display=swap" rel="stylesheet">
   
-  <!-- Critical CSS inline or preloaded -->
-  <link href="{{ url_for('static', filename='css/main.css') }}" rel="stylesheet">
+  <!-- Inline critical CSS for instant render -->
+  <style>
+    :root{--default-font:"Mozilla Text",system-ui,-apple-system,Roboto;--heading-font:"Mozilla Text",sans-serif;--background-color:#fff;--default-color:#444;--heading-color:#273d4e;--accent-color:#ff4a17;--contrast-color:#fff}*{margin:0;padding:0;box-sizing:border-box}body{font-family:var(--default-font);color:var(--default-color);background-color:var(--background-color);line-height:1.6}.home.section{min-height:100vh;display:flex;align-items:center;position:relative}.home-content{position:relative;z-index:2}.home-image img{width:100%;height:auto;display:block}.home-text h2{font-size:2.5rem;color:var(--heading-color);font-weight:700;margin-bottom:1rem}.home-text p{font-size:1.1rem;margin-bottom:1rem}.header{background:#fff;box-shadow:0 2px 4px rgba(0,0,0,.1);position:sticky;top:0;z-index:1000}.container{max-width:1200px;margin:0 auto;padding:0 15px}
+  </style>
+  
+  <!-- Load full CSS asynchronously -->
+  <link href="{{ url_for('static', filename='css/main.css') }}" rel="stylesheet" media="print" onload="this.media='all'">
   
   <!-- Defer non-critical CSS -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" media="print" onload="this.media='all'">

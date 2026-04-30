@@ -205,19 +205,23 @@
     <!-- home Section -->
 <section id="home" class="home section">
     <div class="container home-content">
-        <div class="home-image">
-            <img src="{{ url_for('static', filename='img/banner.jpg') }}" alt="Background Image" width="1920" height="1080" loading="eager">
-        </div>
-        <div class="home-text text-start">
-            <h2 data-aos="fade-up" data-aos-delay="100">
+        <div class="home-text" data-aos="fade-right" data-aos-delay="100">
+            <h2>
                 Premium Desk Setup Solutions for WFH & Office
             </h2>
-            <p data-aos="fade-up" data-aos-delay="200">
+            <p>
                 Transform your empty space into a complete, ready-to-use desk setup. Whether you need a WFH setup, office desk setup, or dream workspace, GSpaces delivers aesthetic, ergonomic solutions with free installation.
             </p>
-            <p data-aos="fade-up" data-aos-delay="200">
-                Complete desk setup with table, chair, lighting & accessories — What you see is exactly what you get.
-            </p>
+            <div class="btn-group">
+                <a href="{{ url_for('products') }}" class="btn-primary">Get Started</a>
+                <a href="https://youtu.be/U7gP16TXE8w?si=s5nXSpjALnLEEx81" class="btn-video glightbox">
+                    <i class="bi bi-play-circle-fill"></i>
+                    <span>Watch Video</span>
+                </a>
+            </div>
+        </div>
+        <div class="home-image" data-aos="fade-left" data-aos-delay="200">
+            <img src="{{ url_for('static', filename='img/banner.jpg') }}" alt="Premium Desk Setup Solutions" width="600" height="600" loading="eager">
         </div>
     </div>
 </section>

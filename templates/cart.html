@@ -453,16 +453,45 @@
                         
                         <!-- Wallet Balance Section -->
                         {% if wallet_balance and wallet_balance > 0 %}
-                        <div class="coupon-section" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; color: white;">
-                            <div class="d-flex align-items-center justify-content-between mb-2">
-                                <strong style="font-size: 14px;"><i class="bi bi-wallet2 me-2"></i>Use Wallet Balance</strong>
-                                <span style="font-size: 13px; opacity: 0.9;">Available: ₹{{ wallet_balance|inr }}</span>
+                        <div class="wallet-balance-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; border-radius: 16px; padding: 20px; margin-bottom: 20px; box-shadow: 0 8px 24px rgba(102, 126, 234, 0.25);">
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <div>
+                                    <div style="color: white; font-size: 16px; font-weight: 600; margin-bottom: 4px;">
+                                        <i class="bi bi-wallet2 me-2"></i>Wallet Balance
+                                    </div>
+                                    <div style="color: rgba(255,255,255,0.9); font-size: 13px;">
+                                        Save money on your order!
+                                    </div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="color: rgba(255,255,255,0.8); font-size: 12px; margin-bottom: 2px;">Available</div>
+                                    <div style="color: white; font-size: 24px; font-weight: 700;">₹{{ wallet_balance|inr }}</div>
+                                </div>
                             </div>
-                            <div class="form-check" style="background: rgba(255,255,255,0.15); padding: 12px; border-radius: 8px;">
-                                <input class="form-check-input" type="checkbox" id="useWalletBalance" onchange="toggleWalletUsage()" style="cursor: pointer;">
-                                <label class="form-check-label" for="useWalletBalance" style="cursor: pointer; font-size: 13px;">
-                                    Apply wallet balance to this order (Max ₹10,000 per order)
-                                </label>
+                            
+                            <div class="wallet-toggle-container" style="background: rgba(255,255,255,0.2); padding: 16px; border-radius: 12px; backdrop-filter: blur(10px);">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div style="flex: 1;">
+                                        <label for="useWalletBalance" style="color: white; font-weight: 500; font-size: 14px; margin: 0; cursor: pointer; display: block;">
+                                            Use wallet balance for this order
+                                        </label>
+                                        <small style="color: rgba(255,255,255,0.8); font-size: 12px;">
+                                            Maximum ₹10,000 per order
+                                        </small>
+                                    </div>
+                                    <div class="form-check form-switch" style="margin: 0; padding: 0;">
+                                        <input class="form-check-input" type="checkbox" role="switch" id="useWalletBalance" onchange="toggleWalletUsage()" style="cursor: pointer; width: 50px; height: 26px; background-color: rgba(255,255,255,0.3); border: 2px solid rgba(255,255,255,0.5);">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div id="wallet-savings-preview" class="d-none" style="margin-top: 12px; padding: 12px; background: rgba(255,255,255,0.15); border-radius: 8px; backdrop-filter: blur(10px);">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <span style="color: white; font-size: 13px;">
+                                        <i class="bi bi-check-circle-fill me-1"></i>You'll save
+                                    </span>
+                                    <strong id="wallet-savings-amount" style="color: #ffd700; font-size: 16px; font-weight: 700;">₹0</strong>
+                                </div>
                             </div>
                         </div>
                         
@@ -637,6 +666,8 @@
             const checkbox = document.getElementById('useWalletBalance');
             const walletRow = document.getElementById('wallet-discount-row');
             const walletAmountDisplay = document.getElementById('wallet-discount-amount');
+            const savingsPreview = document.getElementById('wallet-savings-preview');
+            const savingsAmount = document.getElementById('wallet-savings-amount');
             
             if (checkbox.checked) {
                 // Calculate current total after coupon discount
@@ -654,6 +685,12 @@
                 walletRow.classList.remove('d-none');
                 walletAmountDisplay.textContent = `- ₹${walletAmountUsed.toFixed(2)}`;
                 
+                // Show savings preview in the wallet card
+                if (savingsPreview && savingsAmount) {
+                    savingsPreview.classList.remove('d-none');
+                    savingsAmount.textContent = `₹${walletAmountUsed.toFixed(0)}`;
+                }
+                
                 // Update total
                 const newTotal = currentTotal - walletAmountUsed;
                 document.getElementById('total-amount').textContent = `₹${Math.max(0, newTotal).toFixed(2)}`;
@@ -662,6 +699,11 @@
                 // Remove wallet discount
                 walletAmountUsed = 0;
                 walletRow.classList.add('d-none');
+                
+                // Hide savings preview
+                if (savingsPreview) {
+                    savingsPreview.classList.add('d-none');
+                }
                 
                 // Recalculate total without wallet
                 let currentSubtotal = originalSubtotal;

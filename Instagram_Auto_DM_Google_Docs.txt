@@ -1,0 +1,373 @@
+═══════════════════════════════════════════════════════════════════════════════
+                    INSTAGRAM AUTO-DM MESSAGE TEMPLATE
+                         For GSpaces Coupon Campaign
+═══════════════════════════════════════════════════════════════════════════════
+
+
+PURPOSE
+───────────────────────────────────────────────────────────────────────────────
+This message will be automatically sent to users who react to or reply to your
+Instagram posts, directing them to a beautiful landing page with all instructions
+to claim their ₹1,500 reward (₹500 signup + ₹1,000 coupon).
+
+LANDING PAGE URL: https://gspaces.in/instagram-welcome
+
+
+═══════════════════════════════════════════════════════════════════════════════
+                         RECOMMENDED MESSAGE VERSION
+                              (Copy This One!)
+═══════════════════════════════════════════════════════════════════════════════
+
+🎊 WOW! Thanks for the love! 🎊
+
+🎁 YOUR EXCLUSIVE GIFT: ₹1,000 COUPON 🎁
+
+✨ About GSpaces: We create complete WFH desk setups for students & professionals - table, ergonomic chair, lighting & accessories with FREE installation! Transform your space into a dream setup. 🪑💻
+
+📋 Coupon Code: GSPACES_DESKS_FOLLOW
+
+💎 TOTAL REWARDS: ₹1,500
+├─ ₹500 → Signup Bonus
+└─ ₹1,000 → This Coupon
+
+📱 QUICK STEPS TO CLAIM:
+
+1️⃣ 🌐 Go to: gspaces.in
+2️⃣ ✍️ Sign up (Google or Email)
+3️⃣ 👤 Tap Profile Icon
+4️⃣ 💰 Open Wallet
+5️⃣ 🎟️ Enter: GSPACES_DESKS_FOLLOW
+6️⃣ ✅ Claim Your ₹1,000!
+
+🛒 HOW TO USE YOUR ₹1,500:
+
+7️⃣ Browse Setups → Add to Cart
+8️⃣ At Checkout → Check "Use Wallet Balance"
+9️⃣ Your ₹1,500 will be applied! 💰
+
+🚀 Build your dream setup now!
+
+💬 Questions? Just reply! We're here to help! 😊
+
+
+═══════════════════════════════════════════════════════════════════════════════
+                         ALTERNATIVE VERSION 1
+                         (Standard Professional)
+═══════════════════════════════════════════════════════════════════════════════
+
+🎉 Thank you for engaging with us! 🎉
+
+✨ GSpaces creates complete WFH desk setups for students & professionals - table, chair, lighting & accessories with FREE installation across India!
+
+Here's your exclusive ₹1,000 coupon code: GSPACES_DESKS_FOLLOW
+
+💰 Get ₹1,500 Total Bonus:
+• ₹500 on signup
+• ₹1,000 with this coupon code
+
+🎯 How to Claim Your Reward:
+
+1️⃣ Visit: https://gspaces.in
+
+2️⃣ Sign up using Google or your own details
+
+3️⃣ Go to your Profile (click the profile icon)
+
+4️⃣ Navigate to Wallet section
+
+5️⃣ Enter coupon code: GSPACES_DESKS_FOLLOW
+
+6️⃣ Click "Claim" to add ₹1,000 to your wallet
+
+🛒 How to Use Your ₹1,500:
+
+7️⃣ Browse Setups → Add your dream setup to cart
+
+8️⃣ At Checkout → Check "Use Wallet Balance" box
+
+9️⃣ Your ₹1,500 discount will be applied automatically!
+
+Start shopping now and build your dream workspace setup!
+
+Questions? Reply to this message anytime! 💬
+
+
+═══════════════════════════════════════════════════════════════════════════════
+                         ALTERNATIVE VERSION 2
+                            (Short & Sweet)
+═══════════════════════════════════════════════════════════════════════════════
+
+🎉 Thanks for engaging! Here's ₹1,000 OFF! 🎉
+
+✨ GSpaces: Complete WFH desk setups for students & professionals with FREE installation!
+
+Code: GSPACES_DESKS_FOLLOW
+
+Steps to Claim:
+1. Visit gspaces.in
+2. Sign up (get ₹500 bonus)
+3. Profile → Wallet
+4. Enter code → Claim ₹1,000
+
+Total: ₹1,500 in your wallet! 🎁
+
+How to Use:
+5. Browse Setups → Add to Cart
+6. Checkout → Check "Use Wallet Balance"
+7. ₹1,500 discount applied! 💰
+
+Build your dream setup now! 🛒
+
+
+═══════════════════════════════════════════════════════════════════════════════
+                         ALTERNATIVE VERSION 3
+                         (Minimal Professional)
+═══════════════════════════════════════════════════════════════════════════════
+
+Thank you for engaging with GSpaces! 🙏
+
+About Us: GSpaces delivers complete WFH desk setup solutions for students & professionals. We provide premium ergonomic desk setups with table, chair, lighting & accessories - all with FREE installation across India.
+
+We're excited to offer you an exclusive ₹1,000 discount coupon.
+
+Coupon Code: GSPACES_DESKS_FOLLOW
+
+Total Benefits:
+• ₹500 signup bonus
+• ₹1,000 coupon discount
+• ₹1,500 total in your wallet
+
+Redemption Steps:
+
+1. Visit https://gspaces.in
+2. Create your account (Google sign-in available)
+3. Navigate to Profile → Wallet
+4. Enter coupon code: GSPACES_DESKS_FOLLOW
+5. Click "Claim" to activate
+
+How to Use Your Wallet Balance:
+
+6. Browse our Setups section
+7. Add your dream setup to cart
+8. At checkout, check the "Use Wallet Balance" box
+9. Your ₹1,500 will be automatically applied
+
+Start building your dream workspace today!
+
+Need assistance? Feel free to reply to this message.
+
+
+═══════════════════════════════════════════════════════════════════════════════
+                         IMPLEMENTATION GUIDELINES
+═══════════════════════════════════════════════════════════════════════════════
+
+INSTAGRAM DM SPECIFICATIONS
+───────────────────────────────────────────────────────────────────────────────
+• Character Limit: 1,000 characters maximum
+• All versions above are within this limit
+• Messages support emojis and line breaks
+• Links are automatically clickable
+
+
+BEST PRACTICES
+───────────────────────────────────────────────────────────────────────────────
+1. Timing
+   • Send DM within 5-10 minutes of user engagement
+   • Don't delay - strike while interest is hot
+
+2. Personalization
+   • Add user's first name if available via Instagram API
+   • Example: "Hi [Name]! 🎉 Thanks for engaging..."
+
+3. Link Optimization
+   • Use full URL: https://gspaces.in
+   • Consider UTM parameters for tracking: 
+     https://gspaces.in?utm_source=instagram&utm_medium=dm&utm_campaign=follow
+
+4. Follow-up Strategy
+   • Send reminder after 24 hours if coupon not claimed
+   • Don't send more than 2 messages total
+
+
+TECHNICAL REQUIREMENTS CHECKLIST
+───────────────────────────────────────────────────────────────────────────────
+Before launching, ensure:
+
+✓ Coupon code "GSPACES_DESKS_FOLLOW" exists in database
+✓ Coupon is set to active status
+✓ Coupon has sufficient usage limit (or unlimited)
+✓ Wallet system is operational
+✓ ₹500 signup bonus is working correctly
+✓ Coupon redemption flow is tested
+✓ Mobile responsive design is verified
+✓ All links work correctly
+
+
+COMPLIANCE & SAFETY
+───────────────────────────────────────────────────────────────────────────────
+⚠️ IMPORTANT: Follow Instagram's automation policies
+
+✓ Don't spam users with repeated messages
+✓ Include opt-out option if sending multiple messages
+✓ Respect user privacy and data protection laws
+✓ Use approved Instagram automation tools only
+✓ Monitor for spam reports and adjust accordingly
+✓ Keep message frequency reasonable
+
+
+TESTING PROCEDURE
+───────────────────────────────────────────────────────────────────────────────
+Test the complete flow before going live:
+
+1. Database Verification
+   □ Check coupon exists in coupons table
+   □ Verify coupon code spelling: GSPACES_DESKS_FOLLOW
+   □ Confirm coupon value is ₹1,000
+   □ Check expiry date (if applicable)
+
+2. User Journey Testing
+   □ Visit gspaces.in on mobile device
+   □ Complete signup process
+   □ Verify ₹500 signup bonus appears
+   □ Navigate to Profile → Wallet
+   □ Enter coupon code
+   □ Click "Claim" button
+   □ Verify ₹1,000 is added
+   □ Check total balance shows ₹1,500
+
+3. Instagram Integration Testing
+   □ Test auto-DM trigger on post reaction
+   □ Test auto-DM trigger on post reply
+   □ Verify message sends within 5-10 minutes
+   □ Check message formatting on mobile
+   □ Verify links are clickable
+   □ Test with multiple test accounts
+
+4. Error Handling
+   □ Test with already-used coupon code
+   □ Test with invalid coupon code
+   □ Test with expired coupon (if applicable)
+   □ Verify appropriate error messages display
+
+
+RECOMMENDED TOOLS FOR INSTAGRAM AUTO-DM
+───────────────────────────────────────────────────────────────────────────────
+Consider using these approved tools:
+
+• ManyChat - Instagram automation platform
+• MobileMonkey - Multi-channel messaging
+• Chatfuel - Bot building platform
+• Instagram Graph API - Official API (requires approval)
+• Manychat + Zapier - For advanced workflows
+
+
+TRACKING & ANALYTICS
+───────────────────────────────────────────────────────────────────────────────
+Monitor these metrics:
+
+• Number of DMs sent
+• Coupon redemption rate
+• Time from DM to redemption
+• Conversion to purchase
+• Average order value with coupon
+• Customer lifetime value
+
+
+OPTIMIZATION TIPS
+───────────────────────────────────────────────────────────────────────────────
+1. A/B Testing
+   • Test different message versions
+   • Compare emoji-rich vs. minimal versions
+   • Test different call-to-action phrases
+
+2. Timing Optimization
+   • Track best response times
+   • Adjust send timing based on data
+   • Consider time zones
+
+3. Message Refinement
+   • Monitor user questions/confusion
+   • Update message based on feedback
+   • Simplify steps if users struggle
+
+4. Urgency Creation
+   • Add expiry date: "Valid for 7 days!"
+   • Limited quantity: "First 100 users only!"
+   • Countdown: "Offer ends in 48 hours!"
+
+
+CUSTOMER SUPPORT PREPARATION
+───────────────────────────────────────────────────────────────────────────────
+Prepare responses for common questions:
+
+Q: "I can't find the wallet section"
+A: After logging in, click your profile icon (top right), then select "Wallet" 
+   from the menu.
+
+Q: "The coupon code isn't working"
+A: Please ensure you're entering: GSPACES_DESKS_FOLLOW (all caps, with 
+   underscores). If it still doesn't work, contact support@gspaces.in
+
+Q: "I didn't receive the ₹500 signup bonus"
+A: The signup bonus is automatically added. Please refresh your wallet page. 
+   If still not visible, contact us.
+
+Q: "Can I use this coupon with other offers?"
+A: [Specify your policy - typically: "This coupon can be combined with 
+   other offers" or "This is a standalone offer"]
+
+Q: "When does the coupon expire?"
+A: [Specify expiry date or "This coupon has no expiry date"]
+
+
+LEGAL CONSIDERATIONS
+───────────────────────────────────────────────────────────────────────────────
+Include in your terms:
+
+• Coupon terms and conditions
+• One coupon per user policy
+• Non-transferable clause
+• Right to modify or cancel offer
+• Dispute resolution process
+
+
+SUCCESS METRICS
+───────────────────────────────────────────────────────────────────────────────
+Track these KPIs:
+
+• DM Open Rate: Target 80%+
+• Click-through Rate: Target 40%+
+• Signup Conversion: Target 30%+
+• Coupon Redemption: Target 60%+
+• Purchase Conversion: Target 20%+
+
+
+═══════════════════════════════════════════════════════════════════════════════
+                              QUICK REFERENCE
+═══════════════════════════════════════════════════════════════════════════════
+
+Website: https://gspaces.in
+Coupon Code: GSPACES_DESKS_FOLLOW
+Signup Bonus: ₹500
+Coupon Value: ₹1,000
+Total Reward: ₹1,500
+
+Redemption Path: Profile Icon → Wallet → Enter Code → Claim
+
+Support Email: support@gspaces.in
+Character Limit: 1,000 characters
+Recommended Version: Emoji-Rich Version (shown at top)
+
+
+═══════════════════════════════════════════════════════════════════════════════
+                              DOCUMENT INFO
+═══════════════════════════════════════════════════════════════════════════════
+
+Created: April 30, 2026
+Version: 1.0
+Purpose: Instagram Auto-DM Campaign for GSpaces
+Campaign: Follow & Engage Reward Program
+
+═══════════════════════════════════════════════════════════════════════════════
+                                  END
+═══════════════════════════════════════════════════════════════════════════════

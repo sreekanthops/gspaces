@@ -4158,8 +4158,8 @@ def serve_sitemap():
 # --- SEO PAGES ---
 @app.route('/about')
 def about():
-    """About Us page with SEO optimization"""
-    return render_template('about.html')
+    """About page with company information"""
+    return render_template('about_new.html')
 
 @app.route('/contact', methods=['GET', 'POST'])
 def contact():
@@ -4180,11 +4180,6 @@ def contact():
         return redirect(url_for('contact'))
     
     return render_template('contact_new.html')
-
-@app.route('/about')
-def about():
-    """About page with company information"""
-    return render_template('about_new.html')
 
 @app.route('/products')
 def products():

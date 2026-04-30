@@ -839,7 +839,7 @@ section,
 # home Section
 --------------------------------------------------------------*/
 .home {
-    background: url('../img/hero-bg.jpg') center center/cover no-repeat;
+    background: url('/static/img/hero-bg.jpg') center center/cover no-repeat fixed;
     padding: 0;
     color: #ffffff;
     min-height: 100vh;
@@ -847,6 +847,8 @@ section,
     overflow: hidden;
     display: flex;
     align-items: center;
+    margin-top: -90px;
+    padding-top: 90px;
 }
 
 .home::before {
@@ -856,7 +858,7 @@ section,
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(135deg, rgba(74, 95, 127, 0.85) 0%, rgba(61, 79, 107, 0.85) 100%);
+    background: linear-gradient(135deg, rgba(74, 95, 127, 0.75) 0%, rgba(61, 79, 107, 0.75) 100%);
     pointer-events: none;
 }
 

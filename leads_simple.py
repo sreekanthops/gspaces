@@ -338,7 +338,10 @@ def add_design(lead_id):
         
     except Exception as e:
         conn.rollback()
-        flash(f'Error: {str(e)}', 'danger')
+        import traceback
+        error_details = traceback.format_exc()
+        print(f"ERROR in add_design: {error_details}")
+        flash(f'Error adding design: {str(e)}', 'danger')
     finally:
         cur.close()
         conn.close()

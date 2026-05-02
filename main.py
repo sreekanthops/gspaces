@@ -64,6 +64,7 @@ from chatbot_routes import add_chatbot_routes
 from deals_routes import register_deals_routes
 from performance_config import configure_performance
 from leads_simple import register_leads_routes
+from admin_users_routes import admin_users_bp, set_db_connection_func
 
 # --- DISPOSABLE EMAIL DOMAINS BLACKLIST ---
 DISPOSABLE_EMAIL_DOMAINS = {
@@ -257,11 +258,13 @@ def load_user(user_id):
     try:
         conn = connect_to_db()
         cursor = conn.cursor(cursor_factory=RealDictCursor)
-        cursor.execute("SELECT id, email, name, profile_photo FROM users WHERE id = %s", (user_id,))
+        cursor.execute("SELECT id, email, name, profile_photo, is_admin FROM users WHERE id = %s", (user_id,))
         user_data = cursor.fetchone()
         if user_data:
-            # Check if the user's email is in ADMIN_EMAILS to set is_admin
-            is_admin = user_data['email'] in ADMIN_EMAILS
+            # Get is_admin from database, fallback to checking ADMIN_EMAILS if column doesn't exist
+            is_admin = user_data.get('is_admin', False)
+            if not is_admin and user_data['email'] in ADMIN_EMAILS:
+                is_admin = True
             return User(
                 id=user_data['id'],
                 email=user_data['email'],
@@ -4527,6 +4530,10 @@ register_ai_routes(app)
 # Register leads management routes
 register_leads_routes(app, connect_to_db)
 
+# --- ADMIN USER MANAGEMENT ---
+# Register admin user management blueprint
+set_db_connection_func(connect_to_db)
+app.register_blueprint(admin_users_bp)
 
 # --- APPLICATION BOOTSTRAP ---
 if __name__ == '__main__':

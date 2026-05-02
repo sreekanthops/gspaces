@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Users - Admin Panel</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .admin-badge {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .user-card {
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+        }
+        .user-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+        .user-card.admin-user {
+            border-left-color: #667eea;
+            background: linear-gradient(to right, #f8f9ff 0%, #ffffff 100%);
+        }
+        .stats-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        .promote-form {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+        .promote-form input {
+            border: none;
+            border-radius: 10px;
+            padding: 12px;
+        }
+        .promote-form button {
+            background: white;
+            color: #f5576c;
+            border: none;
+            border-radius: 10px;
+            padding: 12px 30px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .promote-form button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .toggle-btn {
+            border-radius: 20px;
+            padding: 6px 16px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .toggle-btn:hover {
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-2 bg-dark text-white p-0">
+                {% include 'admin_nav.html' %}
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-10 p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2><i class="fas fa-users-cog"></i> Manage Users</h2>
+                    <a href="{{ url_for('admin_orders') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Dashboard
+                    </a>
+                </div>
+
+                <!-- Flash Messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <!-- Stats Cards -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="stats-card">
+                            <h3 class="mb-0">{{ total_users }}</h3>
+                            <p class="mb-0"><i class="fas fa-users"></i> Total Users</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="stats-card">
+                            <h3 class="mb-0">{{ total_admins }}</h3>
+                            <p class="mb-0"><i class="fas fa-user-shield"></i> Admin Users</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Promote User Form -->
+                <div class="promote-form">
+                    <h4 class="mb-3"><i class="fas fa-user-plus"></i> Promote User to Admin</h4>
+                    <form method="POST" action="{{ url_for('admin_users.promote_user') }}" class="row g-3">
+                        <div class="col-md-9">
+                            <input type="email" 
+                                   name="email" 
+                                   class="form-control" 
+                                   placeholder="Enter user's email address"
+                                   required>
+                        </div>
+                        <div class="col-md-3">
+                            <button type="submit" class="btn w-100">
+                                <i class="fas fa-crown"></i> Promote to Admin
+                            </button>
+                        </div>
+                    </form>
+                    <small class="d-block mt-2 opacity-75">
+                        <i class="fas fa-info-circle"></i> Enter the email address of the user you want to promote to admin
+                    </small>
+                </div>
+
+                <!-- Users List -->
+                <div class="card shadow-sm">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0"><i class="fas fa-list"></i> All Users</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Phone</th>
+                                        <th>Status</th>
+                                        <th>Orders</th>
+                                        <th>Wallet</th>
+                                        <th>Referral Code</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for user in users %}
+                                    <tr class="user-card {% if user.is_admin %}admin-user{% endif %}">
+                                        <td><strong>#{{ user.id }}</strong></td>
+                                        <td>
+                                            {{ user.name }}
+                                            {% if user.is_admin %}
+                                                <span class="admin-badge ms-2">
+                                                    <i class="fas fa-crown"></i> ADMIN
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ user.email }}</td>
+                                        <td>{{ user.phone or '-' }}</td>
+                                        <td>
+                                            {% if user.is_admin %}
+                                                <span class="badge bg-success">Admin</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">User</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-info">{{ user.order_count }}</span>
+                                        </td>
+                                        <td>₹{{ "%.2f"|format(user.wallet_balance or 0) }}</td>
+                                        <td>
+                                            {% if user.referral_code %}
+                                                <code>{{ user.referral_code }}</code>
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if user.id != current_user.id %}
+                                                <form method="POST" 
+                                                      action="{{ url_for('admin_users.toggle_admin', user_id=user.id) }}"
+                                                      style="display: inline;"
+                                                      onsubmit="return confirm('Are you sure you want to {% if user.is_admin %}remove admin access from{% else %}promote{% endif %} {{ user.name }}?');">
+                                                    {% if user.is_admin %}
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger toggle-btn">
+                                                            <i class="fas fa-user-minus"></i> Remove Admin
+                                                        </button>
+                                                    {% else %}
+                                                        <button type="submit" class="btn btn-sm btn-outline-success toggle-btn">
+                                                            <i class="fas fa-user-plus"></i> Make Admin
+                                                        </button>
+                                                    {% endif %}
+                                                </form>
+                                            {% else %}
+                                                <span class="badge bg-warning text-dark">
+                                                    <i class="fas fa-user"></i> You
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Info Box -->
+                <div class="alert alert-info mt-4">
+                    <h6><i class="fas fa-info-circle"></i> Admin Management Tips:</h6>
+                    <ul class="mb-0">
+                        <li>Admins have full access to all admin features including orders, leads, and user management</li>
+                        <li>You cannot remove your own admin access for security reasons</li>
+                        <li>Use the "Promote User to Admin" form to quickly add new admins by email</li>
+                        <li>Click the toggle buttons to promote or demote users directly from the list</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

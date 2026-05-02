@@ -320,12 +320,36 @@ h6 {
   height: 24px;
 }
 
-/* Fix for mobile: Add semi-transparent background to make logo and menu visible */
+/* Fix for mobile: Use lighter background so logo blends better */
 @media (max-width: 768px) {
   .index-page .custom-navbar {
-    background: rgba(0, 0, 0, 0.7) !important;
+    background: rgba(255, 255, 255, 0.95) !important; /* Light background instead of dark */
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
+  }
+  
+  /* Change text color to dark since background is now light */
+  .index-page .custom-navbar .custom-navbar-nav li a {
+    color: #333333 !important;
+  }
+  
+  .index-page .custom-navbar .custom-navbar-nav li a:hover,
+  .index-page .custom-navbar .custom-navbar-nav li.active a {
+    color: #ff4a17 !important;
+  }
+  
+  /* Change hamburger to dark */
+  .index-page .navbar-toggler {
+    border-color: rgba(0, 0, 0, 0.3) !important;
+  }
+  
+  .index-page .navbar-toggler-icon {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(0, 0, 0, 0.75)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") !important;
+  }
+  
+  /* Change cart/user icons to dark */
+  .index-page .custom-navbar .custom-navbar-cta img {
+    filter: none !important;
   }
   
   /* Show PNG logo on mobile without filter */

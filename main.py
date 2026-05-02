@@ -63,6 +63,7 @@ from blog_routes import add_blog_routes
 from chatbot_routes import add_chatbot_routes
 from deals_routes import register_deals_routes
 from performance_config import configure_performance
+from leads_simple import register_leads_routes
 
 # --- DISPOSABLE EMAIL DOMAINS BLACKLIST ---
 DISPOSABLE_EMAIL_DOMAINS = {
@@ -4521,6 +4522,10 @@ def services():
 # --- AI VISUALIZATION ROUTES ---
 # Register AI room visualization routes
 register_ai_routes(app)
+
+# --- LEADS/QUOTATION SYSTEM ---
+# Register leads management routes
+register_leads_routes(app, get_db_connection)
 
 
 # --- APPLICATION BOOTSTRAP ---

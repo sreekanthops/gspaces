@@ -283,6 +283,7 @@ h6 {
 .index-page .custom-navbar .navbar-brand img {
   filter: none !important; /* No filter - show PNG logo as-is */
   background: transparent !important;
+  height: 60px !important; /* Increased from default 50px */
 }
 
 .index-page .custom-navbar .custom-navbar-nav li a {
@@ -388,6 +389,11 @@ h6 {
 
     .custom-navbar .navbar-brand img {
         height: 80px;
+    }
+    
+    /* Larger logo on home page mobile */
+    .index-page .custom-navbar .navbar-brand img {
+        height: 70px !important; /* Larger logo for home page on mobile */
     }
 }
 

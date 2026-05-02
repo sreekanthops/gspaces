@@ -1070,32 +1070,44 @@ body:not(.index-page) .section:first-of-type {
 
     .home-content {
         padding: 120px 20px 80px 20px; /* Added horizontal padding for mobile */
+        text-align: center; /* Ensure content is centered */
     }
 
     .home-text {
         padding: 0 15px; /* Extra padding to prevent text from touching edges */
+        text-align: center; /* Explicitly center text on mobile */
+        width: 100%; /* Full width for proper centering */
     }
 
     .home-text h2 {
         font-size: 2.2rem;
         margin-bottom: 1rem;
+        text-align: center; /* Center heading */
     }
 
     .home-text p {
         font-size: 1rem;
         margin-bottom: 2rem;
         line-height: 1.6;
+        text-align: center; /* Center paragraph */
     }
 
     .home-text .btn-group {
         flex-direction: column;
         gap: 1rem;
         margin-bottom: 80px; /* Space for contact buttons at bottom */
+        align-items: center; /* Center buttons */
+        width: 100%; /* Full width for proper centering */
     }
 
     .home-text .btn-primary {
         padding: 14px 32px;
         font-size: 1rem;
+        width: auto; /* Auto width for button */
+    }
+
+    .home-text .btn-video {
+        justify-content: center; /* Center video button content */
     }
 }
 
@@ -1839,8 +1851,8 @@ colors
   top: 50% !important;
   transform: translateY(-50%);
   bottom: auto !important;
-  z-index: 100;
-  display: none;
+  z-index: 9999 !important; /* Increased z-index to ensure visibility */
+  display: flex; /* Changed from none to flex - always visible */
   flex-direction: column;
   gap: 12px;
   pointer-events: none;
@@ -1859,6 +1871,7 @@ colors
   box-shadow: 0 8px 20px rgba(17, 24, 39, 0.18);
   transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
   pointer-events: auto;
+  cursor: pointer; /* Added cursor pointer */
 }
 
 .floating-contact-btn i {
@@ -1882,7 +1895,7 @@ colors
 
 @media (max-width: 767px) {
   .floating-contact-buttons {
-    display: flex;
+    display: flex !important; /* Ensure it's visible on mobile */
     left: 15px !important; /* Bottom-left positioning */
     right: auto !important;
     bottom: 15px !important;
@@ -1898,7 +1911,7 @@ colors
   }
 
   .floating-contact-btn i {
-    font-size: 22px;
+    font-size: 24px; /* Slightly larger for better mobile visibility */
   }
 }
 

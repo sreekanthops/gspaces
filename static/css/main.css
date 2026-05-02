@@ -299,6 +299,11 @@ h6 {
   filter: brightness(0) invert(1) !important;
 }
 
+/* Make SVG profile icon visible on index page desktop */
+.index-page .custom-navbar .custom-navbar-cta svg {
+  stroke: #ffffff !important;
+}
+
 .index-page .badge {
   background: #5ec4e8 !important;
 }

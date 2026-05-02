@@ -185,8 +185,15 @@ document.addEventListener("DOMContentLoaded", initCountdownFromServer);
                     </a>
                 </li>
                 <li>
-                    <a class="nav-link" href="{{ url_for('profile') }}">
-                        <img src="{{ url_for('static', filename='img/user.svg') }}" alt="User">
+                    <a class="nav-link" href="{{ url_for('profile') }}" style="position: relative;">
+                        {% if current_user.is_authenticated and current_user.profile_photo %}
+                            <img src="{{ url_for('static', filename=current_user.profile_photo) }}" alt="Profile" style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover; border: 2px solid #fff;">
+                        {% else %}
+                            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                        {% endif %}
                     </a>
                 </li>
             </ul>

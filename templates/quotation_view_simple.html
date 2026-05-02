@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quotation - {{ lead.customer_name }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .quotation-container {
+            max-width: 1200px;
+            margin: 40px auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+        .company-logo {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .content {
+            padding: 40px;
+        }
+        .customer-info {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+        .reference-image {
+            max-width: 100%;
+            max-height: 500px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+            margin-bottom: 30px;
+        }
+        .design-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+        .design-image {
+            max-width: 100%;
+            max-height: 400px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .items-list {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        .item-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            margin: 5px;
+            font-size: 0.9rem;
+        }
+        .price-tag {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 15px;
+            font-size: 1.8rem;
+            font-weight: bold;
+            display: inline-block;
+            margin-top: 20px;
+        }
+        .total-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+            margin-top: 40px;
+        }
+        .total-amount {
+            font-size: 3rem;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        .footer {
+            background: #f8f9fa;
+            padding: 30px;
+            text-align: center;
+            color: #6b7280;
+        }
+        @media print {
+            body {
+                background: white;
+            }
+            .no-print {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="quotation-container">
+        <!-- Header -->
+        <div class="header">
+            <div class="company-logo">
+                <i class="bi bi-building"></i> GSPACES
+            </div>
+            <h2>Workspace Setup Quotation</h2>
+            <p class="mb-0">Premium Home Office Solutions</p>
+        </div>
+
+        <!-- Content -->
+        <div class="content">
+            <!-- Customer Info -->
+            <div class="customer-info">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h4><i class="bi bi-person-circle"></i> Customer Details</h4>
+                        <p class="mb-1"><strong>Name:</strong> {{ lead.customer_name }}</p>
+                        {% if lead.customer_email %}
+                        <p class="mb-1"><strong>Email:</strong> {{ lead.customer_email }}</p>
+                        {% endif %}
+                        {% if lead.customer_phone %}
+                        <p class="mb-1"><strong>Phone:</strong> {{ lead.customer_phone }}</p>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <h4><i class="bi bi-file-text"></i> Project Details</h4>
+                        {% if lead.project_name %}
+                        <p class="mb-1"><strong>Project:</strong> {{ lead.project_name }}</p>
+                        {% endif %}
+                        <p class="mb-1"><strong>Date:</strong> {{ lead.created_at.strftime('%B %d, %Y') }}</p>
+                        <p class="mb-1"><strong>Options:</strong> {{ designs|length }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reference Image -->
+            {% if lead.reference_image %}
+            <div class="text-center mb-4">
+                <h4><i class="bi bi-image"></i> Reference Inspiration</h4>
+                <img src="{{ url_for('static', filename=lead.reference_image) }}" 
+                     alt="Reference" class="reference-image">
+            </div>
+            {% endif %}
+
+            <!-- Design Options -->
+            <h3 class="mb-4"><i class="bi bi-collection"></i> Design Options for You</h3>
+            
+            {% for design in designs %}
+            <div class="design-section">
+                <h4 class="mb-3">{{ design.design_name }}</h4>
+                
+                {% if design.design_image %}
+                <img src="{{ url_for('static', filename=design.design_image) }}" 
+                     alt="{{ design.design_name }}" class="design-image">
+                {% endif %}
+
+                <div class="items-list">
+                    <h5 class="mb-3"><i class="bi bi-check-circle"></i> What's Included:</h5>
+                    
+                    {% if design.has_table %}
+                    <div class="mb-3">
+                        <span class="item-badge"><i class="bi bi-table"></i> Table</span>
+                        {% if design.table_details %}
+                        <p class="mt-2 ms-3">{{ design.table_details }}</p>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    {% if design.has_chair %}
+                    <div class="mb-3">
+                        <span class="item-badge"><i class="bi bi-chair"></i> Chair</span>
+                        {% if design.chair_details %}
+                        <p class="mt-2 ms-3">{{ design.chair_details }}</p>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    {% if design.has_plants %}
+                    <div class="mb-3">
+                        <span class="item-badge"><i class="bi bi-flower1"></i> Plants</span>
+                        {% if design.plants_details %}
+                        <p class="mt-2 ms-3">{{ design.plants_details }}</p>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    {% if design.has_lighting %}
+                    <div class="mb-3">
+                        <span class="item-badge"><i class="bi bi-lightbulb"></i> Lighting</span>
+                        {% if design.lighting_details %}
+                        <p class="mt-2 ms-3">{{ design.lighting_details }}</p>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    {% if design.has_storage %}
+                    <div class="mb-3">
+                        <span class="item-badge"><i class="bi bi-box"></i> Storage</span>
+                        {% if design.storage_details %}
+                        <p class="mt-2 ms-3">{{ design.storage_details }}</p>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    {% if design.has_accessories %}
+                    <div class="mb-3">
+                        <span class="item-badge"><i class="bi bi-gear"></i> Accessories</span>
+                        {% if design.accessories_details %}
+                        <p class="mt-2 ms-3">{{ design.accessories_details }}</p>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    {% if design.notes %}
+                    <div class="alert alert-info mt-3">
+                        <i class="bi bi-info-circle"></i> <strong>Note:</strong> {{ design.notes }}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="text-end">
+                    <span class="price-tag">
+                        ₹{{ "{:,.0f}".format(design.price) }}
+                    </span>
+                </div>
+            </div>
+            {% endfor %}
+
+            <!-- Total -->
+            <div class="total-section">
+                <h3>Total Investment</h3>
+                <div class="total-amount">
+                    ₹{{ "{:,.0f}".format(total) }}
+                </div>
+                <p class="mb-0">All prices are inclusive of materials and installation</p>
+            </div>
+
+            <!-- Call to Action -->
+            <div class="text-center mt-4 no-print">
+                <button onclick="window.print()" class="btn btn-lg" 
+                        style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 15px 40px; border-radius: 25px;">
+                    <i class="bi bi-printer"></i> Print / Save as PDF
+                </button>
+                <a href="tel:{{ lead.customer_phone or '+91' }}" class="btn btn-success btn-lg ms-2" 
+                   style="padding: 15px 40px; border-radius: 25px;">
+                    <i class="bi bi-telephone"></i> Contact Us
+                </a>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p class="mb-2"><strong>GSPACES</strong> - Premium Home Office Solutions</p>
+            <p class="mb-0">
+                <i class="bi bi-envelope"></i> info@gspaces.in | 
+                <i class="bi bi-telephone"></i> +91 XXXXXXXXXX | 
+                <i class="bi bi-globe"></i> www.gspaces.in
+            </p>
+            <p class="mt-3 mb-0" style="font-size: 0.9rem;">
+                This quotation is valid for 30 days from the date of issue.
+            </p>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

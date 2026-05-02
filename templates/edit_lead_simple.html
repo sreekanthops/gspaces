@@ -194,20 +194,17 @@
         {% if designs %}
             {% for design in designs %}
             <div class="design-card">
-                <form method="POST" action="{{ url_for('leads.update_design', design_id=design.id) }}">
-                    <input type="hidden" name="lead_id" value="{{ lead.id }}">
+                <form method="POST" action="{{ url_for('leads.update_design', design_id=design.id) }}" id="updateForm{{ design.id }}">
                     
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h5 class="mb-0">
-                            <input type="text" name="design_name" class="form-control d-inline-block" 
+                            <input type="text" name="design_name" class="form-control d-inline-block"
                                    style="width: auto;" value="{{ design.design_name }}">
                         </h5>
-                        <form method="POST" action="{{ url_for('leads.delete_design', design_id=design.id) }}" 
-                              style="display: inline;" onsubmit="return confirm('Delete this design?');">
-                            <button type="submit" class="btn btn-danger btn-sm">
-                                <i class="bi bi-trash"></i> Delete
-                            </button>
-                        </form>
+                        <button type="button" class="btn btn-danger btn-sm"
+                                onclick="if(confirm('Delete this design?')) { document.getElementById('deleteForm{{ design.id }}').submit(); }">
+                            <i class="bi bi-trash"></i> Delete
+                        </button>
                     </div>
 
                     {% if design.design_image %}
@@ -322,6 +319,11 @@
                     <button type="submit" class="btn btn-gradient">
                         <i class="bi bi-check-circle"></i> Update Design
                     </button>
+                </form>
+                
+                <!-- Hidden delete form -->
+                <form method="POST" action="{{ url_for('leads.delete_design', design_id=design.id) }}"
+                      id="deleteForm{{ design.id }}" style="display: none;">
                 </form>
             </div>
             {% endfor %}

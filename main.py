@@ -2,6 +2,7 @@ import os
 import sys
 import random
 import string
+import json
 import psycopg2
 from psycopg2 import Error
 from psycopg2.extras import RealDictCursor # Import RealDictCursor
@@ -476,6 +477,16 @@ def inr_format(value):
     try:
         return f"{float(value):.2f}"
     except:
+
+@app.template_filter('from_json')
+def from_json_filter(value):
+    """Parse JSON string to Python object"""
+    try:
+        if value:
+            return json.loads(value)
+        return []
+    except:
+        return []
         return value
 
 # Initialize wallet routes
@@ -4263,7 +4274,6 @@ def submit_customer_inquiry():
                         reference_images.append(relative_path)
         
         # Convert reference_images list to JSON string
-        import json
         reference_images_json = json.dumps(reference_images) if reference_images else None
         
         # Insert into database

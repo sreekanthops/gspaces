@@ -359,48 +359,57 @@ def update_design(design_id):
         
         # Get form data
         design_name = request.form.get('design_name')
-        has_table = request.form.get('has_table') == 'on'
-        has_chair = request.form.get('has_chair') == 'on'
-        has_plants = request.form.get('has_plants') == 'on'
-        has_lighting = request.form.get('has_lighting') == 'on'
-        has_storage = request.form.get('has_storage') == 'on'
-        has_accessories = request.form.get('has_accessories') == 'on'
-        
-        table_details = request.form.get('table_details', '')
-        chair_details = request.form.get('chair_details', '')
-        plants_details = request.form.get('plants_details', '')
-        lighting_details = request.form.get('lighting_details', '')
-        storage_details = request.form.get('storage_details', '')
-        accessories_details = request.form.get('accessories_details', '')
-        
-        # Get individual item prices
-        table_price = float(request.form.get('table_price', 0))
-        chair_price = float(request.form.get('chair_price', 0))
-        plants_price = float(request.form.get('plants_price', 0))
-        lighting_price = float(request.form.get('lighting_price', 0))
-        storage_price = float(request.form.get('storage_price', 0))
-        accessories_price = float(request.form.get('accessories_price', 0))
-        
         notes = request.form.get('notes', '')
         
-        # Handle custom items with prices
+        # Define all 17 items
+        items = [
+            'table', 'chair', 'plants', 'lighting', 'storage', 'accessories',
+            'big_plants', 'mini_plants', 'frames', 'wall_racks', 'desk_mat',
+            'dustbin', 'floor_mat', 'keyboard', 'mouse', 'paint', 'wardrobes'
+        ]
+        
+        # Collect data for all items
+        item_data = {}
+        subtotal = 0
+        
+        for item in items:
+            has_item = request.form.get(f'has_{item}') == 'on'
+            quantity = int(request.form.get(f'{item}_quantity', 1))
+            price = float(request.form.get(f'{item}_price', 0))
+            details = request.form.get(f'{item}_details', '')
+            
+            item_data[item] = {
+                'has': has_item,
+                'quantity': quantity,
+                'price': price,
+                'details': details
+            }
+            
+            # Calculate subtotal: quantity × price for each item
+            if has_item:
+                subtotal += quantity * price
+        
+        # Handle custom items with prices and quantities
         custom_items = []
         names = request.form.getlist('custom_item_name[]')
         details_list = request.form.getlist('custom_item_details[]')
         icons = request.form.getlist('custom_item_icon[]')
         prices = request.form.getlist('custom_item_price[]')
+        quantities = request.form.getlist('custom_item_quantity[]')
+        
         for i in range(len(names)):
             if names[i].strip():
+                qty = int(quantities[i]) if i < len(quantities) and quantities[i] else 1
+                price = float(prices[i]) if i < len(prices) and prices[i] else 0
                 custom_items.append({
                     'name': names[i],
                     'details': details_list[i] if i < len(details_list) else '',
                     'icon': icons[i] if i < len(icons) else '📌',
-                    'price': float(prices[i]) if i < len(prices) else 0
+                    'price': price,
+                    'quantity': qty
                 })
-        
-        # Calculate subtotal
-        subtotal = table_price + chair_price + plants_price + lighting_price + storage_price + accessories_price
-        subtotal += sum(item['price'] for item in custom_items)
+                # Add to subtotal
+                subtotal += qty * price
         
         # Get discount info
         discount_type = request.form.get('discount_type', 'none')
@@ -414,24 +423,70 @@ def update_design(design_id):
             final_price = subtotal - discount_value
         final_price = max(0, final_price)  # Ensure non-negative
         
+        # Build UPDATE query with all 17 items
         cur.execute("""
             UPDATE lead_designs
             SET design_name = %s,
-                has_table = %s, has_chair = %s, has_plants = %s,
-                has_lighting = %s, has_storage = %s, has_accessories = %s,
-                table_details = %s, chair_details = %s, plants_details = %s,
-                lighting_details = %s, storage_details = %s, accessories_details = %s,
-                table_price = %s, chair_price = %s, plants_price = %s,
-                lighting_price = %s, storage_price = %s, accessories_price = %s,
+                has_table = %s, table_quantity = %s, table_price = %s, table_details = %s,
+                has_chair = %s, chair_quantity = %s, chair_price = %s, chair_details = %s,
+                has_plants = %s, plants_quantity = %s, plants_price = %s, plants_details = %s,
+                has_lighting = %s, lighting_quantity = %s, lighting_price = %s, lighting_details = %s,
+                has_storage = %s, storage_quantity = %s, storage_price = %s, storage_details = %s,
+                has_accessories = %s, accessories_quantity = %s, accessories_price = %s, accessories_details = %s,
+                has_big_plants = %s, big_plants_quantity = %s, big_plants_price = %s, big_plants_details = %s,
+                has_mini_plants = %s, mini_plants_quantity = %s, mini_plants_price = %s, mini_plants_details = %s,
+                has_frames = %s, frames_quantity = %s, frames_price = %s, frames_details = %s,
+                has_wall_racks = %s, wall_racks_quantity = %s, wall_racks_price = %s, wall_racks_details = %s,
+                has_deskmat = %s, deskmat_quantity = %s, deskmat_price = %s, deskmat_details = %s,
+                has_dustbin = %s, dustbin_quantity = %s, dustbin_price = %s, dustbin_details = %s,
+                has_floor_mat = %s, floor_mat_quantity = %s, floor_mat_price = %s, floor_mat_details = %s,
+                has_keyboard = %s, keyboard_quantity = %s, keyboard_price = %s, keyboard_details = %s,
+                has_mouse = %s, mouse_quantity = %s, mouse_price = %s, mouse_details = %s,
+                has_paint = %s, paint_quantity = %s, paint_price = %s, paint_details = %s,
+                has_wardrobes = %s, wardrobes_quantity = %s, wardrobes_price = %s, wardrobes_details = %s,
                 subtotal = %s, discount_type = %s, discount_value = %s,
                 final_price = %s, price = %s, notes = %s, custom_items = %s
             WHERE id = %s
-        """, (design_name, has_table, has_chair, has_plants, has_lighting, has_storage,
-              has_accessories, table_details, chair_details, plants_details,
-              lighting_details, storage_details, accessories_details,
-              table_price, chair_price, plants_price, lighting_price, storage_price, accessories_price,
-              subtotal, discount_type, discount_value, final_price, final_price, notes,
-              json.dumps(custom_items), design_id))
+        """, (
+            design_name,
+            # Table
+            item_data['table']['has'], item_data['table']['quantity'], item_data['table']['price'], item_data['table']['details'],
+            # Chair
+            item_data['chair']['has'], item_data['chair']['quantity'], item_data['chair']['price'], item_data['chair']['details'],
+            # Plants
+            item_data['plants']['has'], item_data['plants']['quantity'], item_data['plants']['price'], item_data['plants']['details'],
+            # Lighting
+            item_data['lighting']['has'], item_data['lighting']['quantity'], item_data['lighting']['price'], item_data['lighting']['details'],
+            # Storage
+            item_data['storage']['has'], item_data['storage']['quantity'], item_data['storage']['price'], item_data['storage']['details'],
+            # Accessories
+            item_data['accessories']['has'], item_data['accessories']['quantity'], item_data['accessories']['price'], item_data['accessories']['details'],
+            # Big Plants
+            item_data['big_plants']['has'], item_data['big_plants']['quantity'], item_data['big_plants']['price'], item_data['big_plants']['details'],
+            # Mini Plants
+            item_data['mini_plants']['has'], item_data['mini_plants']['quantity'], item_data['mini_plants']['price'], item_data['mini_plants']['details'],
+            # Frames
+            item_data['frames']['has'], item_data['frames']['quantity'], item_data['frames']['price'], item_data['frames']['details'],
+            # Wall Racks
+            item_data['wall_racks']['has'], item_data['wall_racks']['quantity'], item_data['wall_racks']['price'], item_data['wall_racks']['details'],
+            # Deskmat
+            item_data['deskmat']['has'], item_data['deskmat']['quantity'], item_data['deskmat']['price'], item_data['deskmat']['details'],
+            # Dustbin
+            item_data['dustbin']['has'], item_data['dustbin']['quantity'], item_data['dustbin']['price'], item_data['dustbin']['details'],
+            # Floor Mat
+            item_data['floor_mat']['has'], item_data['floor_mat']['quantity'], item_data['floor_mat']['price'], item_data['floor_mat']['details'],
+            # Keyboard
+            item_data['keyboard']['has'], item_data['keyboard']['quantity'], item_data['keyboard']['price'], item_data['keyboard']['details'],
+            # Mouse
+            item_data['mouse']['has'], item_data['mouse']['quantity'], item_data['mouse']['price'], item_data['mouse']['details'],
+            # Paint
+            item_data['paint']['has'], item_data['paint']['quantity'], item_data['paint']['price'], item_data['paint']['details'],
+            # Wardrobes
+            item_data['wardrobes']['has'], item_data['wardrobes']['quantity'], item_data['wardrobes']['price'], item_data['wardrobes']['details'],
+            # Pricing
+            subtotal, discount_type, discount_value, final_price, final_price, notes,
+            json.dumps(custom_items), design_id
+        ))
         
         conn.commit()
         flash('Design updated!', 'success')

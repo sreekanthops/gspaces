@@ -213,119 +213,560 @@
                              alt="Design" class="design-image">
                     {% endif %}
 
-                    <h6 class="mt-4 mb-3">Select Items Included:</h6>
+                    <h6 class="mt-4 mb-3">Select Items Included: <small class="text-muted">(Enter quantity and unit price for each item)</small></h6>
                     
-                    <!-- Table -->
+                    <!-- 1. Desk -->
                     <div class="item-checkbox">
                         <label>
-                            <input type="checkbox" name="has_table"
-                                   {% if design.has_table %}checked{% endif %}
+                            <input type="checkbox" name="has_table" {% if design.has_table %}checked{% endif %}
                                    onchange="toggleDetails(this, 'table_{{ design.id }}')">
-                            <strong><i class="bi bi-table"></i> Desk</strong>
+                            <strong>🪑 Desk</strong>
                         </label>
-                        <div id="table_{{ design.id }}" class="item-details"
-                             {% if design.has_table %}style="display:block"{% endif %}>
-                            <textarea name="table_details" class="form-control mb-2" rows="2"
-                                      placeholder="e.g., 4x2 wooden desk with storage">{{ design.table_details or '' }}</textarea>
-                            <input type="number" name="table_price" class="form-control"
-                                   placeholder="Price (₹)" step="0.01" min="0"
-                                   value="{{ design.table_price or 0 }}"
-                                   onchange="calculateTotal({{ design.id }})">
+                        <div id="table_{{ design.id }}" class="item-details" {% if design.has_table %}style="display:block"{% endif %}>
+                            <div class="row mb-2">
+                                <div class="col-md-3">
+                                    <label class="form-label small">Quantity</label>
+                                    <input type="number" name="table_quantity" class="form-control" min="1"
+                                           value="{{ design.table_quantity or 1 }}"
+                                           onchange="calculateItemTotal('table', {{ design.id }})">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label small">Unit Price (₹)</label>
+                                    <input type="number" name="table_price" class="form-control" step="0.01" min="0"
+                                           value="{{ design.table_price or 0 }}"
+                                           onchange="calculateItemTotal('table', {{ design.id }})">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label small">Total (₹)</label>
+                                    <input type="number" id="table_total_{{ design.id }}" class="form-control" readonly
+                                           style="background: #e9ecef; font-weight: bold;">
+                                </div>
+                            </div>
+                            <textarea name="table_details" class="form-control" rows="2"
+                                      placeholder="e.g., Ergonomic standing desk with storage">{{ design.table_details or '' }}</textarea>
                         </div>
                     </div>
 
-                    <!-- Chair -->
+                    <!-- 2. Chair -->
                     <div class="item-checkbox">
                         <label>
-                            <input type="checkbox" name="has_chair"
-                                   {% if design.has_chair %}checked{% endif %}
+                            <input type="checkbox" name="has_chair" {% if design.has_chair %}checked{% endif %}
                                    onchange="toggleDetails(this, 'chair_{{ design.id }}')">
-                            <strong><i class="bi bi-chair"></i> Chair</strong>
+                            <strong>💺 Chair</strong>
                         </label>
-                        <div id="chair_{{ design.id }}" class="item-details"
-                             {% if design.has_chair %}style="display:block"{% endif %}>
-                            <textarea name="chair_details" class="form-control mb-2" rows="2"
-                                      placeholder="e.g., Ergonomic chair with headrest">{{ design.chair_details or '' }}</textarea>
-                            <input type="number" name="chair_price" class="form-control"
-                                   placeholder="Price (₹)" step="0.01" min="0"
-                                   value="{{ design.chair_price or 0 }}"
-                                   onchange="calculateTotal({{ design.id }})">
+                        <div id="chair_{{ design.id }}" class="item-details" {% if design.has_chair %}style="display:block"{% endif %}>
+                            <div class="row mb-2">
+                                <div class="col-md-3">
+                                    <label class="form-label small">Quantity</label>
+                                    <input type="number" name="chair_quantity" class="form-control" min="1"
+                                           value="{{ design.chair_quantity or 1 }}"
+                                           onchange="calculateItemTotal('chair', {{ design.id }})">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label small">Unit Price (₹)</label>
+                                    <input type="number" name="chair_price" class="form-control" step="0.01" min="0"
+                                           value="{{ design.chair_price or 0 }}"
+                                           onchange="calculateItemTotal('chair', {{ design.id }})">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label small">Total (₹)</label>
+                                    <input type="number" id="chair_total_{{ design.id }}" class="form-control" readonly
+                                           style="background: #e9ecef; font-weight: bold;">
+                                </div>
+                            </div>
+                            <textarea name="chair_details" class="form-control" rows="2"
+                                      placeholder="e.g., Ergonomic office chair with lumbar support">{{ design.chair_details or '' }}</textarea>
                         </div>
                     </div>
 
-                    <!-- Plants -->
+                    <!-- 3. Plants & Decor -->
                     <div class="item-checkbox">
                         <label>
-                            <input type="checkbox" name="has_plants"
-                                   {% if design.has_plants %}checked{% endif %}
+                            <input type="checkbox" name="has_plants" {% if design.has_plants %}checked{% endif %}
                                    onchange="toggleDetails(this, 'plants_{{ design.id }}')">
-                            <strong><i class="bi bi-flower1"></i> Plants</strong>
+                            <strong>🪴 Plants & Decor</strong>
                         </label>
-                        <div id="plants_{{ design.id }}" class="item-details"
-                             {% if design.has_plants %}style="display:block"{% endif %}>
-                            <textarea name="plants_details" class="form-control mb-2" rows="2"
-                                      placeholder="e.g., 2 mini plants, 1 big plant">{{ design.plants_details or '' }}</textarea>
-                            <input type="number" name="plants_price" class="form-control"
-                                   placeholder="Price (₹)" step="0.01" min="0"
-                                   value="{{ design.plants_price or 0 }}"
-                                   onchange="calculateTotal({{ design.id }})">
+                        <div id="plants_{{ design.id }}" class="item-details" {% if design.has_plants %}style="display:block"{% endif %}>
+                            <div class="row mb-2">
+                                <div class="col-md-3">
+                                    <label class="form-label small">Quantity</label>
+                                    <input type="number" name="plants_quantity" class="form-control" min="1"
+                                           value="{{ design.plants_quantity or 1 }}"
+                                           onchange="calculateItemTotal('plants', {{ design.id }})">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label small">Unit Price (₹)</label>
+                                    <input type="number" name="plants_price" class="form-control" step="0.01" min="0"
+                                           value="{{ design.plants_price or 0 }}"
+                                           onchange="calculateItemTotal('plants', {{ design.id }})">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label small">Total (₹)</label>
+                                    <input type="number" id="plants_total_{{ design.id }}" class="form-control" readonly
+                                           style="background: #e9ecef; font-weight: bold;">
+                                </div>
+                            </div>
+                            <textarea name="plants_details" class="form-control" rows="2"
+                                      placeholder="e.g., Mixed indoor plants for decoration">{{ design.plants_details or '' }}</textarea>
                         </div>
                     </div>
 
-                    <!-- Lighting -->
+                    <!-- 4. Lighting -->
                     <div class="item-checkbox">
                         <label>
-                            <input type="checkbox" name="has_lighting"
-                                   {% if design.has_lighting %}checked{% endif %}
+                            <input type="checkbox" name="has_lighting" {% if design.has_lighting %}checked{% endif %}
                                    onchange="toggleDetails(this, 'lighting_{{ design.id }}')">
-                            <strong><i class="bi bi-lightbulb"></i> Lighting</strong>
+                            <strong>💡 Lighting</strong>
                         </label>
-                        <div id="lighting_{{ design.id }}" class="item-details"
-                             {% if design.has_lighting %}style="display:block"{% endif %}>
-                            <textarea name="lighting_details" class="form-control mb-2" rows="2"
-                                      placeholder="e.g., Table lamp, profile light 5ft">{{ design.lighting_details or '' }}</textarea>
-                            <input type="number" name="lighting_price" class="form-control"
-                                   placeholder="Price (₹)" step="0.01" min="0"
-                                   value="{{ design.lighting_price or 0 }}"
-                                   onchange="calculateTotal({{ design.id }})">
+                        <div id="lighting_{{ design.id }}" class="item-details" {% if design.has_lighting %}style="display:block"{% endif %}>
+                            <div class="row mb-2">
+                                <div class="col-md-3">
+                                    <label class="form-label small">Quantity</label>
+                                    <input type="number" name="lighting_quantity" class="form-control" min="1"
+                                           value="{{ design.lighting_quantity or 1 }}"
+                                           onchange="calculateItemTotal('lighting', {{ design.id }})">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label small">Unit Price (₹)</label>
+                                    <input type="number" name="lighting_price" class="form-control" step="0.01" min="0"
+                                           value="{{ design.lighting_price or 0 }}"
+                                           onchange="calculateItemTotal('lighting', {{ design.id }})">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label small">Total (₹)</label>
+                                    <input type="number" id="lighting_total_{{ design.id }}" class="form-control" readonly
+                                           style="background: #e9ecef; font-weight: bold;">
+                                </div>
+                            </div>
+                            <textarea name="lighting_details" class="form-control" rows="2"
+                                      placeholder="e.g., LED desk lamp with adjustable brightness">{{ design.lighting_details or '' }}</textarea>
                         </div>
                     </div>
 
-                    <!-- Storage -->
+                    <!-- 5. Storage -->
                     <div class="item-checkbox">
                         <label>
-                            <input type="checkbox" name="has_storage"
-                                   {% if design.has_storage %}checked{% endif %}
+                            <input type="checkbox" name="has_storage" {% if design.has_storage %}checked{% endif %}
                                    onchange="toggleDetails(this, 'storage_{{ design.id }}')">
-                            <strong><i class="bi bi-box"></i> Storage</strong>
+                            <strong>📦 Storage</strong>
                         </label>
-                        <div id="storage_{{ design.id }}" class="item-details"
-                             {% if design.has_storage %}style="display:block"{% endif %}>
-                            <textarea name="storage_details" class="form-control mb-2" rows="2"
-                                      placeholder="e.g., Drawer unit, shelves">{{ design.storage_details or '' }}</textarea>
-                            <input type="number" name="storage_price" class="form-control"
-                                   placeholder="Price (₹)" step="0.01" min="0"
-                                   value="{{ design.storage_price or 0 }}"
-                                   onchange="calculateTotal({{ design.id }})">
+                        <div id="storage_{{ design.id }}" class="item-details" {% if design.has_storage %}style="display:block"{% endif %}>
+                            <div class="row mb-2">
+                                <div class="col-md-3">
+                                    <label class="form-label small">Quantity</label>
+                                    <input type="number" name="storage_quantity" class="form-control" min="1"
+                                           value="{{ design.storage_quantity or 1 }}"
+                                           onchange="calculateItemTotal('storage', {{ design.id }})">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label small">Unit Price (₹)</label>
+                                    <input type="number" name="storage_price" class="form-control" step="0.01" min="0"
+                                           value="{{ design.storage_price or 0 }}"
+                                           onchange="calculateItemTotal('storage', {{ design.id }})">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label small">Total (₹)</label>
+                                    <input type="number" id="storage_total_{{ design.id }}" class="form-control" readonly
+                                           style="background: #e9ecef; font-weight: bold;">
+                                </div>
+                            </div>
+                            <textarea name="storage_details" class="form-control" rows="2"
+                                      placeholder="e.g., Drawer unit with file organizer">{{ design.storage_details or '' }}</textarea>
                         </div>
                     </div>
 
-                    <!-- Accessories -->
+                    <!-- 6. Accessories -->
                     <div class="item-checkbox">
                         <label>
-                            <input type="checkbox" name="has_accessories"
-                                   {% if design.has_accessories %}checked{% endif %}
+                            <input type="checkbox" name="has_accessories" {% if design.has_accessories %}checked{% endif %}
                                    onchange="toggleDetails(this, 'accessories_{{ design.id }}')">
-                            <strong><i class="bi bi-gear"></i> Accessories</strong>
+                            <strong>✨ Accessories</strong>
                         </label>
-                        <div id="accessories_{{ design.id }}" class="item-details"
-                             {% if design.has_accessories %}style="display:block"{% endif %}>
-                            <textarea name="accessories_details" class="form-control mb-2" rows="2"
-                                      placeholder="e.g., Desk mat, cable organizer, clock">{{ design.accessories_details or '' }}</textarea>
-                            <input type="number" name="accessories_price" class="form-control"
-                                   placeholder="Price (₹)" step="0.01" min="0"
-                                   value="{{ design.accessories_price or 0 }}"
-                                   onchange="calculateTotal({{ design.id }})">
+                        <div id="accessories_{{ design.id }}" class="item-details" {% if design.has_accessories %}style="display:block"{% endif %}>
+                            <div class="row mb-2">
+                                <div class="col-md-3">
+                                    <label class="form-label small">Quantity</label>
+                                    <input type="number" name="accessories_quantity" class="form-control" min="1"
+                                           value="{{ design.accessories_quantity or 1 }}"
+                                           onchange="calculateItemTotal('accessories', {{ design.id }})">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label small">Unit Price (₹)</label>
+                                    <input type="number" name="accessories_price" class="form-control" step="0.01" min="0"
+                                           value="{{ design.accessories_price or 0 }}"
+                                           onchange="calculateItemTotal('accessories', {{ design.id }})">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label small">Total (₹)</label>
+                                    <input type="number" id="accessories_total_{{ design.id }}" class="form-control" readonly
+                                           style="background: #e9ecef; font-weight: bold;">
+                                </div>
+                            </div>
+                            <textarea name="accessories_details" class="form-control" rows="2"
+                                      placeholder="e.g., Desk organizer, pen holder, clock">{{ design.accessories_details or '' }}</textarea>
+                        </div>
+                    </div>
+
+                    <!-- 🌳 Big Plants -->
+                    <div class="mb-3 p-3" style="background: #f0fff4; border-radius: 10px;">
+                        <div class="form-check mb-2">
+                            <input type="checkbox" class="form-check-input" name="has_big_plants"
+                                   {% if design.has_big_plants %}checked{% endif %}>
+                            <label class="form-check-label fw-bold">🌳 Big Plants</label>
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-md-3">
+                                <label class="form-label small">Quantity</label>
+                                <input type="number" name="big_plants_quantity" class="form-control"
+                                       value="{{ design.big_plants_quantity or 1 }}" min="1"
+                                       onchange="calculateItemTotal('big_plants', {{ design.id }})">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small">Unit Price (₹)</label>
+                                <input type="number" name="big_plants_price" class="form-control"
+                                       value="{{ design.big_plants_price or '' }}" min="0"
+                                       onchange="calculateItemTotal('big_plants', {{ design.id }})">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small">Total (₹)</label>
+                                <input type="text" id="big_plants_total_{{ design.id }}" class="form-control" readonly
+                                       style="background: #e8f5e9; font-weight: bold;">
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <label class="form-label small">Details</label>
+                            <textarea name="big_plants_details" class="form-control" rows="2"
+                                      placeholder="e.g., Monstera, Fiddle Leaf Fig, Snake Plant">{{ design.big_plants_details or '' }}</textarea>
+                        </div>
+                    </div>
+
+                    <!-- 🌱 Mini Plants -->
+                    <div class="mb-3 p-3" style="background: #f0fff4; border-radius: 10px;">
+                        <div class="form-check mb-2">
+                            <input type="checkbox" class="form-check-input" name="has_mini_plants"
+                                   {% if design.has_mini_plants %}checked{% endif %}>
+                            <label class="form-check-label fw-bold">🌱 Mini Plants</label>
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-md-3">
+                                <label class="form-label small">Quantity</label>
+                                <input type="number" name="mini_plants_quantity" class="form-control"
+                                       value="{{ design.mini_plants_quantity or 1 }}" min="1"
+                                       onchange="calculateItemTotal('mini_plants', {{ design.id }})">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small">Unit Price (₹)</label>
+                                <input type="number" name="mini_plants_price" class="form-control"
+                                       value="{{ design.mini_plants_price or '' }}" min="0"
+                                       onchange="calculateItemTotal('mini_plants', {{ design.id }})">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small">Total (₹)</label>
+                                <input type="text" id="mini_plants_total_{{ design.id }}" class="form-control" readonly
+                                       style="background: #e8f5e9; font-weight: bold;">
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <label class="form-label small">Details</label>
+                            <textarea name="mini_plants_details" class="form-control" rows="2"
+                                      placeholder="e.g., Succulents, Cacti, Air Plants">{{ design.mini_plants_details or '' }}</textarea>
+                        </div>
+                    </div>
+
+                    <!-- 🖼️ Frames -->
+                    <div class="mb-3 p-3" style="background: #fff8e1; border-radius: 10px;">
+                        <div class="form-check mb-2">
+                            <input type="checkbox" class="form-check-input" name="has_frames"
+                                   {% if design.has_frames %}checked{% endif %}>
+                            <label class="form-check-label fw-bold">🖼️ Frames</label>
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-md-3">
+                                <label class="form-label small">Quantity</label>
+                                <input type="number" name="frames_quantity" class="form-control"
+                                       value="{{ design.frames_quantity or 1 }}" min="1"
+                                       onchange="calculateItemTotal('frames', {{ design.id }})">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small">Unit Price (₹)</label>
+                                <input type="number" name="frames_price" class="form-control"
+                                       value="{{ design.frames_price or '' }}" min="0"
+                                       onchange="calculateItemTotal('frames', {{ design.id }})">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small">Total (₹)</label>
+                                <input type="text" id="frames_total_{{ design.id }}" class="form-control" readonly
+                                       style="background: #fff9c4; font-weight: bold;">
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <label class="form-label small">Details</label>
+                            <textarea name="frames_details" class="form-control" rows="2"
+                                      placeholder="e.g., Wall art frames, photo frames">{{ design.frames_details or '' }}</textarea>
+                        </div>
+                    </div>
+
+                    <!-- 📚 Wall Racks -->
+                    <div class="mb-3 p-3" style="background: #fff8e1; border-radius: 10px;">
+                        <div class="form-check mb-2">
+                            <input type="checkbox" class="form-check-input" name="has_wall_racks"
+                                   {% if design.has_wall_racks %}checked{% endif %}>
+                            <label class="form-check-label fw-bold">📚 Wall Racks</label>
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-md-3">
+                                <label class="form-label small">Quantity</label>
+                                <input type="number" name="wall_racks_quantity" class="form-control"
+                                       value="{{ design.wall_racks_quantity or 1 }}" min="1"
+                                       onchange="calculateItemTotal('wall_racks', {{ design.id }})">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small">Unit Price (₹)</label>
+                                <input type="number" name="wall_racks_price" class="form-control"
+                                       value="{{ design.wall_racks_price or '' }}" min="0"
+                                       onchange="calculateItemTotal('wall_racks', {{ design.id }})">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small">Total (₹)</label>
+                                <input type="text" id="wall_racks_total_{{ design.id }}" class="form-control" readonly
+                                       style="background: #fff9c4; font-weight: bold;">
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <label class="form-label small">Details</label>
+                            <textarea name="wall_racks_details" class="form-control" rows="2"
+                                      placeholder="e.g., Floating shelves, book racks">{{ design.wall_racks_details or '' }}</textarea>
+                        </div>
+                    </div>
+
+                    <!-- 🎯 Desk Mat -->
+                    <div class="mb-3 p-3" style="background: #fce4ec; border-radius: 10px;">
+                        <div class="form-check mb-2">
+                            <input type="checkbox" class="form-check-input" name="has_desk_mat"
+                                   {% if design.has_desk_mat %}checked{% endif %}>
+                            <label class="form-check-label fw-bold">🎯 Desk Mat</label>
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-md-3">
+                                <label class="form-label small">Quantity</label>
+                                <input type="number" name="desk_mat_quantity" class="form-control"
+                                       value="{{ design.desk_mat_quantity or 1 }}" min="1"
+                                       onchange="calculateItemTotal('desk_mat', {{ design.id }})">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small">Unit Price (₹)</label>
+                                <input type="number" name="desk_mat_price" class="form-control"
+                                       value="{{ design.desk_mat_price or '' }}" min="0"
+                                       onchange="calculateItemTotal('desk_mat', {{ design.id }})">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small">Total (₹)</label>
+                                <input type="text" id="desk_mat_total_{{ design.id }}" class="form-control" readonly
+                                       style="background: #f8bbd0; font-weight: bold;">
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <label class="form-label small">Details</label>
+                            <textarea name="desk_mat_details" class="form-control" rows="2"
+                                      placeholder="e.g., Large gaming mat, leather desk pad">{{ design.desk_mat_details or '' }}</textarea>
+                        </div>
+                    </div>
+
+                    <!-- 🗑️ Dustbin -->
+                    <div class="mb-3 p-3" style="background: #fce4ec; border-radius: 10px;">
+                        <div class="form-check mb-2">
+                            <input type="checkbox" class="form-check-input" name="has_dustbin"
+                                   {% if design.has_dustbin %}checked{% endif %}>
+                            <label class="form-check-label fw-bold">🗑️ Dustbin</label>
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-md-3">
+                                <label class="form-label small">Quantity</label>
+                                <input type="number" name="dustbin_quantity" class="form-control"
+                                       value="{{ design.dustbin_quantity or 1 }}" min="1"
+                                       onchange="calculateItemTotal('dustbin', {{ design.id }})">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small">Unit Price (₹)</label>
+                                <input type="number" name="dustbin_price" class="form-control"
+                                       value="{{ design.dustbin_price or '' }}" min="0"
+                                       onchange="calculateItemTotal('dustbin', {{ design.id }})">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small">Total (₹)</label>
+                                <input type="text" id="dustbin_total_{{ design.id }}" class="form-control" readonly
+                                       style="background: #f8bbd0; font-weight: bold;">
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <label class="form-label small">Details</label>
+                            <textarea name="dustbin_details" class="form-control" rows="2"
+                                      placeholder="e.g., Stainless steel, pedal bin">{{ design.dustbin_details or '' }}</textarea>
+                        </div>
+                    </div>
+
+                    <!-- 🟫 Floor Mat -->
+                    <div class="mb-3 p-3" style="background: #fce4ec; border-radius: 10px;">
+                        <div class="form-check mb-2">
+                            <input type="checkbox" class="form-check-input" name="has_floor_mat"
+                                   {% if design.has_floor_mat %}checked{% endif %}>
+                            <label class="form-check-label fw-bold">🟫 Floor Mat</label>
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-md-3">
+                                <label class="form-label small">Quantity</label>
+                                <input type="number" name="floor_mat_quantity" class="form-control"
+                                       value="{{ design.floor_mat_quantity or 1 }}" min="1"
+                                       onchange="calculateItemTotal('floor_mat', {{ design.id }})">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small">Unit Price (₹)</label>
+                                <input type="number" name="floor_mat_price" class="form-control"
+                                       value="{{ design.floor_mat_price or '' }}" min="0"
+                                       onchange="calculateItemTotal('floor_mat', {{ design.id }})">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small">Total (₹)</label>
+                                <input type="text" id="floor_mat_total_{{ design.id }}" class="form-control" readonly
+                                       style="background: #f8bbd0; font-weight: bold;">
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <label class="form-label small">Details</label>
+                            <textarea name="floor_mat_details" class="form-control" rows="2"
+                                      placeholder="e.g., Anti-fatigue mat, carpet">{{ design.floor_mat_details or '' }}</textarea>
+                        </div>
+                    </div>
+
+                    <!-- ⌨️ Keyboard -->
+                    <div class="mb-3 p-3" style="background: #e3f2fd; border-radius: 10px;">
+                        <div class="form-check mb-2">
+                            <input type="checkbox" class="form-check-input" name="has_keyboard"
+                                   {% if design.has_keyboard %}checked{% endif %}>
+                            <label class="form-check-label fw-bold">⌨️ Keyboard</label>
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-md-3">
+                                <label class="form-label small">Quantity</label>
+                                <input type="number" name="keyboard_quantity" class="form-control"
+                                       value="{{ design.keyboard_quantity or 1 }}" min="1"
+                                       onchange="calculateItemTotal('keyboard', {{ design.id }})">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small">Unit Price (₹)</label>
+                                <input type="number" name="keyboard_price" class="form-control"
+                                       value="{{ design.keyboard_price or '' }}" min="0"
+                                       onchange="calculateItemTotal('keyboard', {{ design.id }})">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small">Total (₹)</label>
+                                <input type="text" id="keyboard_total_{{ design.id }}" class="form-control" readonly
+                                       style="background: #bbdefb; font-weight: bold;">
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <label class="form-label small">Details</label>
+                            <textarea name="keyboard_details" class="form-control" rows="2"
+                                      placeholder="e.g., Mechanical, wireless, RGB">{{ design.keyboard_details or '' }}</textarea>
+                        </div>
+                    </div>
+
+                    <!-- 🖱️ Mouse -->
+                    <div class="mb-3 p-3" style="background: #e3f2fd; border-radius: 10px;">
+                        <div class="form-check mb-2">
+                            <input type="checkbox" class="form-check-input" name="has_mouse"
+                                   {% if design.has_mouse %}checked{% endif %}>
+                            <label class="form-check-label fw-bold">🖱️ Mouse</label>
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-md-3">
+                                <label class="form-label small">Quantity</label>
+                                <input type="number" name="mouse_quantity" class="form-control"
+                                       value="{{ design.mouse_quantity or 1 }}" min="1"
+                                       onchange="calculateItemTotal('mouse', {{ design.id }})">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small">Unit Price (₹)</label>
+                                <input type="number" name="mouse_price" class="form-control"
+                                       value="{{ design.mouse_price or '' }}" min="0"
+                                       onchange="calculateItemTotal('mouse', {{ design.id }})">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small">Total (₹)</label>
+                                <input type="text" id="mouse_total_{{ design.id }}" class="form-control" readonly
+                                       style="background: #bbdefb; font-weight: bold;">
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <label class="form-label small">Details</label>
+                            <textarea name="mouse_details" class="form-control" rows="2"
+                                      placeholder="e.g., Wireless, gaming, ergonomic">{{ design.mouse_details or '' }}</textarea>
+                        </div>
+                    </div>
+
+                    <!-- 🎨 Paint -->
+                    <div class="mb-3 p-3" style="background: #f3e5f5; border-radius: 10px;">
+                        <div class="form-check mb-2">
+                            <input type="checkbox" class="form-check-input" name="has_paint"
+                                   {% if design.has_paint %}checked{% endif %}>
+                            <label class="form-check-label fw-bold">🎨 Paint</label>
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-md-3">
+                                <label class="form-label small">Quantity</label>
+                                <input type="number" name="paint_quantity" class="form-control"
+                                       value="{{ design.paint_quantity or 1 }}" min="1"
+                                       onchange="calculateItemTotal('paint', {{ design.id }})">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small">Unit Price (₹)</label>
+                                <input type="number" name="paint_price" class="form-control"
+                                       value="{{ design.paint_price or '' }}" min="0"
+                                       onchange="calculateItemTotal('paint', {{ design.id }})">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small">Total (₹)</label>
+                                <input type="text" id="paint_total_{{ design.id }}" class="form-control" readonly
+                                       style="background: #e1bee7; font-weight: bold;">
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <label class="form-label small">Details</label>
+                            <textarea name="paint_details" class="form-control" rows="2"
+                                      placeholder="e.g., Wall paint, primer, colors">{{ design.paint_details or '' }}</textarea>
+                        </div>
+                    </div>
+
+                    <!-- 🚪 Wardrobes -->
+                    <div class="mb-3 p-3" style="background: #f3e5f5; border-radius: 10px;">
+                        <div class="form-check mb-2">
+                            <input type="checkbox" class="form-check-input" name="has_wardrobes"
+                                   {% if design.has_wardrobes %}checked{% endif %}>
+                            <label class="form-check-label fw-bold">🚪 Wardrobes</label>
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-md-3">
+                                <label class="form-label small">Quantity</label>
+                                <input type="number" name="wardrobes_quantity" class="form-control"
+                                       value="{{ design.wardrobes_quantity or 1 }}" min="1"
+                                       onchange="calculateItemTotal('wardrobes', {{ design.id }})">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small">Unit Price (₹)</label>
+                                <input type="number" name="wardrobes_price" class="form-control"
+                                       value="{{ design.wardrobes_price or '' }}" min="0"
+                                       onchange="calculateItemTotal('wardrobes', {{ design.id }})">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small">Total (₹)</label>
+                                <input type="text" id="wardrobes_total_{{ design.id }}" class="form-control" readonly
+                                       style="background: #e1bee7; font-weight: bold;">
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <label class="form-label small">Details</label>
+                            <textarea name="wardrobes_details" class="form-control" rows="2"
+                                      placeholder="e.g., Sliding door, built-in, walk-in closet">{{ design.wardrobes_details or '' }}</textarea>
                         </div>
                     </div>
 
@@ -342,6 +783,10 @@
                                            name="custom_item_details[]" value="{{ item.details }}" style="flex: 2;">
                                     <input type="text" class="form-control" placeholder="Icon"
                                            name="custom_item_icon[]" value="{{ item.icon }}" style="max-width: 70px;">
+                                    <input type="number" class="form-control" placeholder="Qty"
+                                           name="custom_item_quantity[]" value="{{ item.quantity or 1 }}"
+                                           min="1" style="max-width: 70px;"
+                                           onchange="calculateTotal({{ design.id }})">
                                     <input type="number" class="form-control" placeholder="Price"
                                            name="custom_item_price[]" value="{{ item.price or 0 }}"
                                            step="0.01" min="0" style="max-width: 120px;"
@@ -465,6 +910,9 @@
                 <input type="text" class="form-control" placeholder="Item name" name="custom_item_name[]" style="flex: 2;">
                 <input type="text" class="form-control" placeholder="Details" name="custom_item_details[]" style="flex: 2;">
                 <input type="text" class="form-control" placeholder="Icon" name="custom_item_icon[]" style="max-width: 70px;">
+                <input type="number" class="form-control" placeholder="Qty" name="custom_item_quantity[]"
+                       value="1" min="1" style="max-width: 70px;"
+                       onchange="calculateTotal(${designId})">
                 <input type="number" class="form-control" placeholder="Price" name="custom_item_price[]"
                        value="0" step="0.01" min="0" style="max-width: 120px;"
                        onchange="calculateTotal(${designId})">
@@ -476,26 +924,59 @@
             container.appendChild(newRow);
         }
 
+        // Calculate individual item total (quantity × price)
+        function calculateItemTotal(itemName, designId) {
+            const form = document.getElementById('updateForm' + designId);
+            const quantity = parseFloat(form.querySelector(`[name="${itemName}_quantity"]`)?.value || 0);
+            const price = parseFloat(form.querySelector(`[name="${itemName}_price"]`)?.value || 0);
+            const total = quantity * price;
+            
+            // Update the total field for this item
+            const totalField = document.getElementById(`${itemName}_total_${designId}`);
+            if (totalField) {
+                totalField.value = total.toFixed(2);
+            }
+            
+            // Recalculate overall total
+            calculateTotal(designId);
+        }
+
         function calculateTotal(designId) {
             let subtotal = 0;
             
-            // Get all item prices
             const form = document.getElementById('updateForm' + designId);
-            const tablePrice = parseFloat(form.querySelector('[name="table_price"]')?.value || 0);
-            const chairPrice = parseFloat(form.querySelector('[name="chair_price"]')?.value || 0);
-            const plantsPrice = parseFloat(form.querySelector('[name="plants_price"]')?.value || 0);
-            const lightingPrice = parseFloat(form.querySelector('[name="lighting_price"]')?.value || 0);
-            const storagePrice = parseFloat(form.querySelector('[name="storage_price"]')?.value || 0);
-            const accessoriesPrice = parseFloat(form.querySelector('[name="accessories_price"]')?.value || 0);
             
-            // Add standard items
-            subtotal += tablePrice + chairPrice + plantsPrice + lightingPrice + storagePrice + accessoriesPrice;
+            // List of all 17 items
+            const items = [
+                'table', 'chair', 'plants', 'lighting', 'storage', 'accessories',
+                'big_plants', 'mini_plants', 'frames', 'wall_racks', 'desk_mat',
+                'dustbin', 'floor_mat', 'keyboard', 'mouse', 'paint', 'wardrobes'
+            ];
             
-            // Add custom items
-            const customPrices = form.querySelectorAll('[name="custom_item_price[]"]');
-            customPrices.forEach(input => {
-                subtotal += parseFloat(input.value || 0);
+            // Calculate total for each item (quantity × price)
+            items.forEach(itemName => {
+                const quantity = parseFloat(form.querySelector(`[name="${itemName}_quantity"]`)?.value || 0);
+                const price = parseFloat(form.querySelector(`[name="${itemName}_price"]`)?.value || 0);
+                const itemTotal = quantity * price;
+                
+                // Update individual item total display
+                const totalField = document.getElementById(`${itemName}_total_${designId}`);
+                if (totalField) {
+                    totalField.value = itemTotal.toFixed(2);
+                }
+                
+                subtotal += itemTotal;
             });
+            
+            // Add custom items (quantity × price)
+            const customQuantities = form.querySelectorAll('[name="custom_item_quantity[]"]');
+            const customPrices = form.querySelectorAll('[name="custom_item_price[]"]');
+            
+            for (let i = 0; i < customPrices.length; i++) {
+                const qty = parseFloat(customQuantities[i]?.value || 1);
+                const price = parseFloat(customPrices[i]?.value || 0);
+                subtotal += qty * price;
+            }
             
             // Update subtotal
             document.getElementById('subtotal' + designId).value = subtotal.toFixed(2);

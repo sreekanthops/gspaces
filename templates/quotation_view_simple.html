@@ -308,7 +308,12 @@
                             <div class="item-row">
                                 <div class="item-icon">🪑</div>
                                 <div class="item-content">
-                                    <div class="item-title">Desk</div>
+                                    <div class="item-title">
+                                        Desk
+                                        {% if design.table_quantity and design.table_quantity > 1 %}
+                                        <span class="badge bg-primary ms-2">×{{ design.table_quantity }}</span>
+                                        {% endif %}
+                                    </div>
                                     {% if design.table_details %}
                                     <div class="item-details">{{ design.table_details }}</div>
                                     {% endif %}
@@ -320,7 +325,12 @@
                             <div class="item-row">
                                 <div class="item-icon">💺</div>
                                 <div class="item-content">
-                                    <div class="item-title">Chair</div>
+                                    <div class="item-title">
+                                        Chair
+                                        {% if design.chair_quantity and design.chair_quantity > 1 %}
+                                        <span class="badge bg-primary ms-2">×{{ design.chair_quantity }}</span>
+                                        {% endif %}
+                                    </div>
                                     {% if design.chair_details %}
                                     <div class="item-details">{{ design.chair_details }}</div>
                                     {% endif %}
@@ -332,7 +342,12 @@
                             <div class="item-row">
                                 <div class="item-icon">🪴</div>
                                 <div class="item-content">
-                                    <div class="item-title">Plants & Decor</div>
+                                    <div class="item-title">
+                                        Plants & Decor
+                                        {% if design.plants_quantity and design.plants_quantity > 1 %}
+                                        <span class="badge bg-primary ms-2">×{{ design.plants_quantity }}</span>
+                                        {% endif %}
+                                    </div>
                                     {% if design.plants_details %}
                                     <div class="item-details">{{ design.plants_details }}</div>
                                     {% endif %}
@@ -344,7 +359,12 @@
                             <div class="item-row">
                                 <div class="item-icon">💡</div>
                                 <div class="item-content">
-                                    <div class="item-title">Lighting</div>
+                                    <div class="item-title">
+                                        Lighting
+                                        {% if design.lighting_quantity and design.lighting_quantity > 1 %}
+                                        <span class="badge bg-primary ms-2">×{{ design.lighting_quantity }}</span>
+                                        {% endif %}
+                                    </div>
                                     {% if design.lighting_details %}
                                     <div class="item-details">{{ design.lighting_details }}</div>
                                     {% endif %}
@@ -356,7 +376,12 @@
                             <div class="item-row">
                                 <div class="item-icon">📦</div>
                                 <div class="item-content">
-                                    <div class="item-title">Storage Solutions</div>
+                                    <div class="item-title">
+                                        Storage Solutions
+                                        {% if design.storage_quantity and design.storage_quantity > 1 %}
+                                        <span class="badge bg-primary ms-2">×{{ design.storage_quantity }}</span>
+                                        {% endif %}
+                                    </div>
                                     {% if design.storage_details %}
                                     <div class="item-details">{{ design.storage_details }}</div>
                                     {% endif %}
@@ -368,9 +393,201 @@
                             <div class="item-row">
                                 <div class="item-icon">✨</div>
                                 <div class="item-content">
-                                    <div class="item-title">Accessories</div>
+                                    <div class="item-title">
+                                        Accessories
+                                        {% if design.accessories_quantity and design.accessories_quantity > 1 %}
+                                        <span class="badge bg-primary ms-2">×{{ design.accessories_quantity }}</span>
+                                        {% endif %}
+                                    </div>
                                     {% if design.accessories_details %}
                                     <div class="item-details">{{ design.accessories_details }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            {% if design.has_big_plants %}
+                            <div class="item-row">
+                                <div class="item-icon">🌳</div>
+                                <div class="item-content">
+                                    <div class="item-title">
+                                        Big Plants
+                                        {% if design.big_plants_quantity and design.big_plants_quantity > 1 %}
+                                        <span class="badge bg-primary ms-2">×{{ design.big_plants_quantity }}</span>
+                                        {% endif %}
+                                    </div>
+                                    {% if design.big_plants_details %}
+                                    <div class="item-details">{{ design.big_plants_details }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            {% if design.has_mini_plants %}
+                            <div class="item-row">
+                                <div class="item-icon">🌱</div>
+                                <div class="item-content">
+                                    <div class="item-title">
+                                        Mini Plants
+                                        {% if design.mini_plants_quantity and design.mini_plants_quantity > 1 %}
+                                        <span class="badge bg-primary ms-2">×{{ design.mini_plants_quantity }}</span>
+                                        {% endif %}
+                                    </div>
+                                    {% if design.mini_plants_details %}
+                                    <div class="item-details">{{ design.mini_plants_details }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            {% if design.has_frames %}
+                            <div class="item-row">
+                                <div class="item-icon">🖼️</div>
+                                <div class="item-content">
+                                    <div class="item-title">
+                                        Frames
+                                        {% if design.frames_quantity and design.frames_quantity > 1 %}
+                                        <span class="badge bg-primary ms-2">×{{ design.frames_quantity }}</span>
+                                        {% endif %}
+                                    </div>
+                                    {% if design.frames_details %}
+                                    <div class="item-details">{{ design.frames_details }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            {% if design.has_wall_racks %}
+                            <div class="item-row">
+                                <div class="item-icon">📚</div>
+                                <div class="item-content">
+                                    <div class="item-title">
+                                        Wall Racks
+                                        {% if design.wall_racks_quantity and design.wall_racks_quantity > 1 %}
+                                        <span class="badge bg-primary ms-2">×{{ design.wall_racks_quantity }}</span>
+                                        {% endif %}
+                                    </div>
+                                    {% if design.wall_racks_details %}
+                                    <div class="item-details">{{ design.wall_racks_details }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            {% if design.has_desk_mat %}
+                            <div class="item-row">
+                                <div class="item-icon">🎯</div>
+                                <div class="item-content">
+                                    <div class="item-title">
+                                        Desk Mat
+                                        {% if design.desk_mat_quantity and design.desk_mat_quantity > 1 %}
+                                        <span class="badge bg-primary ms-2">×{{ design.desk_mat_quantity }}</span>
+                                        {% endif %}
+                                    </div>
+                                    {% if design.desk_mat_details %}
+                                    <div class="item-details">{{ design.desk_mat_details }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            {% if design.has_dustbin %}
+                            <div class="item-row">
+                                <div class="item-icon">🗑️</div>
+                                <div class="item-content">
+                                    <div class="item-title">
+                                        Dustbin
+                                        {% if design.dustbin_quantity and design.dustbin_quantity > 1 %}
+                                        <span class="badge bg-primary ms-2">×{{ design.dustbin_quantity }}</span>
+                                        {% endif %}
+                                    </div>
+                                    {% if design.dustbin_details %}
+                                    <div class="item-details">{{ design.dustbin_details }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            {% if design.has_floor_mat %}
+                            <div class="item-row">
+                                <div class="item-icon">🟫</div>
+                                <div class="item-content">
+                                    <div class="item-title">
+                                        Floor Mat
+                                        {% if design.floor_mat_quantity and design.floor_mat_quantity > 1 %}
+                                        <span class="badge bg-primary ms-2">×{{ design.floor_mat_quantity }}</span>
+                                        {% endif %}
+                                    </div>
+                                    {% if design.floor_mat_details %}
+                                    <div class="item-details">{{ design.floor_mat_details }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            {% if design.has_keyboard %}
+                            <div class="item-row">
+                                <div class="item-icon">⌨️</div>
+                                <div class="item-content">
+                                    <div class="item-title">
+                                        Keyboard
+                                        {% if design.keyboard_quantity and design.keyboard_quantity > 1 %}
+                                        <span class="badge bg-primary ms-2">×{{ design.keyboard_quantity }}</span>
+                                        {% endif %}
+                                    </div>
+                                    {% if design.keyboard_details %}
+                                    <div class="item-details">{{ design.keyboard_details }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            {% if design.has_mouse %}
+                            <div class="item-row">
+                                <div class="item-icon">🖱️</div>
+                                <div class="item-content">
+                                    <div class="item-title">
+                                        Mouse
+                                        {% if design.mouse_quantity and design.mouse_quantity > 1 %}
+                                        <span class="badge bg-primary ms-2">×{{ design.mouse_quantity }}</span>
+                                        {% endif %}
+                                    </div>
+                                    {% if design.mouse_details %}
+                                    <div class="item-details">{{ design.mouse_details }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            {% if design.has_paint %}
+                            <div class="item-row">
+                                <div class="item-icon">🎨</div>
+                                <div class="item-content">
+                                    <div class="item-title">
+                                        Paint
+                                        {% if design.paint_quantity and design.paint_quantity > 1 %}
+                                        <span class="badge bg-primary ms-2">×{{ design.paint_quantity }}</span>
+                                        {% endif %}
+                                    </div>
+                                    {% if design.paint_details %}
+                                    <div class="item-details">{{ design.paint_details }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            {% if design.has_wardrobes %}
+                            <div class="item-row">
+                                <div class="item-icon">🚪</div>
+                                <div class="item-content">
+                                    <div class="item-title">
+                                        Wardrobes
+                                        {% if design.wardrobes_quantity and design.wardrobes_quantity > 1 %}
+                                        <span class="badge bg-primary ms-2">×{{ design.wardrobes_quantity }}</span>
+                                        {% endif %}
+                                    </div>
+                                    {% if design.wardrobes_details %}
+                                    <div class="item-details">{{ design.wardrobes_details }}</div>
                                     {% endif %}
                                 </div>
                             </div>
@@ -381,7 +598,12 @@
                                 <div class="item-row">
                                     <div class="item-icon">{{ item.icon }}</div>
                                     <div class="item-content">
-                                        <div class="item-title">{{ item.name }}</div>
+                                        <div class="item-title">
+                                            {{ item.name }}
+                                            {% if item.quantity and item.quantity > 1 %}
+                                            <span class="badge bg-primary ms-2">×{{ item.quantity }}</span>
+                                            {% endif %}
+                                        </div>
                                         {% if item.details %}
                                         <div class="item-details">{{ item.details }}</div>
                                         {% endif %}

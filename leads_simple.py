@@ -374,8 +374,14 @@ def update_design(design_id):
         
         for item in items:
             has_item = request.form.get(f'has_{item}') == 'on'
-            quantity = int(request.form.get(f'{item}_quantity', 1))
-            price = float(request.form.get(f'{item}_price', 0))
+            
+            # Handle empty strings for quantity and price
+            quantity_str = request.form.get(f'{item}_quantity', '1')
+            quantity = int(quantity_str) if quantity_str and quantity_str.strip() else 1
+            
+            price_str = request.form.get(f'{item}_price', '0')
+            price = float(price_str) if price_str and price_str.strip() else 0.0
+            
             details = request.form.get(f'{item}_details', '')
             
             item_data[item] = {
@@ -399,8 +405,12 @@ def update_design(design_id):
         
         for i in range(len(names)):
             if names[i].strip():
-                qty = int(quantities[i]) if i < len(quantities) and quantities[i] else 1
-                price = float(prices[i]) if i < len(prices) and prices[i] else 0
+                # Handle empty strings for quantity and price
+                qty_str = quantities[i] if i < len(quantities) else '1'
+                qty = int(qty_str) if qty_str and qty_str.strip() else 1
+                
+                price_str = prices[i] if i < len(prices) else '0'
+                price = float(price_str) if price_str and price_str.strip() else 0.0
                 custom_items.append({
                     'name': names[i],
                     'details': details_list[i] if i < len(details_list) else '',

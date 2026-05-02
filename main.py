@@ -4525,7 +4525,7 @@ register_ai_routes(app)
 
 # --- LEADS/QUOTATION SYSTEM ---
 # Register leads management routes
-register_leads_routes(app, get_db_connection)
+register_leads_routes(app, connect_to_db)
 
 
 # --- APPLICATION BOOTSTRAP ---

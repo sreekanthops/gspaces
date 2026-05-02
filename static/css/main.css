@@ -807,6 +807,13 @@ section,
   overflow: clip;
 }
 
+/* Reduce top spacing for non-home page sections */
+body:not(.index-page) section:first-of-type,
+body:not(.index-page) .section:first-of-type {
+  padding-top: 30px;
+  margin-top: 0;
+}
+
 @media (max-width: 1199px) {
   section,
   .section {
@@ -1056,7 +1063,12 @@ section,
 # About Section
 --------------------------------------------------------------*/
 .about {
-    margin-top: 100px;
+    margin-top: 30px;
+}
+
+/* Reduce spacing for About page specifically */
+body:not(.index-page) .about {
+    margin-top: 20px;
 }
 
 .about h3 {
@@ -1127,12 +1139,40 @@ section,
 
 /* Reduce top spacing for About section */
 #about {
-  padding-top: 0px;  /* was likely 80px or 100px */
+  padding-top: 20px;
+  margin-top: 0;
 }
 
 /* Optional: fine-tune margins inside */
 #about .content h3 {
-  margin-top: 0;  /* remove extra gap from heading */
+  margin-top: 0;
+}
+
+/* Reduce spacing for Products, Contact, Corporate pages */
+#products,
+#contact,
+#corporate {
+  padding-top: 30px;
+  margin-top: 0;
+}
+
+/* Mobile adjustments for better spacing */
+@media (max-width: 768px) {
+  body:not(.index-page) section:first-of-type,
+  body:not(.index-page) .section:first-of-type {
+    padding-top: 20px;
+  }
+  
+  .about {
+    margin-top: 15px;
+  }
+  
+  #about,
+  #products,
+  #contact,
+  #corporate {
+    padding-top: 20px;
+  }
 }
 
 /* Responsive text adjustments */

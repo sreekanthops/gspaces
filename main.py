@@ -477,6 +477,7 @@ def inr_format(value):
     try:
         return f"{float(value):.2f}"
     except:
+        return value
 
 @app.template_filter('from_json')
 def from_json_filter(value):
@@ -487,7 +488,6 @@ def from_json_filter(value):
         return []
     except:
         return []
-        return value
 
 # Initialize wallet routes
 add_wallet_routes(app, connect_to_db)

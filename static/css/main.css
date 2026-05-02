@@ -281,7 +281,7 @@ h6 {
 }
 
 .index-page .custom-navbar .navbar-brand img {
-  filter: brightness(0) invert(1);
+  filter: brightness(0) invert(1) !important;
 }
 
 .index-page .custom-navbar .custom-navbar-nav li a {
@@ -294,27 +294,27 @@ h6 {
 }
 
 .index-page .custom-navbar .custom-navbar-cta img {
-  filter: brightness(0) invert(1);
+  filter: brightness(0) invert(1) !important;
 }
 
 .index-page .badge {
   background: #5ec4e8 !important;
 }
 
-/* Navbar toggler (hamburger menu) styling for visibility */
-.navbar-toggler {
-  border: 2px solid rgba(255, 255, 255, 0.5);
+/* Navbar toggler (hamburger menu) styling - WHITE for index page */
+.index-page .navbar-toggler {
+  border: 2px solid rgba(255, 255, 255, 0.8) !important;
   padding: 8px 10px;
   border-radius: 4px;
 }
 
-.navbar-toggler:focus {
-  box-shadow: 0 0 0 0.2rem rgba(255, 255, 255, 0.25);
+.index-page .navbar-toggler:focus {
+  box-shadow: 0 0 0 0.2rem rgba(255, 255, 255, 0.25) !important;
   outline: none;
 }
 
-.navbar-toggler-icon {
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(255, 255, 255, 0.95)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+.index-page .navbar-toggler-icon {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(255, 255, 255, 1)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2.5' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") !important;
   width: 24px;
   height: 24px;
 }
@@ -327,13 +327,18 @@ h6 {
     -webkit-backdrop-filter: blur(10px);
   }
   
-  /* Ensure navbar toggler is visible on mobile */
+  /* Ensure logo stays WHITE on mobile */
+  .index-page .custom-navbar .navbar-brand img {
+    filter: brightness(0) invert(1) !important;
+  }
+  
+  /* Ensure navbar toggler is WHITE on mobile */
   .index-page .navbar-toggler {
-    border-color: rgba(255, 255, 255, 0.8);
+    border-color: rgba(255, 255, 255, 0.8) !important;
   }
   
   .index-page .navbar-toggler-icon {
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(255, 255, 255, 1)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2.5' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(255, 255, 255, 1)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2.5' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") !important;
   }
 }
 
@@ -897,7 +902,7 @@ section,
 }
 
 .home::before {
-    content: ';
+    content: '';
     position: absolute;
     top: 0;
     left: 0;
@@ -905,7 +910,6 @@ section,
     bottom: 0;
     background: linear-gradient(135deg, rgba(74, 95, 127, 0.3) 0%, rgba(61, 79, 107, 0.3) 100%);
     pointer-events: none;
-}
 }
 
 .home-content {
@@ -1017,21 +1021,28 @@ section,
     }
 
     .home-content {
-        padding: 100px 0 60px 0;
+        padding: 120px 20px 80px 20px; /* Added horizontal padding for mobile */
+    }
+
+    .home-text {
+        padding: 0 15px; /* Extra padding to prevent text from touching edges */
     }
 
     .home-text h2 {
         font-size: 2.2rem;
+        margin-bottom: 1rem;
     }
 
     .home-text p {
         font-size: 1rem;
         margin-bottom: 2rem;
+        line-height: 1.6;
     }
 
     .home-text .btn-group {
         flex-direction: column;
         gap: 1rem;
+        margin-bottom: 80px; /* Space for contact buttons at bottom */
     }
 
     .home-text .btn-primary {
@@ -1791,21 +1802,22 @@ colors
 @media (max-width: 767px) {
   .floating-contact-buttons {
     display: flex;
-    left: auto;
-    right: 12px;
-    bottom: 12px;
-    top: auto;
+    left: 15px !important; /* Bottom-left positioning */
+    right: auto !important;
+    bottom: 15px !important;
+    top: auto !important;
     transform: none;
     gap: 10px;
+    flex-direction: row; /* Horizontal layout on mobile */
   }
 
   .floating-contact-btn {
-    width: 52px;
-    height: 52px;
+    width: 56px;
+    height: 56px;
   }
 
   .floating-contact-btn i {
-    font-size: 20px;
+    font-size: 22px;
   }
 }
 

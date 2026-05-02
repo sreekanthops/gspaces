@@ -149,11 +149,7 @@ document.addEventListener("DOMContentLoaded", initCountdownFromServer);
 <nav class="custom-navbar navbar navbar-expand-md" aria-label="GSpaces Navigation Bar">
     <div class="container">
         <a class="navbar-brand" href="{{ url_for('index') }}">
-            {% if request.endpoint == 'index' %}
-                <img src="{{ url_for('static', filename='img/logo-gspaces.svg') }}" alt="GSPACES-LOGO" class="home-logo">
-            {% else %}
-                <img src="{{ url_for('static', filename='img/gspaces-logo.png') }}" alt="GSPACES-LOGO">
-            {% endif %}
+            <img src="{{ url_for('static', filename='img/gspaces-logo.png') }}" alt="GSPACES-LOGO">
         </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarsFurni" aria-controls="navbarsFurni" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>

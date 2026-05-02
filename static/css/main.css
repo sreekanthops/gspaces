@@ -281,13 +281,7 @@ h6 {
 }
 
 .index-page .custom-navbar .navbar-brand img {
-  filter: none !important;
-  background: transparent !important;
-}
-
-/* Style SVG logo for home page - make it white/visible */
-.index-page .custom-navbar .navbar-brand img.home-logo {
-  filter: brightness(0) invert(1) !important; /* SVG can handle this filter */
+  filter: none !important; /* No filter - show PNG logo as-is */
   background: transparent !important;
 }
 
@@ -334,9 +328,9 @@ h6 {
     -webkit-backdrop-filter: blur(10px);
   }
   
-  /* Show SVG logo on mobile - white color */
-  .index-page .custom-navbar .navbar-brand img.home-logo {
-    filter: brightness(0) invert(1) !important;
+  /* Show PNG logo on mobile without filter */
+  .index-page .custom-navbar .navbar-brand img {
+    filter: none !important;
     background: transparent !important;
   }
   

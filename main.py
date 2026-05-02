@@ -232,11 +232,12 @@ login_manager.login_message_category = None
 
 # User class for Flask-Login
 class User(UserMixin):
-    def __init__(self, id, email, name, is_admin=False):
+    def __init__(self, id, email, name, is_admin=False, profile_photo=None):
         self.id = id
         self.email = email
         self.name = name
         self.is_admin = is_admin
+        self.profile_photo = profile_photo
 
     def get_id(self):
         return str(self.id)
@@ -251,12 +252,18 @@ def load_user(user_id):
     try:
         conn = connect_to_db()
         cursor = conn.cursor(cursor_factory=RealDictCursor)
-        cursor.execute("SELECT id, email, name FROM users WHERE id = %s", (user_id,))
+        cursor.execute("SELECT id, email, name, profile_photo FROM users WHERE id = %s", (user_id,))
         user_data = cursor.fetchone()
         if user_data:
             # Check if the user's email is in ADMIN_EMAILS to set is_admin
             is_admin = user_data['email'] in ADMIN_EMAILS
-            return User(id=user_data['id'], email=user_data['email'], name=user_data['name'], is_admin=is_admin)
+            return User(
+                id=user_data['id'],
+                email=user_data['email'],
+                name=user_data['name'],
+                is_admin=is_admin,
+                profile_photo=user_data.get('profile_photo')
+            )
         else:
             return None
     except Exception as e:

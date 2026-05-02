@@ -341,13 +341,22 @@ h6 {
     color: #ff4a17 !important;
   }
   
-  /* Change hamburger to dark */
+  /* Change hamburger to DARK for mobile home page */
   .index-page .navbar-toggler {
-    border-color: rgba(0, 0, 0, 0.3) !important;
+    border-color: rgba(0, 0, 0, 0.5) !important;
+    padding: 8px 10px;
+    border-radius: 4px;
+  }
+  
+  .index-page .navbar-toggler:focus {
+    box-shadow: 0 0 0 0.2rem rgba(0, 0, 0, 0.15) !important;
+    outline: none;
   }
   
   .index-page .navbar-toggler-icon {
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(0, 0, 0, 0.75)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(0, 0, 0, 0.9)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2.5' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") !important;
+    width: 24px;
+    height: 24px;
   }
   
   /* Change cart/user icons to dark */
@@ -359,15 +368,6 @@ h6 {
   .index-page .custom-navbar .navbar-brand img {
     filter: none !important;
     background: transparent !important;
-  }
-  
-  /* Ensure navbar toggler is WHITE on mobile */
-  .index-page .navbar-toggler {
-    border-color: rgba(255, 255, 255, 0.8) !important;
-  }
-  
-  .index-page .navbar-toggler-icon {
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(255, 255, 255, 1)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2.5' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") !important;
   }
 }
 

@@ -304,8 +304,9 @@ def add_design(lead_id):
         first_design = cur.fetchone()
         
         # Get next order
-        cur.execute("SELECT COALESCE(MAX(design_order), 0) + 1 FROM lead_designs WHERE lead_id = %s", (lead_id,))
-        next_order = cur.fetchone()[0]
+        cur.execute("SELECT COALESCE(MAX(design_order), 0) + 1 as next_order FROM lead_designs WHERE lead_id = %s", (lead_id,))
+        result = cur.fetchone()
+        next_order = result['next_order'] if result else 1
         
         if first_design:
             # Copy properties from first design

@@ -173,13 +173,14 @@
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label class="form-label">Design Name</label>
-                        <input type="text" name="design_name" class="form-control" 
+                        <input type="text" name="design_name" class="form-control"
                                placeholder="e.g., Option 1, Modern Setup, etc." required>
                     </div>
                     <div class="col-md-6 mb-3">
-                        <label class="form-label">Design Image</label>
-                        <input type="file" name="design_image" class="form-control" 
-                               accept="image/*" required>
+                        <label class="form-label">Media Files (Images/Videos - Max 50MB each)</label>
+                        <input type="file" name="media_files" class="form-control"
+                               accept="image/*,video/*" multiple required>
+                        <small class="text-muted">You can select multiple images and videos. Hold Ctrl/Cmd to select multiple files.</small>
                     </div>
                 </div>
                 <button type="submit" class="btn btn-success">

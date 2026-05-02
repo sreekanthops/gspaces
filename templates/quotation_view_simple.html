@@ -59,6 +59,75 @@
         .reference-image:hover, .design-image:hover {
             transform: scale(1.02);
         }
+        /* Media Carousel */
+        .media-carousel {
+            position: relative;
+            width: 100%;
+            max-height: 500px;
+            overflow: hidden;
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+        .media-carousel-inner {
+            display: flex;
+            transition: transform 0.5s ease-in-out;
+        }
+        .media-slide {
+            min-width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #000;
+        }
+        .media-slide img, .media-slide video {
+            max-width: 100%;
+            max-height: 500px;
+            object-fit: contain;
+            cursor: pointer;
+        }
+        .carousel-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0,0,0,0.5);
+            color: white;
+            border: none;
+            padding: 15px 20px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background 0.3s;
+            z-index: 10;
+        }
+        .carousel-nav:hover {
+            background: rgba(0,0,0,0.8);
+        }
+        .carousel-nav.prev {
+            left: 10px;
+        }
+        .carousel-nav.next {
+            right: 10px;
+        }
+        .carousel-indicators {
+            position: absolute;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+            z-index: 10;
+        }
+        .carousel-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.5);
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .carousel-indicator.active {
+            background: white;
+        }
         .design-section {
             background: #f8f9fa;
             border-radius: 15px;
@@ -187,10 +256,49 @@
                     <div class="design-section h-100">
                         <h4 class="mb-3">{{ design.design_name }}</h4>
                         
-                        {% if design.design_image %}
-                        <img src="{{ url_for('static', filename=design.design_image) }}"
-                             alt="{{ design.design_name }}" class="design-image"
-                             onclick="openImageModal(this.src)">
+                        {% if design.media_files and design.media_files|length > 0 %}
+                            <!-- Media Carousel -->
+                            <div class="media-carousel" id="carousel{{ design.id }}">
+                                <div class="media-carousel-inner" id="carouselInner{{ design.id }}">
+                                    {% for media in design.media_files %}
+                                    <div class="media-slide">
+                                        {% if media.type == 'image' %}
+                                            <img src="{{ url_for('static', filename=media.url) }}"
+                                                 alt="{{ design.design_name }}"
+                                                 onclick="openImageModal(this.src)">
+                                        {% elif media.type == 'video' %}
+                                            <video controls>
+                                                <source src="{{ url_for('static', filename=media.url) }}" type="video/mp4">
+                                                Your browser does not support the video tag.
+                                            </video>
+                                        {% endif %}
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                
+                                {% if design.media_files|length > 1 %}
+                                <!-- Navigation Arrows -->
+                                <button class="carousel-nav prev" onclick="moveSlide({{ design.id }}, -1)">
+                                    <i class="bi bi-chevron-left"></i>
+                                </button>
+                                <button class="carousel-nav next" onclick="moveSlide({{ design.id }}, 1)">
+                                    <i class="bi bi-chevron-right"></i>
+                                </button>
+                                
+                                <!-- Indicators -->
+                                <div class="carousel-indicators" id="indicators{{ design.id }}">
+                                    {% for media in design.media_files %}
+                                    <div class="carousel-indicator {% if loop.first %}active{% endif %}"
+                                         onclick="goToSlide({{ design.id }}, {{ loop.index0 }})"></div>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        {% elif design.design_image %}
+                            <!-- Fallback to single image -->
+                            <img src="{{ url_for('static', filename=design.design_image) }}"
+                                 alt="{{ design.design_name }}" class="design-image"
+                                 onclick="openImageModal(this.src)">
                         {% endif %}
 
                         <div class="items-list">
@@ -367,6 +475,119 @@
             const modal = new bootstrap.Modal(document.getElementById('imageModal'));
             modal.show();
         }
+
+        // Carousel functionality
+        const carouselStates = {};
+
+        function initCarousel(designId, totalSlides) {
+            carouselStates[designId] = {
+                currentSlide: 0,
+                totalSlides: totalSlides,
+                autoScrollInterval: null
+            };
+            
+            // Start auto-scroll
+            startAutoScroll(designId);
+        }
+
+        function moveSlide(designId, direction) {
+            const state = carouselStates[designId];
+            if (!state) return;
+            
+            // Stop auto-scroll when user manually navigates
+            stopAutoScroll(designId);
+            
+            state.currentSlide += direction;
+            
+            // Loop around
+            if (state.currentSlide < 0) {
+                state.currentSlide = state.totalSlides - 1;
+            } else if (state.currentSlide >= state.totalSlides) {
+                state.currentSlide = 0;
+            }
+            
+            updateCarousel(designId);
+            
+            // Restart auto-scroll after 10 seconds
+            setTimeout(() => startAutoScroll(designId), 10000);
+        }
+
+        function goToSlide(designId, slideIndex) {
+            const state = carouselStates[designId];
+            if (!state) return;
+            
+            stopAutoScroll(designId);
+            state.currentSlide = slideIndex;
+            updateCarousel(designId);
+            
+            // Restart auto-scroll after 10 seconds
+            setTimeout(() => startAutoScroll(designId), 10000);
+        }
+
+        function updateCarousel(designId) {
+            const state = carouselStates[designId];
+            if (!state) return;
+            
+            const inner = document.getElementById('carouselInner' + designId);
+            const indicators = document.querySelectorAll('#indicators' + designId + ' .carousel-indicator');
+            
+            if (inner) {
+                inner.style.transform = `translateX(-${state.currentSlide * 100}%)`;
+            }
+            
+            // Update indicators
+            indicators.forEach((indicator, index) => {
+                if (index === state.currentSlide) {
+                    indicator.classList.add('active');
+                } else {
+                    indicator.classList.remove('active');
+                }
+            });
+        }
+
+        function startAutoScroll(designId) {
+            const state = carouselStates[designId];
+            if (!state || state.totalSlides <= 1) return;
+            
+            // Clear existing interval
+            stopAutoScroll(designId);
+            
+            // Auto-scroll every 5 seconds
+            state.autoScrollInterval = setInterval(() => {
+                state.currentSlide = (state.currentSlide + 1) % state.totalSlides;
+                updateCarousel(designId);
+            }, 5000);
+        }
+
+        function stopAutoScroll(designId) {
+            const state = carouselStates[designId];
+            if (state && state.autoScrollInterval) {
+                clearInterval(state.autoScrollInterval);
+                state.autoScrollInterval = null;
+            }
+        }
+
+        // Initialize all carousels on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            {% for design in designs %}
+                {% if design.media_files and design.media_files|length > 1 %}
+                    initCarousel({{ design.id }}, {{ design.media_files|length }});
+                {% endif %}
+            {% endfor %}
+        });
+
+        // Pause auto-scroll when page is not visible
+        document.addEventListener('visibilitychange', function() {
+            {% for design in designs %}
+                {% if design.media_files and design.media_files|length > 1 %}
+                    if (document.hidden) {
+                        stopAutoScroll({{ design.id }});
+                    } else {
+                        startAutoScroll({{ design.id }});
+                    }
+                {% endif %}
+            {% endfor %}
+        });
     </script>
 </body>
 </html>

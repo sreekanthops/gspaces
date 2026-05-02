@@ -23,13 +23,33 @@ get_db_connection = None
 LEADS_FOLDER = os.path.join('static', 'img', 'leads')
 REFERENCE_FOLDER = os.path.join(LEADS_FOLDER, 'reference')
 DESIGNS_FOLDER = os.path.join(LEADS_FOLDER, 'designs')
+MEDIA_FOLDER = os.path.join(LEADS_FOLDER, 'media')
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+ALLOWED_VIDEO_EXTENSIONS = {'mp4', 'webm', 'mov', 'avi'}
+MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
 
 os.makedirs(REFERENCE_FOLDER, exist_ok=True)
 os.makedirs(DESIGNS_FOLDER, exist_ok=True)
+os.makedirs(MEDIA_FOLDER, exist_ok=True)
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def allowed_media_file(filename):
+    """Check if file is allowed image or video"""
+    if '.' not in filename:
+        return False
+    ext = filename.rsplit('.', 1)[1].lower()
+    return ext in ALLOWED_EXTENSIONS or ext in ALLOWED_VIDEO_EXTENSIONS
+
+def get_media_type(filename):
+    """Determine if file is image or video"""
+    ext = filename.rsplit('.', 1)[1].lower()
+    if ext in ALLOWED_EXTENSIONS:
+        return 'image'
+    elif ext in ALLOWED_VIDEO_EXTENSIONS:
+        return 'video'
+    return None
 
 def admin_required(f):
     @login_required
@@ -184,8 +204,9 @@ def edit_lead(lead_id):
     """, (lead_id,))
     designs = cur.fetchall()
     
-    # Parse custom_items JSON for each design
+    # Parse custom_items and media_files JSON for each design
     for design in designs:
+        # Parse custom_items
         if design.get('custom_items'):
             try:
                 design['custom_items'] = json.loads(design['custom_items'])
@@ -193,6 +214,15 @@ def edit_lead(lead_id):
                 design['custom_items'] = []
         else:
             design['custom_items'] = []
+        
+        # Parse media_files
+        if design.get('media_files'):
+            try:
+                design['media_files'] = json.loads(design['media_files'])
+            except:
+                design['media_files'] = []
+        else:
+            design['media_files'] = []
     
     cur.close()
     conn.close()
@@ -209,9 +239,44 @@ def add_design(lead_id):
     try:
         design_name = request.form.get('design_name', 'Design Option')
         
-        # Handle design image
-        design_image = None
-        if 'design_image' in request.files:
+        # Handle multiple media files (images and videos)
+        media_files = []
+        design_image = None  # Keep for backward compatibility
+        
+        if 'media_files' in request.files:
+            files = request.files.getlist('media_files')
+            for idx, file in enumerate(files):
+                if file and file.filename and allowed_media_file(file.filename):
+                    # Check file size
+                    file.seek(0, os.SEEK_END)
+                    file_size = file.tell()
+                    file.seek(0)
+                    
+                    if file_size > MAX_FILE_SIZE:
+                        flash(f'File {file.filename} exceeds 50MB limit', 'warning')
+                        continue
+                    
+                    filename = secure_filename(file.filename)
+                    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                    filename = f"media_{timestamp}_{idx}_{filename}"
+                    filepath = os.path.join(MEDIA_FOLDER, filename)
+                    file.save(filepath)
+                    
+                    media_type = get_media_type(file.filename)
+                    media_url = f"img/leads/media/{filename}"
+                    
+                    media_files.append({
+                        'type': media_type,
+                        'url': media_url,
+                        'order': idx
+                    })
+                    
+                    # Set first image as design_image for backward compatibility
+                    if not design_image and media_type == 'image':
+                        design_image = media_url
+        
+        # Fallback to single design_image if no media_files uploaded
+        if not media_files and 'design_image' in request.files:
             file = request.files['design_image']
             if file and file.filename and allowed_file(file.filename):
                 filename = secure_filename(file.filename)
@@ -220,6 +285,11 @@ def add_design(lead_id):
                 filepath = os.path.join(DESIGNS_FOLDER, filename)
                 file.save(filepath)
                 design_image = f"img/leads/designs/{filename}"
+                media_files.append({
+                    'type': 'image',
+                    'url': design_image,
+                    'order': 0
+                })
         
         # Get first design to copy properties from
         cur.execute("""
@@ -241,14 +311,14 @@ def add_design(lead_id):
             # Copy properties from first design
             cur.execute("""
                 INSERT INTO lead_designs (
-                    lead_id, design_name, design_image, design_order,
+                    lead_id, design_name, design_image, design_order, media_files,
                     has_table, has_chair, has_plants, has_lighting, has_storage, has_accessories,
                     table_details, chair_details, plants_details, lighting_details,
                     storage_details, accessories_details, price, notes
                 )
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """, (
-                lead_id, design_name, design_image, next_order,
+                lead_id, design_name, design_image, next_order, json.dumps(media_files),
                 first_design['has_table'], first_design['has_chair'], first_design['has_plants'],
                 first_design['has_lighting'], first_design['has_storage'], first_design['has_accessories'],
                 first_design['table_details'], first_design['chair_details'], first_design['plants_details'],
@@ -259,9 +329,9 @@ def add_design(lead_id):
         else:
             # First design - create with defaults
             cur.execute("""
-                INSERT INTO lead_designs (lead_id, design_name, design_image, design_order)
-                VALUES (%s, %s, %s, %s)
-            """, (lead_id, design_name, design_image, next_order))
+                INSERT INTO lead_designs (lead_id, design_name, design_image, design_order, media_files)
+                VALUES (%s, %s, %s, %s, %s)
+            """, (lead_id, design_name, design_image, next_order, json.dumps(media_files)))
             flash('First design added! Set up the items and price.', 'info')
         
         conn.commit()
@@ -422,8 +492,9 @@ def view_quotation(share_token):
     """, (lead['id'],))
     designs = cur.fetchall()
     
-    # Parse custom_items JSON for each design
+    # Parse custom_items and media_files JSON for each design
     for design in designs:
+        # Parse custom_items
         if design.get('custom_items'):
             try:
                 design['custom_items'] = json.loads(design['custom_items'])
@@ -431,6 +502,23 @@ def view_quotation(share_token):
                 design['custom_items'] = []
         else:
             design['custom_items'] = []
+        
+        # Parse media_files
+        if design.get('media_files'):
+            try:
+                design['media_files'] = json.loads(design['media_files'])
+            except:
+                design['media_files'] = []
+        else:
+            design['media_files'] = []
+        
+        # Fallback: if no media_files but has design_image, create media_files array
+        if not design['media_files'] and design.get('design_image'):
+            design['media_files'] = [{
+                'type': 'image',
+                'url': design['design_image'],
+                'order': 0
+            }]
     
     # Calculate total
     total = sum(d['price'] or 0 for d in designs)

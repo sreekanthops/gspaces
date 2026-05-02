@@ -447,7 +447,7 @@ def update_design(design_id):
                 has_mini_plants = %s, mini_plants_quantity = %s, mini_plants_price = %s, mini_plants_details = %s,
                 has_frames = %s, frames_quantity = %s, frames_price = %s, frames_details = %s,
                 has_wall_racks = %s, wall_racks_quantity = %s, wall_racks_price = %s, wall_racks_details = %s,
-                has_deskmat = %s, deskmat_quantity = %s, deskmat_price = %s, deskmat_details = %s,
+                has_desk_mat = %s, desk_mat_quantity = %s, desk_mat_price = %s, desk_mat_details = %s,
                 has_dustbin = %s, dustbin_quantity = %s, dustbin_price = %s, dustbin_details = %s,
                 has_floor_mat = %s, floor_mat_quantity = %s, floor_mat_price = %s, floor_mat_details = %s,
                 has_keyboard = %s, keyboard_quantity = %s, keyboard_price = %s, keyboard_details = %s,
@@ -479,8 +479,8 @@ def update_design(design_id):
             item_data['frames']['has'], item_data['frames']['quantity'], item_data['frames']['price'], item_data['frames']['details'],
             # Wall Racks
             item_data['wall_racks']['has'], item_data['wall_racks']['quantity'], item_data['wall_racks']['price'], item_data['wall_racks']['details'],
-            # Deskmat
-            item_data['deskmat']['has'], item_data['deskmat']['quantity'], item_data['deskmat']['price'], item_data['deskmat']['details'],
+            # Desk Mat
+            item_data['desk_mat']['has'], item_data['desk_mat']['quantity'], item_data['desk_mat']['price'], item_data['desk_mat']['details'],
             # Dustbin
             item_data['dustbin']['has'], item_data['dustbin']['quantity'], item_data['dustbin']['price'], item_data['dustbin']['details'],
             # Floor Mat

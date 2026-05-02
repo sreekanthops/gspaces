@@ -20,6 +20,12 @@ def set_db_connection_func(func):
     global get_db_connection
     get_db_connection = func
 
+def _get_connection():
+    """Helper to get database connection with error handling"""
+    if get_db_connection is None:
+        raise RuntimeError("Database connection function not set. Call set_db_connection_func() first.")
+    return get_db_connection()
+
 def admin_required(f):
     """Decorator to require admin access"""
     @login_required
@@ -42,7 +48,7 @@ def admin_required(f):
 @admin_required
 def manage_users():
     """Admin page to manage user privileges"""
-    conn = get_db_connection()
+    conn = _get_connection()
     if not conn:
         flash('Database connection error', 'danger')
         return redirect(url_for('admin_orders'))
@@ -93,7 +99,7 @@ def promote_user():
         flash('Email is required', 'danger')
         return redirect(url_for('admin_users.manage_users'))
     
-    conn = get_db_connection()
+    conn = _get_connection()
     if not conn:
         flash('Database connection error', 'danger')
         return redirect(url_for('admin_users.manage_users'))
@@ -146,7 +152,7 @@ def toggle_admin(user_id):
         flash('You cannot remove your own admin access', 'danger')
         return redirect(url_for('admin_users.manage_users'))
     
-    conn = get_db_connection()
+    conn = _get_connection()
     if not conn:
         flash('Database connection error', 'danger')
         return redirect(url_for('admin_users.manage_users'))
@@ -194,7 +200,7 @@ def search_users():
     if len(query) < 3:
         return jsonify({'users': []})
     
-    conn = get_db_connection()
+    conn = _get_connection()
     if not conn:
         return jsonify({'error': 'Database connection error'}), 500
     

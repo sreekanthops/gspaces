@@ -217,100 +217,190 @@
                     <!-- Table -->
                     <div class="item-checkbox">
                         <label>
-                            <input type="checkbox" name="has_table" 
+                            <input type="checkbox" name="has_table"
                                    {% if design.has_table %}checked{% endif %}
                                    onchange="toggleDetails(this, 'table_{{ design.id }}')">
-                            <strong><i class="bi bi-table"></i> Table</strong>
+                            <strong><i class="bi bi-table"></i> Desk</strong>
                         </label>
-                        <div id="table_{{ design.id }}" class="item-details" 
+                        <div id="table_{{ design.id }}" class="item-details"
                              {% if design.has_table %}style="display:block"{% endif %}>
-                            <textarea name="table_details" class="form-control" rows="2" 
-                                      placeholder="e.g., 4x2 wooden table with storage">{{ design.table_details or '' }}</textarea>
+                            <textarea name="table_details" class="form-control mb-2" rows="2"
+                                      placeholder="e.g., 4x2 wooden desk with storage">{{ design.table_details or '' }}</textarea>
+                            <input type="number" name="table_price" class="form-control"
+                                   placeholder="Price (₹)" step="0.01" min="0"
+                                   value="{{ design.table_price or 0 }}"
+                                   onchange="calculateTotal({{ design.id }})">
                         </div>
                     </div>
 
                     <!-- Chair -->
                     <div class="item-checkbox">
                         <label>
-                            <input type="checkbox" name="has_chair" 
+                            <input type="checkbox" name="has_chair"
                                    {% if design.has_chair %}checked{% endif %}
                                    onchange="toggleDetails(this, 'chair_{{ design.id }}')">
                             <strong><i class="bi bi-chair"></i> Chair</strong>
                         </label>
-                        <div id="chair_{{ design.id }}" class="item-details" 
+                        <div id="chair_{{ design.id }}" class="item-details"
                              {% if design.has_chair %}style="display:block"{% endif %}>
-                            <textarea name="chair_details" class="form-control" rows="2" 
+                            <textarea name="chair_details" class="form-control mb-2" rows="2"
                                       placeholder="e.g., Ergonomic chair with headrest">{{ design.chair_details or '' }}</textarea>
+                            <input type="number" name="chair_price" class="form-control"
+                                   placeholder="Price (₹)" step="0.01" min="0"
+                                   value="{{ design.chair_price or 0 }}"
+                                   onchange="calculateTotal({{ design.id }})">
                         </div>
                     </div>
 
                     <!-- Plants -->
                     <div class="item-checkbox">
                         <label>
-                            <input type="checkbox" name="has_plants" 
+                            <input type="checkbox" name="has_plants"
                                    {% if design.has_plants %}checked{% endif %}
                                    onchange="toggleDetails(this, 'plants_{{ design.id }}')">
                             <strong><i class="bi bi-flower1"></i> Plants</strong>
                         </label>
-                        <div id="plants_{{ design.id }}" class="item-details" 
+                        <div id="plants_{{ design.id }}" class="item-details"
                              {% if design.has_plants %}style="display:block"{% endif %}>
-                            <textarea name="plants_details" class="form-control" rows="2" 
+                            <textarea name="plants_details" class="form-control mb-2" rows="2"
                                       placeholder="e.g., 2 mini plants, 1 big plant">{{ design.plants_details or '' }}</textarea>
+                            <input type="number" name="plants_price" class="form-control"
+                                   placeholder="Price (₹)" step="0.01" min="0"
+                                   value="{{ design.plants_price or 0 }}"
+                                   onchange="calculateTotal({{ design.id }})">
                         </div>
                     </div>
 
                     <!-- Lighting -->
                     <div class="item-checkbox">
                         <label>
-                            <input type="checkbox" name="has_lighting" 
+                            <input type="checkbox" name="has_lighting"
                                    {% if design.has_lighting %}checked{% endif %}
                                    onchange="toggleDetails(this, 'lighting_{{ design.id }}')">
                             <strong><i class="bi bi-lightbulb"></i> Lighting</strong>
                         </label>
-                        <div id="lighting_{{ design.id }}" class="item-details" 
+                        <div id="lighting_{{ design.id }}" class="item-details"
                              {% if design.has_lighting %}style="display:block"{% endif %}>
-                            <textarea name="lighting_details" class="form-control" rows="2" 
+                            <textarea name="lighting_details" class="form-control mb-2" rows="2"
                                       placeholder="e.g., Table lamp, profile light 5ft">{{ design.lighting_details or '' }}</textarea>
+                            <input type="number" name="lighting_price" class="form-control"
+                                   placeholder="Price (₹)" step="0.01" min="0"
+                                   value="{{ design.lighting_price or 0 }}"
+                                   onchange="calculateTotal({{ design.id }})">
                         </div>
                     </div>
 
                     <!-- Storage -->
                     <div class="item-checkbox">
                         <label>
-                            <input type="checkbox" name="has_storage" 
+                            <input type="checkbox" name="has_storage"
                                    {% if design.has_storage %}checked{% endif %}
                                    onchange="toggleDetails(this, 'storage_{{ design.id }}')">
                             <strong><i class="bi bi-box"></i> Storage</strong>
                         </label>
-                        <div id="storage_{{ design.id }}" class="item-details" 
+                        <div id="storage_{{ design.id }}" class="item-details"
                              {% if design.has_storage %}style="display:block"{% endif %}>
-                            <textarea name="storage_details" class="form-control" rows="2" 
+                            <textarea name="storage_details" class="form-control mb-2" rows="2"
                                       placeholder="e.g., Drawer unit, shelves">{{ design.storage_details or '' }}</textarea>
+                            <input type="number" name="storage_price" class="form-control"
+                                   placeholder="Price (₹)" step="0.01" min="0"
+                                   value="{{ design.storage_price or 0 }}"
+                                   onchange="calculateTotal({{ design.id }})">
                         </div>
                     </div>
 
                     <!-- Accessories -->
                     <div class="item-checkbox">
                         <label>
-                            <input type="checkbox" name="has_accessories" 
+                            <input type="checkbox" name="has_accessories"
                                    {% if design.has_accessories %}checked{% endif %}
                                    onchange="toggleDetails(this, 'accessories_{{ design.id }}')">
                             <strong><i class="bi bi-gear"></i> Accessories</strong>
                         </label>
-                        <div id="accessories_{{ design.id }}" class="item-details" 
+                        <div id="accessories_{{ design.id }}" class="item-details"
                              {% if design.has_accessories %}style="display:block"{% endif %}>
-                            <textarea name="accessories_details" class="form-control" rows="2" 
+                            <textarea name="accessories_details" class="form-control mb-2" rows="2"
                                       placeholder="e.g., Desk mat, cable organizer, clock">{{ design.accessories_details or '' }}</textarea>
+                            <input type="number" name="accessories_price" class="form-control"
+                                   placeholder="Price (₹)" step="0.01" min="0"
+                                   value="{{ design.accessories_price or 0 }}"
+                                   onchange="calculateTotal({{ design.id }})">
                         </div>
                     </div>
 
-                    <div class="row mt-4">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label"><strong>Price (₹)</strong></label>
-                            <input type="number" name="price" class="form-control price-input" 
-                                   value="{{ design.price or 0 }}" step="100" min="0" required>
+                    <!-- Custom Items Section -->
+                    <div class="mt-4 p-3" style="background: #f0f9ff; border-radius: 10px; border: 2px dashed #667eea;">
+                        <h6 class="mb-3"><i class="bi bi-plus-circle"></i> Add Custom Items (Optional)</h6>
+                        <div id="customItems{{ design.id }}">
+                            {% if design.custom_items %}
+                                {% for item in design.custom_items %}
+                                <div class="custom-item-row mb-2" style="display: flex; gap: 10px; align-items: start;">
+                                    <input type="text" class="form-control" placeholder="Item name"
+                                           name="custom_item_name[]" value="{{ item.name }}" style="flex: 2;">
+                                    <input type="text" class="form-control" placeholder="Details"
+                                           name="custom_item_details[]" value="{{ item.details }}" style="flex: 2;">
+                                    <input type="text" class="form-control" placeholder="Icon"
+                                           name="custom_item_icon[]" value="{{ item.icon }}" style="max-width: 70px;">
+                                    <input type="number" class="form-control" placeholder="Price"
+                                           name="custom_item_price[]" value="{{ item.price or 0 }}"
+                                           step="0.01" min="0" style="max-width: 120px;"
+                                           onchange="calculateTotal({{ design.id }})">
+                                    <button type="button" class="btn btn-danger btn-sm"
+                                            onclick="this.parentElement.remove(); calculateTotal({{ design.id }})">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                                {% endfor %}
+                            {% endif %}
                         </div>
-                        <div class="col-md-6 mb-3">
+                        <button type="button" class="btn btn-sm btn-outline-primary mt-2"
+                                onclick="addCustomItem({{ design.id }})">
+                            <i class="bi bi-plus"></i> Add Another Item
+                        </button>
+                    </div>
+
+                    <!-- Pricing Summary -->
+                    <div class="mt-4 p-3" style="background: #fff3cd; border-radius: 10px; border: 2px solid #ffc107;">
+                        <h6 class="mb-3"><i class="bi bi-calculator"></i> Pricing</h6>
+                        
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label class="form-label"><strong>Subtotal (Auto-calculated)</strong></label>
+                                <input type="number" id="subtotal{{ design.id }}" name="subtotal"
+                                       class="form-control" readonly value="{{ design.subtotal or 0 }}"
+                                       style="background: #e9ecef; font-weight: bold;">
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label"><strong>Discount Type</strong></label>
+                                <select name="discount_type" class="form-control"
+                                        onchange="calculateTotal({{ design.id }}); toggleDiscountInput(this, {{ design.id }})">
+                                    <option value="none" {% if not design.discount_type or design.discount_type == 'none' %}selected{% endif %}>No Discount</option>
+                                    <option value="percentage" {% if design.discount_type == 'percentage' %}selected{% endif %}>Percentage (%)</option>
+                                    <option value="fixed" {% if design.discount_type == 'fixed' %}selected{% endif %}>Fixed Amount (₹)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label"><strong>Discount Value</strong></label>
+                                <input type="number" name="discount_value" id="discountValue{{ design.id }}"
+                                       class="form-control" value="{{ design.discount_value or 0 }}"
+                                       step="0.01" min="0"
+                                       onchange="calculateTotal({{ design.id }})"
+                                       {% if not design.discount_type or design.discount_type == 'none' %}disabled{% endif %}>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label"><strong>Final Price</strong></label>
+                                <input type="number" id="finalPrice{{ design.id }}" name="final_price"
+                                       class="form-control" readonly value="{{ design.final_price or design.price or 0 }}"
+                                       style="background: #d4edda; font-weight: bold; font-size: 1.1em;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-md-12 mb-3">
                             <label class="form-label">Additional Notes</label>
                             <textarea name="notes" class="form-control" rows="2">{{ design.notes or '' }}</textarea>
                         </div>
@@ -364,6 +454,86 @@
             document.execCommand('copy');
             alert('Link copied to clipboard!');
         }
+
+        function addCustomItem(designId) {
+            const container = document.getElementById('customItems' + designId);
+            const newRow = document.createElement('div');
+            newRow.className = 'custom-item-row mb-2';
+            newRow.style.cssText = 'display: flex; gap: 10px; align-items: start;';
+            newRow.innerHTML = `
+                <input type="text" class="form-control" placeholder="Item name" name="custom_item_name[]" style="flex: 2;">
+                <input type="text" class="form-control" placeholder="Details" name="custom_item_details[]" style="flex: 2;">
+                <input type="text" class="form-control" placeholder="Icon" name="custom_item_icon[]" style="max-width: 70px;">
+                <input type="number" class="form-control" placeholder="Price" name="custom_item_price[]"
+                       value="0" step="0.01" min="0" style="max-width: 120px;"
+                       onchange="calculateTotal(${designId})">
+                <button type="button" class="btn btn-danger btn-sm"
+                        onclick="this.parentElement.remove(); calculateTotal(${designId})">
+                    <i class="bi bi-trash"></i>
+                </button>
+            `;
+            container.appendChild(newRow);
+        }
+
+        function calculateTotal(designId) {
+            let subtotal = 0;
+            
+            // Get all item prices
+            const form = document.getElementById('updateForm' + designId);
+            const tablePrice = parseFloat(form.querySelector('[name="table_price"]')?.value || 0);
+            const chairPrice = parseFloat(form.querySelector('[name="chair_price"]')?.value || 0);
+            const plantsPrice = parseFloat(form.querySelector('[name="plants_price"]')?.value || 0);
+            const lightingPrice = parseFloat(form.querySelector('[name="lighting_price"]')?.value || 0);
+            const storagePrice = parseFloat(form.querySelector('[name="storage_price"]')?.value || 0);
+            const accessoriesPrice = parseFloat(form.querySelector('[name="accessories_price"]')?.value || 0);
+            
+            // Add standard items
+            subtotal += tablePrice + chairPrice + plantsPrice + lightingPrice + storagePrice + accessoriesPrice;
+            
+            // Add custom items
+            const customPrices = form.querySelectorAll('[name="custom_item_price[]"]');
+            customPrices.forEach(input => {
+                subtotal += parseFloat(input.value || 0);
+            });
+            
+            // Update subtotal
+            document.getElementById('subtotal' + designId).value = subtotal.toFixed(2);
+            
+            // Calculate discount
+            const discountType = form.querySelector('[name="discount_type"]').value;
+            const discountValue = parseFloat(form.querySelector('[name="discount_value"]').value || 0);
+            
+            let finalPrice = subtotal;
+            if (discountType === 'percentage') {
+                finalPrice = subtotal - (subtotal * discountValue / 100);
+            } else if (discountType === 'fixed') {
+                finalPrice = subtotal - discountValue;
+            }
+            
+            // Ensure final price is not negative
+            finalPrice = Math.max(0, finalPrice);
+            
+            // Update final price
+            document.getElementById('finalPrice' + designId).value = finalPrice.toFixed(2);
+        }
+
+        function toggleDiscountInput(select, designId) {
+            const discountInput = document.getElementById('discountValue' + designId);
+            if (select.value === 'none') {
+                discountInput.disabled = true;
+                discountInput.value = 0;
+            } else {
+                discountInput.disabled = false;
+            }
+            calculateTotal(designId);
+        }
+
+        // Calculate totals on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            {% for design in designs %}
+            calculateTotal({{ design.id }});
+            {% endfor %}
+        });
     </script>
 </body>
 </html>

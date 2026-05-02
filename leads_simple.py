@@ -5,6 +5,7 @@ Admin creates leads with designs and manual pricing
 
 import os
 import secrets
+import json
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
@@ -177,11 +178,21 @@ def edit_lead(lead_id):
     
     # Fetch designs
     cur.execute("""
-        SELECT * FROM lead_designs 
-        WHERE lead_id = %s 
+        SELECT * FROM lead_designs
+        WHERE lead_id = %s
         ORDER BY design_order, id
     """, (lead_id,))
     designs = cur.fetchall()
+    
+    # Parse custom_items JSON for each design
+    for design in designs:
+        if design.get('custom_items'):
+            try:
+                design['custom_items'] = json.loads(design['custom_items'])
+            except:
+                design['custom_items'] = []
+        else:
+            design['custom_items'] = []
     
     cur.close()
     conn.close()
@@ -292,21 +303,65 @@ def update_design(design_id):
         storage_details = request.form.get('storage_details', '')
         accessories_details = request.form.get('accessories_details', '')
         
-        price = float(request.form.get('price', 0))
+        # Get individual item prices
+        table_price = float(request.form.get('table_price', 0))
+        chair_price = float(request.form.get('chair_price', 0))
+        plants_price = float(request.form.get('plants_price', 0))
+        lighting_price = float(request.form.get('lighting_price', 0))
+        storage_price = float(request.form.get('storage_price', 0))
+        accessories_price = float(request.form.get('accessories_price', 0))
+        
         notes = request.form.get('notes', '')
         
+        # Handle custom items with prices
+        custom_items = []
+        names = request.form.getlist('custom_item_name[]')
+        details_list = request.form.getlist('custom_item_details[]')
+        icons = request.form.getlist('custom_item_icon[]')
+        prices = request.form.getlist('custom_item_price[]')
+        for i in range(len(names)):
+            if names[i].strip():
+                custom_items.append({
+                    'name': names[i],
+                    'details': details_list[i] if i < len(details_list) else '',
+                    'icon': icons[i] if i < len(icons) else '📌',
+                    'price': float(prices[i]) if i < len(prices) else 0
+                })
+        
+        # Calculate subtotal
+        subtotal = table_price + chair_price + plants_price + lighting_price + storage_price + accessories_price
+        subtotal += sum(item['price'] for item in custom_items)
+        
+        # Get discount info
+        discount_type = request.form.get('discount_type', 'none')
+        discount_value = float(request.form.get('discount_value', 0))
+        
+        # Calculate final price
+        final_price = subtotal
+        if discount_type == 'percentage':
+            final_price = subtotal - (subtotal * discount_value / 100)
+        elif discount_type == 'fixed':
+            final_price = subtotal - discount_value
+        final_price = max(0, final_price)  # Ensure non-negative
+        
         cur.execute("""
-            UPDATE lead_designs 
+            UPDATE lead_designs
             SET design_name = %s,
                 has_table = %s, has_chair = %s, has_plants = %s,
                 has_lighting = %s, has_storage = %s, has_accessories = %s,
                 table_details = %s, chair_details = %s, plants_details = %s,
                 lighting_details = %s, storage_details = %s, accessories_details = %s,
-                price = %s, notes = %s
+                table_price = %s, chair_price = %s, plants_price = %s,
+                lighting_price = %s, storage_price = %s, accessories_price = %s,
+                subtotal = %s, discount_type = %s, discount_value = %s,
+                final_price = %s, price = %s, notes = %s, custom_items = %s
             WHERE id = %s
         """, (design_name, has_table, has_chair, has_plants, has_lighting, has_storage,
               has_accessories, table_details, chair_details, plants_details,
-              lighting_details, storage_details, accessories_details, price, notes, design_id))
+              lighting_details, storage_details, accessories_details,
+              table_price, chair_price, plants_price, lighting_price, storage_price, accessories_price,
+              subtotal, discount_type, discount_value, final_price, final_price, notes,
+              json.dumps(custom_items), design_id))
         
         conn.commit()
         flash('Design updated!', 'success')
@@ -361,11 +416,21 @@ def view_quotation(share_token):
     
     # Get designs
     cur.execute("""
-        SELECT * FROM lead_designs 
-        WHERE lead_id = %s 
+        SELECT * FROM lead_designs
+        WHERE lead_id = %s
         ORDER BY design_order, id
     """, (lead['id'],))
     designs = cur.fetchall()
+    
+    # Parse custom_items JSON for each design
+    for design in designs:
+        if design.get('custom_items'):
+            try:
+                design['custom_items'] = json.loads(design['custom_items'])
+            except:
+                design['custom_items'] = []
+        else:
+            design['custom_items'] = []
     
     # Calculate total
     total = sum(d['price'] or 0 for d in designs)
@@ -373,7 +438,7 @@ def view_quotation(share_token):
     cur.close()
     conn.close()
     
-    return render_template('quotation_view_simple.html', 
+    return render_template('quotation_view_simple.html',
                          lead=lead, designs=designs, total=total)
 
 def register_leads_routes(app, db_connection_func):

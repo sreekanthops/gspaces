@@ -26,9 +26,17 @@
             text-align: center;
         }
         .company-logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
             font-size: 2.5rem;
             font-weight: bold;
             margin-bottom: 10px;
+        }
+        .company-logo img {
+            height: 60px;
+            width: auto;
         }
         .content {
             padding: 40px;
@@ -39,12 +47,17 @@
             border-radius: 15px;
             margin-bottom: 30px;
         }
-        .reference-image {
+        .reference-image, .design-image {
             max-width: 100%;
             max-height: 500px;
             border-radius: 15px;
             box-shadow: 0 5px 20px rgba(0,0,0,0.15);
             margin-bottom: 30px;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        .reference-image:hover, .design-image:hover {
+            transform: scale(1.02);
         }
         .design-section {
             background: #f8f9fa;
@@ -52,26 +65,38 @@
             padding: 30px;
             margin-bottom: 30px;
         }
-        .design-image {
-            max-width: 100%;
-            max-height: 400px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-        }
         .items-list {
             background: white;
-            padding: 20px;
+            padding: 25px;
             border-radius: 10px;
             margin-top: 20px;
         }
-        .item-badge {
-            display: inline-block;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 8px 15px;
-            border-radius: 20px;
-            margin: 5px;
-            font-size: 0.9rem;
+        .item-row {
+            display: flex;
+            align-items: flex-start;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .item-row:last-child {
+            border-bottom: none;
+        }
+        .item-icon {
+            font-size: 1.5rem;
+            margin-right: 15px;
+            min-width: 30px;
+        }
+        .item-content {
+            flex: 1;
+        }
+        .item-title {
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 5px;
+        }
+        .item-details {
+            color: #6b7280;
+            font-size: 0.95rem;
         }
         .price-tag {
             background: linear-gradient(135deg, #10b981 0%, #059669 100%);
@@ -83,18 +108,11 @@
             display: inline-block;
             margin-top: 20px;
         }
-        .total-section {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 40px;
-            border-radius: 15px;
-            text-align: center;
-            margin-top: 40px;
-        }
-        .total-amount {
-            font-size: 3rem;
-            font-weight: bold;
-            margin: 20px 0;
+        /* Image Modal */
+        .modal-image {
+            max-width: 100%;
+            max-height: 90vh;
+            object-fit: contain;
         }
         .footer {
             background: #f8f9fa;
@@ -117,7 +135,8 @@
         <!-- Header -->
         <div class="header">
             <div class="company-logo">
-                <i class="bi bi-building"></i> GSPACES
+                <img src="{{ url_for('static', filename='img/gspaces-logo.png') }}" alt="GSpaces Logo">
+                <span>GSPACES</span>
             </div>
             <h2>Workspace Setup Quotation</h2>
             <p class="mb-0">Premium Home Office Solutions</p>
@@ -153,8 +172,9 @@
             {% if lead.reference_image %}
             <div class="text-center mb-4">
                 <h4><i class="bi bi-image"></i> Reference Inspiration</h4>
-                <img src="{{ url_for('static', filename=lead.reference_image) }}" 
-                     alt="Reference" class="reference-image">
+                <img src="{{ url_for('static', filename=lead.reference_image) }}"
+                     alt="Reference" class="reference-image"
+                     onclick="openImageModal(this.src)">
             </div>
             {% endif %}
 
@@ -169,64 +189,97 @@
                         
                         {% if design.design_image %}
                         <img src="{{ url_for('static', filename=design.design_image) }}"
-                             alt="{{ design.design_name }}" class="design-image">
+                             alt="{{ design.design_name }}" class="design-image"
+                             onclick="openImageModal(this.src)">
                         {% endif %}
 
                         <div class="items-list">
-                            <h5 class="mb-3"><i class="bi bi-check-circle"></i> What's Included:</h5>
+                            <h5 class="mb-3"><i class="bi bi-check2-circle text-success"></i> What's Included:</h5>
                             
                             {% if design.has_table %}
-                            <div class="mb-3">
-                                <span class="item-badge"><i class="bi bi-table"></i> Table</span>
-                                {% if design.table_details %}
-                                <p class="mt-2 ms-3">{{ design.table_details }}</p>
-                                {% endif %}
+                            <div class="item-row">
+                                <div class="item-icon">🪑</div>
+                                <div class="item-content">
+                                    <div class="item-title">Desk</div>
+                                    {% if design.table_details %}
+                                    <div class="item-details">{{ design.table_details }}</div>
+                                    {% endif %}
+                                </div>
                             </div>
                             {% endif %}
 
                             {% if design.has_chair %}
-                            <div class="mb-3">
-                                <span class="item-badge"><i class="bi bi-chair"></i> Chair</span>
-                                {% if design.chair_details %}
-                                <p class="mt-2 ms-3">{{ design.chair_details }}</p>
-                                {% endif %}
+                            <div class="item-row">
+                                <div class="item-icon">💺</div>
+                                <div class="item-content">
+                                    <div class="item-title">Chair</div>
+                                    {% if design.chair_details %}
+                                    <div class="item-details">{{ design.chair_details }}</div>
+                                    {% endif %}
+                                </div>
                             </div>
                             {% endif %}
 
                             {% if design.has_plants %}
-                            <div class="mb-3">
-                                <span class="item-badge"><i class="bi bi-flower1"></i> Plants</span>
-                                {% if design.plants_details %}
-                                <p class="mt-2 ms-3">{{ design.plants_details }}</p>
-                                {% endif %}
+                            <div class="item-row">
+                                <div class="item-icon">🪴</div>
+                                <div class="item-content">
+                                    <div class="item-title">Plants & Decor</div>
+                                    {% if design.plants_details %}
+                                    <div class="item-details">{{ design.plants_details }}</div>
+                                    {% endif %}
+                                </div>
                             </div>
                             {% endif %}
 
                             {% if design.has_lighting %}
-                            <div class="mb-3">
-                                <span class="item-badge"><i class="bi bi-lightbulb"></i> Lighting</span>
-                                {% if design.lighting_details %}
-                                <p class="mt-2 ms-3">{{ design.lighting_details }}</p>
-                                {% endif %}
+                            <div class="item-row">
+                                <div class="item-icon">💡</div>
+                                <div class="item-content">
+                                    <div class="item-title">Lighting</div>
+                                    {% if design.lighting_details %}
+                                    <div class="item-details">{{ design.lighting_details }}</div>
+                                    {% endif %}
+                                </div>
                             </div>
                             {% endif %}
 
                             {% if design.has_storage %}
-                            <div class="mb-3">
-                                <span class="item-badge"><i class="bi bi-box"></i> Storage</span>
-                                {% if design.storage_details %}
-                                <p class="mt-2 ms-3">{{ design.storage_details }}</p>
-                                {% endif %}
+                            <div class="item-row">
+                                <div class="item-icon">📦</div>
+                                <div class="item-content">
+                                    <div class="item-title">Storage Solutions</div>
+                                    {% if design.storage_details %}
+                                    <div class="item-details">{{ design.storage_details }}</div>
+                                    {% endif %}
+                                </div>
                             </div>
                             {% endif %}
 
                             {% if design.has_accessories %}
-                            <div class="mb-3">
-                                <span class="item-badge"><i class="bi bi-gear"></i> Accessories</span>
-                                {% if design.accessories_details %}
-                                <p class="mt-2 ms-3">{{ design.accessories_details }}</p>
-                                {% endif %}
+                            <div class="item-row">
+                                <div class="item-icon">✨</div>
+                                <div class="item-content">
+                                    <div class="item-title">Accessories</div>
+                                    {% if design.accessories_details %}
+                                    <div class="item-details">{{ design.accessories_details }}</div>
+                                    {% endif %}
+                                </div>
                             </div>
+                            {% endif %}
+
+                            {% if design.custom_items %}
+                                {% for item in design.custom_items %}
+                                <div class="item-row">
+                                    <div class="item-icon">{{ item.icon }}</div>
+                                    <div class="item-content">
+                                        <div class="item-title">{{ item.name }}</div>
+                                        {% if item.details %}
+                                        <div class="item-details">{{ item.details }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% endfor %}
                             {% endif %}
 
                             {% if design.notes %}
@@ -237,22 +290,33 @@
                         </div>
 
                         <div class="text-end mt-auto">
-                            <span class="price-tag">
-                                ₹{{ "{:,.0f}".format(design.price) }}
-                            </span>
+                            {% if design.discount_type and design.discount_type != 'none' and design.discount_value > 0 %}
+                                <!-- Show original price crossed out -->
+                                <div class="mb-2">
+                                    <span style="text-decoration: line-through; color: #999; font-size: 1.1em;">
+                                        ₹{{ "{:,.0f}".format(design.subtotal or design.price) }}
+                                    </span>
+                                    <span class="badge bg-danger ms-2" style="font-size: 0.9em;">
+                                        {% if design.discount_type == 'percentage' %}
+                                            {{ design.discount_value }}% OFF
+                                        {% else %}
+                                            ₹{{ "{:,.0f}".format(design.discount_value) }} OFF
+                                        {% endif %}
+                                    </span>
+                                </div>
+                                <span class="price-tag" style="color: #28a745;">
+                                    ₹{{ "{:,.0f}".format(design.final_price or design.price) }}
+                                </span>
+                            {% else %}
+                                <!-- No discount, show regular price -->
+                                <span class="price-tag">
+                                    ₹{{ "{:,.0f}".format(design.final_price or design.price) }}
+                                </span>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
             {% endfor %}
-            </div>
-
-            <!-- Total -->
-            <div class="total-section">
-                <h3>Total Investment</h3>
-                <div class="total-amount">
-                    ₹{{ "{:,.0f}".format(total) }}
-                </div>
-                <p class="mb-0">All prices are inclusive of materials and installation</p>
             </div>
 
             <!-- Call to Action -->
@@ -282,6 +346,27 @@
         </div>
     </div>
 
+    <!-- Image Modal -->
+    <div class="modal fade" id="imageModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <img id="modalImage" src="" class="modal-image" alt="Full size image">
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function openImageModal(imageSrc) {
+            document.getElementById('modalImage').src = imageSrc;
+            const modal = new bootstrap.Modal(document.getElementById('imageModal'));
+            modal.show();
+        }
+    </script>
 </body>
 </html>

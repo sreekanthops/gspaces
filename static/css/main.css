@@ -217,7 +217,7 @@ h6 {
 }
 
 .custom-navbar .navbar-brand img {
-  height: 50px;
+  height: 60px; /* Increased from 50px for all pages */
   width: auto;
   filter: none;
 }
@@ -283,7 +283,7 @@ h6 {
 .index-page .custom-navbar .navbar-brand img {
   filter: none !important; /* No filter - show PNG logo as-is */
   background: transparent !important;
-  height: 60px !important; /* Increased from default 50px */
+  /* Height inherited from .custom-navbar .navbar-brand img (60px) */
 }
 
 .index-page .custom-navbar .custom-navbar-nav li a {
@@ -303,22 +303,24 @@ h6 {
   background: #5ec4e8 !important;
 }
 
-/* Navbar toggler (hamburger menu) styling - WHITE for index page */
-.index-page .navbar-toggler {
-  border: 2px solid rgba(255, 255, 255, 0.8) !important;
-  padding: 8px 10px;
-  border-radius: 4px;
-}
+/* Navbar toggler (hamburger menu) styling - WHITE for index page DESKTOP */
+@media (min-width: 769px) {
+  .index-page .navbar-toggler {
+    border: 2px solid rgba(255, 255, 255, 0.8) !important;
+    padding: 8px 10px;
+    border-radius: 4px;
+  }
 
-.index-page .navbar-toggler:focus {
-  box-shadow: 0 0 0 0.2rem rgba(255, 255, 255, 0.25) !important;
-  outline: none;
-}
+  .index-page .navbar-toggler:focus {
+    box-shadow: 0 0 0 0.2rem rgba(255, 255, 255, 0.25) !important;
+    outline: none;
+  }
 
-.index-page .navbar-toggler-icon {
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(255, 255, 255, 1)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2.5' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") !important;
-  width: 24px;
-  height: 24px;
+  .index-page .navbar-toggler-icon {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(255, 255, 255, 1)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2.5' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") !important;
+    width: 24px;
+    height: 24px;
+  }
 }
 
 /* Fix for mobile: Use lighter background so logo blends better */
@@ -388,12 +390,7 @@ h6 {
     }
 
     .custom-navbar .navbar-brand img {
-        height: 80px;
-    }
-    
-    /* Larger logo on home page mobile */
-    .index-page .custom-navbar .navbar-brand img {
-        height: 70px !important; /* Larger logo for home page on mobile */
+        height: 70px; /* Consistent size on mobile for all pages */
     }
 }
 

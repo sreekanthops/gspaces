@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Tell Us Your Requirements - GSpaces</title>
+    <meta name="description" content="Share your workspace requirements with GSpaces. Get personalized desk setup solutions tailored to your needs and budget.">
+    
+    <!-- Favicon -->
+    <link href="{{ url_for('static', filename='img/favicon.svg') }}" rel="icon">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Mozilla+Text:wght@200..700&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    
+    <!-- Main CSS -->
+    <link href="{{ url_for('static', filename='css/main.css') }}" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+            --success-color: #10b981;
+            --text-dark: #1f2937;
+            --text-light: #6b7280;
+            --border-color: #e5e7eb;
+        }
+        
+        body {
+            font-family: 'Mozilla Text', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding-top: 90px;
+        }
+        
+        .inquiry-container {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+        
+        .inquiry-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        .inquiry-header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+        
+        .inquiry-header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .inquiry-header p {
+            font-size: 1.1rem;
+            opacity: 0.95;
+            margin: 0;
+        }
+        
+        .inquiry-body {
+            padding: 40px 30px;
+        }
+        
+        .form-section {
+            margin-bottom: 35px;
+        }
+        
+        .form-section-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .form-section-title i {
+            color: var(--primary-color);
+            font-size: 1.5rem;
+        }
+        
+        .form-label {
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+        }
+        
+        .form-control, .form-select {
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            padding: 12px 16px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .option-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 10px;
+        }
+        
+        .option-card {
+            position: relative;
+        }
+        
+        .option-card input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+        }
+        
+        .option-card label {
+            display: block;
+            padding: 20px 15px;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+        }
+        
+        .option-card label:hover {
+            border-color: var(--primary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+        }
+        
+        .option-card input[type="radio"]:checked + label {
+            border-color: var(--primary-color);
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+            font-weight: 600;
+        }
+        
+        .option-card label i {
+            font-size: 2rem;
+            color: var(--primary-color);
+            margin-bottom: 8px;
+            display: block;
+        }
+        
+        .file-upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #f9fafb;
+        }
+        
+        .file-upload-area:hover {
+            border-color: var(--primary-color);
+            background: rgba(102, 126, 234, 0.05);
+        }
+        
+        .file-upload-area i {
+            font-size: 3rem;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+        
+        .file-info {
+            font-size: 0.85rem;
+            color: var(--text-light);
+            margin-top: 8px;
+        }
+        
+        .submit-btn {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            border: none;
+            padding: 16px 40px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 20px;
+        }
+        
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+        
+        .submit-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .preview-images {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .preview-item {
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            aspect-ratio: 1;
+        }
+        
+        .preview-item img, .preview-item video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .preview-item .remove-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(239, 68, 68, 0.9);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+        
+        @media (max-width: 768px) {
+            .inquiry-header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .inquiry-body {
+                padding: 30px 20px;
+            }
+            
+            .option-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    {% include 'navbar.html' %}
+    
+    <div class="inquiry-container">
+        <div class="inquiry-card">
+            <div class="inquiry-header">
+                <h1>🎯 Tell Us Your Requirements</h1>
+                <p>Share your workspace needs and we'll create the perfect setup for you</p>
+            </div>
+            
+            <div class="inquiry-body">
+                <form id="inquiryForm" enctype="multipart/form-data">
+                    <!-- Basic Information -->
+                    <div class="form-section">
+                        <h3 class="form-section-title">
+                            <i class="bi bi-person-circle"></i>
+                            Basic Information
+                        </h3>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Full Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="name" required placeholder="Enter your name">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Email Address <span class="text-danger">*</span></label>
+                                <input type="email" class="form-control" name="email" required placeholder="your@email.com">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Phone Number <span class="text-danger">*</span></label>
+                                <input type="tel" class="form-control" name="phone" required placeholder="+91 XXXXX XXXXX">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Preferred Contact Time</label>
+                                <input type="text" class="form-control" name="preferred_contact_time" placeholder="e.g., Morning 10-12 AM">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Setup Type -->
+                    <div class="form-section">
+                        <h3 class="form-section-title">
+                            <i class="bi bi-briefcase"></i>
+                            What type of setup are you looking for?
+                        </h3>
+                        <div class="option-cards">
+                            <div class="option-card">
+                                <input type="radio" name="setup_type" value="office" id="setup_office" required>
+                                <label for="setup_office">
+                                    <i class="bi bi-building"></i>
+                                    <div>Office Setup</div>
+                                </label>
+                            </div>
+                            <div class="option-card">
+                                <input type="radio" name="setup_type" value="studio" id="setup_studio">
+                                <label for="setup_studio">
+                                    <i class="bi bi-camera-video"></i>
+                                    <div>Studio Setup</div>
+                                </label>
+                            </div>
+                            <div class="option-card">
+                                <input type="radio" name="setup_type" value="wfh" id="setup_wfh">
+                                <label for="setup_wfh">
+                                    <i class="bi bi-house"></i>
+                                    <div>Work From Home</div>
+                                </label>
+                            </div>
+                            <div class="option-card">
+                                <input type="radio" name="setup_type" value="other" id="setup_other">
+                                <label for="setup_other">
+                                    <i class="bi bi-three-dots"></i>
+                                    <div>Other</div>
+                                </label>
+                            </div>
+                        </div>
+                        <div id="otherSetupDiv" style="display: none; margin-top: 15px;">
+                            <input type="text" class="form-control" name="setup_type_other" placeholder="Please specify...">
+                        </div>
+                    </div>
+                    
+                    <!-- Budget Range -->
+                    <div class="form-section">
+                        <h3 class="form-section-title">
+                            <i class="bi bi-currency-rupee"></i>
+                            Budget Range
+                        </h3>
+                        <div class="option-cards">
+                            <div class="option-card">
+                                <input type="radio" name="budget_range" value="under_25k" id="budget_25k" required>
+                                <label for="budget_25k">
+                                    <i class="bi bi-cash-stack"></i>
+                                    <div>Under ₹25,000</div>
+                                </label>
+                            </div>
+                            <div class="option-card">
+                                <input type="radio" name="budget_range" value="25k_50k" id="budget_25_50">
+                                <label for="budget_25_50">
+                                    <i class="bi bi-cash-stack"></i>
+                                    <div>₹25K - ₹50K</div>
+                                </label>
+                            </div>
+                            <div class="option-card">
+                                <input type="radio" name="budget_range" value="50k_100k" id="budget_50_100">
+                                <label for="budget_50_100">
+                                    <i class="bi bi-cash-stack"></i>
+                                    <div>₹50K - ₹1L</div>
+                                </label>
+                            </div>
+                            <div class="option-card">
+                                <input type="radio" name="budget_range" value="100k_500k" id="budget_100_500">
+                                <label for="budget_100_500">
+                                    <i class="bi bi-cash-stack"></i>
+                                    <div>₹1L - ₹5L</div>
+                                </label>
+                            </div>
+                            <div class="option-card">
+                                <input type="radio" name="budget_range" value="500k_plus" id="budget_500_plus">
+                                <label for="budget_500_plus">
+                                    <i class="bi bi-cash-stack"></i>
+                                    <div>₹5L+</div>
+                                </label>
+                            </div>
+                            <div class="option-card">
+                                <input type="radio" name="budget_range" value="not_decided" id="budget_not_decided">
+                                <label for="budget_not_decided">
+                                    <i class="bi bi-question-circle"></i>
+                                    <div>Not Decided Yet</div>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Show matching products -->
+                        <div id="matchingProducts" style="margin-top: 20px; display: none;">
+                            <div class="alert alert-info">
+                                <strong>Great! We have setups in your budget range.</strong>
+                                <a href="#" id="viewProductsLink" target="_blank" class="alert-link">View matching products →</a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Quantity/Scale -->
+                    <div class="form-section">
+                        <h3 class="form-section-title">
+                            <i class="bi bi-box-seam"></i>
+                            Quantity / Scale
+                        </h3>
+                        <div class="option-cards">
+                            <div class="option-card">
+                                <input type="radio" name="quantity_scale" value="single" id="qty_single" required>
+                                <label for="qty_single">
+                                    <i class="bi bi-1-circle"></i>
+                                    <div>Single Setup</div>
+                                </label>
+                            </div>
+                            <div class="option-card">
+                                <input type="radio" name="quantity_scale" value="2_10" id="qty_2_10">
+                                <label for="qty_2_10">
+                                    <i class="bi bi-2-circle"></i>
+                                    <div>2-10 Setups</div>
+                                </label>
+                            </div>
+                            <div class="option-card">
+                                <input type="radio" name="quantity_scale" value="10_50" id="qty_10_50">
+                                <label for="qty_10_50">
+                                    <i class="bi bi-3-circle"></i>
+                                    <div>10-50 Setups</div>
+                                </label>
+                            </div>
+                            <div class="option-card">
+                                <input type="radio" name="quantity_scale" value="50_plus" id="qty_50_plus">
+                                <label for="qty_50_plus">
+                                    <i class="bi bi-building"></i>
+                                    <div>50+ (Bulk/Enterprise)</div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Timeline -->
+                    <div class="form-section">
+                        <h3 class="form-section-title">
+                            <i class="bi bi-calendar-check"></i>
+                            Timeline
+                        </h3>
+                        <div class="option-cards">
+                            <div class="option-card">
+                                <input type="radio" name="timeline" value="immediate" id="time_immediate" required>
+                                <label for="time_immediate">
+                                    <i class="bi bi-lightning"></i>
+                                    <div>Immediate (within 1 week)</div>
+                                </label>
+                            </div>
+                            <div class="option-card">
+                                <input type="radio" name="timeline" value="1_2_weeks" id="time_1_2">
+                                <label for="time_1_2">
+                                    <i class="bi bi-clock"></i>
+                                    <div>1-2 Weeks</div>
+                                </label>
+                            </div>
+                            <div class="option-card">
+                                <input type="radio" name="timeline" value="1_month" id="time_1_month">
+                                <label for="time_1_month">
+                                    <i class="bi bi-calendar3"></i>
+                                    <div>1 Month</div>
+                                </label>
+                            </div>
+                            <div class="option-card">
+                                <input type="radio" name="timeline" value="flexible" id="time_flexible">
+                                <label for="time_flexible">
+                                    <i class="bi bi-hourglass-split"></i>
+                                    <div>Flexible</div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Additional Requirements -->
+                    <div class="form-section">
+                        <h3 class="form-section-title">
+                            <i class="bi bi-chat-left-text"></i>
+                            Additional Requirements
+                        </h3>
+                        <textarea class="form-control" name="additional_requirements" rows="4" placeholder="Tell us more about your specific needs, preferences, or any special requirements..."></textarea>
+                    </div>
+                    
+                    <!-- File Uploads -->
+                    <div class="form-section">
+                        <h3 class="form-section-title">
+                            <i class="bi bi-images"></i>
+                            Upload Photos/Videos (Optional)
+                        </h3>
+                        <p class="text-muted mb-3">Share your office layout, room photos, or reference images</p>
+                        
+                        <div class="file-upload-area" onclick="document.getElementById('fileInput').click()">
+                            <i class="bi bi-cloud-upload"></i>
+                            <div><strong>Click to upload</strong> or drag and drop</div>
+                            <div class="file-info">Images (max 10MB each) or Videos (max 50MB each)</div>
+                        </div>
+                        <input type="file" id="fileInput" name="files" multiple accept="image/*,video/*" style="display: none;">
+                        
+                        <div id="previewContainer" class="preview-images"></div>
+                    </div>
+                    
+                    <!-- Consultation -->
+                    <div class="form-section">
+                        <h3 class="form-section-title">
+                            <i class="bi bi-telephone"></i>
+                            Free Consultation
+                        </h3>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="wants_consultation" id="wantsConsultation" value="true">
+                            <label class="form-check-label" for="wantsConsultation">
+                                Yes, I would like a free consultation call to discuss my requirements
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Submit Button -->
+                    <button type="submit" class="submit-btn" id="submitBtn">
+                        <i class="bi bi-send"></i> Submit Requirements
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Success Modal -->
+    <div class="modal fade" id="successModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body text-center p-5">
+                    <i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i>
+                    <h3 class="mt-3">Thank You!</h3>
+                    <p class="text-muted">We've received your requirements. Our team will contact you shortly.</p>
+                    <button type="button" class="btn btn-primary mt-3" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Show/hide other setup type input
+        document.querySelectorAll('input[name="setup_type"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                document.getElementById('otherSetupDiv').style.display = 
+                    this.value === 'other' ? 'block' : 'none';
+            });
+        });
+        
+        // Show matching products based on budget
+        document.querySelectorAll('input[name="budget_range"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                const matchingDiv = document.getElementById('matchingProducts');
+                const link = document.getElementById('viewProductsLink');
+                
+                if (this.value !== 'not_decided') {
+                    matchingDiv.style.display = 'block';
+                    // Set link based on budget
+                    const budgetMap = {
+                        'under_25k': '/products?max_price=25000',
+                        '25k_50k': '/products?min_price=25000&max_price=50000',
+                        '50k_100k': '/products?min_price=50000&max_price=100000',
+                        '100k_500k': '/products?min_price=100000&max_price=500000',
+                        '500k_plus': '/products?min_price=500000'
+                    };
+                    link.href = budgetMap[this.value] || '/products';
+                } else {
+                    matchingDiv.style.display = 'none';
+                }
+            });
+        });
+        
+        // File upload handling
+        const fileInput = document.getElementById('fileInput');
+        const previewContainer = document.getElementById('previewContainer');
+        let selectedFiles = [];
+        
+        fileInput.addEventListener('change', function(e) {
+            const files = Array.from(e.target.files);
+            
+            files.forEach(file => {
+                // Validate file size
+                const maxSize = file.type.startsWith('video/') ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
+                if (file.size > maxSize) {
+                    alert(`File ${file.name} is too large. Max size: ${file.type.startsWith('video/') ? '50MB' : '10MB'}`);
+                    return;
+                }
+                
+                selectedFiles.push(file);
+                
+                // Create preview
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const previewItem = document.createElement('div');
+                    previewItem.className = 'preview-item';
+                    
+                    if (file.type.startsWith('image/')) {
+                        previewItem.innerHTML = `
+                            <img src="${e.target.result}" alt="Preview">
+                            <button type="button" class="remove-btn" onclick="removeFile(${selectedFiles.length - 1})">
+                                <i class="bi bi-x"></i>
+                            </button>
+                        `;
+                    } else if (file.type.startsWith('video/')) {
+                        previewItem.innerHTML = `
+                            <video src="${e.target.result}" muted></video>
+                            <button type="button" class="remove-btn" onclick="removeFile(${selectedFiles.length - 1})">
+                                <i class="bi bi-x"></i>
+                            </button>
+                        `;
+                    }
+                    
+                    previewContainer.appendChild(previewItem);
+                };
+                reader.readAsDataURL(file);
+            });
+        });
+        
+        window.removeFile = function(index) {
+            selectedFiles.splice(index, 1);
+            previewContainer.children[index].remove();
+        };
+        
+        // Form submission
+        document.getElementById('inquiryForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Submitting...';
+            
+            const formData = new FormData(this);
+            
+            // Add files
+            selectedFiles.forEach(file => {
+                formData.append('files', file);
+            });
+            
+            try {
+                const response = await fetch('/submit_customer_inquiry', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    // Show success modal
+                    const modal = new bootstrap.Modal(document.getElementById('successModal'));
+                    modal.show();
+                    
+                    // Reset form
+                    this.reset();
+                    selectedFiles = [];
+                    previewContainer.innerHTML = '';
+                    document.getElementById('matchingProducts').style.display = 'none';
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (error) {
+                alert('An error occurred. Please try again.');
+                console.error(error);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="bi bi-send"></i> Submit Requirements';
+            }
+        });
+    </script>
+</body>
+</html>

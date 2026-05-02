@@ -202,12 +202,15 @@ APP_BASE_URL = os.getenv("APP_BASE_URL", "http://13.51.205.239")
 UPLOAD_FOLDER = os.path.join('static', 'img', 'Products')
 PROFILE_UPLOAD_FOLDER = os.path.join('static', 'img', 'profiles')
 REVIEW_MEDIA_FOLDER = os.path.join('static', 'img', 'reviews')
+INQUIRY_UPLOAD_FOLDER = os.path.join('static', 'img', 'inquiries')
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(PROFILE_UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(REVIEW_MEDIA_FOLDER, exist_ok=True)
+os.makedirs(INQUIRY_UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['PROFILE_UPLOAD_FOLDER'] = PROFILE_UPLOAD_FOLDER
 app.config['REVIEW_MEDIA_FOLDER'] = REVIEW_MEDIA_FOLDER
+app.config['INQUIRY_UPLOAD_FOLDER'] = INQUIRY_UPLOAD_FOLDER
 
 # Allowed file extensions for reviews
 ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
@@ -4187,6 +4190,272 @@ def contact():
         return redirect(url_for('contact'))
     
     return render_template('contact_new.html')
+
+# ============================================
+# CUSTOMER INQUIRY SYSTEM
+# ============================================
+
+@app.route('/customers')
+def customer_inquiry_page():
+    """Customer inquiry form page"""
+    return render_template('customer_inquiry.html')
+
+@app.route('/submit_customer_inquiry', methods=['POST'])
+def submit_customer_inquiry():
+    """Handle customer inquiry form submission"""
+    try:
+        # Get form data
+        name = request.form.get('name')
+        email = request.form.get('email')
+        phone = request.form.get('phone')
+        setup_type = request.form.get('setup_type')
+        setup_type_other = request.form.get('setup_type_other')
+        budget_range = request.form.get('budget_range')
+        quantity_scale = request.form.get('quantity_scale')
+        timeline = request.form.get('timeline')
+        additional_requirements = request.form.get('additional_requirements')
+        preferred_contact_time = request.form.get('preferred_contact_time')
+        wants_consultation = request.form.get('wants_consultation') == 'true'
+        
+        # Get user_id if logged in
+        user_id = current_user.id if current_user.is_authenticated else None
+        
+        # Handle file uploads
+        uploaded_files = request.files.getlist('files')
+        layout_photo = None
+        reference_images = []
+        
+        if uploaded_files:
+            for file in uploaded_files:
+                if file and file.filename:
+                    # Validate file
+                    filename = secure_filename(file.filename)
+                    ext = os.path.splitext(filename)[1].lower()
+                    
+                    # Check file type and size
+                    if file.content_type.startswith('image/'):
+                        max_size = 10 * 1024 * 1024  # 10MB
+                    elif file.content_type.startswith('video/'):
+                        max_size = 50 * 1024 * 1024  # 50MB
+                    else:
+                        continue
+                    
+                    # Read file to check size
+                    file.seek(0, os.SEEK_END)
+                    file_size = file.tell()
+                    file.seek(0)
+                    
+                    if file_size > max_size:
+                        continue
+                    
+                    # Save file
+                    timestamp = int(datetime.utcnow().timestamp())
+                    new_filename = f"inquiry_{timestamp}_{filename}"
+                    file_path = os.path.join(app.config['INQUIRY_UPLOAD_FOLDER'], new_filename)
+                    file.save(file_path)
+                    
+                    relative_path = f"img/inquiries/{new_filename}"
+                    
+                    # First image/video becomes layout_photo, rest are references
+                    if not layout_photo:
+                        layout_photo = relative_path
+                    else:
+                        reference_images.append(relative_path)
+        
+        # Convert reference_images list to JSON string
+        import json
+        reference_images_json = json.dumps(reference_images) if reference_images else None
+        
+        # Insert into database
+        conn = connect_to_db()
+        if not conn:
+            return jsonify({'error': 'Database connection failed'}), 500
+        
+        try:
+            cur = conn.cursor()
+            cur.execute("""
+                INSERT INTO customer_inquiries (
+                    name, email, phone, setup_type, setup_type_other,
+                    budget_range, quantity_scale, timeline,
+                    additional_requirements, layout_photo, reference_images,
+                    preferred_contact_time, wants_consultation, user_id, status
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                RETURNING id
+            """, (
+                name, email, phone, setup_type, setup_type_other,
+                budget_range, quantity_scale, timeline,
+                additional_requirements, layout_photo, reference_images_json,
+                preferred_contact_time, wants_consultation, user_id, 'new'
+            ))
+            
+            inquiry_id = cur.fetchone()[0]
+            conn.commit()
+            
+            return jsonify({
+                'success': True,
+                'message': 'Your inquiry has been submitted successfully!',
+                'inquiry_id': inquiry_id
+            }), 200
+            
+        except Exception as e:
+            conn.rollback()
+            print(f"Error saving inquiry: {e}")
+            return jsonify({'error': 'Failed to save inquiry'}), 500
+        finally:
+            if cur:
+                cur.close()
+            if conn:
+                conn.close()
+                
+    except Exception as e:
+        print(f"Error processing inquiry: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/admin/inquiries')
+@login_required
+def admin_inquiries():
+    """Admin panel for viewing customer inquiries"""
+    if not current_user.is_admin:
+        flash('Access denied. Admin privileges required.', 'danger')
+        return redirect(url_for('index'))
+    
+    # Get filter parameters
+    status_filter = request.args.get('status', 'all')
+    budget_filter = request.args.get('budget', 'all')
+    setup_filter = request.args.get('setup', 'all')
+    sort_by = request.args.get('sort', 'newest')
+    
+    conn = connect_to_db()
+    if not conn:
+        flash('Database connection error', 'error')
+        return redirect(url_for('admin_orders'))
+    
+    try:
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        
+        # Build query
+        query = "SELECT * FROM customer_inquiries WHERE 1=1"
+        params = []
+        
+        if status_filter != 'all':
+            query += " AND status = %s"
+            params.append(status_filter)
+        
+        if budget_filter != 'all':
+            query += " AND budget_range = %s"
+            params.append(budget_filter)
+        
+        if setup_filter != 'all':
+            query += " AND setup_type = %s"
+            params.append(setup_filter)
+        
+        # Add sorting
+        if sort_by == 'newest':
+            query += " ORDER BY created_at DESC"
+        elif sort_by == 'oldest':
+            query += " ORDER BY created_at ASC"
+        elif sort_by == 'budget_high':
+            query += " ORDER BY CASE budget_range WHEN '500k_plus' THEN 6 WHEN '100k_500k' THEN 5 WHEN '50k_100k' THEN 4 WHEN '25k_50k' THEN 3 WHEN 'under_25k' THEN 2 ELSE 1 END DESC"
+        elif sort_by == 'budget_low':
+            query += " ORDER BY CASE budget_range WHEN '500k_plus' THEN 6 WHEN '100k_500k' THEN 5 WHEN '50k_100k' THEN 4 WHEN '25k_50k' THEN 3 WHEN 'under_25k' THEN 2 ELSE 1 END ASC"
+        
+        cur.execute(query, params)
+        inquiries = cur.fetchall()
+        
+        # Get statistics
+        cur.execute("SELECT COUNT(*) as total FROM customer_inquiries")
+        total_inquiries = cur.fetchone()['total']
+        
+        cur.execute("SELECT COUNT(*) as new FROM customer_inquiries WHERE status = 'new'")
+        new_inquiries = cur.fetchone()['new']
+        
+        cur.execute("SELECT COUNT(*) as contacted FROM customer_inquiries WHERE status = 'contacted'")
+        contacted_inquiries = cur.fetchone()['contacted']
+        
+        return render_template('admin_inquiries.html',
+                             inquiries=inquiries,
+                             total_inquiries=total_inquiries,
+                             new_inquiries=new_inquiries,
+                             contacted_inquiries=contacted_inquiries,
+                             status_filter=status_filter,
+                             budget_filter=budget_filter,
+                             setup_filter=setup_filter,
+                             sort_by=sort_by)
+    
+    except Exception as e:
+        print(f"Error fetching inquiries: {e}")
+        flash('Error loading inquiries', 'error')
+        return redirect(url_for('admin_orders'))
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
+@app.route('/admin/inquiries/<int:inquiry_id>/update_status', methods=['POST'])
+@login_required
+def update_inquiry_status(inquiry_id):
+    """Update inquiry status"""
+    if not current_user.is_admin:
+        return jsonify({'error': 'Access denied'}), 403
+    
+    data = request.get_json()
+    new_status = data.get('status')
+    admin_notes = data.get('admin_notes', '')
+    
+    conn = connect_to_db()
+    if not conn:
+        return jsonify({'error': 'Database connection failed'}), 500
+    
+    try:
+        cur = conn.cursor()
+        cur.execute("""
+            UPDATE customer_inquiries
+            SET status = %s, admin_notes = %s, updated_at = CURRENT_TIMESTAMP
+            WHERE id = %s
+        """, (new_status, admin_notes, inquiry_id))
+        conn.commit()
+        
+        return jsonify({'success': True, 'message': 'Status updated successfully'}), 200
+    
+    except Exception as e:
+        conn.rollback()
+        print(f"Error updating inquiry status: {e}")
+        return jsonify({'error': 'Failed to update status'}), 500
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
+@app.route('/admin/inquiries/<int:inquiry_id>/delete', methods=['POST'])
+@login_required
+def delete_inquiry(inquiry_id):
+    """Delete an inquiry"""
+    if not current_user.is_admin:
+        return jsonify({'error': 'Access denied'}), 403
+    
+    conn = connect_to_db()
+    if not conn:
+        return jsonify({'error': 'Database connection failed'}), 500
+    
+    try:
+        cur = conn.cursor()
+        cur.execute("DELETE FROM customer_inquiries WHERE id = %s", (inquiry_id,))
+        conn.commit()
+        
+        return jsonify({'success': True, 'message': 'Inquiry deleted successfully'}), 200
+    
+    except Exception as e:
+        conn.rollback()
+        print(f"Error deleting inquiry: {e}")
+        return jsonify({'error': 'Failed to delete inquiry'}), 500
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
 
 @app.route('/products')
 def products():

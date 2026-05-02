@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Customer Inquiries - Admin Panel</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/main.css') }}" rel="stylesheet">
+    
+    <style>
+        body {
+            background: #f8f9fa;
+            font-family: 'Mozilla Text', sans-serif;
+        }
+        
+        .admin-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px 0;
+            margin-bottom: 30px;
+        }
+        
+        .stats-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .stats-card h3 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 0;
+        }
+        
+        .stats-card p {
+            color: #6b7280;
+            margin: 0;
+        }
+        
+        .inquiry-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .inquiry-card:hover {
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        }
+        
+        .inquiry-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .inquiry-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #1f2937;
+        }
+        
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        
+        .status-new { background: #dbeafe; color: #1e40af; }
+        .status-contacted { background: #fef3c7; color: #92400e; }
+        .status-quoted { background: #e0e7ff; color: #4338ca; }
+        .status-converted { background: #d1fae5; color: #065f46; }
+        .status-closed { background: #f3f4f6; color: #4b5563; }
+        
+        .inquiry-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .detail-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .detail-item i {
+            color: #667eea;
+            font-size: 1.1rem;
+        }
+        
+        .media-preview {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+        
+        .media-preview img, .media-preview video {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+        
+        .filter-section {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+
+<body>
+    {% include 'navbar.html' %}
+    
+    <div class="admin-header">
+        <div class="container">
+            <h1><i class="bi bi-people"></i> Customer Inquiries</h1>
+            <p>Manage and track customer requirements</p>
+        </div>
+    </div>
+    
+    <div class="container">
+        <!-- Statistics -->
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="stats-card">
+                    <h3>{{ total_inquiries }}</h3>
+                    <p>Total Inquiries</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stats-card">
+                    <h3 class="text-primary">{{ new_inquiries }}</h3>
+                    <p>New Inquiries</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stats-card">
+                    <h3 class="text-warning">{{ contacted_inquiries }}</h3>
+                    <p>Contacted</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Filters -->
+        <div class="filter-section">
+            <form method="GET" action="{{ url_for('admin_inquiries') }}">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Status</label>
+                        <select name="status" class="form-select" onchange="this.form.submit()">
+                            <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All Status</option>
+                            <option value="new" {% if status_filter == 'new' %}selected{% endif %}>New</option>
+                            <option value="contacted" {% if status_filter == 'contacted' %}selected{% endif %}>Contacted</option>
+                            <option value="quoted" {% if status_filter == 'quoted' %}selected{% endif %}>Quoted</option>
+                            <option value="converted" {% if status_filter == 'converted' %}selected{% endif %}>Converted</option>
+                            <option value="closed" {% if status_filter == 'closed' %}selected{% endif %}>Closed</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Budget</label>
+                        <select name="budget" class="form-select" onchange="this.form.submit()">
+                            <option value="all" {% if budget_filter == 'all' %}selected{% endif %}>All Budgets</option>
+                            <option value="under_25k" {% if budget_filter == 'under_25k' %}selected{% endif %}>Under ₹25K</option>
+                            <option value="25k_50k" {% if budget_filter == '25k_50k' %}selected{% endif %}>₹25K-₹50K</option>
+                            <option value="50k_100k" {% if budget_filter == '50k_100k' %}selected{% endif %}>₹50K-₹1L</option>
+                            <option value="100k_500k" {% if budget_filter == '100k_500k' %}selected{% endif %}>₹1L-₹5L</option>
+                            <option value="500k_plus" {% if budget_filter == '500k_plus' %}selected{% endif %}>₹5L+</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Setup Type</label>
+                        <select name="setup" class="form-select" onchange="this.form.submit()">
+                            <option value="all" {% if setup_filter == 'all' %}selected{% endif %}>All Types</option>
+                            <option value="office" {% if setup_filter == 'office' %}selected{% endif %}>Office</option>
+                            <option value="studio" {% if setup_filter == 'studio' %}selected{% endif %}>Studio</option>
+                            <option value="wfh" {% if setup_filter == 'wfh' %}selected{% endif %}>WFH</option>
+                            <option value="other" {% if setup_filter == 'other' %}selected{% endif %}>Other</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Sort By</label>
+                        <select name="sort" class="form-select" onchange="this.form.submit()">
+                            <option value="newest" {% if sort_by == 'newest' %}selected{% endif %}>Newest First</option>
+                            <option value="oldest" {% if sort_by == 'oldest' %}selected{% endif %}>Oldest First</option>
+                            <option value="budget_high" {% if sort_by == 'budget_high' %}selected{% endif %}>Budget: High to Low</option>
+                            <option value="budget_low" {% if sort_by == 'budget_low' %}selected{% endif %}>Budget: Low to High</option>
+                        </select>
+                    </div>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Inquiries List -->
+        {% if inquiries %}
+            {% for inquiry in inquiries %}
+            <div class="inquiry-card">
+                <div class="inquiry-header">
+                    <div>
+                        <div class="inquiry-title">{{ inquiry.name }}</div>
+                        <small class="text-muted">{{ inquiry.created_at.strftime('%B %d, %Y at %I:%M %p') }}</small>
+                    </div>
+                    <span class="status-badge status-{{ inquiry.status }}">{{ inquiry.status|upper }}</span>
+                </div>
+                
+                <div class="inquiry-details">
+                    <div class="detail-item">
+                        <i class="bi bi-envelope"></i>
+                        <span>{{ inquiry.email }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <i class="bi bi-telephone"></i>
+                        <span>{{ inquiry.phone }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <i class="bi bi-briefcase"></i>
+                        <span>{{ inquiry.setup_type|title }}{% if inquiry.setup_type_other %}: {{ inquiry.setup_type_other }}{% endif %}</span>
+                    </div>
+                    <div class="detail-item">
+                        <i class="bi bi-currency-rupee"></i>
+                        <span>
+                            {% if inquiry.budget_range == 'under_25k' %}Under ₹25K
+                            {% elif inquiry.budget_range == '25k_50k' %}₹25K-₹50K
+                            {% elif inquiry.budget_range == '50k_100k' %}₹50K-₹1L
+                            {% elif inquiry.budget_range == '100k_500k' %}₹1L-₹5L
+                            {% elif inquiry.budget_range == '500k_plus' %}₹5L+
+                            {% else %}Not Decided
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="detail-item">
+                        <i class="bi bi-box-seam"></i>
+                        <span>
+                            {% if inquiry.quantity_scale == 'single' %}Single Setup
+                            {% elif inquiry.quantity_scale == '2_10' %}2-10 Setups
+                            {% elif inquiry.quantity_scale == '10_50' %}10-50 Setups
+                            {% else %}50+ Setups
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="detail-item">
+                        <i class="bi bi-calendar"></i>
+                        <span>
+                            {% if inquiry.timeline == 'immediate' %}Immediate
+                            {% elif inquiry.timeline == '1_2_weeks' %}1-2 Weeks
+                            {% elif inquiry.timeline == '1_month' %}1 Month
+                            {% else %}Flexible
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+                
+                {% if inquiry.additional_requirements %}
+                <div class="mt-3">
+                    <strong>Requirements:</strong>
+                    <p class="mb-0">{{ inquiry.additional_requirements }}</p>
+                </div>
+                {% endif %}
+                
+                {% if inquiry.preferred_contact_time %}
+                <div class="mt-2">
+                    <strong>Preferred Contact Time:</strong> {{ inquiry.preferred_contact_time }}
+                </div>
+                {% endif %}
+                
+                {% if inquiry.wants_consultation %}
+                <div class="mt-2">
+                    <span class="badge bg-success"><i class="bi bi-telephone"></i> Wants Consultation Call</span>
+                </div>
+                {% endif %}
+                
+                {% if inquiry.layout_photo or inquiry.reference_images %}
+                <div class="media-preview">
+                    {% if inquiry.layout_photo %}
+                    <img src="{{ url_for('static', filename=inquiry.layout_photo) }}" alt="Layout" onclick="window.open(this.src, '_blank')">
+                    {% endif %}
+                    {% if inquiry.reference_images %}
+                        {% set images = inquiry.reference_images|from_json %}
+                        {% for img in images %}
+                        <img src="{{ url_for('static', filename=img) }}" alt="Reference" onclick="window.open(this.src, '_blank')">
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                {% endif %}
+                
+                {% if inquiry.admin_notes %}
+                <div class="alert alert-info mt-3 mb-0">
+                    <strong>Admin Notes:</strong> {{ inquiry.admin_notes }}
+                </div>
+                {% endif %}
+                
+                <div class="action-buttons">
+                    <button class="btn btn-primary btn-sm" onclick="updateStatus({{ inquiry.id }}, 'contacted')">
+                        <i class="bi bi-telephone"></i> Mark Contacted
+                    </button>
+                    <button class="btn btn-warning btn-sm" onclick="updateStatus({{ inquiry.id }}, 'quoted')">
+                        <i class="bi bi-file-text"></i> Mark Quoted
+                    </button>
+                    <button class="btn btn-success btn-sm" onclick="updateStatus({{ inquiry.id }}, 'converted')">
+                        <i class="bi bi-check-circle"></i> Mark Converted
+                    </button>
+                    <button class="btn btn-secondary btn-sm" onclick="addNotes({{ inquiry.id }})">
+                        <i class="bi bi-pencil"></i> Add Notes
+                    </button>
+                    <button class="btn btn-danger btn-sm" onclick="deleteInquiry({{ inquiry.id }})">
+                        <i class="bi bi-trash"></i> Delete
+                    </button>
+                    <a href="tel:{{ inquiry.phone }}" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-telephone-fill"></i> Call
+                    </a>
+                    <a href="mailto:{{ inquiry.email }}" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-envelope-fill"></i> Email
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle"></i> No inquiries found matching your filters.
+            </div>
+        {% endif %}
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function updateStatus(inquiryId, status) {
+            if (confirm(`Update status to ${status}?`)) {
+                fetch(`/admin/inquiries/${inquiryId}/update_status`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: status })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                });
+            }
+        }
+        
+        function addNotes(inquiryId) {
+            const notes = prompt('Enter admin notes:');
+            if (notes !== null) {
+                fetch(`/admin/inquiries/${inquiryId}/update_status`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: 'contacted', admin_notes: notes })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                });
+            }
+        }
+        
+        function deleteInquiry(inquiryId) {
+            if (confirm('Are you sure you want to delete this inquiry? This action cannot be undone.')) {
+                fetch(`/admin/inquiries/${inquiryId}/delete`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                });
+            }
+        }
+    </script>
+</body>
+</html>

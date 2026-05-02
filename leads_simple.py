@@ -191,9 +191,9 @@ def edit_lead(lead_id):
 @leads_bp.route('/admin/leads/<int:lead_id>/design/add', methods=['POST'])
 @admin_required
 def add_design(lead_id):
-    """Add design to lead"""
+    """Add design to lead - copies properties from first design if exists"""
     conn = get_db_connection()
-    cur = conn.cursor()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
     
     try:
         design_name = request.form.get('design_name', 'Design Option')
@@ -210,17 +210,50 @@ def add_design(lead_id):
                 file.save(filepath)
                 design_image = f"img/leads/designs/{filename}"
         
+        # Get first design to copy properties from
+        cur.execute("""
+            SELECT has_table, has_chair, has_plants, has_lighting, has_storage, has_accessories,
+                   table_details, chair_details, plants_details, lighting_details,
+                   storage_details, accessories_details, price, notes
+            FROM lead_designs
+            WHERE lead_id = %s
+            ORDER BY design_order
+            LIMIT 1
+        """, (lead_id,))
+        first_design = cur.fetchone()
+        
         # Get next order
         cur.execute("SELECT COALESCE(MAX(design_order), 0) + 1 FROM lead_designs WHERE lead_id = %s", (lead_id,))
         next_order = cur.fetchone()[0]
         
-        cur.execute("""
-            INSERT INTO lead_designs (lead_id, design_name, design_image, design_order)
-            VALUES (%s, %s, %s, %s)
-        """, (lead_id, design_name, design_image, next_order))
+        if first_design:
+            # Copy properties from first design
+            cur.execute("""
+                INSERT INTO lead_designs (
+                    lead_id, design_name, design_image, design_order,
+                    has_table, has_chair, has_plants, has_lighting, has_storage, has_accessories,
+                    table_details, chair_details, plants_details, lighting_details,
+                    storage_details, accessories_details, price, notes
+                )
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, (
+                lead_id, design_name, design_image, next_order,
+                first_design['has_table'], first_design['has_chair'], first_design['has_plants'],
+                first_design['has_lighting'], first_design['has_storage'], first_design['has_accessories'],
+                first_design['table_details'], first_design['chair_details'], first_design['plants_details'],
+                first_design['lighting_details'], first_design['storage_details'], first_design['accessories_details'],
+                first_design['price'], first_design['notes']
+            ))
+            flash('Design added with properties copied from first design! You can now customize it.', 'success')
+        else:
+            # First design - create with defaults
+            cur.execute("""
+                INSERT INTO lead_designs (lead_id, design_name, design_image, design_order)
+                VALUES (%s, %s, %s, %s)
+            """, (lead_id, design_name, design_image, next_order))
+            flash('First design added! Set up the items and price.', 'info')
         
         conn.commit()
-        flash('Design added!', 'success')
         
     except Exception as e:
         conn.rollback()

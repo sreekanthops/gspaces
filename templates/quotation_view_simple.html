@@ -161,86 +161,90 @@
             <!-- Design Options -->
             <h3 class="mb-4"><i class="bi bi-collection"></i> Design Options for You</h3>
             
+            <div class="row">
             {% for design in designs %}
-            <div class="design-section">
-                <h4 class="mb-3">{{ design.design_name }}</h4>
-                
-                {% if design.design_image %}
-                <img src="{{ url_for('static', filename=design.design_image) }}" 
-                     alt="{{ design.design_name }}" class="design-image">
-                {% endif %}
-
-                <div class="items-list">
-                    <h5 class="mb-3"><i class="bi bi-check-circle"></i> What's Included:</h5>
-                    
-                    {% if design.has_table %}
-                    <div class="mb-3">
-                        <span class="item-badge"><i class="bi bi-table"></i> Table</span>
-                        {% if design.table_details %}
-                        <p class="mt-2 ms-3">{{ design.table_details }}</p>
+                <div class="col-md-6 mb-4">
+                    <div class="design-section h-100">
+                        <h4 class="mb-3">{{ design.design_name }}</h4>
+                        
+                        {% if design.design_image %}
+                        <img src="{{ url_for('static', filename=design.design_image) }}"
+                             alt="{{ design.design_name }}" class="design-image">
                         {% endif %}
-                    </div>
-                    {% endif %}
 
-                    {% if design.has_chair %}
-                    <div class="mb-3">
-                        <span class="item-badge"><i class="bi bi-chair"></i> Chair</span>
-                        {% if design.chair_details %}
-                        <p class="mt-2 ms-3">{{ design.chair_details }}</p>
-                        {% endif %}
-                    </div>
-                    {% endif %}
+                        <div class="items-list">
+                            <h5 class="mb-3"><i class="bi bi-check-circle"></i> What's Included:</h5>
+                            
+                            {% if design.has_table %}
+                            <div class="mb-3">
+                                <span class="item-badge"><i class="bi bi-table"></i> Table</span>
+                                {% if design.table_details %}
+                                <p class="mt-2 ms-3">{{ design.table_details }}</p>
+                                {% endif %}
+                            </div>
+                            {% endif %}
 
-                    {% if design.has_plants %}
-                    <div class="mb-3">
-                        <span class="item-badge"><i class="bi bi-flower1"></i> Plants</span>
-                        {% if design.plants_details %}
-                        <p class="mt-2 ms-3">{{ design.plants_details }}</p>
-                        {% endif %}
-                    </div>
-                    {% endif %}
+                            {% if design.has_chair %}
+                            <div class="mb-3">
+                                <span class="item-badge"><i class="bi bi-chair"></i> Chair</span>
+                                {% if design.chair_details %}
+                                <p class="mt-2 ms-3">{{ design.chair_details }}</p>
+                                {% endif %}
+                            </div>
+                            {% endif %}
 
-                    {% if design.has_lighting %}
-                    <div class="mb-3">
-                        <span class="item-badge"><i class="bi bi-lightbulb"></i> Lighting</span>
-                        {% if design.lighting_details %}
-                        <p class="mt-2 ms-3">{{ design.lighting_details }}</p>
-                        {% endif %}
-                    </div>
-                    {% endif %}
+                            {% if design.has_plants %}
+                            <div class="mb-3">
+                                <span class="item-badge"><i class="bi bi-flower1"></i> Plants</span>
+                                {% if design.plants_details %}
+                                <p class="mt-2 ms-3">{{ design.plants_details }}</p>
+                                {% endif %}
+                            </div>
+                            {% endif %}
 
-                    {% if design.has_storage %}
-                    <div class="mb-3">
-                        <span class="item-badge"><i class="bi bi-box"></i> Storage</span>
-                        {% if design.storage_details %}
-                        <p class="mt-2 ms-3">{{ design.storage_details }}</p>
-                        {% endif %}
-                    </div>
-                    {% endif %}
+                            {% if design.has_lighting %}
+                            <div class="mb-3">
+                                <span class="item-badge"><i class="bi bi-lightbulb"></i> Lighting</span>
+                                {% if design.lighting_details %}
+                                <p class="mt-2 ms-3">{{ design.lighting_details }}</p>
+                                {% endif %}
+                            </div>
+                            {% endif %}
 
-                    {% if design.has_accessories %}
-                    <div class="mb-3">
-                        <span class="item-badge"><i class="bi bi-gear"></i> Accessories</span>
-                        {% if design.accessories_details %}
-                        <p class="mt-2 ms-3">{{ design.accessories_details }}</p>
-                        {% endif %}
-                    </div>
-                    {% endif %}
+                            {% if design.has_storage %}
+                            <div class="mb-3">
+                                <span class="item-badge"><i class="bi bi-box"></i> Storage</span>
+                                {% if design.storage_details %}
+                                <p class="mt-2 ms-3">{{ design.storage_details }}</p>
+                                {% endif %}
+                            </div>
+                            {% endif %}
 
-                    {% if design.notes %}
-                    <div class="alert alert-info mt-3">
-                        <i class="bi bi-info-circle"></i> <strong>Note:</strong> {{ design.notes }}
+                            {% if design.has_accessories %}
+                            <div class="mb-3">
+                                <span class="item-badge"><i class="bi bi-gear"></i> Accessories</span>
+                                {% if design.accessories_details %}
+                                <p class="mt-2 ms-3">{{ design.accessories_details }}</p>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+
+                            {% if design.notes %}
+                            <div class="alert alert-info mt-3">
+                                <i class="bi bi-info-circle"></i> <strong>Note:</strong> {{ design.notes }}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="text-end mt-auto">
+                            <span class="price-tag">
+                                ₹{{ "{:,.0f}".format(design.price) }}
+                            </span>
+                        </div>
                     </div>
-                    {% endif %}
                 </div>
-
-                <div class="text-end">
-                    <span class="price-tag">
-                        ₹{{ "{:,.0f}".format(design.price) }}
-                    </span>
-                </div>
-            </div>
             {% endfor %}
+            </div>
 
             <!-- Total -->
             <div class="total-section">

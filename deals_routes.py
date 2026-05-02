@@ -17,8 +17,9 @@ def get_db_connection():
     return psycopg2.connect(
         host=os.getenv('DB_HOST', 'localhost'),
         database=os.getenv('DB_NAME', 'gspaces'),
-        user=os.getenv('DB_USER', 'postgres'),
-        password=os.getenv('DB_PASSWORD', 'sri')
+        user=os.getenv('DB_USER', 'sri'),
+        password=os.getenv('DB_PASSWORD', 'gspaces2025'),
+        port=os.getenv('DB_PORT', '5432')
     )
 
 def get_active_campaign():

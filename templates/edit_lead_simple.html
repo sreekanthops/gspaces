@@ -89,6 +89,9 @@
                 <a href="{{ url_for('leads.admin_leads_list') }}" class="btn btn-light">
                     <i class="bi bi-arrow-left"></i> Back to Leads
                 </a>
+                <a href="{{ url_for('leads.manage_default_prices') }}" class="btn btn-warning ms-2">
+                    <i class="bi bi-gear"></i> Manage Default Prices
+                </a>
             </div>
         </div>
     </div>
@@ -241,7 +244,7 @@
                                 <div class="col-md-3">
                                     <label class="form-label small">Unit Price (₹)</label>
                                     <input type="number" name="table_price" class="form-control" step="0.01" min="0"
-                                           value="{{ design.table_price or 0 }}"
+                                           value="{{ design.table_price or default_prices.get(\'table\', 0) }}"
                                            onchange="calculateItemTotal('table', {{ design.id }})">
                                 </div>
                                 <div class="col-md-3">
@@ -280,7 +283,7 @@
                                 <div class="col-md-3">
                                     <label class="form-label small">Unit Price (₹)</label>
                                     <input type="number" name="chair_price" class="form-control" step="0.01" min="0"
-                                           value="{{ design.chair_price or 12000 }}"
+                                           value="{{ design.chair_price or default_prices.get(\'chair\', 0) }}"
                                            onchange="calculateItemTotal('chair', {{ design.id }})">
                                 </div>
                                 <div class="col-md-3">
@@ -312,7 +315,7 @@
                                 <div class="col-md-3">
                                     <label class="form-label small">Unit Price (₹)</label>
                                     <input type="number" name="lighting_price" class="form-control" step="0.01" min="0"
-                                           value="{{ design.lighting_price or 0 }}"
+                                           value="{{ design.lighting_price or default_prices.get(\'lighting\', 0) }}"
                                            onchange="calculateItemTotal('lighting', {{ design.id }})">
                                 </div>
                                 <div class="col-md-3">
@@ -344,7 +347,7 @@
                                 <div class="col-md-3">
                                     <label class="form-label small">Unit Price (₹)</label>
                                     <input type="number" name="storage_price" class="form-control" step="0.01" min="0"
-                                           value="{{ design.storage_price or 0 }}"
+                                           value="{{ design.storage_price or default_prices.get(\'storage\', 0) }}"
                                            onchange="calculateItemTotal('storage', {{ design.id }})">
                                 </div>
                                 <div class="col-md-3">
@@ -376,7 +379,7 @@
                                 <div class="col-md-3">
                                     <label class="form-label small">Unit Price (₹)</label>
                                     <input type="number" name="accessories_price" class="form-control" step="0.01" min="0"
-                                           value="{{ design.accessories_price or 0 }}"
+                                           value="{{ design.accessories_price or default_prices.get(\'accessories\', 0) }}"
                                            onchange="calculateItemTotal('accessories', {{ design.id }})">
                                 </div>
                                 <div class="col-md-3">
@@ -407,7 +410,7 @@
                             <div class="col-md-3">
                                 <label class="form-label small">Unit Price (₹)</label>
                                 <input type="number" name="big_plants_price" class="form-control"
-                                       value="{{ design.big_plants_price or '' }}" min="0"
+                                       value="{{ design.big_plants_price or default_prices.get('big_plants', 1000) }}" min="0"
                                        onchange="calculateItemTotal('big_plants', {{ design.id }})">
                             </div>
                             <div class="col-md-3">
@@ -440,7 +443,7 @@
                             <div class="col-md-3">
                                 <label class="form-label small">Unit Price (₹)</label>
                                 <input type="number" name="mini_plants_price" class="form-control"
-                                       value="{{ design.mini_plants_price or '' }}" min="0"
+                                       value="{{ design.mini_plants_price or default_prices.get(\'mini_plants\', 0) }}" min="0"
                                        onchange="calculateItemTotal('mini_plants', {{ design.id }})">
                             </div>
                             <div class="col-md-3">
@@ -473,7 +476,7 @@
                             <div class="col-md-3">
                                 <label class="form-label small">Unit Price (₹)</label>
                                 <input type="number" name="frames_price" class="form-control"
-                                       value="{{ design.frames_price or '' }}" min="0"
+                                       value="{{ design.frames_price or default_prices.get(\'frames\', 0) }}" min="0"
                                        onchange="calculateItemTotal('frames', {{ design.id }})">
                             </div>
                             <div class="col-md-3">
@@ -506,7 +509,7 @@
                             <div class="col-md-3">
                                 <label class="form-label small">Unit Price (₹)</label>
                                 <input type="number" name="wall_racks_price" class="form-control"
-                                       value="{{ design.wall_racks_price or '' }}" min="0"
+                                       value="{{ design.wall_racks_price or default_prices.get(\'wall_racks\', 0) }}" min="0"
                                        onchange="calculateItemTotal('wall_racks', {{ design.id }})">
                             </div>
                             <div class="col-md-3">
@@ -539,7 +542,7 @@
                             <div class="col-md-3">
                                 <label class="form-label small">Unit Price (₹)</label>
                                 <input type="number" name="desk_mat_price" class="form-control"
-                                       value="{{ design.desk_mat_price or '' }}" min="0"
+                                       value="{{ design.desk_mat_price or default_prices.get(\'desk_mat\', 0) }}" min="0"
                                        onchange="calculateItemTotal('desk_mat', {{ design.id }})">
                             </div>
                             <div class="col-md-3">
@@ -571,7 +574,7 @@
                             <div class="col-md-3">
                                 <label class="form-label small">Unit Price (₹)</label>
                                 <input type="number" name="desk_lamp_price" class="form-control"
-                                       value="{{ design.desk_lamp_price or 2500 }}" min="0"
+                                       value="{{ design.desk_lamp_price or default_prices.get(\'desk_lamp\', 0) }}" min="0"
                                        onchange="calculateItemTotal('desk_lamp', {{ design.id }})">
                             </div>
                             <div class="col-md-3">
@@ -604,7 +607,7 @@
                             <div class="col-md-3">
                                 <label class="form-label small">Unit Price (₹)</label>
                                 <input type="number" name="pen_holder_price" class="form-control"
-                                       value="{{ design.pen_holder_price or 500 }}" min="0"
+                                       value="{{ design.pen_holder_price or default_prices.get(\'pen_holder\', 0) }}" min="0"
                                        onchange="calculateItemTotal('pen_holder', {{ design.id }})">
                             </div>
                             <div class="col-md-3">
@@ -637,7 +640,7 @@
                             <div class="col-md-3">
                                 <label class="form-label small">Unit Price (₹)</label>
                                 <input type="number" name="laptop_holder_price" class="form-control"
-                                       value="{{ design.laptop_holder_price or 1800 }}" min="0"
+                                       value="{{ design.laptop_holder_price or default_prices.get(\'laptop_holder\', 0) }}" min="0"
                                        onchange="calculateItemTotal('laptop_holder', {{ design.id }})">
                             </div>
                             <div class="col-md-3">
@@ -671,7 +674,7 @@
                             <div class="col-md-3">
                                 <label class="form-label small">Unit Price (₹)</label>
                                 <input type="number" name="dustbin_price" class="form-control"
-                                       value="{{ design.dustbin_price or '' }}" min="0"
+                                       value="{{ design.dustbin_price or default_prices.get(\'dustbin\', 0) }}" min="0"
                                        onchange="calculateItemTotal('dustbin', {{ design.id }})">
                             </div>
                             <div class="col-md-3">
@@ -704,7 +707,7 @@
                             <div class="col-md-3">
                                 <label class="form-label small">Unit Price (₹)</label>
                                 <input type="number" name="floor_mat_price" class="form-control"
-                                       value="{{ design.floor_mat_price or '' }}" min="0"
+                                       value="{{ design.floor_mat_price or default_prices.get(\'floor_mat\', 0) }}" min="0"
                                        onchange="calculateItemTotal('floor_mat', {{ design.id }})">
                             </div>
                             <div class="col-md-3">
@@ -737,7 +740,7 @@
                             <div class="col-md-3">
                                 <label class="form-label small">Unit Price (₹)</label>
                                 <input type="number" name="keyboard_price" class="form-control"
-                                       value="{{ design.keyboard_price or '' }}" min="0"
+                                       value="{{ design.keyboard_price or default_prices.get(\'keyboard\', 0) }}" min="0"
                                        onchange="calculateItemTotal('keyboard', {{ design.id }})">
                             </div>
                             <div class="col-md-3">
@@ -770,7 +773,7 @@
                             <div class="col-md-3">
                                 <label class="form-label small">Unit Price (₹)</label>
                                 <input type="number" name="mouse_price" class="form-control"
-                                       value="{{ design.mouse_price or '' }}" min="0"
+                                       value="{{ design.mouse_price or default_prices.get(\'mouse\', 0) }}" min="0"
                                        onchange="calculateItemTotal('mouse', {{ design.id }})">
                             </div>
                             <div class="col-md-3">
@@ -803,7 +806,7 @@
                             <div class="col-md-3">
                                 <label class="form-label small">Unit Price (₹)</label>
                                 <input type="number" name="paint_price" class="form-control"
-                                       value="{{ design.paint_price or '' }}" min="0"
+                                       value="{{ design.paint_price or default_prices.get(\'paint\', 0) }}" min="0"
                                        onchange="calculateItemTotal('paint', {{ design.id }})">
                             </div>
                             <div class="col-md-3">
@@ -836,7 +839,7 @@
                             <div class="col-md-3">
                                 <label class="form-label small">Unit Price (₹)</label>
                                 <input type="number" name="wardrobes_price" class="form-control"
-                                       value="{{ design.wardrobes_price or '' }}" min="0"
+                                       value="{{ design.wardrobes_price or default_prices.get(\'wardrobes\', 0) }}" min="0"
                                        onchange="calculateItemTotal('wardrobes', {{ design.id }})">
                             </div>
                             <div class="col-md-3">

@@ -1,0 +1,82 @@
+<!-- All 17 Item Sections for Admin Form -->
+<!-- Copy these into edit_lead_simple.html -->
+
+<!-- 1. Desk/Table -->
+<div class="item-checkbox">
+    <label>
+        <input type="checkbox" name="has_table" 
+               {% if design.has_table %}checked{% endif %}
+               onchange="toggleDetails(this, 'table_{{ design.id }}')">
+        <strong>🪑 Desk</strong>
+    </label>
+    <div id="table_{{ design.id }}" class="item-details" 
+         {% if design.has_table %}style="display:block"{% endif %}>
+        <div class="row mb-2">
+            <div class="col-md-3">
+                <input type="number" name="table_quantity" class="form-control" 
+                       placeholder="Qty" min="1" value="{{ design.table_quantity or 1 }}"
+                       onchange="calculateItemTotal('table', {{ design.id }}); calculateTotal({{ design.id }})">
+            </div>
+            <div class="col-md-3">
+                <input type="number" name="table_price" class="form-control" 
+                       placeholder="Unit Price (₹)" step="0.01" min="0"
+                       value="{{ design.table_price or 0 }}"
+                       onchange="calculateItemTotal('table', {{ design.id }}); calculateTotal({{ design.id }})">
+            </div>
+            <div class="col-md-3">
+                <input type="number" id="table_total_{{ design.id }}" class="form-control" 
+                       placeholder="Total" readonly style="background: #e9ecef;">
+            </div>
+        </div>
+        <textarea name="table_details" class="form-control" rows="2" 
+                  placeholder="e.g., Ergonomic standing desk with storage">{{ design.table_details or '' }}</textarea>
+    </div>
+</div>
+
+<!-- 2. Chair -->
+<div class="item-checkbox">
+    <label>
+        <input type="checkbox" name="has_chair" 
+               {% if design.has_chair %}checked{% endif %}
+               onchange="toggleDetails(this, 'chair_{{ design.id }}')">
+        <strong>💺 Chair</strong>
+    </label>
+    <div id="chair_{{ design.id }}" class="item-details" 
+         {% if design.has_chair %}style="display:block"{% endif %}>
+        <div class="row mb-2">
+            <div class="col-md-3">
+                <input type="number" name="chair_quantity" class="form-control" 
+                       placeholder="Qty" min="1" value="{{ design.chair_quantity or 1 }}"
+                       onchange="calculateItemTotal('chair', {{ design.id }}); calculateTotal({{ design.id }})">
+            </div>
+            <div class="col-md-3">
+                <input type="number" name="chair_price" class="form-control" 
+                       placeholder="Unit Price (₹)" step="0.01" min="0"
+                       value="{{ design.chair_price or 0 }}"
+                       onchange="calculateItemTotal('chair', {{ design.id }}); calculateTotal({{ design.id }})">
+            </div>
+            <div class="col-md-3">
+                <input type="number" id="chair_total_{{ design.id }}" class="form-control" 
+                       placeholder="Total" readonly style="background: #e9ecef;">
+            </div>
+        </div>
+        <textarea name="chair_details" class="form-control" rows="2" 
+                  placeholder="e.g., Ergonomic office chair with lumbar support">{{ design.chair_details or '' }}</textarea>
+    </div>
+</div>
+
+<!-- Continue for all 17 items... -->
+<!-- This file shows the pattern. Each item follows the same structure -->
+
+<!-- JavaScript function to add -->
+<script>
+function calculateItemTotal(itemName, designId) {
+    const qty = parseFloat(document.querySelector(`[name="${itemName}_quantity"]`).value || 1);
+    const price = parseFloat(document.querySelector(`[name="${itemName}_price"]`).value || 0);
+    const total = qty * price;
+    const totalField = document.getElementById(`${itemName}_total_${designId}`);
+    if (totalField) {
+        totalField.value = total.toFixed(2);
+    }
+}
+</script>

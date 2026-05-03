@@ -1517,12 +1517,18 @@ def update_profile_phone():
     finally:
         conn.close()
 
-@app.route('/add_product', methods=['POST'])
+@app.route('/add_product', methods=['GET', 'POST'])
 @login_required
 def add_product():
     if not current_user.is_admin:
-        return jsonify({'success': False, 'message': 'Admins only.'}), 403
-
+        flash('Admins only.', 'warning')
+        return redirect(url_for('products'))
+    
+    # GET request - show the form
+    if request.method == 'GET':
+        return render_template('add_product.html')
+    
+    # POST request - process the form
     try:
         name = request.form['name']
         category = request.form['category']

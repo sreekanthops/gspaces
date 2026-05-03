@@ -747,6 +747,142 @@ def manage_default_prices():
     cur.close()
     conn.close()
     
+
+@leads_bp.route('/admin/default-items/add', methods=['POST'])
+@admin_required
+def add_default_item():
+    """Add a new default item"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    try:
+        item_name = request.form.get('item_name')
+        item_slug = request.form.get('item_slug')
+        icon_emoji = request.form.get('icon_emoji', '📦')
+        default_price = float(request.form.get('default_price', 0))
+        description = request.form.get('description', '')
+        display_order = int(request.form.get('display_order', 0))
+        is_active = 'is_active' in request.form
+        
+        # Handle icon image upload
+        icon_image = None
+        if 'icon_image' in request.files:
+            file = request.files['icon_image']
+            if file and file.filename and allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                filename = f"icon_{item_slug}_{timestamp}_{filename}"
+                
+                # Create icons directory if it doesn't exist
+                icons_folder = os.path.join('static', 'img', 'icons')
+                os.makedirs(icons_folder, exist_ok=True)
+                
+                filepath = os.path.join(icons_folder, filename)
+                file.save(filepath)
+                icon_image = f"img/icons/{filename}"
+        
+        # Insert new item
+        cur.execute("""
+            INSERT INTO default_items 
+            (item_name, item_slug, icon_emoji, icon_image, default_price, 
+             description, display_order, is_active)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        """, (item_name, item_slug, icon_emoji, icon_image, default_price,
+              description, display_order, is_active))
+        
+        conn.commit()
+        flash(f'Item "{item_name}" added successfully!', 'success')
+        
+    except Exception as e:
+        conn.rollback()
+        flash(f'Error adding item: {str(e)}', 'danger')
+    finally:
+        cur.close()
+        conn.close()
+    
+    return redirect(url_for('leads.manage_default_prices'))
+
+@leads_bp.route('/admin/default-items/update', methods=['POST'])
+@admin_required
+def update_default_item():
+    """Update an existing default item"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    try:
+        item_id = int(request.form.get('item_id'))
+        item_name = request.form.get('item_name')
+        item_slug = request.form.get('item_slug')
+        icon_emoji = request.form.get('icon_emoji', '📦')
+        default_price = float(request.form.get('default_price', 0))
+        description = request.form.get('description', '')
+        display_order = int(request.form.get('display_order', 0))
+        is_active = 'is_active' in request.form
+        
+        # Handle icon image upload
+        icon_image_update = ""
+        if 'icon_image' in request.files:
+            file = request.files['icon_image']
+            if file and file.filename and allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                filename = f"icon_{item_slug}_{timestamp}_{filename}"
+                
+                # Create icons directory if it doesn't exist
+                icons_folder = os.path.join('static', 'img', 'icons')
+                os.makedirs(icons_folder, exist_ok=True)
+                
+                filepath = os.path.join(icons_folder, filename)
+                file.save(filepath)
+                icon_image_update = f", icon_image = 'img/icons/{filename}'"
+        
+        # Update item
+        cur.execute(f"""
+            UPDATE default_items
+            SET item_name = %s, item_slug = %s, icon_emoji = %s,
+                default_price = %s, description = %s, display_order = %s,
+                is_active = %s, updated_at = CURRENT_TIMESTAMP
+                {icon_image_update}
+            WHERE id = %s
+        """, (item_name, item_slug, icon_emoji, default_price, description,
+              display_order, is_active, item_id))
+        
+        conn.commit()
+        flash(f'Item "{item_name}" updated successfully!', 'success')
+        
+    except Exception as e:
+        conn.rollback()
+        flash(f'Error updating item: {str(e)}', 'danger')
+    finally:
+        cur.close()
+        conn.close()
+    
+    return redirect(url_for('leads.manage_default_prices'))
+
+@leads_bp.route('/admin/default-items/delete', methods=['POST'])
+@admin_required
+def delete_default_item():
+    """Delete a default item"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    try:
+        item_id = int(request.form.get('item_id'))
+        
+        # Delete item
+        cur.execute("DELETE FROM default_items WHERE id = %s", (item_id,))
+        
+        conn.commit()
+        flash('Item deleted successfully!', 'success')
+        
+    except Exception as e:
+        conn.rollback()
+        flash(f'Error deleting item: {str(e)}', 'danger')
+    finally:
+        cur.close()
+        conn.close()
+    
+    return redirect(url_for('leads.manage_default_prices'))
     return render_template('admin_default_prices.html', items=items)
 
 def register_leads_routes(app, db_connection_func):

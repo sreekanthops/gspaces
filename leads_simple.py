@@ -359,7 +359,7 @@ def add_design(lead_id):
                         %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
                         %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
                         %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                        %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """, (
                 lead_id, design_name, design_image, next_order, json.dumps(media_files),
                 first_design.get('has_table', False), first_design.get('table_quantity', 1), first_design.get('table_price', 0), first_design.get('table_details', ''),

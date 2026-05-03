@@ -675,6 +675,17 @@ def view_quotation(share_token):
         else:
             design['media_files'] = []
         
+        # Combine design_image with media_files for carousel
+        all_media = []
+        if design.get('design_image'):
+            all_media.append({
+                'type': 'image',
+                'url': design['design_image'],
+                'is_main': True
+            })
+        all_media.extend(design['media_files'])
+        design['all_media'] = all_media
+        
         # Fallback: if no media_files but has design_image, create media_files array
         if not design['media_files'] and design.get('design_image'):
             design['media_files'] = [{

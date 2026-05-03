@@ -259,11 +259,11 @@
                     <div class="design-section h-100">
                         <h4 class="mb-3">{{ design.design_name }}</h4>
                         
-                        {% if design.media_files and design.media_files|length > 0 %}
+                        {% if design.all_media and design.all_media|length > 0 %}
                             <!-- Media Carousel -->
                             <div class="media-carousel" id="carousel{{ design.id }}">
                                 <div class="media-carousel-inner" id="carouselInner{{ design.id }}">
-                                    {% for media in design.media_files %}
+                                    {% for media in design.all_media %}
                                     <div class="media-slide">
                                         {% if media.type == 'image' %}
                                             <img src="{{ url_for('static', filename=media.url) }}"
@@ -279,7 +279,7 @@
                                     {% endfor %}
                                 </div>
                                 
-                                {% if design.media_files|length > 1 %}
+                                {% if design.all_media|length > 1 %}
                                 <!-- Navigation Arrows -->
                                 <button class="carousel-nav prev" onclick="moveSlide({{ design.id }}, -1)">
                                     <i class="bi bi-chevron-left"></i>
@@ -287,21 +287,8 @@
                                 <button class="carousel-nav next" onclick="moveSlide({{ design.id }}, 1)">
                                     <i class="bi bi-chevron-right"></i>
                                 </button>
-                                
-                                <!-- Indicators -->
-                                <div class="carousel-indicators" id="indicators{{ design.id }}">
-                                    {% for media in design.media_files %}
-                                    <div class="carousel-indicator {% if loop.first %}active{% endif %}"
-                                         onclick="goToSlide({{ design.id }}, {{ loop.index0 }})"></div>
-                                    {% endfor %}
-                                </div>
                                 {% endif %}
                             </div>
-                        {% elif design.design_image %}
-                            <!-- Fallback to single image -->
-                            <img src="{{ url_for('static', filename=design.design_image) }}"
-                                 alt="{{ design.design_name }}" class="design-image"
-                                 onclick="openImageModal(this.src)">
                         {% endif %}
 
                         <div class="items-list">
@@ -725,7 +712,7 @@
                 currentModalIndex = mediaIndex;
                 
                 // Show navigation buttons if there are multiple media files
-                const mediaFiles = {{ designs|tojson|safe }}.find(d => d.id === designId)?.media_files || [];
+                const mediaFiles = {{ designs|tojson|safe }}.find(d => d.id === designId)?.all_media || [];
                 if (mediaFiles.length > 1) {
                     document.getElementById('modalPrevBtn').style.display = 'block';
                     document.getElementById('modalNextBtn').style.display = 'block';
@@ -753,9 +740,9 @@
             
             const designs = {{ designs|tojson|safe }};
             const design = designs.find(d => d.id === currentModalDesignId);
-            if (!design || !design.media_files) return;
+            if (!design || !design.all_media) return;
             
-            const mediaFiles = design.media_files;
+            const mediaFiles = design.all_media;
             currentModalIndex += direction;
             
             // Loop around
@@ -874,8 +861,8 @@
         // Initialize all carousels on page load
         document.addEventListener('DOMContentLoaded', function() {
             {% for design in designs %}
-                {% if design.media_files and design.media_files|length > 1 %}
-                    initCarousel({{ design.id }}, {{ design.media_files|length }});
+                {% if design.all_media and design.all_media|length > 1 %}
+                    initCarousel({{ design.id }}, {{ design.all_media|length }});
                 {% endif %}
             {% endfor %}
         });
@@ -883,7 +870,7 @@
         // Pause auto-scroll when page is not visible
         document.addEventListener('visibilitychange', function() {
             {% for design in designs %}
-                {% if design.media_files and design.media_files|length > 1 %}
+                {% if design.all_media and design.all_media|length > 1 %}
                     if (document.hidden) {
                         stopAutoScroll({{ design.id }});
                     } else {

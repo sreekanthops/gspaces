@@ -297,12 +297,13 @@ def add_design(lead_id):
                     'order': 0
                 })
         
-        # Get first design to copy properties from (including all 17 quantity-based items)
+        # Get first design to copy properties from (including all 18 quantity-based items)
         cur.execute("""
             SELECT has_table, table_quantity, table_price, table_details,
                    has_chair, chair_quantity, chair_price, chair_details,
                    has_plants, plants_quantity, plants_price, plants_details,
                    has_lighting, lighting_quantity, lighting_price, lighting_details,
+                   has_profile_lighting, profile_lighting_quantity, profile_lighting_price, profile_lighting_details,
                    has_storage, storage_quantity, storage_price, storage_details,
                    has_accessories, accessories_quantity, accessories_price, accessories_details,
                    has_big_plants, big_plants_quantity, big_plants_price, big_plants_details,
@@ -338,6 +339,7 @@ def add_design(lead_id):
                     has_chair, chair_quantity, chair_price, chair_details,
                     has_plants, plants_quantity, plants_price, plants_details,
                     has_lighting, lighting_quantity, lighting_price, lighting_details,
+                    has_profile_lighting, profile_lighting_quantity, profile_lighting_price, profile_lighting_details,
                     has_storage, storage_quantity, storage_price, storage_details,
                     has_accessories, accessories_quantity, accessories_price, accessories_details,
                     has_big_plants, big_plants_quantity, big_plants_price, big_plants_details,
@@ -359,13 +361,14 @@ def add_design(lead_id):
                         %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
                         %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
                         %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """, (
                 lead_id, design_name, design_image, next_order, json.dumps(media_files),
                 first_design.get('has_table', False), first_design.get('table_quantity', 1), first_design.get('table_price', 0), first_design.get('table_details', ''),
                 first_design.get('has_chair', False), first_design.get('chair_quantity', 1), first_design.get('chair_price', 0), first_design.get('chair_details', ''),
                 first_design.get('has_plants', False), first_design.get('plants_quantity', 1), first_design.get('plants_price', 0), first_design.get('plants_details', ''),
                 first_design.get('has_lighting', False), first_design.get('lighting_quantity', 1), first_design.get('lighting_price', 0), first_design.get('lighting_details', ''),
+                first_design.get('has_profile_lighting', False), first_design.get('profile_lighting_quantity', 1), first_design.get('profile_lighting_price', 0), first_design.get('profile_lighting_details', ''),
                 first_design.get('has_storage', False), first_design.get('storage_quantity', 1), first_design.get('storage_price', 0), first_design.get('storage_details', ''),
                 first_design.get('has_accessories', False), first_design.get('accessories_quantity', 1), first_design.get('accessories_price', 0), first_design.get('accessories_details', ''),
                 first_design.get('has_big_plants', False), first_design.get('big_plants_quantity', 1), first_design.get('big_plants_price', 0), first_design.get('big_plants_details', ''),

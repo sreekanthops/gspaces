@@ -7,10 +7,19 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
     <style>
-        /* Hide hero section on admin pages */
+        /* Hide all hero/banner content that comes after navbar */
+        body > section:first-of-type,
+        body > div:first-of-type:not(.container):not(.container-fluid),
         .hero-section,
         .hero,
-        section.hero {
+        section.hero,
+        main > section:first-child {
+            display: none !important;
+        }
+        
+        /* Hide any large images in body */
+        body > img,
+        body > div > img[style*="max-width: 100%"] {
             display: none !important;
         }
         

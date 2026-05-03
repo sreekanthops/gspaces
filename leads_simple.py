@@ -776,7 +776,28 @@ def add_default_item():
                 os.makedirs(icons_folder, exist_ok=True)
                 
                 filepath = os.path.join(icons_folder, filename)
-                file.save(filepath)
+                
+                # Resize image to icon size (64x64) to reduce file size
+                try:
+                    from PIL import Image
+                    img = Image.open(file.stream)
+                    
+                    # Convert RGBA to RGB if needed
+                    if img.mode == 'RGBA':
+                        background = Image.new('RGB', img.size, (255, 255, 255))
+                        background.paste(img, mask=img.split()[3])
+                        img = background
+                    
+                    # Resize to 64x64 maintaining aspect ratio
+                    img.thumbnail((64, 64), Image.Resampling.LANCZOS)
+                    
+                    # Save with optimization
+                    img.save(filepath, optimize=True, quality=85)
+                except ImportError:
+                    # Fallback if PIL not available
+                    file.seek(0)
+                    file.save(filepath)
+                
                 icon_image = f"img/icons/{filename}"
         
         # Insert new item
@@ -831,7 +852,28 @@ def update_default_item():
                 os.makedirs(icons_folder, exist_ok=True)
                 
                 filepath = os.path.join(icons_folder, filename)
-                file.save(filepath)
+                
+                # Resize image to icon size (64x64) to reduce file size
+                try:
+                    from PIL import Image
+                    img = Image.open(file.stream)
+                    
+                    # Convert RGBA to RGB if needed
+                    if img.mode == 'RGBA':
+                        background = Image.new('RGB', img.size, (255, 255, 255))
+                        background.paste(img, mask=img.split()[3])
+                        img = background
+                    
+                    # Resize to 64x64 maintaining aspect ratio
+                    img.thumbnail((64, 64), Image.Resampling.LANCZOS)
+                    
+                    # Save with optimization
+                    img.save(filepath, optimize=True, quality=85)
+                except ImportError:
+                    # Fallback if PIL not available
+                    file.stream.seek(0)
+                    file.save(filepath)
+                
                 icon_image_update = f", icon_image = 'img/icons/{filename}'"
         
         # Update item

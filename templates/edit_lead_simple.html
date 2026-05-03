@@ -228,7 +228,7 @@
                         <label>
                             <input type="checkbox" name="has_table" {% if design.has_table %}checked{% endif %}
                                    onchange="toggleDetails(this, 'table_{{ design.id }}')">
-                            <strong>🪑 Desk Table</strong>
+                            <strong>Desk Table</strong>
                         </label>
                         <div id="table_{{ design.id }}" class="item-details" {% if design.has_table %}style="display:block"{% endif %}>
                             <div class="row mb-2">
@@ -287,39 +287,7 @@
                         </div>
                     </div>
 
-                    <!-- 3. Plants & Decor -->
-                    <div class="item-checkbox">
-                        <label>
-                            <input type="checkbox" name="has_plants" {% if design.has_plants %}checked{% endif %}
-                                   onchange="toggleDetails(this, 'plants_{{ design.id }}')">
-                            <strong>🪴 Plants & Decor</strong>
-                        </label>
-                        <div id="plants_{{ design.id }}" class="item-details" {% if design.has_plants %}style="display:block"{% endif %}>
-                            <div class="row mb-2">
-                                <div class="col-md-3">
-                                    <label class="form-label small">Quantity</label>
-                                    <input type="number" name="plants_quantity" class="form-control" min="1"
-                                           value="{{ design.plants_quantity or 1 }}"
-                                           onchange="calculateItemTotal('plants', {{ design.id }})">
-                                </div>
-                                <div class="col-md-3">
-                                    <label class="form-label small">Unit Price (₹)</label>
-                                    <input type="number" name="plants_price" class="form-control" step="0.01" min="0"
-                                           value="{{ design.plants_price or 0 }}"
-                                           onchange="calculateItemTotal('plants', {{ design.id }})">
-                                </div>
-                                <div class="col-md-3">
-                                    <label class="form-label small">Total (₹)</label>
-                                    <input type="number" id="plants_total_{{ design.id }}" class="form-control" readonly
-                                           style="background: #e9ecef; font-weight: bold;">
-                                </div>
-                            </div>
-                            <textarea name="plants_details" class="form-control" rows="2"
-                                      placeholder="e.g., Mixed indoor plants for decoration">{{ design.plants_details or '' }}</textarea>
-                        </div>
-                    </div>
-
-                    <!-- 4. Lighting -->
+                    <!-- 3. Lighting -->
                     <div class="item-checkbox">
                         <label>
                             <input type="checkbox" name="has_lighting" {% if design.has_lighting %}checked{% endif %}
@@ -514,12 +482,12 @@
                         </div>
                     </div>
 
-                    <!-- 📚 Wall Racks -->
+                    <!-- 🚪 Wall Racks -->
                     <div class="mb-3 p-3" style="background: #fff8e1; border-radius: 10px;">
                         <div class="form-check mb-2">
                             <input type="checkbox" class="form-check-input" name="has_wall_racks"
                                    {% if design.has_wall_racks %}checked{% endif %}>
-                            <label class="form-check-label fw-bold">📚 Wall Racks</label>
+                            <label class="form-check-label fw-bold">🚪 Wall Racks</label>
                         </div>
                         <div class="row g-2">
                             <div class="col-md-3">
@@ -547,12 +515,12 @@
                         </div>
                     </div>
 
-                    <!-- 🎯 Desk Mat -->
+                    <!-- 🧮 Desk Mat -->
                     <div class="mb-3 p-3" style="background: #fce4ec; border-radius: 10px;">
                         <div class="form-check mb-2">
                             <input type="checkbox" class="form-check-input" name="has_desk_mat"
                                    {% if design.has_desk_mat %}checked{% endif %}>
-                            <label class="form-check-label fw-bold">🎯 Desk Mat</label>
+                            <label class="form-check-label fw-bold">🧮 Desk Mat</label>
                         </div>
                         <div class="row g-2">
                             <div class="col-md-3">

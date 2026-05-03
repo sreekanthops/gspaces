@@ -292,7 +292,7 @@
                     <div class="item-checkbox">
                         <label>
                             <input type="checkbox" name="has_table" {% if design.has_table %}checked{% endif %}
-                                   onchange="toggleDetails(this, 'table_{{ design.id }}')">
+                                   onchange="toggleDetails(this, 'table_{{ design.id }}'); calculateTotal({{ design.id }})">
                             <strong>Desk Table</strong>
                         </label>
                         <div id="table_{{ design.id }}" class="item-details" {% if design.has_table %}style="display:block"{% endif %}>
@@ -324,7 +324,7 @@
                     <div class="item-checkbox">
                         <label>
                             <input type="checkbox" name="has_chair" {% if design.has_chair %}checked{% endif %}
-                                   onchange="toggleDetails(this, 'chair_{{ design.id }}')">
+                                   onchange="toggleDetails(this, 'chair_{{ design.id }}'); calculateTotal({{ design.id }})">
                             <strong>💺 Chair</strong>
                         </label>
                         <div id="chair_{{ design.id }}" class="item-details" {% if design.has_chair %}style="display:block"{% endif %}>
@@ -363,7 +363,7 @@
                     <div class="item-checkbox">
                         <label>
                             <input type="checkbox" name="has_lighting" {% if design.has_lighting %}checked{% endif %}
-                                   onchange="toggleDetails(this, 'lighting_{{ design.id }}')">
+                                   onchange="toggleDetails(this, 'lighting_{{ design.id }}'); calculateTotal({{ design.id }})">
                             <strong>💡 Rope Lighting</strong>
                         </label>
                         <div id="lighting_{{ design.id }}" class="item-details" {% if design.has_lighting %}style="display:block"{% endif %}>
@@ -395,7 +395,7 @@
                     <div class="item-checkbox">
                         <label>
                             <input type="checkbox" name="has_profile_lighting" {% if design.has_profile_lighting %}checked{% endif %}
-                                   onchange="toggleDetails(this, 'profile_lighting_{{ design.id }}')">
+                                   onchange="toggleDetails(this, 'profile_lighting_{{ design.id }}'); calculateTotal({{ design.id }})">
                             <strong>💡 Profile Lighting</strong>
                         </label>
                         <div id="profile_lighting_{{ design.id }}" class="item-details" {% if design.has_profile_lighting %}style="display:block"{% endif %}>
@@ -427,7 +427,7 @@
                     <div class="item-checkbox">
                         <label>
                             <input type="checkbox" name="has_storage" {% if design.has_storage %}checked{% endif %}
-                                   onchange="toggleDetails(this, 'storage_{{ design.id }}')">
+                                   onchange="toggleDetails(this, 'storage_{{ design.id }}'); calculateTotal({{ design.id }})">
                             <strong>📦 Storage</strong>
                         </label>
                         <div id="storage_{{ design.id }}" class="item-details" {% if design.has_storage %}style="display:block"{% endif %}>
@@ -459,7 +459,7 @@
                     <div class="item-checkbox">
                         <label>
                             <input type="checkbox" name="has_accessories" {% if design.has_accessories %}checked{% endif %}
-                                   onchange="toggleDetails(this, 'accessories_{{ design.id }}')">
+                                   onchange="toggleDetails(this, 'accessories_{{ design.id }}'); calculateTotal({{ design.id }})">
                             <strong>✨ Accessories</strong>
                         </label>
                         <div id="accessories_{{ design.id }}" class="item-details" {% if design.has_accessories %}style="display:block"{% endif %}>
@@ -491,7 +491,8 @@
                     <div class="mb-3 p-3" style="background: #f0fff4; border-radius: 10px;">
                         <div class="form-check mb-2">
                             <input type="checkbox" class="form-check-input" name="has_big_plants"
-                                   {% if design.has_big_plants %}checked{% endif %}>
+                                   {% if design.has_big_plants %}checked{% endif %}
+                                   onchange="calculateTotal({{ design.id }})">
                             <label class="form-check-label fw-bold">🌳 Big Plants</label>
                         </div>
                         <div class="row g-2">
@@ -524,7 +525,8 @@
                     <div class="mb-3 p-3" style="background: #f0fff4; border-radius: 10px;">
                         <div class="form-check mb-2">
                             <input type="checkbox" class="form-check-input" name="has_mini_plants"
-                                   {% if design.has_mini_plants %}checked{% endif %}>
+                                   {% if design.has_mini_plants %}checked{% endif %}
+                                   onchange="calculateTotal({{ design.id }})">
                             <label class="form-check-label fw-bold">🌱 Mini Plants</label>
                         </div>
                         <div class="row g-2">
@@ -557,7 +559,8 @@
                     <div class="mb-3 p-3" style="background: #fff8e1; border-radius: 10px;">
                         <div class="form-check mb-2">
                             <input type="checkbox" class="form-check-input" name="has_frames"
-                                   {% if design.has_frames %}checked{% endif %}>
+                                   {% if design.has_frames %}checked{% endif %}
+                                   onchange="calculateTotal({{ design.id }})">
                             <label class="form-check-label fw-bold">🖼️ Frames</label>
                         </div>
                         <div class="row g-2">
@@ -590,7 +593,8 @@
                     <div class="mb-3 p-3" style="background: #fff8e1; border-radius: 10px;">
                         <div class="form-check mb-2">
                             <input type="checkbox" class="form-check-input" name="has_wall_racks"
-                                   {% if design.has_wall_racks %}checked{% endif %}>
+                                   {% if design.has_wall_racks %}checked{% endif %}
+                                   onchange="calculateTotal({{ design.id }})">
                             <label class="form-check-label fw-bold">🚪 Wall Racks</label>
                         </div>
                         <div class="row g-2">
@@ -623,7 +627,8 @@
                     <div class="mb-3 p-3" style="background: #fce4ec; border-radius: 10px;">
                         <div class="form-check mb-2">
                             <input type="checkbox" class="form-check-input" name="has_desk_mat"
-                                   {% if design.has_desk_mat %}checked{% endif %}>
+                                   {% if design.has_desk_mat %}checked{% endif %}
+                                   onchange="calculateTotal({{ design.id }})">
                             <label class="form-check-label fw-bold">🧮 Desk Mat</label>
                         </div>
                         <div class="row g-2">
@@ -755,7 +760,8 @@
                     <div class="mb-3 p-3" style="background: #fce4ec; border-radius: 10px;">
                         <div class="form-check mb-2">
                             <input type="checkbox" class="form-check-input" name="has_dustbin"
-                                   {% if design.has_dustbin %}checked{% endif %}>
+                                   {% if design.has_dustbin %}checked{% endif %}
+                                   onchange="calculateTotal({{ design.id }})">
                             <label class="form-check-label fw-bold">🗑️ Dustbin</label>
                         </div>
                         <div class="row g-2">
@@ -788,7 +794,8 @@
                     <div class="mb-3 p-3" style="background: #fce4ec; border-radius: 10px;">
                         <div class="form-check mb-2">
                             <input type="checkbox" class="form-check-input" name="has_floor_mat"
-                                   {% if design.has_floor_mat %}checked{% endif %}>
+                                   {% if design.has_floor_mat %}checked{% endif %}
+                                   onchange="calculateTotal({{ design.id }})">
                             <label class="form-check-label fw-bold">🟫 Floor Mat</label>
                         </div>
                         <div class="row g-2">
@@ -821,7 +828,8 @@
                     <div class="mb-3 p-3" style="background: #e3f2fd; border-radius: 10px;">
                         <div class="form-check mb-2">
                             <input type="checkbox" class="form-check-input" name="has_keyboard"
-                                   {% if design.has_keyboard %}checked{% endif %}>
+                                   {% if design.has_keyboard %}checked{% endif %}
+                                   onchange="calculateTotal({{ design.id }})">
                             <label class="form-check-label fw-bold">⌨️ Keyboard</label>
                         </div>
                         <div class="row g-2">
@@ -854,7 +862,8 @@
                     <div class="mb-3 p-3" style="background: #e3f2fd; border-radius: 10px;">
                         <div class="form-check mb-2">
                             <input type="checkbox" class="form-check-input" name="has_mouse"
-                                   {% if design.has_mouse %}checked{% endif %}>
+                                   {% if design.has_mouse %}checked{% endif %}
+                                   onchange="calculateTotal({{ design.id }})">
                             <label class="form-check-label fw-bold">🖱️ Mouse</label>
                         </div>
                         <div class="row g-2">
@@ -887,7 +896,8 @@
                     <div class="mb-3 p-3" style="background: #f3e5f5; border-radius: 10px;">
                         <div class="form-check mb-2">
                             <input type="checkbox" class="form-check-input" name="has_paint"
-                                   {% if design.has_paint %}checked{% endif %}>
+                                   {% if design.has_paint %}checked{% endif %}
+                                   onchange="calculateTotal({{ design.id }})">
                             <label class="form-check-label fw-bold">🎨 Paint</label>
                         </div>
                         <div class="row g-2">
@@ -920,7 +930,8 @@
                     <div class="mb-3 p-3" style="background: #f3e5f5; border-radius: 10px;">
                         <div class="form-check mb-2">
                             <input type="checkbox" class="form-check-input" name="has_wardrobes"
-                                   {% if design.has_wardrobes %}checked{% endif %}>
+                                   {% if design.has_wardrobes %}checked{% endif %}
+                                   onchange="calculateTotal({{ design.id }})">
                             <label class="form-check-label fw-bold">🚪 Wardrobes</label>
                         </div>
                         <div class="row g-2">

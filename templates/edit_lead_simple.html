@@ -220,34 +220,6 @@
                 <div id="collapse{{ design.id }}" class="accordion-collapse collapse {% if loop.first %}show{% endif %}"
                      aria-labelledby="heading{{ design.id }}" data-bs-parent="#designsAccordion">
                     <div class="accordion-body">
-                        <form method="POST" action="{{ url_for('leads.update_design', design_id=design.id) }}">
-                            
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <div class="flex-grow-1 me-3">
-                                    <label class="form-label small">Design Name</label>
-                                    <input type="text" name="design_name" class="form-control"
-                                           value="{{ design.design_name }}">
-                                </div>
-                                <div class="btn-group">
-                                    {% if not loop.first %}
-                                    <button type="button" class="btn btn-info btn-sm"
-                                            onclick="copyFromFirstDesign({{ design.id }})"
-                                            title="Copy items from Design 1">
-                                        <i class="bi bi-files"></i> Copy from Design 1
-                                    </button>
-                                    {% endif %}
-                                    <button type="button" class="btn btn-danger btn-sm"
-                                            onclick="if(confirm('Delete this design?')) { document.getElementById('deleteForm{{ design.id }}').submit(); }">
-                                        <i class="bi bi-trash"></i> Delete
-                                    </button>
-                                </div>
-                            </div>
-
-                            {% if design.design_image %}
-                                <img src="{{ url_for('static', filename=design.design_image) }}"
-                                     alt="Design" class="design-image">
-                            {% endif %}
-                        </form>
 
                 <!-- Media Gallery Section (Separate Form) -->
                     <div class="mb-4 p-3" style="background: #f8f9fa; border-radius: 10px;">
@@ -308,8 +280,35 @@
                         </form>
                     </div>
 
-                    <!-- Reopen Design Update Form -->
+                    <!-- Design Update Form -->
                     <form method="POST" action="{{ url_for('leads.update_design', design_id=design.id) }}" id="updateForm{{ design.id }}">
+                        
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div class="flex-grow-1 me-3">
+                                <label class="form-label small">Design Name</label>
+                                <input type="text" name="design_name" class="form-control"
+                                       value="{{ design.design_name }}">
+                            </div>
+                            <div class="btn-group">
+                                {% if not loop.first %}
+                                <button type="button" class="btn btn-info btn-sm"
+                                        onclick="copyFromFirstDesign({{ design.id }})"
+                                        title="Copy items from Design 1">
+                                    <i class="bi bi-files"></i> Copy from Design 1
+                                </button>
+                                {% endif %}
+                                <button type="button" class="btn btn-danger btn-sm"
+                                        onclick="if(confirm('Delete this design?')) { document.getElementById('deleteForm{{ design.id }}').submit(); }">
+                                    <i class="bi bi-trash"></i> Delete
+                                </button>
+                            </div>
+                        </div>
+
+                        {% if design.design_image %}
+                            <img src="{{ url_for('static', filename=design.design_image) }}"
+                                 alt="Design" class="design-image">
+                        {% endif %}
+                        
                         <h6 class="mt-4 mb-3">Select Items Included: <small class="text-muted">(Enter quantity and unit price for each item)</small></h6>
                     
                     <!-- 1. Desk Table -->

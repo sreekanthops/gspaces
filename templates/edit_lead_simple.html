@@ -223,12 +223,12 @@
 
                     <h6 class="mt-4 mb-3">Select Items Included: <small class="text-muted">(Enter quantity and unit price for each item)</small></h6>
                     
-                    <!-- 1. Desk -->
+                    <!-- 1. Desk Table -->
                     <div class="item-checkbox">
                         <label>
                             <input type="checkbox" name="has_table" {% if design.has_table %}checked{% endif %}
                                    onchange="toggleDetails(this, 'table_{{ design.id }}')">
-                            <strong>🪑 Desk</strong>
+                            <strong>🪑 Desk Table</strong>
                         </label>
                         <div id="table_{{ design.id }}" class="item-details" {% if design.has_table %}style="display:block"{% endif %}>
                             <div class="row mb-2">

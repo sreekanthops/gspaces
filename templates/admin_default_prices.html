@@ -4,33 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Default Prices - GSpaces Admin</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='img/favicon.svg') }}" rel="icon">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/main.css') }}" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
     <style>
-        /* Hide hero sections that appear after navbar */
-        body > section.hero-section,
-        body > section:has(img[style*="max-width: 100%"]),
-        section.hero,
-        .hero-section,
-        #hero,
-        body > div:has(> img[style*="max-width: 100%"]) {
-            display: none !important;
-        }
-        
-        /* Hide promotional banner above navbar */
-        body > div:first-child:not(.container):not(.container-fluid):not(nav) {
-            display: none !important;
-        }
-        
         body {
-            background: #f8f9fa;
-            margin: 0;
-            padding: 0;
-        }
-        
-        /* Adjust navbar to be at top */
-        .custom-navbar {
-            margin-top: 0 !important;
+            background: #f7f8fc;
         }
         .header-section {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -68,15 +48,18 @@
     </style>
 </head>
 <body>
-    {% set active_page = 'default_prices' %}
     {% include 'navbar.html' %}
     
-    <div class="container-fluid" style="padding-top: 20px;">
-        <div class="row">
+    <div class="container-fluid" style="margin-top: 76px;">
+        <div class="row g-0">
+            <!-- Sidebar -->
             <div class="col-md-2">
+                {% set active_page = 'default_prices' %}
                 {% include 'admin_sidebar.html' %}
             </div>
-            <div class="col-md-10">
+            
+            <!-- Main Content -->
+            <div class="col-md-10" style="background: #f8f9fa; min-height: calc(100vh - 76px); padding: 24px; border-radius: 16px;">
                 <div class="header-section">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>

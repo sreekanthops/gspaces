@@ -4503,7 +4503,8 @@ def products():
     cursor.close()
     conn.close()
     
-    is_admin = session.get('is_admin', False)
+    # Check if current user is admin
+    is_admin = current_user.is_authenticated and getattr(current_user, 'is_admin', False)
     
     return render_template('products_new.html',
                          products=products,

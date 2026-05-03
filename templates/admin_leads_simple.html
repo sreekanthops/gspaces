@@ -64,33 +64,34 @@
 </head>
 <body>
     {% include 'navbar.html' %}
-    {% include 'admin_nav.html' %}
     
-    <div class="admin-header" style="margin-top: 0;">
-        <div class="container">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h1><i class="bi bi-briefcase"></i> Leads Management</h1>
-                    <p class="mb-0">Create and manage customer quotations</p>
-                </div>
-                <div>
-                    <a href="{{ url_for('admin_orders') }}" class="btn btn-light me-2">
-                        <i class="bi bi-arrow-left"></i> Back to Admin
-                    </a>
-                    <a href="{{ url_for('leads.create_lead') }}" class="btn btn-create">
-                        <i class="bi bi-plus-circle"></i> New Lead
-                    </a>
-                </div>
+    <div class="container-fluid" style="margin-top: 76px;">
+        <div class="row g-0">
+            <!-- Sidebar -->
+            <div class="col-md-2">
+                {% set active_page = 'leads' %}
+                {% include 'admin_sidebar.html' %}
             </div>
-        </div>
-    </div>
 
-    <div class="container">
-        <!-- Admin Navigation -->
-        {% set active_page = 'leads' %}
-        {% include 'admin_nav.html' %}
+            <!-- Main Content -->
+            <div class="col-md-10 p-4" style="background: #f8f9fa; min-height: calc(100vh - 76px);">
+                <div class="admin-header" style="margin: -16px -16px 24px -16px; border-radius: 0;">
+                    <div class="container-fluid">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h1><i class="bi bi-briefcase"></i> Leads Management</h1>
+                                <p class="mb-0">Create and manage customer quotations</p>
+                            </div>
+                            <div>
+                                <a href="{{ url_for('leads.create_lead') }}" class="btn btn-create">
+                                    <i class="bi bi-plus-circle"></i> New Lead
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
         
-        <!-- Stats -->
+                <!-- Stats -->
         <div class="row mb-4">
             <div class="col-md-4">
                 <div class="stats-card">
@@ -177,6 +178,8 @@
                 </a>
             </div>
         {% endif %}
+            </div>
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

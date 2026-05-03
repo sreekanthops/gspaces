@@ -249,25 +249,30 @@
 <body>
     {% include 'navbar.html' %}
 
-    <div class="container admin-container">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                <div class="mb-4">
-                    {% for category, message in messages %}
-                        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                            {{ message }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    <div class="container-fluid" style="margin-top: 76px;">
+        <div class="row g-0">
+            <!-- Sidebar -->
+            <div class="col-md-2">
+                {% set active_page = 'referral' %}
+                {% include 'admin_sidebar.html' %}
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-10 p-4" style="background: #f8f9fa; min-height: calc(100vh - 76px);">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        <div class="mb-4">
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}
                         </div>
-                    {% endfor %}
-                </div>
-            {% endif %}
-        {% endwith %}
+                    {% endif %}
+                {% endwith %}
 
-        <!-- Admin Navigation -->
-        {% set active_page = 'referral' %}
-        {% include 'admin_nav.html' %}
-
-        <div class="page-header">
+                <div class="page-header" style="margin: -16px -16px 24px -16px; border-radius: 0;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div>
                     <h1>🎯 Referral Coupon Management</h1>
@@ -750,5 +755,8 @@
     }
 
     </script>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

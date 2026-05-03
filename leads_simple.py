@@ -861,7 +861,7 @@ def delete_default_item():
     
     return redirect(url_for('leads.manage_default_prices'))
 
-@leads_bp.route('/admin/design/<int:design_id>/upload-media', methods=['POST'])
+@leads_bp.route('/admin/leads/design/<int:design_id>/upload_media', methods=['POST'])
 @admin_required
 def upload_design_media(design_id):
     """Upload media files to design gallery"""
@@ -962,7 +962,7 @@ def upload_design_media(design_id):
     
     return redirect(url_for('leads.edit_lead', lead_id=lead_id))
 
-@leads_bp.route('/admin/design/<int:design_id>/delete-media/<int:media_index>', methods=['POST'])
+@leads_bp.route('/admin/leads/design/<int:design_id>/delete_media/<int:media_index>', methods=['POST'])
 @admin_required
 def delete_design_media(design_id, media_index):
     """Delete a media file from design gallery"""

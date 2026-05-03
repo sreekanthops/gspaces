@@ -264,7 +264,14 @@
                         </label>
                         <div id="chair_{{ design.id }}" class="item-details" {% if design.has_chair %}style="display:block"{% endif %}>
                             <div class="row mb-2">
-                                <div class="col-md-3">
+                                <div class="col-md-2">
+                                    <label class="form-label small">Headrest</label>
+                                    <select name="chair_headrest" class="form-control">
+                                        <option value="with_headrest" {% if design.chair_headrest == 'with_headrest' or not design.chair_headrest %}selected{% endif %}>With Headrest</option>
+                                        <option value="without_headrest" {% if design.chair_headrest == 'without_headrest' %}selected{% endif %}>Without Headrest</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
                                     <label class="form-label small">Quantity</label>
                                     <input type="number" name="chair_quantity" class="form-control" min="1"
                                            value="{{ design.chair_quantity or 1 }}"
@@ -273,7 +280,7 @@
                                 <div class="col-md-3">
                                     <label class="form-label small">Unit Price (₹)</label>
                                     <input type="number" name="chair_price" class="form-control" step="0.01" min="0"
-                                           value="{{ design.chair_price or 0 }}"
+                                           value="{{ design.chair_price or 12000 }}"
                                            onchange="calculateItemTotal('chair', {{ design.id }})">
                                 </div>
                                 <div class="col-md-3">
@@ -547,6 +554,105 @@
                                       placeholder="e.g., Large gaming mat, leather desk pad">{{ design.desk_mat_details or '' }}</textarea>
                         </div>
                     </div>
+                    <!-- 💡 Desk Lamp -->
+                    <div class="mb-3 p-3" style="background: #fff9c4; border-radius: 10px;">
+                        <div class="form-check mb-2">
+                            <input type="checkbox" class="form-check-input" name="has_desk_lamp"
+                                   {% if design.has_desk_lamp %}checked{% endif %}>
+                            <label class="form-check-label fw-bold">💡 Desk Lamp</label>
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-md-3">
+                                <label class="form-label small">Quantity</label>
+                                <input type="number" name="desk_lamp_quantity" class="form-control"
+                                       value="{{ design.desk_lamp_quantity or 1 }}" min="1"
+                                       onchange="calculateItemTotal('desk_lamp', {{ design.id }})">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small">Unit Price (₹)</label>
+                                <input type="number" name="desk_lamp_price" class="form-control"
+                                       value="{{ design.desk_lamp_price or 2500 }}" min="0"
+                                       onchange="calculateItemTotal('desk_lamp', {{ design.id }})">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small">Total (₹)</label>
+                                <input type="text" id="desk_lamp_total_{{ design.id }}" class="form-control" readonly
+                                       style="background: #fff59d; font-weight: bold;">
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <label class="form-label small">Details</label>
+                            <textarea name="desk_lamp_details" class="form-control" rows="2"
+                                      placeholder="e.g., LED desk lamp with adjustable brightness">{{ design.desk_lamp_details or '' }}</textarea>
+                        </div>
+                    </div>
+
+                    <!-- ✏️ Pen Holder -->
+                    <div class="mb-3 p-3" style="background: #e1f5fe; border-radius: 10px;">
+                        <div class="form-check mb-2">
+                            <input type="checkbox" class="form-check-input" name="has_pen_holder"
+                                   {% if design.has_pen_holder %}checked{% endif %}>
+                            <label class="form-check-label fw-bold">✏️ Pen Holder</label>
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-md-3">
+                                <label class="form-label small">Quantity</label>
+                                <input type="number" name="pen_holder_quantity" class="form-control"
+                                       value="{{ design.pen_holder_quantity or 1 }}" min="1"
+                                       onchange="calculateItemTotal('pen_holder', {{ design.id }})">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small">Unit Price (₹)</label>
+                                <input type="number" name="pen_holder_price" class="form-control"
+                                       value="{{ design.pen_holder_price or 500 }}" min="0"
+                                       onchange="calculateItemTotal('pen_holder', {{ design.id }})">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small">Total (₹)</label>
+                                <input type="text" id="pen_holder_total_{{ design.id }}" class="form-control" readonly
+                                       style="background: #b3e5fc; font-weight: bold;">
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <label class="form-label small">Details</label>
+                            <textarea name="pen_holder_details" class="form-control" rows="2"
+                                      placeholder="e.g., Wooden pen holder, metal mesh organizer">{{ design.pen_holder_details or '' }}</textarea>
+                        </div>
+                    </div>
+
+                    <!-- 💻 Laptop Holder -->
+                    <div class="mb-3 p-3" style="background: #f3e5f5; border-radius: 10px;">
+                        <div class="form-check mb-2">
+                            <input type="checkbox" class="form-check-input" name="has_laptop_holder"
+                                   {% if design.has_laptop_holder %}checked{% endif %}>
+                            <label class="form-check-label fw-bold">💻 Laptop Holder</label>
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-md-3">
+                                <label class="form-label small">Quantity</label>
+                                <input type="number" name="laptop_holder_quantity" class="form-control"
+                                       value="{{ design.laptop_holder_quantity or 1 }}" min="1"
+                                       onchange="calculateItemTotal('laptop_holder', {{ design.id }})">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small">Unit Price (₹)</label>
+                                <input type="number" name="laptop_holder_price" class="form-control"
+                                       value="{{ design.laptop_holder_price or 1800 }}" min="0"
+                                       onchange="calculateItemTotal('laptop_holder', {{ design.id }})">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small">Total (₹)</label>
+                                <input type="text" id="laptop_holder_total_{{ design.id }}" class="form-control" readonly
+                                       style="background: #e1bee7; font-weight: bold;">
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <label class="form-label small">Details</label>
+                            <textarea name="laptop_holder_details" class="form-control" rows="2"
+                                      placeholder="e.g., Vertical laptop stand, adjustable holder">{{ design.laptop_holder_details or '' }}</textarea>
+                        </div>
+                    </div>
+
 
                     <!-- 🗑️ Dustbin -->
                     <div class="mb-3 p-3" style="background: #fce4ec; border-radius: 10px;">

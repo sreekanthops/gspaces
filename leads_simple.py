@@ -709,11 +709,22 @@ def view_quotation(share_token):
     # Calculate total
     total = sum(d['price'] or 0 for d in designs)
     
+    # Fetch default items with icons for dynamic display
+    cur.execute("""
+        SELECT id, item_name, item_slug, icon_emoji, icon_image, default_price, description,
+               display_order, is_active
+        FROM default_items
+        WHERE is_active = TRUE
+        ORDER BY display_order, item_name
+    """)
+    default_items_list = cur.fetchall()
+    default_items = [dict(row) for row in default_items_list]
+    
     cur.close()
     conn.close()
     
     return render_template('quotation_view_simple.html',
-                         lead=lead, designs=designs, total=total)
+                         lead=lead, designs=designs, total=total, default_items=default_items)
 
 @leads_bp.route('/admin/default-prices', methods=['GET', 'POST'])
 @admin_required

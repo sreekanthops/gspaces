@@ -120,7 +120,7 @@
 <body>
     {% include 'navbar.html' %}
 
-    <div class="container-fluid" style="margin-top: 76px; padding: 16px;">
+    <div class="container-fluid" style="margin-top: 76px; padding: 0;">
         <div class="row g-0">
             <!-- Sidebar -->
             <div class="col-md-2" style="padding: 0;">
@@ -129,7 +129,7 @@
             </div>
 
             <!-- Main Content -->
-            <div class="col-md-10" style="background: #f8f9fa; min-height: calc(100vh - 108px); padding: 24px; border-radius: 16px;">
+            <div class="col-md-10" style="background: #f8f9fa; min-height: calc(100vh - 76px); padding: 24px; border-radius: 0 16px 16px 16px; margin-left: 16px;">
                 {% with messages = get_flashed_messages(with_categories=true) %}
                     {% if messages %}
                         <div class="mb-4">

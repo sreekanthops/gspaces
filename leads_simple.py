@@ -589,6 +589,32 @@ def delete_design(design_id):
     
     return redirect(url_for('leads.edit_lead', lead_id=lead_id))
 
+@leads_bp.route('/admin/leads/<int:lead_id>/delete', methods=['POST'])
+@admin_required
+def delete_lead(lead_id):
+    """Delete entire lead and all its designs"""
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    
+    try:
+        # Delete all designs first (foreign key constraint)
+        cur.execute("DELETE FROM lead_designs WHERE lead_id = %s", (lead_id,))
+        
+        # Delete the lead
+        cur.execute("DELETE FROM leads WHERE id = %s", (lead_id,))
+        
+        conn.commit()
+        flash('Lead and all its designs deleted successfully!', 'success')
+        
+    except Exception as e:
+        conn.rollback()
+        flash(f'Error deleting lead: {str(e)}', 'danger')
+    finally:
+        cur.close()
+        conn.close()
+    
+    return redirect(url_for('leads.admin_leads'))
+
 @leads_bp.route('/quotation/<share_token>')
 def view_quotation(share_token):
     """Public quotation view"""

@@ -65,13 +65,28 @@ ADD COLUMN IF NOT EXISTS laptop_stand_details TEXT,
 ADD COLUMN IF NOT EXISTS has_headphone_stand BOOLEAN DEFAULT FALSE,
 ADD COLUMN IF NOT EXISTS headphone_stand_quantity INTEGER DEFAULT 0,
 ADD COLUMN IF NOT EXISTS headphone_stand_price DECIMAL(10,2) DEFAULT 0,
-ADD COLUMN IF NOT EXISTS headphone_stand_details TEXT;
+ADD COLUMN IF NOT EXISTS headphone_stand_details TEXT,
+
+ADD COLUMN IF NOT EXISTS has_whiteboard BOOLEAN DEFAULT FALSE,
+ADD COLUMN IF NOT EXISTS whiteboard_quantity INTEGER DEFAULT 0,
+ADD COLUMN IF NOT EXISTS whiteboard_price DECIMAL(10,2) DEFAULT 0,
+ADD COLUMN IF NOT EXISTS whiteboard_details TEXT,
+
+ADD COLUMN IF NOT EXISTS has_bookshelf BOOLEAN DEFAULT FALSE,
+ADD COLUMN IF NOT EXISTS bookshelf_quantity INTEGER DEFAULT 0,
+ADD COLUMN IF NOT EXISTS bookshelf_price DECIMAL(10,2) DEFAULT 0,
+ADD COLUMN IF NOT EXISTS bookshelf_details TEXT,
+
+ADD COLUMN IF NOT EXISTS has_trash_bin BOOLEAN DEFAULT FALSE,
+ADD COLUMN IF NOT EXISTS trash_bin_quantity INTEGER DEFAULT 0,
+ADD COLUMN IF NOT EXISTS trash_bin_price DECIMAL(10,2) DEFAULT 0,
+ADD COLUMN IF NOT EXISTS trash_bin_details TEXT;
 
 -- Verify the columns were added
-SELECT column_name, data_type 
-FROM information_schema.columns 
-WHERE table_name = 'lead_designs' 
-AND column_name LIKE '%carpet%' 
+SELECT column_name, data_type
+FROM information_schema.columns
+WHERE table_name = 'lead_designs'
+AND (column_name LIKE '%carpet%'
    OR column_name LIKE '%curtains%'
    OR column_name LIKE '%wall_art%'
    OR column_name LIKE '%desk_organizer%'
@@ -84,6 +99,9 @@ AND column_name LIKE '%carpet%'
    OR column_name LIKE '%monitor%'
    OR column_name LIKE '%laptop_stand%'
    OR column_name LIKE '%headphone_stand%'
+   OR column_name LIKE '%whiteboard%'
+   OR column_name LIKE '%bookshelf%'
+   OR column_name LIKE '%trash_bin%')
 ORDER BY column_name;
 
 -- Made with Bob

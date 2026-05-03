@@ -226,10 +226,13 @@
 
                     <!-- Media Gallery Section -->
                     <div class="mb-4 p-3" style="background: #f8f9fa; border-radius: 10px;">
-                        <h6 class="mb-3"><i class="bi bi-images"></i> Media Gallery</h6>
+                        <h6 class="mb-3">
+                            <i class="bi bi-images"></i> Media Gallery
+                            <span class="badge bg-secondary">{{ design.media_files|length if design.media_files else 0 }} files</span>
+                        </h6>
                         
                         <!-- Current Media Files -->
-                        {% if design.media_files %}
+                        {% if design.media_files and design.media_files|length > 0 %}
                         <div class="row mb-3">
                             {% for media in design.media_files %}
                             <div class="col-md-4 mb-3">

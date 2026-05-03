@@ -685,7 +685,7 @@ def view_quotation(share_token):
 @leads_bp.route('/admin/default-prices', methods=['GET', 'POST'])
 @admin_required
 def manage_default_prices():
-    """Manage default prices for all items"""
+    """Manage default prices and items - Main page"""
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
     
@@ -694,14 +694,14 @@ def manage_default_prices():
             # Update all default prices
             for key, value in request.form.items():
                 if key.startswith('price_'):
-                    item_name = key.replace('price_', '')
+                    item_slug = key.replace('price_', '')
                     price = float(value)
                     
                     cur.execute("""
-                        UPDATE item_default_prices
+                        UPDATE default_items
                         SET default_price = %s, updated_at = CURRENT_TIMESTAMP
-                        WHERE item_name = %s
-                    """, (price, item_name))
+                        WHERE item_slug = %s
+                    """, (price, item_slug))
             
             conn.commit()
             flash('Default prices updated successfully!', 'success')
@@ -711,42 +711,19 @@ def manage_default_prices():
             conn.rollback()
             flash(f'Error updating prices: {str(e)}', 'danger')
     
-    # Fetch all items with their default prices
+    # Fetch all items from default_items table
     cur.execute("""
-        SELECT item_name, default_price, description
-        FROM item_default_prices
-        ORDER BY item_name
+        SELECT id, item_name, item_slug, icon_emoji, icon_image,
+               default_price, description, display_order, is_active
+        FROM default_items
+        ORDER BY display_order, item_name
     """)
-    items_raw = cur.fetchall()
-    
-    # Add display names and icons for better UI
-    item_icons = {
-        'table': '🪑', 'chair': '💺', 'lighting': '💡', 'storage': '📦',
-        'accessories': '✨', 'big_plants': '🌳', 'mini_plants': '🌱',
-        'frames': '🖼️', 'wall_racks': '📚', 'desk_mat': '🖱️',
-        'dustbin': '🗑️', 'floor_mat': '🧹', 'keyboard': '⌨️',
-        'mouse': '🖱️', 'paint': '🎨', 'wardrobes': '👔',
-        'carpet': '🧶', 'curtains': '🪟', 'wall_art': '🖼️',
-        'desk_organizer': '📋', 'monitor_stand': '🖥️', 'cable_management': '🔌',
-        'footrest': '🦶', 'monitor': '🖥️', 'laptop_stand': '💻',
-        'headphone_stand': '🎧', 'whiteboard': '📝', 'bookshelf': '📚',
-        'trash_bin': '🗑️', 'desk_lamp': '💡', 'pen_holder': '✏️',
-        'laptop_holder': '💻'
-    }
-    
-    items = []
-    for item in items_raw:
-        items.append({
-            'item_name': item['item_name'],
-            'default_price': item['default_price'],
-            'description': item['description'],
-            'display_name': item['item_name'].replace('_', ' ').title(),
-            'icon': item_icons.get(item['item_name'], '📦')
-        })
+    items = cur.fetchall()
     
     cur.close()
     conn.close()
     
+    return render_template('admin_default_prices.html', items=items)
 
 @leads_bp.route('/admin/default-items/add', methods=['POST'])
 @admin_required

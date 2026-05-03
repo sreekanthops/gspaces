@@ -183,7 +183,7 @@ def edit_lead():
                     reference_image_update = f", reference_image = 'img/leads/reference/{filename}'"
             
             cur.execute(f"""
-                UPDATE leads 
+                UPDATE leads
                 SET customer_name = %s, customer_email = %s, customer_phone = %s,
                     project_name = %s, notes = %s, status = %s,
                     discount_type = %s, discount_value = %s
@@ -222,7 +222,7 @@ def edit_lead():
     for design in designs:
         if design['id']:
             cur.execute("""
-                SELECT * FROM design_custom_fields 
+                SELECT * FROM design_custom_fields
                 WHERE design_id = %s
             """, (design['id'],))
             design_custom_fields[design['id']] = cur.fetchall()
@@ -231,14 +231,20 @@ def edit_lead():
     cur.execute("SELECT * FROM pricing_rules ORDER BY item_category, item_type")
     pricing_rules = cur.fetchall()
     
+    # Fetch default prices from database
+    cur.execute("SELECT item_name, default_price, description FROM item_default_prices ORDER BY item_name")
+    default_prices_list = cur.fetchall()
+    default_prices = {row['item_name']: row['default_price'] for row in default_prices_list}
+    
     cur.close()
     conn.close()
     
-    return render_template('edit_lead.html',
+    return render_template('edit_lead_simple.html',
                          lead=lead,
                          designs=designs,
                          design_custom_fields=design_custom_fields,
-                         pricing_rules=pricing_rules)
+                         pricing_rules=pricing_rules,
+                         default_prices=default_prices)
 
 @leads_bp.route('/admin/leads/<int:lead_id>/design/add', methods=['POST'])
 @admin_required
@@ -293,6 +299,73 @@ def add_design():
         conn.close()
     
     return redirect(url_for('leads.edit_lead', lead_id=lead_id))
+
+@leads_bp.route('/admin/default-prices', methods=['GET', 'POST'])
+@admin_required
+def manage_default_prices():
+    """Manage default prices for all items"""
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    
+    if request.method == 'POST':
+        try:
+            # Update all default prices
+            for key, value in request.form.items():
+                if key.startswith('price_'):
+                    item_name = key.replace('price_', '')
+                    price = float(value)
+                    
+                    cur.execute("""
+                        UPDATE item_default_prices
+                        SET default_price = %s, updated_at = CURRENT_TIMESTAMP
+                        WHERE item_name = %s
+                    """, (price, item_name))
+            
+            conn.commit()
+            flash('Default prices updated successfully!', 'success')
+            return redirect(url_for('leads.manage_default_prices'))
+            
+        except Exception as e:
+            conn.rollback()
+            flash(f'Error updating prices: {str(e)}', 'danger')
+    
+    # Fetch all items with their default prices
+    cur.execute("""
+        SELECT item_name, default_price, description
+        FROM item_default_prices
+        ORDER BY item_name
+    """)
+    items_raw = cur.fetchall()
+    
+    # Add display names and icons for better UI
+    item_icons = {
+        'table': '🪑', 'chair': '💺', 'lighting': '💡', 'storage': '📦',
+        'accessories': '✨', 'big_plants': '🌳', 'mini_plants': '🌱',
+        'frames': '🖼️', 'wall_racks': '📚', 'desk_mat': '🖱️',
+        'dustbin': '🗑️', 'floor_mat': '🧹', 'keyboard': '⌨️',
+        'mouse': '🖱️', 'paint': '🎨', 'wardrobes': '👔',
+        'carpet': '🧶', 'curtains': '🪟', 'wall_art': '🖼️',
+        'desk_organizer': '📋', 'monitor_stand': '🖥️', 'cable_management': '🔌',
+        'footrest': '🦶', 'monitor': '🖥️', 'laptop_stand': '💻',
+        'headphone_stand': '🎧', 'whiteboard': '📝', 'bookshelf': '📚',
+        'trash_bin': '🗑️', 'desk_lamp': '💡', 'pen_holder': '✏️',
+        'laptop_holder': '💻'
+    }
+    
+    items = []
+    for item in items_raw:
+        items.append({
+            'item_name': item['item_name'],
+            'default_price': item['default_price'],
+            'description': item['description'],
+            'display_name': item['item_name'].replace('_', ' ').title(),
+            'icon': item_icons.get(item['item_name'], '📦')
+        })
+    
+    cur.close()
+    conn.close()
+    
+    return render_template('admin_default_prices.html', items=items)
 
 # Continue in next message due to length...
 

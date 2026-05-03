@@ -612,7 +612,13 @@
                             {% if design.custom_items %}
                                 {% for item in design.custom_items %}
                                 <div class="item-row">
-                                    <div class="item-icon">{{ item.icon }}</div>
+                                    <div class="item-icon">
+                                        {% if item.icon and item.icon.startswith('img/') %}
+                                            <img src="{{ url_for('static', filename=item.icon) }}" alt="{{ item.name }}" class="item-icon-img">
+                                        {% else %}
+                                            <span class="item-icon-emoji">{{ item.icon or '📦' }}</span>
+                                        {% endif %}
+                                    </div>
                                     <div class="item-content">
                                         <div class="item-title">
                                             {{ item.name }}

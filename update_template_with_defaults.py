@@ -25,18 +25,21 @@ items = [
 for item in items:
     # Pattern 1: or '' (empty string)
     pattern1 = rf'(name="{item}_price"[^>]*value="{{\{{ design\.{item}_price) or \'\' (}}\}}")'
-    replacement1 = rf'\1 or default_prices.get(\'{item}\', 0) \2'
+    replacement1 = rf'\1 or default_prices.get("{item}", 0) \2'
     content = re.sub(pattern1, replacement1, content)
     
     # Pattern 2: or 0
     pattern2 = rf'(name="{item}_price"[^>]*value="{{\{{ design\.{item}_price) or 0 (}}\}}")'
-    replacement2 = rf'\1 or default_prices.get(\'{item}\', 0) \2'
+    replacement2 = rf'\1 or default_prices.get("{item}", 0) \2'
     content = re.sub(pattern2, replacement2, content)
     
     # Pattern 3: or NUMBER (any hardcoded number)
     pattern3 = rf'(name="{item}_price"[^>]*value="{{\{{ design\.{item}_price) or \d+ (}}\}}")'
-    replacement3 = rf'\1 or default_prices.get(\'{item}\', 0) \2'
+    replacement3 = rf'\1 or default_prices.get("{item}", 0) \2'
     content = re.sub(pattern3, replacement3, content)
+    
+    # Pattern 4: Fix any escaped quotes from previous runs
+    content = content.replace(rf"default_prices.get(\'{item}\', 0)", f'default_prices.get("{item}", 0)')
 
 # Add "Manage Default Prices" button if not already present
 if 'Manage Default Prices' not in content:

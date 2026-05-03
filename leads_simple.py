@@ -440,9 +440,9 @@ def update_design(design_id):
         design_name = request.form.get('design_name')
         notes = request.form.get('notes', '')
         
-        # Define all 17 items
+        # Define all 18 items (including profile_lighting)
         items = [
-            'table', 'chair', 'plants', 'lighting', 'storage', 'accessories',
+            'table', 'chair', 'plants', 'lighting', 'profile_lighting', 'storage', 'accessories',
             'big_plants', 'mini_plants', 'frames', 'wall_racks', 'desk_mat',
             'dustbin', 'floor_mat', 'keyboard', 'mouse', 'paint', 'wardrobes'
         ]
@@ -512,7 +512,7 @@ def update_design(design_id):
             final_price = subtotal - discount_value
         final_price = max(0, final_price)  # Ensure non-negative
         
-        # Build UPDATE query with all 17 items
+        # Build UPDATE query with all 18 items (including profile_lighting)
         cur.execute("""
             UPDATE lead_designs
             SET design_name = %s,
@@ -520,6 +520,7 @@ def update_design(design_id):
                 has_chair = %s, chair_quantity = %s, chair_price = %s, chair_details = %s,
                 has_plants = %s, plants_quantity = %s, plants_price = %s, plants_details = %s,
                 has_lighting = %s, lighting_quantity = %s, lighting_price = %s, lighting_details = %s,
+                has_profile_lighting = %s, profile_lighting_quantity = %s, profile_lighting_price = %s, profile_lighting_details = %s,
                 has_storage = %s, storage_quantity = %s, storage_price = %s, storage_details = %s,
                 has_accessories = %s, accessories_quantity = %s, accessories_price = %s, accessories_details = %s,
                 has_big_plants = %s, big_plants_quantity = %s, big_plants_price = %s, big_plants_details = %s,
@@ -546,6 +547,8 @@ def update_design(design_id):
             item_data['plants']['has'], item_data['plants']['quantity'], item_data['plants']['price'], item_data['plants']['details'],
             # Lighting
             item_data['lighting']['has'], item_data['lighting']['quantity'], item_data['lighting']['price'], item_data['lighting']['details'],
+            # Profile Lighting
+            item_data['profile_lighting']['has'], item_data['profile_lighting']['quantity'], item_data['profile_lighting']['price'], item_data['profile_lighting']['details'],
             # Storage
             item_data['storage']['has'], item_data['storage']['quantity'], item_data['storage']['price'], item_data['storage']['details'],
             # Accessories

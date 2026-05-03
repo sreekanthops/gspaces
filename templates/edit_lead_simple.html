@@ -1169,9 +1169,9 @@
             const selectedItem = defaultItems.find(item => item.item_name === itemName);
             
             if (selectedItem) {
-                // Update price
+                // Always update price with default price
                 const priceInput = row.querySelector('.custom-item-price-input');
-                if (priceInput && !priceInput.value) {
+                if (priceInput) {
                     priceInput.value = selectedItem.default_price || 0;
                 }
                 

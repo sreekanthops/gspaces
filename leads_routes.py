@@ -309,12 +309,34 @@ def add_design():
     
     return redirect(url_for('leads.edit_lead', lead_id=lead_id))
 
-@leads_bp.route('/admin/default-prices', methods=['GET'])
+@leads_bp.route('/admin/default-prices', methods=['GET', 'POST'])
 @admin_required
 def manage_default_prices():
     """Manage default prices and items - Main page"""
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
+    
+    if request.method == 'POST':
+        try:
+            # Update all default prices
+            for key, value in request.form.items():
+                if key.startswith('price_'):
+                    item_slug = key.replace('price_', '')
+                    price = float(value)
+                    
+                    cur.execute("""
+                        UPDATE default_items
+                        SET default_price = %s, updated_at = CURRENT_TIMESTAMP
+                        WHERE item_slug = %s
+                    """, (price, item_slug))
+            
+            conn.commit()
+            flash('Default prices updated successfully!', 'success')
+            return redirect(url_for('leads.manage_default_prices'))
+            
+        except Exception as e:
+            conn.rollback()
+            flash(f'Error updating prices: {str(e)}', 'danger')
     
     # Fetch all items from default_items table
     cur.execute("""
@@ -329,38 +351,6 @@ def manage_default_prices():
     conn.close()
     
     return render_template('admin_default_prices.html', items=items)
-
-@leads_bp.route('/admin/default-prices/update', methods=['POST'])
-@admin_required
-def update_default_prices():
-    """Update all default prices"""
-    conn = get_db_connection()
-    cur = conn.cursor()
-    
-    try:
-        # Update all default prices
-        for key, value in request.form.items():
-            if key.startswith('price_'):
-                item_slug = key.replace('price_', '')
-                price = float(value)
-                
-                cur.execute("""
-                    UPDATE default_items
-                    SET default_price = %s, updated_at = CURRENT_TIMESTAMP
-                    WHERE item_slug = %s
-                """, (price, item_slug))
-        
-        conn.commit()
-        flash('Default prices updated successfully!', 'success')
-        
-    except Exception as e:
-        conn.rollback()
-        flash(f'Error updating prices: {str(e)}', 'danger')
-    finally:
-        cur.close()
-        conn.close()
-    
-    return redirect(url_for('leads.manage_default_prices'))
 
 @leads_bp.route('/admin/default-items/add', methods=['POST'])
 @admin_required

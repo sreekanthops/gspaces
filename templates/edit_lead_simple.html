@@ -220,9 +220,65 @@
                     </div>
 
                     {% if design.design_image %}
-                        <img src="{{ url_for('static', filename=design.design_image) }}" 
+                        <img src="{{ url_for('static', filename=design.design_image) }}"
                              alt="Design" class="design-image">
                     {% endif %}
+
+                    <!-- Media Gallery Section -->
+                    <div class="mb-4 p-3" style="background: #f8f9fa; border-radius: 10px;">
+                        <h6 class="mb-3"><i class="bi bi-images"></i> Media Gallery</h6>
+                        
+                        <!-- Current Media Files -->
+                        {% if design.media_files %}
+                        <div class="row mb-3">
+                            {% for media in design.media_files %}
+                            <div class="col-md-4 mb-3">
+                                <div class="card">
+                                    {% if media.type == 'image' %}
+                                        <img src="{{ url_for('static', filename=media.url) }}"
+                                             class="card-img-top" alt="Design media"
+                                             style="height: 150px; object-fit: cover; cursor: pointer;"
+                                             onclick="openLightbox({{ design.id }}, {{ loop.index0 }})">
+                                    {% else %}
+                                        <video class="card-img-top" style="height: 150px; object-fit: cover; cursor: pointer;"
+                                               onclick="openLightbox({{ design.id }}, {{ loop.index0 }})">
+                                            <source src="{{ url_for('static', filename=media.url) }}" type="video/mp4">
+                                        </video>
+                                    {% endif %}
+                                    <div class="card-body p-2">
+                                        <small class="text-muted">{{ media.filename }}</small>
+                                        <form method="POST"
+                                              action="{{ url_for('leads.delete_design_media', design_id=design.id, media_index=loop.index0) }}?lead_id={{ lead.id }}"
+                                              style="display: inline;">
+                                            <button type="submit" class="btn btn-sm btn-danger float-end"
+                                                    onclick="return confirm('Delete this media file?')">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Upload Form -->
+                        <form method="POST" enctype="multipart/form-data"
+                              action="{{ url_for('leads.upload_design_media', design_id=design.id) }}?lead_id={{ lead.id }}">
+                            <div class="mb-3">
+                                <label class="form-label">Upload Media Files</label>
+                                <input type="file" name="media_files" class="form-control" multiple
+                                       accept="image/*,video/mp4,video/webm,video/mov"
+                                       onchange="validateMediaFiles(this)">
+                                <small class="text-muted">
+                                    Images: PNG, JPG (max 5MB each) | Videos: MP4, WEBM (max 50MB each) | Max 5 files total
+                                </small>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-sm">
+                                <i class="bi bi-upload"></i> Upload Media
+                            </button>
+                        </form>
+                    </div>
 
                     <h6 class="mt-4 mb-3">Select Items Included: <small class="text-muted">(Enter quantity and unit price for each item)</small></h6>
                     
@@ -1140,6 +1196,148 @@
             calculateTotal({{ design.id }});
             {% endfor %}
         });
+
+        // ===== MEDIA GALLERY FUNCTIONS =====
+        
+        // Store media files for each design
+        const designMediaFiles = {
+            {% for design in designs %}
+            {{ design.id }}: {{ design.media_files|tojson if design.media_files else '[]'|safe }}{% if not loop.last %},{% endif %}
+            {% endfor %}
+        };
+        
+        let currentDesignId = null;
+        let currentMediaIndex = 0;
+
+        // Validate file uploads
+        function validateMediaFiles(input) {
+            const files = input.files;
+            let imageCount = 0;
+            let videoCount = 0;
+            
+            for (let file of files) {
+                const ext = file.name.split('.').pop().toLowerCase();
+                const isImage = ['png', 'jpg', 'jpeg', 'gif', 'webp'].includes(ext);
+                const isVideo = ['mp4', 'webm', 'mov'].includes(ext);
+                
+                if (isImage) {
+                    imageCount++;
+                    if (file.size > 5 * 1024 * 1024) {
+                        alert(`${file.name} exceeds 5MB limit for images`);
+                        input.value = '';
+                        return false;
+                    }
+                } else if (isVideo) {
+                    videoCount++;
+                    if (file.size > 50 * 1024 * 1024) {
+                        alert(`${file.name} exceeds 50MB limit for videos`);
+                        input.value = '';
+                        return false;
+                    }
+                }
+            }
+            
+            if (imageCount > 3) {
+                alert('Maximum 3 images allowed');
+                input.value = '';
+                return false;
+            }
+            if (videoCount > 2) {
+                alert('Maximum 2 videos allowed');
+                input.value = '';
+                return false;
+            }
+            if (files.length > 5) {
+                alert('Maximum 5 files allowed');
+                input.value = '';
+                return false;
+            }
+            
+            return true;
+        }
+
+        // Open lightbox
+        function openLightbox(designId, index) {
+            currentDesignId = designId;
+            currentMediaIndex = index;
+            showMedia(index);
+            new bootstrap.Modal(document.getElementById('mediaLightbox')).show();
+        }
+
+        // Show media in lightbox
+        function showMedia(index) {
+            const mediaFiles = designMediaFiles[currentDesignId];
+            if (!mediaFiles || index < 0 || index >= mediaFiles.length) return;
+            
+            const media = mediaFiles[index];
+            const content = document.getElementById('lightboxContent');
+            const counter = document.getElementById('mediaCounter');
+            
+            if (media.type === 'image') {
+                content.innerHTML = `<img src="/static/${media.url}" style="max-width: 100%; max-height: 90vh; object-fit: contain;">`;
+            } else {
+                content.innerHTML = `
+                    <video controls autoplay style="max-width: 100%; max-height: 90vh;">
+                        <source src="/static/${media.url}" type="video/mp4">
+                    </video>
+                `;
+            }
+            
+            counter.textContent = `${index + 1} / ${mediaFiles.length}`;
+        }
+
+        // Navigate media
+        function navigateMedia(direction) {
+            const mediaFiles = designMediaFiles[currentDesignId];
+            if (!mediaFiles) return;
+            
+            currentMediaIndex += direction;
+            if (currentMediaIndex < 0) currentMediaIndex = mediaFiles.length - 1;
+            if (currentMediaIndex >= mediaFiles.length) currentMediaIndex = 0;
+            showMedia(currentMediaIndex);
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            const modal = document.getElementById('mediaLightbox');
+            if (modal && modal.classList.contains('show')) {
+                if (e.key === 'ArrowLeft') navigateMedia(-1);
+                if (e.key === 'ArrowRight') navigateMedia(1);
+                if (e.key === 'Escape') bootstrap.Modal.getInstance(modal).hide();
+            }
+        });
     </script>
+
+    <!-- Lightbox Modal -->
+    <div class="modal fade" id="mediaLightbox" tabindex="-1">
+        <div class="modal-dialog modal-fullscreen">
+            <div class="modal-content bg-dark">
+                <div class="modal-header border-0">
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body d-flex align-items-center justify-content-center position-relative">
+                    <!-- Previous Button -->
+                    <button class="btn btn-light position-absolute start-0 ms-3"
+                            onclick="navigateMedia(-1)" style="z-index: 1000;">
+                        <i class="bi bi-chevron-left"></i>
+                    </button>
+                    
+                    <!-- Media Container -->
+                    <div id="lightboxContent" class="text-center" style="max-width: 90%; max-height: 90vh;">
+                        <!-- Content injected by JavaScript -->
+                    </div>
+                    
+                    <!-- Next Button -->
+                    <button class="btn btn-light position-absolute end-0 me-3"
+                            onclick="navigateMedia(1)" style="z-index: 1000;">
+                        <i class="bi bi-chevron-right"></i>
+                    </button>
+                </div>
+                <div class="modal-footer border-0 justify-content-center">
+                    <span id="mediaCounter" class="text-white"></span>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

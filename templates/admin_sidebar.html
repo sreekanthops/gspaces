@@ -104,6 +104,12 @@
             </a>
         </li>
         <li class="admin-sidebar-item">
+            <a href="{{ url_for('leads.manage_default_prices') }}" class="admin-sidebar-link {% if active_page == 'default_prices' %}active{% endif %}">
+                <span class="admin-sidebar-icon">💲</span>
+                <span>Default Prices</span>
+            </a>
+        </li>
+        <li class="admin-sidebar-item">
             <a href="{{ url_for('admin_coupons') }}" class="admin-sidebar-link {% if active_page == 'coupons' %}active{% endif %}">
                 <span class="admin-sidebar-icon">🎁</span>
                 <span>Coupons</span>

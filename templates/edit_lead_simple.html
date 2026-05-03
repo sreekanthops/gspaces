@@ -1038,8 +1038,12 @@
                 'dustbin', 'floor_mat', 'keyboard', 'mouse', 'paint', 'wardrobes'
             ];
             
-            // Calculate total for each item (quantity × price)
+            // Calculate total for each item (quantity × price) - ONLY if checkbox is checked
             items.forEach(itemName => {
+                // Check if the item's checkbox is checked
+                const checkbox = form.querySelector(`[name="has_${itemName}"]`);
+                const isChecked = checkbox ? checkbox.checked : false;
+                
                 const quantity = parseFloat(form.querySelector(`[name="${itemName}_quantity"]`)?.value || 0);
                 const price = parseFloat(form.querySelector(`[name="${itemName}_price"]`)?.value || 0);
                 const itemTotal = quantity * price;
@@ -1050,7 +1054,10 @@
                     totalField.value = itemTotal.toFixed(2);
                 }
                 
-                subtotal += itemTotal;
+                // Only add to subtotal if checkbox is checked
+                if (isChecked) {
+                    subtotal += itemTotal;
+                }
             });
             
             // Add custom items (quantity × price)

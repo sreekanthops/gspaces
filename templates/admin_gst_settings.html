@@ -9,17 +9,14 @@
     <link href="{{ url_for('static', filename='css/main.css') }}" rel="stylesheet">
     <style>
         body {
-            background: #f7f8fc;
-        }
-        .admin-container {
-            margin-top: 96px;
-            padding-bottom: 56px;
+            background: #f8f9fa;
         }
         .settings-card {
             background: #fff;
-            border-radius: 24px;
-            box-shadow: 0 18px 40px rgba(17, 24, 39, 0.08);
+            border-radius: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
             padding: 32px;
+            margin-bottom: 24px;
         }
         .toggle-switch {
             position: relative;
@@ -99,15 +96,18 @@
 <body>
     {% include 'navbar.html' %}
 
-    <div class="container admin-container">
-        <!-- Admin Navigation -->
-        {% set active_page = 'gst' %}
-        {% include 'admin_nav.html' %}
+    <div class="container-fluid" style="margin-top: 76px; padding: 0;">
+        <div class="row g-0">
+            <!-- Left Sidebar -->
+            <div class="col-md-2" style="padding: 0;">
+                {% set active_page = 'gst' %}
+                {% include 'admin_sidebar.html' %}
+            </div>
 
-        <div class="row justify-content-center">
-            <div class="col-lg-8">
+            <!-- Main Content -->
+            <div class="col-md-10 p-4" style="background: #f8f9fa; min-height: calc(100vh - 76px); border-radius: 16px 0 0 0;">
                 <div class="settings-card">
-                    <h2 class="mb-4">GST Settings</h2>
+                    <h2 class="mb-4">💳 GST Settings</h2>
                     
                     <div class="info-badge">
                         <strong>ℹ️ Info:</strong> Control GST calculation and display across your store. When disabled, GST will not be added to cart totals and won't appear in invoices.

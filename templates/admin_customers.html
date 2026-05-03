@@ -112,12 +112,17 @@
 <body>
     {% include 'navbar.html' %}
     
-    <div class="admin-container">
-        <!-- Admin Navigation -->
-        {% set active_page = 'customers' %}
-        {% include 'admin_nav.html' %}
+    <div class="container-fluid" style="margin-top: 76px; padding: 0;">
+        <div class="row g-0">
+            <!-- Sidebar -->
+            <div class="col-md-2" style="padding: 0;">
+                {% set active_page = 'customers' %}
+                {% include 'admin_sidebar.html' %}
+            </div>
 
-        <div class="admin-card">
+            <!-- Main Content -->
+            <div class="col-md-10 p-4" style="background: #f8f9fa; min-height: calc(100vh - 76px); border-radius: 16px 0 0 0;">
+                <div class="admin-card" style="border-radius: 16px;">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <div>
                     <h2 class="mb-2">Customer Management</h2>
@@ -314,5 +319,8 @@
             }
         }
     </script>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

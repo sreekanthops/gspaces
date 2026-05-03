@@ -1,0 +1,146 @@
+<!-- Admin Sidebar Navigation -->
+<style>
+    .admin-sidebar {
+        background: #1f2937;
+        min-height: calc(100vh - 76px);
+        padding: 20px 0;
+        position: sticky;
+        top: 76px;
+    }
+    
+    .admin-sidebar-menu {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .admin-sidebar-item {
+        margin-bottom: 4px;
+    }
+    
+    .admin-sidebar-link {
+        display: flex;
+        align-items: center;
+        padding: 12px 20px;
+        color: #9ca3af;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        font-weight: 500;
+        font-size: 0.95rem;
+    }
+    
+    .admin-sidebar-link:hover {
+        background: #374151;
+        color: #f3f4f6;
+        padding-left: 24px;
+    }
+    
+    .admin-sidebar-link.active {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-left: 4px solid #d4af37;
+        padding-left: 16px;
+    }
+    
+    .admin-sidebar-icon {
+        font-size: 1.2rem;
+        margin-right: 12px;
+        min-width: 24px;
+        text-align: center;
+    }
+    
+    .admin-sidebar-header {
+        padding: 0 20px 20px;
+        border-bottom: 1px solid #374151;
+        margin-bottom: 20px;
+    }
+    
+    .admin-sidebar-header h5 {
+        color: #f3f4f6;
+        font-weight: 700;
+        margin: 0;
+        font-size: 1.1rem;
+    }
+    
+    .admin-sidebar-header p {
+        color: #9ca3af;
+        font-size: 0.85rem;
+        margin: 4px 0 0;
+    }
+</style>
+
+<div class="admin-sidebar">
+    <div class="admin-sidebar-header">
+        <h5>⚙️ Admin Panel</h5>
+        <p>Manage your workspace</p>
+    </div>
+    
+    <ul class="admin-sidebar-menu">
+        <li class="admin-sidebar-item">
+            <a href="{{ url_for('admin_orders') }}" class="admin-sidebar-link {% if active_page == 'orders' %}active{% endif %}">
+                <span class="admin-sidebar-icon">📦</span>
+                <span>Orders</span>
+            </a>
+        </li>
+        <li class="admin-sidebar-item">
+            <a href="{{ url_for('admin_inquiries') }}" class="admin-sidebar-link {% if active_page == 'inquiries' %}active{% endif %}">
+                <span class="admin-sidebar-icon">👥</span>
+                <span>Inquiries</span>
+            </a>
+        </li>
+        <li class="admin-sidebar-item">
+            <a href="{{ url_for('leads.admin_leads_list') }}" class="admin-sidebar-link {% if active_page == 'leads' %}active{% endif %}">
+                <span class="admin-sidebar-icon">💼</span>
+                <span>Leads</span>
+            </a>
+        </li>
+        <li class="admin-sidebar-item">
+            <a href="{{ url_for('admin_coupons') }}" class="admin-sidebar-link {% if active_page == 'coupons' %}active{% endif %}">
+                <span class="admin-sidebar-icon">🎁</span>
+                <span>Coupons</span>
+            </a>
+        </li>
+        <li class="admin-sidebar-item">
+            <a href="{{ url_for('admin_referral_coupons') }}" class="admin-sidebar-link {% if active_page == 'referral' %}active{% endif %}">
+                <span class="admin-sidebar-icon">🎯</span>
+                <span>Referral Coupons</span>
+            </a>
+        </li>
+        <li class="admin-sidebar-item">
+            <a href="{{ url_for('admin_reviews') }}" class="admin-sidebar-link {% if active_page == 'reviews' %}active{% endif %}">
+                <span class="admin-sidebar-icon">⭐</span>
+                <span>Reviews</span>
+            </a>
+        </li>
+        <li class="admin-sidebar-item">
+            <a href="{{ url_for('admin_gst_settings') }}" class="admin-sidebar-link {% if active_page == 'gst' %}active{% endif %}">
+                <span class="admin-sidebar-icon">💰</span>
+                <span>GST Settings</span>
+            </a>
+        </li>
+        <li class="admin-sidebar-item">
+            <a href="{{ url_for('admin_customers') }}" class="admin-sidebar-link {% if active_page == 'customers' %}active{% endif %}">
+                <span class="admin-sidebar-icon">👤</span>
+                <span>Customers</span>
+            </a>
+        </li>
+        <li class="admin-sidebar-item">
+            <a href="{{ url_for('admin_users.manage_users') }}" class="admin-sidebar-link {% if active_page == 'users' %}active{% endif %}">
+                <span class="admin-sidebar-icon">👥</span>
+                <span>Manage Users</span>
+            </a>
+        </li>
+        <li class="admin-sidebar-item">
+            <a href="{{ url_for('admin_blogs') }}" class="admin-sidebar-link {% if active_page == 'blogs' %}active{% endif %}">
+                <span class="admin-sidebar-icon">📝</span>
+                <span>Blogs</span>
+            </a>
+        </li>
+        <li class="admin-sidebar-item">
+            <a href="{{ url_for('admin_deals') }}" class="admin-sidebar-link {% if active_page == 'deals' %}active{% endif %}">
+                <span class="admin-sidebar-icon">🔥</span>
+                <span>Deals</span>
+            </a>
+        </li>
+    </ul>
+</div>

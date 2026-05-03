@@ -60,25 +60,30 @@
 <body>
     {% include 'navbar.html' %}
 
-    <div class="container admin-container">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                <div class="mb-4">
-                    {% for category, message in messages %}
-                        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                            {{ message }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    <div class="container-fluid" style="margin-top: 76px;">
+        <div class="row g-0">
+            <!-- Sidebar -->
+            <div class="col-md-2">
+                {% set active_page = 'coupons' %}
+                {% include 'admin_sidebar.html' %}
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-10 p-4" style="background: #f8f9fa; min-height: calc(100vh - 76px);">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        <div class="mb-4">
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}
                         </div>
-                    {% endfor %}
-                </div>
-            {% endif %}
-        {% endwith %}
+                    {% endif %}
+                {% endwith %}
 
-        <!-- Admin Navigation -->
-        {% set active_page = 'coupons' %}
-        {% include 'admin_nav.html' %}
-
-        <div class="admin-card">
+                <div class="admin-card">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <div>
                     <h2 class="mb-2">Coupon Management</h2>
@@ -345,6 +350,7 @@
                         <button type="submit" class="btn btn-primary">Update Coupon</button>
                     </div>
                 </form>
+                </div>
             </div>
         </div>
     </div>

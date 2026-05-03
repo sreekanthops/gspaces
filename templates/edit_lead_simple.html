@@ -206,7 +206,7 @@
         {% if designs %}
             {% for design in designs %}
             <div class="design-card">
-                <form method="POST" action="{{ url_for('leads.update_design', design_id=design.id) }}" id="updateForm{{ design.id }}">
+                <form method="POST" action="{{ url_for('leads.update_design', design_id=design.id) }}">
                     
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h5 class="mb-0">

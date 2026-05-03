@@ -309,7 +309,7 @@
                                 <div class="item-icon">🪑</div>
                                 <div class="item-content">
                                     <div class="item-title">
-                                        Desk
+                                        <i class="bi bi-table"></i> Office Table
                                         {% if design.table_quantity and design.table_quantity > 1 %}
                                         <span class="badge bg-primary ms-2">×{{ design.table_quantity }}</span>
                                         {% endif %}
@@ -634,7 +634,7 @@
                                         {% endif %}
                                     </span>
                                 </div>
-                                <span class="price-tag" style="color: #28a745;">
+                                <span class="price-tag">
                                     ₹{{ "{:,.0f}".format(design.final_price or design.price) }}
                                 </span>
                             {% else %}

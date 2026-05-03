@@ -291,11 +291,26 @@ def add_design(lead_id):
                     'order': 0
                 })
         
-        # Get first design to copy properties from
+        # Get first design to copy properties from (including all 17 quantity-based items)
         cur.execute("""
-            SELECT has_table, has_chair, has_plants, has_lighting, has_storage, has_accessories,
-                   table_details, chair_details, plants_details, lighting_details,
-                   storage_details, accessories_details, price, notes
+            SELECT has_table, table_quantity, table_price, table_details,
+                   has_chair, chair_quantity, chair_price, chair_details,
+                   has_plants, plants_quantity, plants_price, plants_details,
+                   has_lighting, lighting_quantity, lighting_price, lighting_details,
+                   has_storage, storage_quantity, storage_price, storage_details,
+                   has_accessories, accessories_quantity, accessories_price, accessories_details,
+                   has_carpet, carpet_quantity, carpet_price, carpet_details,
+                   has_curtains, curtains_quantity, curtains_price, curtains_details,
+                   has_wall_art, wall_art_quantity, wall_art_price, wall_art_details,
+                   has_desk_organizer, desk_organizer_quantity, desk_organizer_price, desk_organizer_details,
+                   has_monitor_stand, monitor_stand_quantity, monitor_stand_price, monitor_stand_details,
+                   has_cable_management, cable_management_quantity, cable_management_price, cable_management_details,
+                   has_desk_mat, desk_mat_quantity, desk_mat_price, desk_mat_details,
+                   has_footrest, footrest_quantity, footrest_price, footrest_details,
+                   has_whiteboard, whiteboard_quantity, whiteboard_price, whiteboard_details,
+                   has_bookshelf, bookshelf_quantity, bookshelf_price, bookshelf_details,
+                   has_trash_bin, trash_bin_quantity, trash_bin_price, trash_bin_details,
+                   price, notes
             FROM lead_designs
             WHERE lead_id = %s
             ORDER BY design_order
@@ -309,24 +324,58 @@ def add_design(lead_id):
         next_order = result['next_order'] if result else 1
         
         if first_design:
-            # Copy properties from first design
+            # Copy ALL properties from first design (all 17 items with quantities and prices)
             cur.execute("""
                 INSERT INTO lead_designs (
                     lead_id, design_name, design_image, design_order, media_files,
-                    has_table, has_chair, has_plants, has_lighting, has_storage, has_accessories,
-                    table_details, chair_details, plants_details, lighting_details,
-                    storage_details, accessories_details, price, notes
+                    has_table, table_quantity, table_price, table_details,
+                    has_chair, chair_quantity, chair_price, chair_details,
+                    has_plants, plants_quantity, plants_price, plants_details,
+                    has_lighting, lighting_quantity, lighting_price, lighting_details,
+                    has_storage, storage_quantity, storage_price, storage_details,
+                    has_accessories, accessories_quantity, accessories_price, accessories_details,
+                    has_carpet, carpet_quantity, carpet_price, carpet_details,
+                    has_curtains, curtains_quantity, curtains_price, curtains_details,
+                    has_wall_art, wall_art_quantity, wall_art_price, wall_art_details,
+                    has_desk_organizer, desk_organizer_quantity, desk_organizer_price, desk_organizer_details,
+                    has_monitor_stand, monitor_stand_quantity, monitor_stand_price, monitor_stand_details,
+                    has_cable_management, cable_management_quantity, cable_management_price, cable_management_details,
+                    has_desk_mat, desk_mat_quantity, desk_mat_price, desk_mat_details,
+                    has_footrest, footrest_quantity, footrest_price, footrest_details,
+                    has_whiteboard, whiteboard_quantity, whiteboard_price, whiteboard_details,
+                    has_bookshelf, bookshelf_quantity, bookshelf_price, bookshelf_details,
+                    has_trash_bin, trash_bin_quantity, trash_bin_price, trash_bin_details,
+                    price, notes
                 )
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                VALUES (%s, %s, %s, %s, %s,
+                        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                        %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """, (
                 lead_id, design_name, design_image, next_order, json.dumps(media_files),
-                first_design['has_table'], first_design['has_chair'], first_design['has_plants'],
-                first_design['has_lighting'], first_design['has_storage'], first_design['has_accessories'],
-                first_design['table_details'], first_design['chair_details'], first_design['plants_details'],
-                first_design['lighting_details'], first_design['storage_details'], first_design['accessories_details'],
+                first_design['has_table'], first_design['table_quantity'], first_design['table_price'], first_design['table_details'],
+                first_design['has_chair'], first_design['chair_quantity'], first_design['chair_price'], first_design['chair_details'],
+                first_design['has_plants'], first_design['plants_quantity'], first_design['plants_price'], first_design['plants_details'],
+                first_design['has_lighting'], first_design['lighting_quantity'], first_design['lighting_price'], first_design['lighting_details'],
+                first_design['has_storage'], first_design['storage_quantity'], first_design['storage_price'], first_design['storage_details'],
+                first_design['has_accessories'], first_design['accessories_quantity'], first_design['accessories_price'], first_design['accessories_details'],
+                first_design['has_carpet'], first_design['carpet_quantity'], first_design['carpet_price'], first_design['carpet_details'],
+                first_design['has_curtains'], first_design['curtains_quantity'], first_design['curtains_price'], first_design['curtains_details'],
+                first_design['has_wall_art'], first_design['wall_art_quantity'], first_design['wall_art_price'], first_design['wall_art_details'],
+                first_design['has_desk_organizer'], first_design['desk_organizer_quantity'], first_design['desk_organizer_price'], first_design['desk_organizer_details'],
+                first_design['has_monitor_stand'], first_design['monitor_stand_quantity'], first_design['monitor_stand_price'], first_design['monitor_stand_details'],
+                first_design['has_cable_management'], first_design['cable_management_quantity'], first_design['cable_management_price'], first_design['cable_management_details'],
+                first_design['has_desk_mat'], first_design['desk_mat_quantity'], first_design['desk_mat_price'], first_design['desk_mat_details'],
+                first_design['has_footrest'], first_design['footrest_quantity'], first_design['footrest_price'], first_design['footrest_details'],
+                first_design['has_whiteboard'], first_design['whiteboard_quantity'], first_design['whiteboard_price'], first_design['whiteboard_details'],
+                first_design['has_bookshelf'], first_design['bookshelf_quantity'], first_design['bookshelf_price'], first_design['bookshelf_details'],
+                first_design['has_trash_bin'], first_design['trash_bin_quantity'], first_design['trash_bin_price'], first_design['trash_bin_details'],
                 first_design['price'], first_design['notes']
             ))
-            flash('Design added with properties copied from first design! You can now customize it.', 'success')
+            flash('Design added! All items, quantities, and prices copied from first design. You can now customize it.', 'success')
         else:
             # First design - create with defaults
             cur.execute("""

@@ -860,7 +860,154 @@ def delete_default_item():
         conn.close()
     
     return redirect(url_for('leads.manage_default_prices'))
-    return render_template('admin_default_prices.html', items=items)
+
+@leads_bp.route('/admin/design/<int:design_id>/upload-media', methods=['POST'])
+@admin_required
+def upload_design_media(design_id):
+    """Upload media files to design gallery"""
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    
+    try:
+        lead_id = request.args.get('lead_id')
+        
+        # Get current media files
+        cur.execute("SELECT media_files FROM lead_designs WHERE id = %s", (design_id,))
+        result = cur.fetchone()
+        media_files = result['media_files'] if result and result['media_files'] else []
+        
+        # Count current files
+        image_count = sum(1 for m in media_files if m.get('type') == 'image')
+        video_count = sum(1 for m in media_files if m.get('type') == 'video')
+        
+        # Process uploaded files
+        files = request.files.getlist('media_files')
+        
+        for file in files:
+            if not file or not file.filename:
+                continue
+                
+            # Validate file type
+            ext = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else ''
+            is_image = ext in ['png', 'jpg', 'jpeg', 'gif', 'webp']
+            is_video = ext in ['mp4', 'webm', 'mov']
+            
+            if not (is_image or is_video):
+                flash(f'Invalid file type: {file.filename}', 'danger')
+                continue
+            
+            # Check limits
+            if is_image and image_count >= 3:
+                flash('Maximum 3 images allowed', 'warning')
+                continue
+            if is_video and video_count >= 2:
+                flash('Maximum 2 videos allowed', 'warning')
+                continue
+            if len(media_files) >= 5:
+                flash('Maximum 5 files allowed', 'warning')
+                break
+            
+            # Check file size
+            file.seek(0, 2)  # Seek to end
+            file_size = file.tell()
+            file.seek(0)  # Reset
+            
+            max_size = 5 * 1024 * 1024 if is_image else 50 * 1024 * 1024
+            if file_size > max_size:
+                size_mb = max_size / (1024 * 1024)
+                flash(f'{file.filename} exceeds {size_mb}MB limit', 'danger')
+                continue
+            
+            # Save file
+            filename = secure_filename(file.filename)
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            order = len(media_files) + 1
+            filename = f"design_{design_id}_{order}_{timestamp}_{filename}"
+            
+            media_folder = os.path.join('static', 'img', 'leads', 'media')
+            os.makedirs(media_folder, exist_ok=True)
+            filepath = os.path.join(media_folder, filename)
+            file.save(filepath)
+            
+            # Add to media_files
+            media_files.append({
+                'type': 'image' if is_image else 'video',
+                'url': f"img/leads/media/{filename}",
+                'order': order,
+                'size': file_size,
+                'filename': file.filename
+            })
+            
+            if is_image:
+                image_count += 1
+            else:
+                video_count += 1
+        
+        # Update database
+        cur.execute("""
+            UPDATE lead_designs
+            SET media_files = %s
+            WHERE id = %s
+        """, (json.dumps(media_files), design_id))
+        
+        conn.commit()
+        flash('Media files uploaded successfully!', 'success')
+        
+    except Exception as e:
+        conn.rollback()
+        flash(f'Error uploading media: {str(e)}', 'danger')
+    finally:
+        cur.close()
+        conn.close()
+    
+    return redirect(url_for('leads.edit_lead', lead_id=lead_id))
+
+@leads_bp.route('/admin/design/<int:design_id>/delete-media/<int:media_index>', methods=['POST'])
+@admin_required
+def delete_design_media(design_id, media_index):
+    """Delete a media file from design gallery"""
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    
+    try:
+        lead_id = request.args.get('lead_id')
+        
+        # Get current media files
+        cur.execute("SELECT media_files FROM lead_designs WHERE id = %s", (design_id,))
+        result = cur.fetchone()
+        media_files = result['media_files'] if result and result['media_files'] else []
+        
+        if 0 <= media_index < len(media_files):
+            # Delete file from filesystem
+            file_path = os.path.join('static', media_files[media_index]['url'])
+            if os.path.exists(file_path):
+                os.remove(file_path)
+            
+            # Remove from array
+            media_files.pop(media_index)
+            
+            # Reorder remaining files
+            for i, media in enumerate(media_files):
+                media['order'] = i + 1
+            
+            # Update database
+            cur.execute("""
+                UPDATE lead_designs
+                SET media_files = %s
+                WHERE id = %s
+            """, (json.dumps(media_files), design_id))
+            
+            conn.commit()
+            flash('Media file deleted successfully!', 'success')
+        
+    except Exception as e:
+        conn.rollback()
+        flash(f'Error deleting media: {str(e)}', 'danger')
+    finally:
+        cur.close()
+        conn.close()
+    
+    return redirect(url_for('leads.edit_lead', lead_id=lead_id))
 
 def register_leads_routes(app, db_connection_func):
     """Register blueprint with app"""

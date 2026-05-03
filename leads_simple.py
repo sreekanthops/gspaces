@@ -708,25 +708,9 @@ def view_quotation(share_token):
                 'url': design['design_image'],
                 'order': 0
             }]
-        
-        # Calculate discount values for display
-        if design.get('discount_type') and design['discount_type'] != 'none' and design.get('discount_value', 0) > 0:
-            base_price = design.get('price', 0)
-            
-            if design['discount_type'] == 'percentage':
-                discount_amount = base_price * (design['discount_value'] / 100)
-                design['subtotal'] = base_price
-                design['final_price'] = base_price - discount_amount
-            elif design['discount_type'] == 'fixed':
-                design['subtotal'] = base_price
-                design['final_price'] = base_price - design['discount_value']
-        else:
-            # No discount
-            design['subtotal'] = design.get('price', 0)
-            design['final_price'] = design.get('price', 0)
     
-    # Calculate total using final prices
-    total = sum(d.get('final_price', d.get('price', 0)) for d in designs)
+    # Calculate total
+    total = sum(d['price'] or 0 for d in designs)
     
     # Fetch default items with icons for dynamic display
     cur.execute("""

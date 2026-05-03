@@ -1014,21 +1014,27 @@
                     <!-- Custom Items Section -->
                     <div class="mt-4 p-3" style="background: #f0f9ff; border-radius: 10px; border: 2px dashed #667eea;">
                         <h6 class="mb-3"><i class="bi bi-plus-circle"></i> Add Custom Items (Optional)</h6>
+                        <p class="small text-muted mb-3">Select items from default prices or type to search. Icon and price will auto-populate.</p>
                         <div id="customItems{{ design.id }}">
                             {% if design.custom_items %}
                                 {% for item in design.custom_items %}
                                 <div class="custom-item-row mb-2" style="display: flex; gap: 10px; align-items: start;">
-                                    <input type="text" class="form-control" placeholder="Item name"
-                                           name="custom_item_name[]" value="{{ item.name }}" style="flex: 2;">
+                                    <div style="flex: 2;">
+                                        <input type="text" class="form-control custom-item-name-input"
+                                               placeholder="Select or type item name"
+                                               name="custom_item_name[]" value="{{ item.name }}"
+                                               list="defaultItemsList{{ design.id }}"
+                                               onchange="populateItemDetails(this, {{ design.id }})">
+                                    </div>
                                     <input type="text" class="form-control" placeholder="Details"
                                            name="custom_item_details[]" value="{{ item.details }}" style="flex: 2;">
-                                    <input type="text" class="form-control" placeholder="Icon"
-                                           name="custom_item_icon[]" value="{{ item.icon }}" style="max-width: 70px;">
+                                    <input type="hidden" class="custom-item-icon-value" name="custom_item_icon[]" value="{{ item.icon }}">
+                                    <span class="custom-item-icon-display" style="min-width: 30px; text-align: center; font-size: 1.2rem;">{{ item.icon or '📦' }}</span>
                                     <input type="number" class="form-control" placeholder="Qty"
                                            name="custom_item_quantity[]" value="{{ item.quantity or 1 }}"
                                            min="1" style="max-width: 70px;"
                                            onchange="calculateTotal({{ design.id }})">
-                                    <input type="number" class="form-control" placeholder="Price"
+                                    <input type="number" class="form-control custom-item-price-input" placeholder="Price"
                                            name="custom_item_price[]" value="{{ item.price or 0 }}"
                                            step="0.01" min="0" style="max-width: 120px;"
                                            onchange="calculateTotal({{ design.id }})">
@@ -1040,6 +1046,14 @@
                                 {% endfor %}
                             {% endif %}
                         </div>
+                        
+                        <!-- Datalist for autocomplete -->
+                        <datalist id="defaultItemsList{{ design.id }}">
+                            {% for item in default_items %}
+                            <option value="{{ item.item_name }}" data-price="{{ item.default_price }}" data-icon="{{ item.icon_emoji }}" data-icon-image="{{ item.icon_image or '' }}">
+                            {% endfor %}
+                        </datalist>
+                        
                         <button type="button" class="btn btn-sm btn-outline-primary mt-2"
                                 onclick="addCustomItem({{ design.id }})">
                             <i class="bi bi-plus"></i> Add Another Item
@@ -1145,19 +1159,61 @@
             alert('Link copied to clipboard!');
         }
 
+        // Populate item details when selected from dropdown
+        function populateItemDetails(input, designId) {
+            const itemName = input.value;
+            const row = input.closest('.custom-item-row');
+            
+            // Find the item in default_items
+            const defaultItems = {{ default_items|tojson|safe }};
+            const selectedItem = defaultItems.find(item => item.item_name === itemName);
+            
+            if (selectedItem) {
+                // Update price
+                const priceInput = row.querySelector('.custom-item-price-input');
+                if (priceInput && !priceInput.value) {
+                    priceInput.value = selectedItem.default_price || 0;
+                }
+                
+                // Update icon
+                const iconHidden = row.querySelector('.custom-item-icon-value');
+                const iconDisplay = row.querySelector('.custom-item-icon-display');
+                
+                if (selectedItem.icon_image) {
+                    // Use uploaded image
+                    iconDisplay.innerHTML = `<img src="/static/${selectedItem.icon_image}" class="item-icon-img" alt="${itemName}">`;
+                    iconHidden.value = selectedItem.icon_image;
+                } else {
+                    // Use emoji
+                    iconDisplay.textContent = selectedItem.icon_emoji || '📦';
+                    iconHidden.value = selectedItem.icon_emoji || '📦';
+                }
+                
+                // Recalculate total
+                calculateTotal(designId);
+            }
+        }
+
         function addCustomItem(designId) {
             const container = document.getElementById('customItems' + designId);
             const newRow = document.createElement('div');
             newRow.className = 'custom-item-row mb-2';
             newRow.style.cssText = 'display: flex; gap: 10px; align-items: start;';
             newRow.innerHTML = `
-                <input type="text" class="form-control" placeholder="Item name" name="custom_item_name[]" style="flex: 2;">
+                <div style="flex: 2;">
+                    <input type="text" class="form-control custom-item-name-input"
+                           placeholder="Select or type item name"
+                           name="custom_item_name[]"
+                           list="defaultItemsList${designId}"
+                           onchange="populateItemDetails(this, ${designId})">
+                </div>
                 <input type="text" class="form-control" placeholder="Details" name="custom_item_details[]" style="flex: 2;">
-                <input type="text" class="form-control" placeholder="Icon" name="custom_item_icon[]" style="max-width: 70px;">
+                <input type="hidden" class="custom-item-icon-value" name="custom_item_icon[]" value="📦">
+                <span class="custom-item-icon-display" style="min-width: 30px; text-align: center; font-size: 1.2rem;">📦</span>
                 <input type="number" class="form-control" placeholder="Qty" name="custom_item_quantity[]"
                        value="1" min="1" style="max-width: 70px;"
                        onchange="calculateTotal(${designId})">
-                <input type="number" class="form-control" placeholder="Price" name="custom_item_price[]"
+                <input type="number" class="form-control custom-item-price-input" placeholder="Price" name="custom_item_price[]"
                        value="0" step="0.01" min="0" style="max-width: 120px;"
                        onchange="calculateTotal(${designId})">
                 <button type="button" class="btn btn-danger btn-sm"

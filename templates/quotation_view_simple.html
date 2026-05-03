@@ -376,13 +376,30 @@
                                 <div class="item-icon">{{ render_icon('lighting') }}</div>
                                 <div class="item-content">
                                     <div class="item-title">
-                                        Lighting
+                                        Rope Lighting
                                         {% if design.lighting_quantity and design.lighting_quantity > 1 %}
                                         <span class="badge bg-primary ms-2">×{{ design.lighting_quantity }}</span>
                                         {% endif %}
                                     </div>
                                     {% if design.lighting_details %}
                                     <div class="item-details">{{ design.lighting_details }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            {% if design.has_profile_lighting %}
+                            <div class="item-row">
+                                <div class="item-icon">{{ render_icon('profile_lighting') }}</div>
+                                <div class="item-content">
+                                    <div class="item-title">
+                                        Profile Lighting
+                                        {% if design.profile_lighting_quantity and design.profile_lighting_quantity > 1 %}
+                                        <span class="badge bg-primary ms-2">×{{ design.profile_lighting_quantity }}</span>
+                                        {% endif %}
+                                    </div>
+                                    {% if design.profile_lighting_details %}
+                                    <div class="item-details">{{ design.profile_lighting_details }}</div>
                                     {% endif %}
                                 </div>
                             </div>

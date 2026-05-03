@@ -1853,9 +1853,9 @@ colors
   position: fixed !important;
   left: 20px !important;
   right: auto !important;
-  top: 50% !important;
-  transform: translateY(-50%);
-  bottom: auto !important;
+  bottom: 20px !important;
+  top: auto !important;
+  transform: none;
   z-index: 9999 !important; /* Increased z-index to ensure visibility */
   display: flex; /* Changed from none to flex - always visible */
   flex-direction: column;

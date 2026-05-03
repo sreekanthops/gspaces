@@ -155,6 +155,7 @@ def edit_lead(lead_id):
             customer_email = request.form.get('customer_email', '')
             customer_phone = request.form.get('customer_phone', '')
             project_name = request.form.get('project_name', '')
+            location = request.form.get('location', '')
             notes = request.form.get('notes', '')
             
             # Get current image
@@ -174,12 +175,12 @@ def edit_lead(lead_id):
                     reference_image = f"img/leads/reference/{filename}"
             
             cur.execute("""
-                UPDATE leads 
+                UPDATE leads
                 SET customer_name = %s, customer_email = %s, customer_phone = %s,
-                    project_name = %s, notes = %s, reference_image = %s
+                    project_name = %s, location = %s, notes = %s, reference_image = %s
                 WHERE id = %s
             """, (customer_name, customer_email, customer_phone, project_name,
-                  notes, reference_image, lead_id))
+                  location, notes, reference_image, lead_id))
             
             conn.commit()
             flash('Lead updated!', 'success')

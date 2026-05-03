@@ -131,6 +131,11 @@
                     </div>
                 </div>
                 <div class="mb-3">
+                    <label class="form-label"><i class="bi bi-geo-alt"></i> Location/Address</label>
+                    <textarea name="location" class="form-control" rows="2" placeholder="Enter customer's location or address">{{ lead.location or '' }}</textarea>
+                    <small class="text-muted">Customer's location for delivery and installation</small>
+                </div>
+                <div class="mb-3">
                     <label class="form-label">Notes</label>
                     <textarea name="notes" class="form-control" rows="2">{{ lead.notes or '' }}</textarea>
                 </div>

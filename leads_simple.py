@@ -613,7 +613,7 @@ def delete_lead(lead_id):
         cur.close()
         conn.close()
     
-    return redirect(url_for('leads.admin_leads'))
+    return redirect(url_for('leads.admin_leads_list'))
 
 @leads_bp.route('/quotation/<share_token>')
 def view_quotation(share_token):

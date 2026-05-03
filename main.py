@@ -1526,7 +1526,7 @@ def add_product():
     
     # GET request - show the form
     if request.method == 'GET':
-        return render_template('add_product.html')
+        return render_template('add_setup.html')
     
     # POST request - process the form
     try:

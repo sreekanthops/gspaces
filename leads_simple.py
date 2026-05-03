@@ -216,12 +216,17 @@ def edit_lead(lead_id):
         else:
             design['custom_items'] = []
         
-        # Parse media_files
+        # Parse media_files (JSONB is already parsed by psycopg2)
         if design.get('media_files'):
-            try:
-                design['media_files'] = json.loads(design['media_files'])
-            except:
-                design['media_files'] = []
+            # If it's already a list (JSONB), use it directly
+            if isinstance(design['media_files'], list):
+                pass  # Already parsed
+            elif isinstance(design['media_files'], str):
+                # If it's a string, parse it
+                try:
+                    design['media_files'] = json.loads(design['media_files'])
+                except:
+                    design['media_files'] = []
         else:
             design['media_files'] = []
     

@@ -230,15 +230,27 @@ def edit_lead(lead_id):
         else:
             design['media_files'] = []
     
-    # Fetch default prices from database
-    cur.execute("SELECT item_name, default_price, description FROM item_default_prices ORDER BY item_name")
-    default_prices_list = cur.fetchall()
-    default_prices = {row['item_name']: row['default_price'] for row in default_prices_list}
+    # Fetch default items with icons and prices from database
+    cur.execute("""
+        SELECT id, item_name, item_slug, icon_emoji, icon_image, default_price, description,
+               display_order, is_active
+        FROM default_items
+        WHERE is_active = TRUE
+        ORDER BY display_order, item_name
+    """)
+    default_items_list = cur.fetchall()
+    
+    # Create a dictionary for backward compatibility with default_prices
+    default_prices = {row['item_slug']: row['default_price'] for row in default_items_list}
+    
+    # Also pass the full items list for icon display
+    default_items = [dict(row) for row in default_items_list]
     
     cur.close()
     conn.close()
     
-    return render_template('edit_lead_simple.html', lead=lead, designs=designs, default_prices=default_prices)
+    return render_template('edit_lead_simple.html', lead=lead, designs=designs,
+                          default_prices=default_prices, default_items=default_items)
 
 @leads_bp.route('/admin/leads/<int:lead_id>/design/add', methods=['POST'])
 @admin_required

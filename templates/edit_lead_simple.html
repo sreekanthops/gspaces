@@ -8,6 +8,20 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/main.css') }}" rel="stylesheet">
     <style>
+        /* Icon styles */
+        .item-icon-img {
+            width: 24px;
+            height: 24px;
+            object-fit: contain;
+            margin-right: 5px;
+            vertical-align: middle;
+        }
+        .item-icon-emoji {
+            font-size: 1.2rem;
+            margin-right: 5px;
+            vertical-align: middle;
+        }
+        
         body { background: #f8f9fa; }
         .header-section {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -107,6 +121,20 @@
                 {% endfor %}
             {% endif %}
         {% endwith %}
+
+        {# Macro to render item icon #}
+        {% macro render_icon(item_slug) %}
+            {% set item = default_items|selectattr('item_slug', 'equalto', item_slug)|first %}
+            {% if item %}
+                {% if item.icon_image %}
+                    <img src="{{ url_for('static', filename=item.icon_image) }}" alt="{{ item.item_name }}" class="item-icon-img">
+                {% else %}
+                    <span class="item-icon-emoji">{{ item.icon_emoji or '📦' }}</span>
+                {% endif %}
+            {% else %}
+                <span class="item-icon-emoji">📦</span>
+            {% endif %}
+        {% endmacro %}
 
         <!-- Lead Info Section -->
         <div class="design-card">
@@ -316,7 +344,7 @@
                         <label>
                             <input type="checkbox" name="has_table" {% if design.has_table %}checked{% endif %}
                                    onchange="toggleDetails(this, 'table_{{ design.id }}'); calculateTotal({{ design.id }})">
-                            <strong>Desk Table</strong>
+                            <strong>{{ render_icon('table') }} Desk Table</strong>
                         </label>
                         <div id="table_{{ design.id }}" class="item-details" {% if design.has_table %}style="display:block"{% endif %}>
                             <div class="row mb-2">
@@ -348,7 +376,7 @@
                         <label>
                             <input type="checkbox" name="has_chair" {% if design.has_chair %}checked{% endif %}
                                    onchange="toggleDetails(this, 'chair_{{ design.id }}'); calculateTotal({{ design.id }})">
-                            <strong>💺 Chair</strong>
+                            <strong>{{ render_icon('chair') }} Chair</strong>
                         </label>
                         <div id="chair_{{ design.id }}" class="item-details" {% if design.has_chair %}style="display:block"{% endif %}>
                             <div class="row mb-2">
@@ -387,7 +415,7 @@
                         <label>
                             <input type="checkbox" name="has_lighting" {% if design.has_lighting %}checked{% endif %}
                                    onchange="toggleDetails(this, 'lighting_{{ design.id }}'); calculateTotal({{ design.id }})">
-                            <strong>💡 Rope Lighting</strong>
+                            <strong>{{ render_icon('lighting') }} Rope Lighting</strong>
                         </label>
                         <div id="lighting_{{ design.id }}" class="item-details" {% if design.has_lighting %}style="display:block"{% endif %}>
                             <div class="row mb-2">
@@ -419,7 +447,7 @@
                         <label>
                             <input type="checkbox" name="has_profile_lighting" {% if design.has_profile_lighting %}checked{% endif %}
                                    onchange="toggleDetails(this, 'profile_lighting_{{ design.id }}'); calculateTotal({{ design.id }})">
-                            <strong>💡 Profile Lighting</strong>
+                            <strong>{{ render_icon('profile_lighting') }} Profile Lighting</strong>
                         </label>
                         <div id="profile_lighting_{{ design.id }}" class="item-details" {% if design.has_profile_lighting %}style="display:block"{% endif %}>
                             <div class="row mb-2">
@@ -451,7 +479,7 @@
                         <label>
                             <input type="checkbox" name="has_storage" {% if design.has_storage %}checked{% endif %}
                                    onchange="toggleDetails(this, 'storage_{{ design.id }}'); calculateTotal({{ design.id }})">
-                            <strong>📦 Storage</strong>
+                            <strong>{{ render_icon('storage') }} Storage</strong>
                         </label>
                         <div id="storage_{{ design.id }}" class="item-details" {% if design.has_storage %}style="display:block"{% endif %}>
                             <div class="row mb-2">
@@ -483,7 +511,7 @@
                         <label>
                             <input type="checkbox" name="has_accessories" {% if design.has_accessories %}checked{% endif %}
                                    onchange="toggleDetails(this, 'accessories_{{ design.id }}'); calculateTotal({{ design.id }})">
-                            <strong>✨ Accessories</strong>
+                            <strong>{{ render_icon('accessories') }} Accessories</strong>
                         </label>
                         <div id="accessories_{{ design.id }}" class="item-details" {% if design.has_accessories %}style="display:block"{% endif %}>
                             <div class="row mb-2">
@@ -516,7 +544,7 @@
                             <input type="checkbox" class="form-check-input" name="has_big_plants"
                                    {% if design.has_big_plants %}checked{% endif %}
                                    onchange="calculateTotal({{ design.id }})">
-                            <label class="form-check-label fw-bold">🌳 Big Plants</label>
+                            <label class="form-check-label fw-bold">{{ render_icon('big_plants') }} Big Plants</label>
                         </div>
                         <div class="row g-2">
                             <div class="col-md-3">
@@ -584,7 +612,7 @@
                             <input type="checkbox" class="form-check-input" name="has_frames"
                                    {% if design.has_frames %}checked{% endif %}
                                    onchange="calculateTotal({{ design.id }})">
-                            <label class="form-check-label fw-bold">🖼️ Frames</label>
+                            <label class="form-check-label fw-bold">{{ render_icon('frames') }} Frames</label>
                         </div>
                         <div class="row g-2">
                             <div class="col-md-3">
@@ -618,7 +646,7 @@
                             <input type="checkbox" class="form-check-input" name="has_wall_racks"
                                    {% if design.has_wall_racks %}checked{% endif %}
                                    onchange="calculateTotal({{ design.id }})">
-                            <label class="form-check-label fw-bold">🚪 Wall Racks</label>
+                            <label class="form-check-label fw-bold">{{ render_icon('wall_racks') }} Wall Racks</label>
                         </div>
                         <div class="row g-2">
                             <div class="col-md-3">
@@ -684,7 +712,7 @@
                         <div class="form-check mb-2">
                             <input type="checkbox" class="form-check-input" name="has_desk_lamp"
                                    {% if design.has_desk_lamp %}checked{% endif %}>
-                            <label class="form-check-label fw-bold">💡 Desk Lamp</label>
+                            <label class="form-check-label fw-bold">{{ render_icon('desk_mat') }} Desk Lamp</label>
                         </div>
                         <div class="row g-2">
                             <div class="col-md-3">
@@ -785,7 +813,7 @@
                             <input type="checkbox" class="form-check-input" name="has_dustbin"
                                    {% if design.has_dustbin %}checked{% endif %}
                                    onchange="calculateTotal({{ design.id }})">
-                            <label class="form-check-label fw-bold">🗑️ Dustbin</label>
+                            <label class="form-check-label fw-bold">{{ render_icon('dustbin') }} Dustbin</label>
                         </div>
                         <div class="row g-2">
                             <div class="col-md-3">
@@ -853,7 +881,7 @@
                             <input type="checkbox" class="form-check-input" name="has_keyboard"
                                    {% if design.has_keyboard %}checked{% endif %}
                                    onchange="calculateTotal({{ design.id }})">
-                            <label class="form-check-label fw-bold">⌨️ Keyboard</label>
+                            <label class="form-check-label fw-bold">{{ render_icon('keyboard') }} Keyboard</label>
                         </div>
                         <div class="row g-2">
                             <div class="col-md-3">
@@ -887,7 +915,7 @@
                             <input type="checkbox" class="form-check-input" name="has_mouse"
                                    {% if design.has_mouse %}checked{% endif %}
                                    onchange="calculateTotal({{ design.id }})">
-                            <label class="form-check-label fw-bold">🖱️ Mouse</label>
+                            <label class="form-check-label fw-bold">{{ render_icon('mouse') }} Mouse</label>
                         </div>
                         <div class="row g-2">
                             <div class="col-md-3">
@@ -921,7 +949,7 @@
                             <input type="checkbox" class="form-check-input" name="has_paint"
                                    {% if design.has_paint %}checked{% endif %}
                                    onchange="calculateTotal({{ design.id }})">
-                            <label class="form-check-label fw-bold">🎨 Paint</label>
+                            <label class="form-check-label fw-bold">{{ render_icon('paint') }} Paint</label>
                         </div>
                         <div class="row g-2">
                             <div class="col-md-3">
@@ -955,7 +983,7 @@
                             <input type="checkbox" class="form-check-input" name="has_wardrobes"
                                    {% if design.has_wardrobes %}checked{% endif %}
                                    onchange="calculateTotal({{ design.id }})">
-                            <label class="form-check-label fw-bold">🚪 Wardrobes</label>
+                            <label class="form-check-label fw-bold">{{ render_icon('wardrobes') }} Wardrobes</label>
                         </div>
                         <div class="row g-2">
                             <div class="col-md-3">

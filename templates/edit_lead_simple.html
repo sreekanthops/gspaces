@@ -204,26 +204,50 @@
         <h3 class="mb-4"><i class="bi bi-collection"></i> Design Options ({{ designs|length }})</h3>
         
         {% if designs %}
+            <div class="accordion" id="designsAccordion">
             {% for design in designs %}
-            <div class="design-card">
-                <form method="POST" action="{{ url_for('leads.update_design', design_id=design.id) }}">
-                    
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="mb-0">
-                            <input type="text" name="design_name" class="form-control d-inline-block"
-                                   style="width: auto;" value="{{ design.design_name }}">
-                        </h5>
-                        <button type="button" class="btn btn-danger btn-sm"
-                                onclick="if(confirm('Delete this design?')) { document.getElementById('deleteForm{{ design.id }}').submit(); }">
-                            <i class="bi bi-trash"></i> Delete
-                        </button>
-                    </div>
+            <div class="accordion-item design-card mb-3" style="border: 2px solid #dee2e6; border-radius: 10px;">
+                <h2 class="accordion-header" id="heading{{ design.id }}">
+                    <button class="accordion-button {% if not loop.first %}collapsed{% endif %}" type="button"
+                            data-bs-toggle="collapse" data-bs-target="#collapse{{ design.id }}"
+                            aria-expanded="{% if loop.first %}true{% else %}false{% endif %}"
+                            aria-controls="collapse{{ design.id }}"
+                            style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-weight: bold;">
+                        <i class="bi bi-palette me-2"></i> {{ design.design_name or 'Design ' + loop.index|string }}
+                        <span class="badge bg-light text-dark ms-2">Design {{ loop.index }}</span>
+                    </button>
+                </h2>
+                <div id="collapse{{ design.id }}" class="accordion-collapse collapse {% if loop.first %}show{% endif %}"
+                     aria-labelledby="heading{{ design.id }}" data-bs-parent="#designsAccordion">
+                    <div class="accordion-body">
+                        <form method="POST" action="{{ url_for('leads.update_design', design_id=design.id) }}">
+                            
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div class="flex-grow-1 me-3">
+                                    <label class="form-label small">Design Name</label>
+                                    <input type="text" name="design_name" class="form-control"
+                                           value="{{ design.design_name }}">
+                                </div>
+                                <div class="btn-group">
+                                    {% if not loop.first %}
+                                    <button type="button" class="btn btn-info btn-sm"
+                                            onclick="copyFromFirstDesign({{ design.id }})"
+                                            title="Copy items from Design 1">
+                                        <i class="bi bi-files"></i> Copy from Design 1
+                                    </button>
+                                    {% endif %}
+                                    <button type="button" class="btn btn-danger btn-sm"
+                                            onclick="if(confirm('Delete this design?')) { document.getElementById('deleteForm{{ design.id }}').submit(); }">
+                                        <i class="bi bi-trash"></i> Delete
+                                    </button>
+                                </div>
+                            </div>
 
-                    {% if design.design_image %}
-                        <img src="{{ url_for('static', filename=design.design_image) }}"
-                             alt="Design" class="design-image">
-                    {% endif %}
-                </form>
+                            {% if design.design_image %}
+                                <img src="{{ url_for('static', filename=design.design_image) }}"
+                                     alt="Design" class="design-image">
+                            {% endif %}
+                        </form>
 
                 <!-- Media Gallery Section (Separate Form) -->
                     <div class="mb-4 p-3" style="background: #f8f9fa; border-radius: 10px;">
@@ -1051,8 +1075,11 @@
                 <form method="POST" action="{{ url_for('leads.delete_design', design_id=design.id) }}"
                       id="deleteForm{{ design.id }}" style="display: none;">
                 </form>
+                    </div>
+                </div>
             </div>
             {% endfor %}
+            </div>
         {% else %}
             <div class="alert alert-info">
                 <i class="bi bi-info-circle"></i> No designs added yet. Add your first design option above.
@@ -1205,6 +1232,96 @@
                 discountInput.disabled = false;
             }
             calculateTotal(designId);
+        }
+
+        // Copy items from first design to another design
+        function copyFromFirstDesign(targetDesignId) {
+            if (!confirm('This will copy all checked items, quantities, and prices from Design 1. Continue?')) {
+                return;
+            }
+            
+            // Get first design ID (assuming designs are in order)
+            const firstDesignId = {{ designs[0].id if designs else 0 }};
+            if (firstDesignId === 0) return;
+            
+            const sourceForm = document.getElementById('updateForm' + firstDesignId);
+            const targetForm = document.getElementById('updateForm' + targetDesignId);
+            
+            if (!sourceForm || !targetForm) {
+                alert('Error: Could not find forms');
+                return;
+            }
+            
+            // List of all items
+            const items = [
+                'table', 'chair', 'plants', 'lighting', 'profile_lighting', 'storage', 'accessories',
+                'big_plants', 'mini_plants', 'frames', 'wall_racks', 'desk_mat',
+                'dustbin', 'floor_mat', 'keyboard', 'mouse', 'paint', 'wardrobes'
+            ];
+            
+            // Copy each item's checkbox, quantity, price, and details
+            items.forEach(itemName => {
+                // Copy checkbox state
+                const sourceCheckbox = sourceForm.querySelector(`[name="has_${itemName}"]`);
+                const targetCheckbox = targetForm.querySelector(`[name="has_${itemName}"]`);
+                if (sourceCheckbox && targetCheckbox) {
+                    targetCheckbox.checked = sourceCheckbox.checked;
+                    // Trigger toggle to show/hide details
+                    if (targetCheckbox.checked) {
+                        const detailsDiv = document.getElementById(`${itemName}_${targetDesignId}`);
+                        if (detailsDiv) detailsDiv.style.display = 'block';
+                    }
+                }
+                
+                // Copy quantity
+                const sourceQty = sourceForm.querySelector(`[name="${itemName}_quantity"]`);
+                const targetQty = targetForm.querySelector(`[name="${itemName}_quantity"]`);
+                if (sourceQty && targetQty) {
+                    targetQty.value = sourceQty.value;
+                }
+                
+                // Copy price
+                const sourcePrice = sourceForm.querySelector(`[name="${itemName}_price"]`);
+                const targetPrice = targetForm.querySelector(`[name="${itemName}_price"]`);
+                if (sourcePrice && targetPrice) {
+                    targetPrice.value = sourcePrice.value;
+                }
+                
+                // Copy details/description
+                const sourceDetails = sourceForm.querySelector(`[name="${itemName}_details"]`);
+                const targetDetails = targetForm.querySelector(`[name="${itemName}_details"]`);
+                if (sourceDetails && targetDetails) {
+                    targetDetails.value = sourceDetails.value;
+                }
+                
+                // Copy headrest for chair
+                if (itemName === 'chair') {
+                    const sourceHeadrest = sourceForm.querySelector(`[name="chair_headrest"]`);
+                    const targetHeadrest = targetForm.querySelector(`[name="chair_headrest"]`);
+                    if (sourceHeadrest && targetHeadrest) {
+                        targetHeadrest.value = sourceHeadrest.value;
+                    }
+                }
+            });
+            
+            // Copy discount settings
+            const sourceDiscountType = sourceForm.querySelector('[name="discount_type"]');
+            const targetDiscountType = targetForm.querySelector('[name="discount_type"]');
+            if (sourceDiscountType && targetDiscountType) {
+                targetDiscountType.value = sourceDiscountType.value;
+                toggleDiscountInput(targetDiscountType, targetDesignId);
+            }
+            
+            const sourceDiscountValue = sourceForm.querySelector('[name="discount_value"]');
+            const targetDiscountValue = targetForm.querySelector('[name="discount_value"]');
+            if (sourceDiscountValue && targetDiscountValue) {
+                targetDiscountValue.value = sourceDiscountValue.value;
+            }
+            
+            // Recalculate totals
+            calculateTotal(targetDesignId);
+            
+            alert('Items copied successfully from Design 1!');
         }
 
         // Calculate totals on page load

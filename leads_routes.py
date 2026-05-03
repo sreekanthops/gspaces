@@ -231,10 +231,18 @@ def edit_lead():
     cur.execute("SELECT * FROM pricing_rules ORDER BY item_category, item_type")
     pricing_rules = cur.fetchall()
     
-    # Fetch default prices from database
-    cur.execute("SELECT item_name, default_price, description FROM item_default_prices ORDER BY item_name")
-    default_prices_list = cur.fetchall()
-    default_prices = {row['item_name']: row['default_price'] for row in default_prices_list}
+    # Fetch default items and prices from default_items table
+    cur.execute("""
+        SELECT id, item_name, item_slug, icon_emoji, icon_image,
+               default_price, description, display_order, is_active
+        FROM default_items
+        WHERE is_active = TRUE
+        ORDER BY display_order, item_name
+    """)
+    default_items_list = cur.fetchall()
+    
+    # Create default_prices dict for backward compatibility
+    default_prices = {row['item_slug']: row['default_price'] for row in default_items_list}
     
     cur.close()
     conn.close()
@@ -244,7 +252,8 @@ def edit_lead():
                          designs=designs,
                          design_custom_fields=design_custom_fields,
                          pricing_rules=pricing_rules,
-                         default_prices=default_prices)
+                         default_prices=default_prices,
+                         default_items=default_items_list)
 
 @leads_bp.route('/admin/leads/<int:lead_id>/design/add', methods=['POST'])
 @admin_required
@@ -300,72 +309,194 @@ def add_design():
     
     return redirect(url_for('leads.edit_lead', lead_id=lead_id))
 
-@leads_bp.route('/admin/default-prices', methods=['GET', 'POST'])
+@leads_bp.route('/admin/default-prices', methods=['GET'])
 @admin_required
 def manage_default_prices():
-    """Manage default prices for all items"""
+    """Manage default prices and items - Main page"""
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
     
-    if request.method == 'POST':
-        try:
-            # Update all default prices
-            for key, value in request.form.items():
-                if key.startswith('price_'):
-                    item_name = key.replace('price_', '')
-                    price = float(value)
-                    
-                    cur.execute("""
-                        UPDATE item_default_prices
-                        SET default_price = %s, updated_at = CURRENT_TIMESTAMP
-                        WHERE item_name = %s
-                    """, (price, item_name))
-            
-            conn.commit()
-            flash('Default prices updated successfully!', 'success')
-            return redirect(url_for('leads.manage_default_prices'))
-            
-        except Exception as e:
-            conn.rollback()
-            flash(f'Error updating prices: {str(e)}', 'danger')
-    
-    # Fetch all items with their default prices
+    # Fetch all items from default_items table
     cur.execute("""
-        SELECT item_name, default_price, description
-        FROM item_default_prices
-        ORDER BY item_name
+        SELECT id, item_name, item_slug, icon_emoji, icon_image,
+               default_price, description, display_order, is_active
+        FROM default_items
+        ORDER BY display_order, item_name
     """)
-    items_raw = cur.fetchall()
-    
-    # Add display names and icons for better UI
-    item_icons = {
-        'table': '🪑', 'chair': '💺', 'lighting': '💡', 'storage': '📦',
-        'accessories': '✨', 'big_plants': '🌳', 'mini_plants': '🌱',
-        'frames': '🖼️', 'wall_racks': '📚', 'desk_mat': '🖱️',
-        'dustbin': '🗑️', 'floor_mat': '🧹', 'keyboard': '⌨️',
-        'mouse': '🖱️', 'paint': '🎨', 'wardrobes': '👔',
-        'carpet': '🧶', 'curtains': '🪟', 'wall_art': '🖼️',
-        'desk_organizer': '📋', 'monitor_stand': '🖥️', 'cable_management': '🔌',
-        'footrest': '🦶', 'monitor': '🖥️', 'laptop_stand': '💻',
-        'headphone_stand': '🎧', 'whiteboard': '📝', 'bookshelf': '📚',
-        'trash_bin': '🗑️', 'desk_lamp': '💡', 'pen_holder': '✏️',
-        'laptop_holder': '💻'
-    }
-    
-    items = []
-    for item in items_raw:
-        items.append({
-            'item_name': item['item_name'],
-            'default_price': item['default_price'],
-            'description': item['description'],
-            'display_name': item['item_name'].replace('_', ' ').title(),
-            'icon': item_icons.get(item['item_name'], '📦')
-        })
+    items = cur.fetchall()
     
     cur.close()
     conn.close()
     
     return render_template('admin_default_prices.html', items=items)
+
+@leads_bp.route('/admin/default-prices/update', methods=['POST'])
+@admin_required
+def update_default_prices():
+    """Update all default prices"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    try:
+        # Update all default prices
+        for key, value in request.form.items():
+            if key.startswith('price_'):
+                item_slug = key.replace('price_', '')
+                price = float(value)
+                
+                cur.execute("""
+                    UPDATE default_items
+                    SET default_price = %s, updated_at = CURRENT_TIMESTAMP
+                    WHERE item_slug = %s
+                """, (price, item_slug))
+        
+        conn.commit()
+        flash('Default prices updated successfully!', 'success')
+        
+    except Exception as e:
+        conn.rollback()
+        flash(f'Error updating prices: {str(e)}', 'danger')
+    finally:
+        cur.close()
+        conn.close()
+    
+    return redirect(url_for('leads.manage_default_prices'))
+
+@leads_bp.route('/admin/default-items/add', methods=['POST'])
+@admin_required
+def add_default_item():
+    """Add a new default item"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    try:
+        item_name = request.form.get('item_name')
+        item_slug = request.form.get('item_slug')
+        icon_emoji = request.form.get('icon_emoji', '📦')
+        default_price = float(request.form.get('default_price', 0))
+        description = request.form.get('description', '')
+        display_order = int(request.form.get('display_order', 0))
+        is_active = 'is_active' in request.form
+        
+        # Handle icon image upload
+        icon_image = None
+        if 'icon_image' in request.files:
+            file = request.files['icon_image']
+            if file and file.filename and allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                filename = f"icon_{item_slug}_{timestamp}_{filename}"
+                
+                # Create icons directory if it doesn't exist
+                icons_folder = os.path.join('static', 'img', 'icons')
+                os.makedirs(icons_folder, exist_ok=True)
+                
+                filepath = os.path.join(icons_folder, filename)
+                file.save(filepath)
+                icon_image = f"img/icons/{filename}"
+        
+        # Insert new item
+        cur.execute("""
+            INSERT INTO default_items
+            (item_name, item_slug, icon_emoji, icon_image, default_price,
+             description, display_order, is_active)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        """, (item_name, item_slug, icon_emoji, icon_image, default_price,
+              description, display_order, is_active))
+        
+        conn.commit()
+        flash(f'Item "{item_name}" added successfully!', 'success')
+        
+    except Exception as e:
+        conn.rollback()
+        flash(f'Error adding item: {str(e)}', 'danger')
+    finally:
+        cur.close()
+        conn.close()
+    
+    return redirect(url_for('leads.manage_default_prices'))
+
+@leads_bp.route('/admin/default-items/update', methods=['POST'])
+@admin_required
+def update_default_item():
+    """Update an existing default item"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    try:
+        item_id = int(request.form.get('item_id'))
+        item_name = request.form.get('item_name')
+        item_slug = request.form.get('item_slug')
+        icon_emoji = request.form.get('icon_emoji', '📦')
+        default_price = float(request.form.get('default_price', 0))
+        description = request.form.get('description', '')
+        display_order = int(request.form.get('display_order', 0))
+        is_active = 'is_active' in request.form
+        
+        # Handle icon image upload
+        icon_image_update = ""
+        if 'icon_image' in request.files:
+            file = request.files['icon_image']
+            if file and file.filename and allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                filename = f"icon_{item_slug}_{timestamp}_{filename}"
+                
+                # Create icons directory if it doesn't exist
+                icons_folder = os.path.join('static', 'img', 'icons')
+                os.makedirs(icons_folder, exist_ok=True)
+                
+                filepath = os.path.join(icons_folder, filename)
+                file.save(filepath)
+                icon_image_update = f", icon_image = 'img/icons/{filename}'"
+        
+        # Update item
+        cur.execute(f"""
+            UPDATE default_items
+            SET item_name = %s, item_slug = %s, icon_emoji = %s,
+                default_price = %s, description = %s, display_order = %s,
+                is_active = %s, updated_at = CURRENT_TIMESTAMP
+                {icon_image_update}
+            WHERE id = %s
+        """, (item_name, item_slug, icon_emoji, default_price, description,
+              display_order, is_active, item_id))
+        
+        conn.commit()
+        flash(f'Item "{item_name}" updated successfully!', 'success')
+        
+    except Exception as e:
+        conn.rollback()
+        flash(f'Error updating item: {str(e)}', 'danger')
+    finally:
+        cur.close()
+        conn.close()
+    
+    return redirect(url_for('leads.manage_default_prices'))
+
+@leads_bp.route('/admin/default-items/delete', methods=['POST'])
+@admin_required
+def delete_default_item():
+    """Delete a default item"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    try:
+        item_id = int(request.form.get('item_id'))
+        
+        # Delete item
+        cur.execute("DELETE FROM default_items WHERE id = %s", (item_id,))
+        
+        conn.commit()
+        flash('Item deleted successfully!', 'success')
+        
+    except Exception as e:
+        conn.rollback()
+        flash(f'Error deleting item: {str(e)}', 'danger')
+    finally:
+        cur.close()
+        conn.close()
+    
+    return redirect(url_for('leads.manage_default_prices'))
 
 # Continue in next message due to length...
 

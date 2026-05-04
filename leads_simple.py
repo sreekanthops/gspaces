@@ -207,11 +207,18 @@ def edit_lead(lead_id):
     
     # Parse custom_items and media_files JSON for each design
     for design in designs:
-        # Parse custom_items
+        # Parse custom_items - handle both JSONB (already parsed) and TEXT (needs parsing)
         if design.get('custom_items'):
-            try:
-                design['custom_items'] = json.loads(design['custom_items'])
-            except:
+            if isinstance(design['custom_items'], list):
+                # Already parsed (JSONB column)
+                pass
+            elif isinstance(design['custom_items'], str):
+                # String that needs parsing (TEXT column)
+                try:
+                    design['custom_items'] = json.loads(design['custom_items'])
+                except:
+                    design['custom_items'] = []
+            else:
                 design['custom_items'] = []
         else:
             design['custom_items'] = []
@@ -715,11 +722,18 @@ def view_quotation(share_token):
     
     # Parse custom_items and media_files JSON for each design
     for design in designs:
-        # Parse custom_items
+        # Parse custom_items - handle both JSONB (already parsed) and TEXT (needs parsing)
         if design.get('custom_items'):
-            try:
-                design['custom_items'] = json.loads(design['custom_items'])
-            except:
+            if isinstance(design['custom_items'], list):
+                # Already parsed (JSONB column)
+                pass
+            elif isinstance(design['custom_items'], str):
+                # String that needs parsing (TEXT column)
+                try:
+                    design['custom_items'] = json.loads(design['custom_items'])
+                except:
+                    design['custom_items'] = []
+            else:
                 design['custom_items'] = []
         else:
             design['custom_items'] = []

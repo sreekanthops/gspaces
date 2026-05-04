@@ -105,21 +105,43 @@
             background: rgba(0,0,0,0.5);
             color: white;
             border: none;
-            padding: 15px 20px;
-            font-size: 1.5rem;
+            padding: 8px 12px;
+            font-size: 1.2rem;
             cursor: pointer;
-            border-radius: 5px;
-            transition: background 0.3s;
+            border-radius: 50%;
+            transition: all 0.3s;
             z-index: 10;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         .carousel-nav:hover {
             background: rgba(0,0,0,0.8);
+            transform: translateY(-50%) scale(1.1);
         }
         .carousel-nav.prev {
             left: 10px;
         }
         .carousel-nav.next {
             right: 10px;
+        }
+        
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            .carousel-nav {
+                padding: 6px 10px;
+                font-size: 1rem;
+                width: 35px;
+                height: 35px;
+            }
+            .carousel-nav.prev {
+                left: 5px;
+            }
+            .carousel-nav.next {
+                right: 5px;
+            }
         }
         .carousel-indicators {
             position: absolute;
@@ -732,7 +754,11 @@
                     
                     <!-- Media Container -->
                     <div id="modalMediaContainer" class="text-center" style="max-width: 90%; max-height: 90vh;">
-                        <img id="modalImage" src="" class="modal-image" alt="Full size image">
+                        <img id="modalImage" src="" class="modal-image" alt="Full size image" style="display: none;">
+                        <video id="modalVideo" controls class="modal-image" style="display: none;">
+                            <source id="modalVideoSource" src="" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
                     </div>
                     
                     <!-- Next Button -->
@@ -755,13 +781,34 @@
         let currentModalIndex = 0;
         
         function openImageModal(imageSrc, designId, mediaIndex) {
+            const modalImage = document.getElementById('modalImage');
+            const modalVideo = document.getElementById('modalVideo');
+            const modalVideoSource = document.getElementById('modalVideoSource');
+            
             // If designId and mediaIndex provided, enable navigation
             if (designId !== undefined && mediaIndex !== undefined) {
                 currentModalDesignId = designId;
                 currentModalIndex = mediaIndex;
                 
+                // Get current media
+                const designs = {{ designs|tojson|safe }};
+                const design = designs.find(d => d.id === designId);
+                const mediaFiles = design?.all_media || [];
+                const currentMedia = mediaFiles[mediaIndex];
+                
+                // Show appropriate media type
+                if (currentMedia && currentMedia.type === 'video') {
+                    modalImage.style.display = 'none';
+                    modalVideo.style.display = 'block';
+                    modalVideoSource.src = '/static/' + currentMedia.url;
+                    modalVideo.load();
+                } else {
+                    modalVideo.style.display = 'none';
+                    modalImage.style.display = 'block';
+                    modalImage.src = imageSrc;
+                }
+                
                 // Show navigation buttons if there are multiple media files
-                const mediaFiles = {{ designs|tojson|safe }}.find(d => d.id === designId)?.all_media || [];
                 if (mediaFiles.length > 1) {
                     document.getElementById('modalPrevBtn').style.display = 'block';
                     document.getElementById('modalNextBtn').style.display = 'block';
@@ -774,12 +821,14 @@
             } else {
                 // Single image mode (reference image)
                 currentModalDesignId = null;
+                modalVideo.style.display = 'none';
+                modalImage.style.display = 'block';
+                modalImage.src = imageSrc;
                 document.getElementById('modalPrevBtn').style.display = 'none';
                 document.getElementById('modalNextBtn').style.display = 'none';
                 document.getElementById('modalCounter').textContent = '';
             }
             
-            document.getElementById('modalImage').src = imageSrc;
             const modal = new bootstrap.Modal(document.getElementById('imageModal'));
             modal.show();
         }
@@ -801,9 +850,23 @@
                 currentModalIndex = 0;
             }
             
-            // Update image
+            // Update media (image or video)
             const media = mediaFiles[currentModalIndex];
-            document.getElementById('modalImage').src = '/static/' + media.url;
+            const modalImage = document.getElementById('modalImage');
+            const modalVideo = document.getElementById('modalVideo');
+            const modalVideoSource = document.getElementById('modalVideoSource');
+            
+            if (media.type === 'video') {
+                modalImage.style.display = 'none';
+                modalVideo.style.display = 'block';
+                modalVideoSource.src = '/static/' + media.url;
+                modalVideo.load();
+            } else {
+                modalVideo.style.display = 'none';
+                modalImage.style.display = 'block';
+                modalImage.src = '/static/' + media.url;
+            }
+            
             document.getElementById('modalCounter').textContent = `${currentModalIndex + 1} / ${mediaFiles.length}`;
         }
         

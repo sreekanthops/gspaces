@@ -304,8 +304,13 @@
             <div class="row">
             {% for design in designs %}
                 <div class="col-md-6 mb-4">
-                    <div class="design-section h-100">
-                        <h4 class="mb-3">{{ design.design_name }}</h4>
+                    <div class="design-section h-100" style="{% if loop.index == 1 %}border-left: 5px solid #667eea;{% else %}border-right: 5px solid #764ba2;{% endif %}">
+                        <h4 class="mb-3">
+                            <span class="badge" style="{% if loop.index == 1 %}background: #667eea;{% else %}background: #764ba2;{% endif %}">
+                                Design {{ loop.index }}
+                            </span>
+                            {{ design.design_name }}
+                        </h4>
                         
                         {% if design.all_media and design.all_media|length > 0 %}
                             <!-- Media Carousel -->
@@ -351,9 +356,10 @@
                                         {% if design.table_quantity and design.table_quantity > 1 %}
                                         <span class="badge bg-primary ms-2">×{{ design.table_quantity }}</span>
                                         {% endif %}
+                                        <span class="badge bg-info ms-2">{{ design.table_length_ft or 4 }}×{{ design.table_width_ft or 2 }}ft + {{ design.table_height_inch or 29 }}inch height</span>
                                     </div>
                                     {% if design.table_details %}
-                                    <div class="item-details">{{ design.table_details }}</div>
+                                    <div class="item-details">{{ design.table_details or 'Ergonomic office table with premium finish' }}</div>
                                     {% endif %}
                                 </div>
                             </div>
@@ -368,10 +374,13 @@
                                         {% if design.chair_quantity and design.chair_quantity > 1 %}
                                         <span class="badge bg-primary ms-2">×{{ design.chair_quantity }}</span>
                                         {% endif %}
+                                        {% if design.chair_headrest == 'with_headrest' or not design.chair_headrest %}
+                                        <span class="badge bg-secondary ms-2">With Headrest</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary ms-2">Without Headrest</span>
+                                        {% endif %}
                                     </div>
-                                    {% if design.chair_details %}
-                                    <div class="item-details">{{ design.chair_details }}</div>
-                                    {% endif %}
+                                    <div class="item-details">{{ design.chair_details or 'Ergonomic office chair with lumbar support and adjustable features' }}</div>
                                 </div>
                             </div>
                             {% endif %}
@@ -386,9 +395,7 @@
                                         <span class="badge bg-primary ms-2">×{{ design.plants_quantity }}</span>
                                         {% endif %}
                                     </div>
-                                    {% if design.plants_details %}
-                                    <div class="item-details">{{ design.plants_details }}</div>
-                                    {% endif %}
+                                    <div class="item-details">{{ design.plants_details or 'Indoor plants with decorative pots for fresh ambiance' }}</div>
                                 </div>
                             </div>
                             {% endif %}
@@ -402,9 +409,10 @@
                                         {% if design.lighting_quantity and design.lighting_quantity > 1 %}
                                         <span class="badge bg-primary ms-2">×{{ design.lighting_quantity }}</span>
                                         {% endif %}
+                                        <span class="badge bg-warning ms-2">{{ design.lighting_length_ft or 10 }}ft</span>
                                     </div>
                                     {% if design.lighting_details %}
-                                    <div class="item-details">{{ design.lighting_details }}</div>
+                                    <div class="item-details">{{ design.lighting_details or 'LED rope lighting for ambient illumination' }}</div>
                                     {% endif %}
                                 </div>
                             </div>
@@ -419,9 +427,10 @@
                                         {% if design.profile_lighting_quantity and design.profile_lighting_quantity > 1 %}
                                         <span class="badge bg-primary ms-2">×{{ design.profile_lighting_quantity }}</span>
                                         {% endif %}
+                                        <span class="badge bg-warning ms-2">{{ design.profile_lighting_length_ft or 10 }}ft</span>
                                     </div>
                                     {% if design.profile_lighting_details %}
-                                    <div class="item-details">{{ design.profile_lighting_details }}</div>
+                                    <div class="item-details">{{ design.profile_lighting_details or 'Aluminum profile LED lighting for modern look' }}</div>
                                     {% endif %}
                                 </div>
                             </div>
@@ -436,26 +445,10 @@
                                         {% if design.storage_quantity and design.storage_quantity > 1 %}
                                         <span class="badge bg-primary ms-2">×{{ design.storage_quantity }}</span>
                                         {% endif %}
+                                        <span class="badge bg-info ms-2">{{ design.storage_length_ft or 3 }}×{{ design.storage_width_ft or 1.5 }}ft + {{ design.storage_height_ft or 6 }}ft height</span>
                                     </div>
                                     {% if design.storage_details %}
-                                    <div class="item-details">{{ design.storage_details }}</div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            {% endif %}
-
-                            {% if design.has_accessories %}
-                            <div class="item-row">
-                                <div class="item-icon">{{ render_icon('accessories') }}</div>
-                                <div class="item-content">
-                                    <div class="item-title">
-                                        Accessories
-                                        {% if design.accessories_quantity and design.accessories_quantity > 1 %}
-                                        <span class="badge bg-primary ms-2">×{{ design.accessories_quantity }}</span>
-                                        {% endif %}
-                                    </div>
-                                    {% if design.accessories_details %}
-                                    <div class="item-details">{{ design.accessories_details }}</div>
+                                    <div class="item-details">{{ design.storage_details or 'Modular storage unit with shelves and drawers' }}</div>
                                     {% endif %}
                                 </div>
                             </div>
@@ -471,9 +464,7 @@
                                         <span class="badge bg-primary ms-2">×{{ design.big_plants_quantity }}</span>
                                         {% endif %}
                                     </div>
-                                    {% if design.big_plants_details %}
-                                    <div class="item-details">{{ design.big_plants_details }}</div>
-                                    {% endif %}
+                                    <div class="item-details">{{ design.big_plants_details or 'Large floor plants for statement decor' }}</div>
                                 </div>
                             </div>
                             {% endif %}
@@ -488,9 +479,7 @@
                                         <span class="badge bg-primary ms-2">×{{ design.mini_plants_quantity }}</span>
                                         {% endif %}
                                     </div>
-                                    {% if design.mini_plants_details %}
-                                    <div class="item-details">{{ design.mini_plants_details }}</div>
-                                    {% endif %}
+                                    <div class="item-details">{{ design.mini_plants_details or 'Small desk plants for workspace freshness' }}</div>
                                 </div>
                             </div>
                             {% endif %}
@@ -504,9 +493,10 @@
                                         {% if design.frames_quantity and design.frames_quantity > 1 %}
                                         <span class="badge bg-primary ms-2">×{{ design.frames_quantity }}</span>
                                         {% endif %}
+                                        <span class="badge bg-success ms-2">{{ design.frames_size_ft or '2x3' }}ft</span>
                                     </div>
                                     {% if design.frames_details %}
-                                    <div class="item-details">{{ design.frames_details }}</div>
+                                    <div class="item-details">{{ design.frames_details or 'Wooden photo/art frames for wall decoration' }}</div>
                                     {% endif %}
                                 </div>
                             </div>
@@ -521,9 +511,10 @@
                                         {% if design.wall_racks_quantity and design.wall_racks_quantity > 1 %}
                                         <span class="badge bg-primary ms-2">×{{ design.wall_racks_quantity }}</span>
                                         {% endif %}
+                                        <span class="badge bg-success ms-2">{{ design.wall_racks_length_ft or 4 }}ft</span>
                                     </div>
                                     {% if design.wall_racks_details %}
-                                    <div class="item-details">{{ design.wall_racks_details }}</div>
+                                    <div class="item-details">{{ design.wall_racks_details or 'Wooden floating shelves for storage and display' }}</div>
                                     {% endif %}
                                 </div>
                             </div>
@@ -539,9 +530,7 @@
                                         <span class="badge bg-primary ms-2">×{{ design.desk_mat_quantity }}</span>
                                         {% endif %}
                                     </div>
-                                    {% if design.desk_mat_details %}
-                                    <div class="item-details">{{ design.desk_mat_details }}</div>
-                                    {% endif %}
+                                    <div class="item-details">{{ design.desk_mat_details or 'Premium desk mat for smooth mouse movement and desk protection' }}</div>
                                 </div>
                             </div>
                             {% endif %}
@@ -556,9 +545,7 @@
                                         <span class="badge bg-primary ms-2">×{{ design.dustbin_quantity }}</span>
                                         {% endif %}
                                     </div>
-                                    {% if design.dustbin_details %}
-                                    <div class="item-details">{{ design.dustbin_details }}</div>
-                                    {% endif %}
+                                    <div class="item-details">{{ design.dustbin_details or 'Stylish waste bin for clean workspace' }}</div>
                                 </div>
                             </div>
                             {% endif %}
@@ -573,9 +560,7 @@
                                         <span class="badge bg-primary ms-2">×{{ design.floor_mat_quantity }}</span>
                                         {% endif %}
                                     </div>
-                                    {% if design.floor_mat_details %}
-                                    <div class="item-details">{{ design.floor_mat_details }}</div>
-                                    {% endif %}
+                                    <div class="item-details">{{ design.floor_mat_details or 'Anti-fatigue floor mat for comfort' }}</div>
                                 </div>
                             </div>
                             {% endif %}
@@ -590,9 +575,7 @@
                                         <span class="badge bg-primary ms-2">×{{ design.keyboard_quantity }}</span>
                                         {% endif %}
                                     </div>
-                                    {% if design.keyboard_details %}
-                                    <div class="item-details">{{ design.keyboard_details }}</div>
-                                    {% endif %}
+                                    <div class="item-details">{{ design.keyboard_details or 'Ergonomic keyboard for comfortable typing' }}</div>
                                 </div>
                             </div>
                             {% endif %}
@@ -607,9 +590,7 @@
                                         <span class="badge bg-primary ms-2">×{{ design.mouse_quantity }}</span>
                                         {% endif %}
                                     </div>
-                                    {% if design.mouse_details %}
-                                    <div class="item-details">{{ design.mouse_details }}</div>
-                                    {% endif %}
+                                    <div class="item-details">{{ design.mouse_details or 'Wireless mouse with precision tracking' }}</div>
                                 </div>
                             </div>
                             {% endif %}
@@ -624,9 +605,7 @@
                                         <span class="badge bg-primary ms-2">×{{ design.paint_quantity }}</span>
                                         {% endif %}
                                     </div>
-                                    {% if design.paint_details %}
-                                    <div class="item-details">{{ design.paint_details }}</div>
-                                    {% endif %}
+                                    <div class="item-details">{{ design.paint_details or 'Premium wall paint with primer for fresh look' }}</div>
                                 </div>
                             </div>
                             {% endif %}
@@ -641,9 +620,7 @@
                                         <span class="badge bg-primary ms-2">×{{ design.wardrobes_quantity }}</span>
                                         {% endif %}
                                     </div>
-                                    {% if design.wardrobes_details %}
-                                    <div class="item-details">{{ design.wardrobes_details }}</div>
-                                    {% endif %}
+                                    <div class="item-details">{{ design.wardrobes_details or 'Spacious wardrobe with organized storage' }}</div>
                                 </div>
                             </div>
                             {% endif %}

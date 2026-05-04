@@ -957,6 +957,24 @@
             
             // Auto-scroll every 5 seconds
             state.autoScrollInterval = setInterval(() => {
+                // Check if any video in this carousel is currently playing
+                const carousel = document.getElementById('carousel' + designId);
+                if (carousel) {
+                    const videos = carousel.querySelectorAll('video');
+                    let isVideoPlaying = false;
+                    
+                    videos.forEach(video => {
+                        if (!video.paused && !video.ended) {
+                            isVideoPlaying = true;
+                        }
+                    });
+                    
+                    // Don't auto-scroll if a video is playing
+                    if (isVideoPlaying) {
+                        return;
+                    }
+                }
+                
                 state.currentSlide = (state.currentSlide + 1) % state.totalSlides;
                 updateCarousel(designId);
             }, 5000);

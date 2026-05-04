@@ -351,12 +351,14 @@
                                 <div class="col-md-2">
                                     <label class="form-label small">Length (ft)</label>
                                     <input type="number" name="table_length_ft" class="form-control" step="0.1" min="0"
-                                           value="{{ design.table_length_ft or 4 }}" placeholder="4">
+                                           value="{{ design.table_length_ft or 4 }}" placeholder="4"
+                                           onchange="calculateItemTotal('table', {{ design.id }})">
                                 </div>
                                 <div class="col-md-2">
                                     <label class="form-label small">Width (ft)</label>
                                     <input type="number" name="table_width_ft" class="form-control" step="0.1" min="0"
-                                           value="{{ design.table_width_ft or 2 }}" placeholder="2">
+                                           value="{{ design.table_width_ft or 2 }}" placeholder="2"
+                                           onchange="calculateItemTotal('table', {{ design.id }})">
                                 </div>
                                 <div class="col-md-2">
                                     <label class="form-label small">Height (inch)</label>
@@ -1211,15 +1213,27 @@
                 'desk_lamp', 'pen_holder', 'laptop_holder'
             ];
             
-            // Calculate total for each item (quantity × price) - ONLY if checkbox is checked
+            // Calculate total for each item - ONLY if checkbox is checked
             items.forEach(itemName => {
                 // Check if the item's checkbox is checked
                 const checkbox = form.querySelector(`[name="has_${itemName}"]`);
                 const isChecked = checkbox ? checkbox.checked : false;
                 
-                const quantity = parseFloat(form.querySelector(`[name="${itemName}_quantity"]`)?.value || 0);
-                const price = parseFloat(form.querySelector(`[name="${itemName}_price"]`)?.value || 0);
-                const itemTotal = quantity * price;
+                let itemTotal = 0;
+                
+                // Special calculation for table and wardrobes: length × width × price per sq ft
+                if (itemName === 'table' || itemName === 'wardrobes') {
+                    const length = parseFloat(form.querySelector(`[name="${itemName}_length_ft"]`)?.value || 0);
+                    const width = parseFloat(form.querySelector(`[name="${itemName}_width_ft"]`)?.value || 0);
+                    const pricePerSqFt = parseFloat(form.querySelector(`[name="${itemName}_price"]`)?.value || 0);
+                    const sqFt = length * width;
+                    itemTotal = sqFt * pricePerSqFt;
+                } else {
+                    // Normal calculation: quantity × price
+                    const quantity = parseFloat(form.querySelector(`[name="${itemName}_quantity"]`)?.value || 0);
+                    const price = parseFloat(form.querySelector(`[name="${itemName}_price"]`)?.value || 0);
+                    itemTotal = quantity * price;
+                }
                 
                 // Update individual item total display
                 const totalField = document.getElementById(`${itemName}_total_${designId}`);

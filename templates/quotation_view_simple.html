@@ -251,6 +251,12 @@
         {% endif %}
     {% endmacro %}
     
+    {# Macro to get item description from default_items #}
+    {% macro get_description(item_slug, fallback='') %}
+        {%- set item = default_items|selectattr('item_slug', 'equalto', item_slug)|first -%}
+        {{- item.description if item and item.description else fallback -}}
+    {% endmacro %}
+    
     <div class="quotation-container" style="margin-top: 20px;">
         <!-- Header -->
         <div class="header">
@@ -537,7 +543,7 @@
 
                             {% if design.has_multi_socket %}
                             <div class="item-row">
-                                <div class="item-icon">🔌</div>
+                                <div class="item-icon">{{ render_icon('multi_socket') }}</div>
                                 <div class="item-content">
                                     <div class="item-title">
                                         Multi Socket
@@ -545,7 +551,7 @@
                                         <span class="badge bg-primary ms-2">×{{ design.multi_socket_quantity }}</span>
                                         {% endif %}
                                     </div>
-                                    <div class="item-details">{{ design.multi_socket_details or 'Premium multi-socket power strip with surge protection and USB ports' }}</div>
+                                    <div class="item-details">{{ design.multi_socket_details or get_description('multi_socket', 'Premium multi-socket power strip with surge protection and USB ports') }}</div>
                                 </div>
                             </div>
                             {% endif %}
@@ -560,14 +566,14 @@
                                         <span class="badge bg-primary ms-2">×{{ design.desk_lamp_quantity }}</span>
                                         {% endif %}
                                     </div>
-                                    <div class="item-details">{{ design.desk_lamp_details or 'LED desk lamp with adjustable brightness' }}</div>
+                                    <div class="item-details">{{ design.desk_lamp_details or get_description('desk_lamp', 'LED desk lamp with adjustable brightness and color temperature') }}</div>
                                 </div>
                             </div>
                             {% endif %}
 
                             {% if design.has_pen_holder %}
                             <div class="item-row">
-                                <div class="item-icon">✏️</div>
+                                <div class="item-icon">{{ render_icon('pen_holder') }}</div>
                                 <div class="item-content">
                                     <div class="item-title">
                                         Pen Holder
@@ -575,14 +581,14 @@
                                         <span class="badge bg-primary ms-2">×{{ design.pen_holder_quantity }}</span>
                                         {% endif %}
                                     </div>
-                                    <div class="item-details">{{ design.pen_holder_details or 'Wooden pen holder for desk organization' }}</div>
+                                    <div class="item-details">{{ design.pen_holder_details or get_description('pen_holder', 'Wooden pen holder for organized desk storage') }}</div>
                                 </div>
                             </div>
                             {% endif %}
 
                             {% if design.has_laptop_holder %}
                             <div class="item-row">
-                                <div class="item-icon">💻</div>
+                                <div class="item-icon">{{ render_icon('laptop_holder') }}</div>
                                 <div class="item-content">
                                     <div class="item-title">
                                         Laptop Holder
@@ -590,7 +596,7 @@
                                         <span class="badge bg-primary ms-2">×{{ design.laptop_holder_quantity }}</span>
                                         {% endif %}
                                     </div>
-                                    <div class="item-details">{{ design.laptop_holder_details or 'Vertical laptop stand for space saving' }}</div>
+                                    <div class="item-details">{{ design.laptop_holder_details or get_description('laptop_holder', 'Vertical laptop stand for space-saving desk organization') }}</div>
                                 </div>
                             </div>
                             {% endif %}

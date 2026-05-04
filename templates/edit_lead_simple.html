@@ -348,26 +348,41 @@
                         </label>
                         <div id="table_{{ design.id }}" class="item-details" {% if design.has_table %}style="display:block"{% endif %}>
                             <div class="row mb-2">
-                                <div class="col-md-3">
+                                <div class="col-md-2">
+                                    <label class="form-label small">Length (ft)</label>
+                                    <input type="number" name="table_length_ft" class="form-control" step="0.1" min="0"
+                                           value="{{ design.table_length_ft or 4 }}" placeholder="4">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label small">Width (ft)</label>
+                                    <input type="number" name="table_width_ft" class="form-control" step="0.1" min="0"
+                                           value="{{ design.table_width_ft or 2 }}" placeholder="2">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label small">Height (inch)</label>
+                                    <input type="number" name="table_height_inch" class="form-control" step="0.1" min="0"
+                                           value="{{ design.table_height_inch or 29 }}" placeholder="29">
+                                </div>
+                                <div class="col-md-2">
                                     <label class="form-label small">Quantity</label>
                                     <input type="number" name="table_quantity" class="form-control" min="1"
                                            value="{{ design.table_quantity or 1 }}"
                                            onchange="calculateItemTotal('table', {{ design.id }})">
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-2">
                                     <label class="form-label small">Unit Price (₹)</label>
                                     <input type="number" name="table_price" class="form-control" step="0.01" min="0"
                                            value="{{ design.table_price or default_prices.get("table", 0) }}"
                                            onchange="calculateItemTotal('table', {{ design.id }})">
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-2">
                                     <label class="form-label small">Total (₹)</label>
                                     <input type="number" id="table_total_{{ design.id }}" class="form-control" readonly
                                            style="background: #e9ecef; font-weight: bold;">
                                 </div>
                             </div>
                             <textarea name="table_details" class="form-control" rows="2"
-                                      placeholder="e.g., Ergonomic standing desk with storage">{{ design.table_details or '' }}</textarea>
+                                      placeholder="e.g., Ergonomic standing desk with storage">{{ design.table_details or 'Ergonomic office table with premium finish' }}</textarea>
                         </div>
                     </div>
 
@@ -380,14 +395,14 @@
                         </label>
                         <div id="chair_{{ design.id }}" class="item-details" {% if design.has_chair %}style="display:block"{% endif %}>
                             <div class="row mb-2">
-                                <div class="col-md-2">
+                                <div class="col-md-3">
                                     <label class="form-label small">Headrest</label>
                                     <select name="chair_headrest" class="form-control">
                                         <option value="with_headrest" {% if design.chair_headrest == 'with_headrest' or not design.chair_headrest %}selected{% endif %}>With Headrest</option>
                                         <option value="without_headrest" {% if design.chair_headrest == 'without_headrest' %}selected{% endif %}>Without Headrest</option>
                                     </select>
                                 </div>
-                                <div class="col-md-2">
+                                <div class="col-md-3">
                                     <label class="form-label small">Quantity</label>
                                     <input type="number" name="chair_quantity" class="form-control" min="1"
                                            value="{{ design.chair_quantity or 1 }}"
@@ -419,7 +434,12 @@
                         </label>
                         <div id="lighting_{{ design.id }}" class="item-details" {% if design.has_lighting %}style="display:block"{% endif %}>
                             <div class="row mb-2">
-                                <div class="col-md-3">
+                                <div class="col-md-2">
+                                    <label class="form-label small">Length (ft)</label>
+                                    <input type="number" name="lighting_length_ft" class="form-control" step="0.1" min="0"
+                                           value="{{ design.lighting_length_ft or 10 }}" placeholder="10">
+                                </div>
+                                <div class="col-md-2">
                                     <label class="form-label small">Quantity</label>
                                     <input type="number" name="lighting_quantity" class="form-control" min="1"
                                            value="{{ design.lighting_quantity or 1 }}"
@@ -451,7 +471,12 @@
                         </label>
                         <div id="profile_lighting_{{ design.id }}" class="item-details" {% if design.has_profile_lighting %}style="display:block"{% endif %}>
                             <div class="row mb-2">
-                                <div class="col-md-3">
+                                <div class="col-md-2">
+                                    <label class="form-label small">Length (ft)</label>
+                                    <input type="number" name="profile_lighting_length_ft" class="form-control" step="0.1" min="0"
+                                           value="{{ design.profile_lighting_length_ft or 10 }}" placeholder="10">
+                                </div>
+                                <div class="col-md-2">
                                     <label class="form-label small">Quantity</label>
                                     <input type="number" name="profile_lighting_quantity" class="form-control" min="1"
                                            value="{{ design.profile_lighting_quantity or 1 }}"
@@ -483,26 +508,41 @@
                         </label>
                         <div id="storage_{{ design.id }}" class="item-details" {% if design.has_storage %}style="display:block"{% endif %}>
                             <div class="row mb-2">
-                                <div class="col-md-3">
+                                <div class="col-md-2">
+                                    <label class="form-label small">Length (ft)</label>
+                                    <input type="number" name="storage_length_ft" class="form-control" step="0.1" min="0"
+                                           value="{{ design.storage_length_ft or 3 }}" placeholder="3">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label small">Width (ft)</label>
+                                    <input type="number" name="storage_width_ft" class="form-control" step="0.1" min="0"
+                                           value="{{ design.storage_width_ft or 1.5 }}" placeholder="1.5">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label small">Height (ft)</label>
+                                    <input type="number" name="storage_height_ft" class="form-control" step="0.1" min="0"
+                                           value="{{ design.storage_height_ft or 6 }}" placeholder="6">
+                                </div>
+                                <div class="col-md-2">
                                     <label class="form-label small">Quantity</label>
                                     <input type="number" name="storage_quantity" class="form-control" min="1"
                                            value="{{ design.storage_quantity or 1 }}"
                                            onchange="calculateItemTotal('storage', {{ design.id }})">
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-2">
                                     <label class="form-label small">Unit Price (₹)</label>
                                     <input type="number" name="storage_price" class="form-control" step="0.01" min="0"
                                            value="{{ design.storage_price or default_prices.get("storage", 0) }}"
                                            onchange="calculateItemTotal('storage', {{ design.id }})">
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-2">
                                     <label class="form-label small">Total (₹)</label>
                                     <input type="number" id="storage_total_{{ design.id }}" class="form-control" readonly
                                            style="background: #e9ecef; font-weight: bold;">
                                 </div>
                             </div>
                             <textarea name="storage_details" class="form-control" rows="2"
-                                      placeholder="e.g., Drawer unit with file organizer">{{ design.storage_details or '' }}</textarea>
+                                      placeholder="e.g., Drawer unit with file organizer">{{ design.storage_details or 'Modular storage unit with shelves and drawers' }}</textarea>
                         </div>
                     </div>
 
@@ -615,7 +655,12 @@
                             <label class="form-check-label fw-bold">{{ render_icon('frames') }} Frames</label>
                         </div>
                         <div class="row g-2">
-                            <div class="col-md-3">
+                            <div class="col-md-2">
+                                <label class="form-label small">Size (ft)</label>
+                                <input type="text" name="frames_size_ft" class="form-control"
+                                       value="{{ design.frames_size_ft or '2x3' }}" placeholder="2x3">
+                            </div>
+                            <div class="col-md-2">
                                 <label class="form-label small">Quantity</label>
                                 <input type="number" name="frames_quantity" class="form-control"
                                        value="{{ design.frames_quantity or 1 }}" min="1"
@@ -636,7 +681,7 @@
                         <div class="mt-2">
                             <label class="form-label small">Details</label>
                             <textarea name="frames_details" class="form-control" rows="2"
-                                      placeholder="e.g., Wall art frames, photo frames">{{ design.frames_details or '' }}</textarea>
+                                      placeholder="e.g., Wall art frames, photo frames">{{ design.frames_details or 'Wooden photo/art frames for wall decoration' }}</textarea>
                         </div>
                     </div>
 
@@ -649,7 +694,12 @@
                             <label class="form-check-label fw-bold">{{ render_icon('wall_racks') }} Wall Racks</label>
                         </div>
                         <div class="row g-2">
-                            <div class="col-md-3">
+                            <div class="col-md-2">
+                                <label class="form-label small">Length (ft)</label>
+                                <input type="number" name="wall_racks_length_ft" class="form-control" step="0.1" min="0"
+                                       value="{{ design.wall_racks_length_ft or 4 }}" placeholder="4">
+                            </div>
+                            <div class="col-md-2">
                                 <label class="form-label small">Quantity</label>
                                 <input type="number" name="wall_racks_quantity" class="form-control"
                                        value="{{ design.wall_racks_quantity or 1 }}" min="1"
@@ -670,7 +720,7 @@
                         <div class="mt-2">
                             <label class="form-label small">Details</label>
                             <textarea name="wall_racks_details" class="form-control" rows="2"
-                                      placeholder="e.g., Floating shelves, book racks">{{ design.wall_racks_details or '' }}</textarea>
+                                      placeholder="e.g., Floating shelves, book racks">{{ design.wall_racks_details or 'Wooden floating shelves for storage and display' }}</textarea>
                         </div>
                     </div>
 

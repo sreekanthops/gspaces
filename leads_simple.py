@@ -451,6 +451,23 @@ def update_design(design_id):
         item_data = {}
         subtotal = 0
         
+        # Get dimension fields
+        table_length_ft = float(request.form.get('table_length_ft', 4))
+        table_width_ft = float(request.form.get('table_width_ft', 2))
+        table_height_inch = float(request.form.get('table_height_inch', 29))
+        
+        storage_length_ft = float(request.form.get('storage_length_ft', 3))
+        storage_width_ft = float(request.form.get('storage_width_ft', 1.5))
+        storage_height_ft = float(request.form.get('storage_height_ft', 6))
+        
+        lighting_length_ft = float(request.form.get('lighting_length_ft', 10))
+        profile_lighting_length_ft = float(request.form.get('profile_lighting_length_ft', 10))
+        
+        frames_size_ft = request.form.get('frames_size_ft', '2x3')
+        wall_racks_length_ft = float(request.form.get('wall_racks_length_ft', 4))
+        
+        chair_headrest = request.form.get('chair_headrest', 'with_headrest')
+        
         for item in items:
             has_item = request.form.get(f'has_{item}') == 'on'
             
@@ -512,21 +529,23 @@ def update_design(design_id):
             final_price = subtotal - discount_value
         final_price = max(0, final_price)  # Ensure non-negative
         
-        # Build UPDATE query with all 18 items (including profile_lighting)
+        # Build UPDATE query with all 18 items + dimensions
         cur.execute("""
             UPDATE lead_designs
             SET design_name = %s,
                 has_table = %s, table_quantity = %s, table_price = %s, table_details = %s,
-                has_chair = %s, chair_quantity = %s, chair_price = %s, chair_details = %s,
+                table_length_ft = %s, table_width_ft = %s, table_height_inch = %s,
+                has_chair = %s, chair_quantity = %s, chair_price = %s, chair_details = %s, chair_headrest = %s,
                 has_plants = %s, plants_quantity = %s, plants_price = %s, plants_details = %s,
-                has_lighting = %s, lighting_quantity = %s, lighting_price = %s, lighting_details = %s,
-                has_profile_lighting = %s, profile_lighting_quantity = %s, profile_lighting_price = %s, profile_lighting_details = %s,
+                has_lighting = %s, lighting_quantity = %s, lighting_price = %s, lighting_details = %s, lighting_length_ft = %s,
+                has_profile_lighting = %s, profile_lighting_quantity = %s, profile_lighting_price = %s, profile_lighting_details = %s, profile_lighting_length_ft = %s,
                 has_storage = %s, storage_quantity = %s, storage_price = %s, storage_details = %s,
+                storage_length_ft = %s, storage_width_ft = %s, storage_height_ft = %s,
                 has_accessories = %s, accessories_quantity = %s, accessories_price = %s, accessories_details = %s,
                 has_big_plants = %s, big_plants_quantity = %s, big_plants_price = %s, big_plants_details = %s,
                 has_mini_plants = %s, mini_plants_quantity = %s, mini_plants_price = %s, mini_plants_details = %s,
-                has_frames = %s, frames_quantity = %s, frames_price = %s, frames_details = %s,
-                has_wall_racks = %s, wall_racks_quantity = %s, wall_racks_price = %s, wall_racks_details = %s,
+                has_frames = %s, frames_quantity = %s, frames_price = %s, frames_details = %s, frames_size_ft = %s,
+                has_wall_racks = %s, wall_racks_quantity = %s, wall_racks_price = %s, wall_racks_details = %s, wall_racks_length_ft = %s,
                 has_desk_mat = %s, desk_mat_quantity = %s, desk_mat_price = %s, desk_mat_details = %s,
                 has_dustbin = %s, dustbin_quantity = %s, dustbin_price = %s, dustbin_details = %s,
                 has_floor_mat = %s, floor_mat_quantity = %s, floor_mat_price = %s, floor_mat_details = %s,
@@ -539,28 +558,30 @@ def update_design(design_id):
             WHERE id = %s
         """, (
             design_name,
-            # Table
+            # Table + dimensions
             item_data['table']['has'], item_data['table']['quantity'], item_data['table']['price'], item_data['table']['details'],
-            # Chair
-            item_data['chair']['has'], item_data['chair']['quantity'], item_data['chair']['price'], item_data['chair']['details'],
+            table_length_ft, table_width_ft, table_height_inch,
+            # Chair + headrest
+            item_data['chair']['has'], item_data['chair']['quantity'], item_data['chair']['price'], item_data['chair']['details'], chair_headrest,
             # Plants
             item_data['plants']['has'], item_data['plants']['quantity'], item_data['plants']['price'], item_data['plants']['details'],
-            # Lighting
-            item_data['lighting']['has'], item_data['lighting']['quantity'], item_data['lighting']['price'], item_data['lighting']['details'],
-            # Profile Lighting
-            item_data['profile_lighting']['has'], item_data['profile_lighting']['quantity'], item_data['profile_lighting']['price'], item_data['profile_lighting']['details'],
-            # Storage
+            # Lighting + length
+            item_data['lighting']['has'], item_data['lighting']['quantity'], item_data['lighting']['price'], item_data['lighting']['details'], lighting_length_ft,
+            # Profile Lighting + length
+            item_data['profile_lighting']['has'], item_data['profile_lighting']['quantity'], item_data['profile_lighting']['price'], item_data['profile_lighting']['details'], profile_lighting_length_ft,
+            # Storage + dimensions
             item_data['storage']['has'], item_data['storage']['quantity'], item_data['storage']['price'], item_data['storage']['details'],
+            storage_length_ft, storage_width_ft, storage_height_ft,
             # Accessories
             item_data['accessories']['has'], item_data['accessories']['quantity'], item_data['accessories']['price'], item_data['accessories']['details'],
             # Big Plants
             item_data['big_plants']['has'], item_data['big_plants']['quantity'], item_data['big_plants']['price'], item_data['big_plants']['details'],
             # Mini Plants
             item_data['mini_plants']['has'], item_data['mini_plants']['quantity'], item_data['mini_plants']['price'], item_data['mini_plants']['details'],
-            # Frames
-            item_data['frames']['has'], item_data['frames']['quantity'], item_data['frames']['price'], item_data['frames']['details'],
-            # Wall Racks
-            item_data['wall_racks']['has'], item_data['wall_racks']['quantity'], item_data['wall_racks']['price'], item_data['wall_racks']['details'],
+            # Frames + size
+            item_data['frames']['has'], item_data['frames']['quantity'], item_data['frames']['price'], item_data['frames']['details'], frames_size_ft,
+            # Wall Racks + length
+            item_data['wall_racks']['has'], item_data['wall_racks']['quantity'], item_data['wall_racks']['price'], item_data['wall_racks']['details'], wall_racks_length_ft,
             # Desk Mat
             item_data['desk_mat']['has'], item_data['desk_mat']['quantity'], item_data['desk_mat']['price'], item_data['desk_mat']['details'],
             # Dustbin

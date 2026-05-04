@@ -520,21 +520,6 @@
                             </div>
                             {% endif %}
 
-                            {% if design.has_desk_mat %}
-                            <div class="item-row">
-                                <div class="item-icon">{{ render_icon('desk_mat') }}</div>
-                                <div class="item-content">
-                                    <div class="item-title">
-                                        Desk Mat
-                                        {% if design.desk_mat_quantity and design.desk_mat_quantity > 1 %}
-                                        <span class="badge bg-primary ms-2">×{{ design.desk_mat_quantity }}</span>
-                                        {% endif %}
-                                    </div>
-                                    <div class="item-details">{{ design.desk_mat_details or 'Premium desk mat for smooth mouse movement and desk protection' }}</div>
-                                </div>
-                            </div>
-                            {% endif %}
-
                             {% if design.has_dustbin %}
                             <div class="item-row">
                                 <div class="item-icon">{{ render_icon('dustbin') }}</div>
@@ -550,47 +535,62 @@
                             </div>
                             {% endif %}
 
-                            {% if design.has_floor_mat %}
+                            {% if design.has_multi_socket %}
                             <div class="item-row">
-                                <div class="item-icon">🟫</div>
+                                <div class="item-icon">🔌</div>
                                 <div class="item-content">
                                     <div class="item-title">
-                                        Floor Mat
-                                        {% if design.floor_mat_quantity and design.floor_mat_quantity > 1 %}
-                                        <span class="badge bg-primary ms-2">×{{ design.floor_mat_quantity }}</span>
+                                        Multi Socket
+                                        {% if design.multi_socket_quantity and design.multi_socket_quantity > 1 %}
+                                        <span class="badge bg-primary ms-2">×{{ design.multi_socket_quantity }}</span>
                                         {% endif %}
                                     </div>
-                                    <div class="item-details">{{ design.floor_mat_details or 'Anti-fatigue floor mat for comfort' }}</div>
+                                    <div class="item-details">{{ design.multi_socket_details or 'Premium multi-socket power strip with surge protection and USB ports' }}</div>
                                 </div>
                             </div>
                             {% endif %}
 
-                            {% if design.has_keyboard %}
+                            {% if design.has_desk_lamp %}
                             <div class="item-row">
-                                <div class="item-icon">{{ render_icon('keyboard') }}</div>
+                                <div class="item-icon">{{ render_icon('desk_lamp') }}</div>
                                 <div class="item-content">
                                     <div class="item-title">
-                                        Keyboard
-                                        {% if design.keyboard_quantity and design.keyboard_quantity > 1 %}
-                                        <span class="badge bg-primary ms-2">×{{ design.keyboard_quantity }}</span>
+                                        Desk Lamp
+                                        {% if design.desk_lamp_quantity and design.desk_lamp_quantity > 1 %}
+                                        <span class="badge bg-primary ms-2">×{{ design.desk_lamp_quantity }}</span>
                                         {% endif %}
                                     </div>
-                                    <div class="item-details">{{ design.keyboard_details or 'Ergonomic keyboard for comfortable typing' }}</div>
+                                    <div class="item-details">{{ design.desk_lamp_details or 'LED desk lamp with adjustable brightness' }}</div>
                                 </div>
                             </div>
                             {% endif %}
 
-                            {% if design.has_mouse %}
+                            {% if design.has_pen_holder %}
                             <div class="item-row">
-                                <div class="item-icon">{{ render_icon('mouse') }}</div>
+                                <div class="item-icon">✏️</div>
                                 <div class="item-content">
                                     <div class="item-title">
-                                        Mouse
-                                        {% if design.mouse_quantity and design.mouse_quantity > 1 %}
-                                        <span class="badge bg-primary ms-2">×{{ design.mouse_quantity }}</span>
+                                        Pen Holder
+                                        {% if design.pen_holder_quantity and design.pen_holder_quantity > 1 %}
+                                        <span class="badge bg-primary ms-2">×{{ design.pen_holder_quantity }}</span>
                                         {% endif %}
                                     </div>
-                                    <div class="item-details">{{ design.mouse_details or 'Wireless mouse with precision tracking' }}</div>
+                                    <div class="item-details">{{ design.pen_holder_details or 'Wooden pen holder for desk organization' }}</div>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            {% if design.has_laptop_holder %}
+                            <div class="item-row">
+                                <div class="item-icon">💻</div>
+                                <div class="item-content">
+                                    <div class="item-title">
+                                        Laptop Holder
+                                        {% if design.laptop_holder_quantity and design.laptop_holder_quantity > 1 %}
+                                        <span class="badge bg-primary ms-2">×{{ design.laptop_holder_quantity }}</span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="item-details">{{ design.laptop_holder_details or 'Vertical laptop stand for space saving' }}</div>
                                 </div>
                             </div>
                             {% endif %}

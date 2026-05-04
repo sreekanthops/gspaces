@@ -291,7 +291,7 @@
             <!-- Reference Image -->
             {% if lead.reference_image %}
             <div class="text-center mb-4">
-                <h4><i class="bi bi-image"></i> Reference Inspiration</h4>
+                <h4><i class="bi bi-image"></i> Original Image</h4>
                 <img src="{{ url_for('static', filename=lead.reference_image) }}"
                      alt="Reference" class="reference-image"
                      onclick="openImageModal(this.src)">
@@ -299,7 +299,7 @@
             {% endif %}
 
             <!-- Design Options -->
-            <h3 class="mb-4"><i class="bi bi-collection"></i> Design Options for You</h3>
+            <h3 class="mb-4"><i class="bi bi-collection"></i> Gspaces Designed Images for you</h3>
             
             <div class="row">
             {% for design in designs %}

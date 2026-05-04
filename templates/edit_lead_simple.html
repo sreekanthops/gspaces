@@ -968,7 +968,13 @@
                                     <input type="text" class="form-control" placeholder="Details"
                                            name="custom_item_details[]" value="{{ item.details }}" style="flex: 2;">
                                     <input type="hidden" class="custom-item-icon-value" name="custom_item_icon[]" value="{{ item.icon }}">
-                                    <span class="custom-item-icon-display" style="min-width: 30px; text-align: center; font-size: 1.2rem;">{{ item.icon or '📦' }}</span>
+                                    <span class="custom-item-icon-display" style="min-width: 30px; text-align: center; font-size: 1.2rem;">
+                                        {% if item.icon and item.icon.startswith('img/') %}
+                                            <img src="{{ url_for('static', filename=item.icon) }}" style="width: 24px; height: 24px; object-fit: contain;">
+                                        {% else %}
+                                            {{ item.icon or '📦' }}
+                                        {% endif %}
+                                    </span>
                                     <input type="number" class="form-control" placeholder="Qty"
                                            name="custom_item_quantity[]" value="{{ item.quantity or 1 }}"
                                            min="1" style="max-width: 70px;"

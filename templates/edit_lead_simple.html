@@ -364,15 +364,9 @@
                                            value="{{ design.table_height_inch or 29 }}" placeholder="29">
                                 </div>
                                 <div class="col-md-2">
-                                    <label class="form-label small">Quantity</label>
-                                    <input type="number" name="table_quantity" class="form-control" min="1"
-                                           value="{{ design.table_quantity or 1 }}"
-                                           onchange="calculateItemTotal('table', {{ design.id }})">
-                                </div>
-                                <div class="col-md-2">
-                                    <label class="form-label small">Unit Price (₹)</label>
+                                    <label class="form-label small">Price per sq ft (₹)</label>
                                     <input type="number" name="table_price" class="form-control" step="0.01" min="0"
-                                           value="{{ design.table_price or default_prices.get("table", 0) }}"
+                                           value="{{ design.table_price or default_prices.get('table', 0) }}"
                                            onchange="calculateItemTotal('table', {{ design.id }})">
                                 </div>
                                 <div class="col-md-2">
@@ -1169,16 +1163,16 @@
             container.appendChild(newRow);
         }
 
-        // Calculate individual item total (quantity × price, or for wardrobes: length × width × price)
+        // Calculate individual item total (quantity × price, or for table/wardrobes: length × width × price)
         function calculateItemTotal(itemName, designId) {
             const form = document.getElementById('updateForm' + designId);
             let total = 0;
             
-            // Special calculation for wardrobes: length × width × price per sq ft
-            if (itemName === 'wardrobes') {
-                const length = parseFloat(form.querySelector(`[name="wardrobes_length_ft"]`)?.value || 0);
-                const width = parseFloat(form.querySelector(`[name="wardrobes_width_ft"]`)?.value || 0);
-                const pricePerSqFt = parseFloat(form.querySelector(`[name="wardrobes_price"]`)?.value || 0);
+            // Special calculation for table and wardrobes: length × width × price per sq ft
+            if (itemName === 'table' || itemName === 'wardrobes') {
+                const length = parseFloat(form.querySelector(`[name="${itemName}_length_ft"]`)?.value || 0);
+                const width = parseFloat(form.querySelector(`[name="${itemName}_width_ft"]`)?.value || 0);
+                const pricePerSqFt = parseFloat(form.querySelector(`[name="${itemName}_price"]`)?.value || 0);
                 const sqFt = length * width;
                 total = sqFt * pricePerSqFt;
             } else {

@@ -359,14 +359,9 @@
                                 <div class="item-content">
                                     <div class="item-title">
                                         Office Table
-                                        {% if design.table_quantity and design.table_quantity > 1 %}
-                                        <span class="badge bg-primary ms-2">×{{ design.table_quantity }}</span>
-                                        {% endif %}
-                                        <span class="badge bg-info ms-2">{{ design.table_length_ft or 4 }}×{{ design.table_width_ft or 2 }}ft + {{ design.table_height_inch or 29 }}inch height</span>
+                                        <span class="badge bg-info ms-2">{{ design.table_length_ft or 4 }}×{{ design.table_width_ft or 2 }}ft {{ design.table_height_inch or 29 }}inch height</span>
                                     </div>
-                                    {% if design.table_details %}
-                                    <div class="item-details">{{ design.table_details or 'Ergonomic office table with premium finish' }}</div>
-                                    {% endif %}
+                                    <div class="item-details">{{ design.table_details or get_description('table', 'Ergonomic office desk with cable management and storage') }}</div>
                                 </div>
                             </div>
                             {% endif %}
@@ -622,7 +617,7 @@
                                 <div class="item-content">
                                     <div class="item-title">
                                         Wardrobes
-                                        <span class="badge bg-info ms-2">{{ design.wardrobes_length_ft or 6 }}×{{ design.wardrobes_width_ft or 2 }}ft ({{ ((design.wardrobes_length_ft or 6) * (design.wardrobes_width_ft or 2))|round(1) }} sq ft) + {{ design.wardrobes_height_ft or 7 }}ft height</span>
+                                        <span class="badge bg-info ms-2">{{ design.wardrobes_length_ft or 6 }}×{{ design.wardrobes_width_ft or 2 }}ft {{ design.wardrobes_height_ft or 7 }}ft height</span>
                                     </div>
                                     <div class="item-details">{{ design.wardrobes_details or get_description('wardrobes', 'Sliding door wardrobe with organized storage and mirror') }}</div>
                                 </div>

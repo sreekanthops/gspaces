@@ -532,9 +532,13 @@ def update_design(design_id):
                 'details': details
             }
             
-            # Calculate subtotal: quantity × price for each item (except wardrobes)
+            # Calculate subtotal: quantity × price for each item (except table and wardrobes)
             if has_item:
-                if item == 'wardrobes':
+                if item == 'table':
+                    # For table: area (length × width) × price per sq ft
+                    area = table_length_ft * table_width_ft
+                    subtotal += area * price
+                elif item == 'wardrobes':
                     # For wardrobes: area (length × width) × price per sq ft
                     area = wardrobes_length_ft * wardrobes_width_ft
                     subtotal += area * price

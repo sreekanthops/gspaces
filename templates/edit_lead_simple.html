@@ -549,16 +549,16 @@
 
                     <!-- 🌳 Plants -->
                     <div class="mb-3 p-3" style="background: #f0fff4; border-radius: 10px;">
-                        <div class="form-check mb-2">
-                            <input type="checkbox" class="form-check-input" name="has_plants"
-                                   {% if design.has_big_plants or design.has_mini_plants %}checked{% endif %}
-                                   onchange="calculateTotal({{ design.id }})">
-                            <label class="form-check-label fw-bold">{{ render_icon('big_plants') }} Plants</label>
-                        </div>
+                        <h6 class="mb-3">{{ render_icon('big_plants') }} Plants</h6>
                         
                         <!-- Big Plants -->
                         <div class="mb-3 p-2" style="background: #e8f5e9; border-radius: 5px;">
-                            <label class="form-label small fw-bold">🌳 Big Plants (3ft height)</label>
+                            <div class="form-check mb-2">
+                                <input type="checkbox" class="form-check-input" name="has_big_plants"
+                                       {% if design.has_big_plants %}checked{% endif %}
+                                       onchange="calculateTotal({{ design.id }})">
+                                <label class="form-check-label fw-bold">🌳 Big Plants (3ft height)</label>
+                            </div>
                             <div class="row g-2">
                                 <div class="col-md-2">
                                     <label class="form-label small">Height (ft)</label>
@@ -591,7 +591,12 @@
                         
                         <!-- Small Plants -->
                         <div class="p-2" style="background: #e8f5e9; border-radius: 5px;">
-                            <label class="form-label small fw-bold">🌱 Small Plants (1ft height)</label>
+                            <div class="form-check mb-2">
+                                <input type="checkbox" class="form-check-input" name="has_mini_plants"
+                                       {% if design.has_mini_plants %}checked{% endif %}
+                                       onchange="calculateTotal({{ design.id }})">
+                                <label class="form-check-label fw-bold">🌱 Small Plants (1ft height)</label>
+                            </div>
                             <div class="row g-2">
                                 <div class="col-md-2">
                                     <label class="form-label small">Height (ft)</label>
@@ -1175,11 +1180,12 @@
             
             const form = document.getElementById('updateForm' + designId);
             
-            // List of all 18 items (added profile_lighting)
+            // List of all items (updated - removed old items, added new ones)
             const items = [
-                'table', 'chair', 'plants', 'lighting', 'profile_lighting', 'storage', 'accessories',
-                'big_plants', 'mini_plants', 'frames', 'wall_racks', 'desk_mat',
-                'dustbin', 'floor_mat', 'keyboard', 'mouse', 'paint', 'wardrobes'
+                'table', 'chair', 'lighting', 'profile_lighting', 'storage',
+                'big_plants', 'mini_plants', 'frames', 'wall_racks',
+                'dustbin', 'paint', 'wardrobes', 'multi_socket',
+                'desk_lamp', 'pen_holder', 'laptop_holder'
             ];
             
             // Calculate total for each item (quantity × price) - ONLY if checkbox is checked

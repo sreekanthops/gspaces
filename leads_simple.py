@@ -314,26 +314,26 @@ def add_design(lead_id):
                     'order': 0
                 })
         
-        # Get first design to copy properties from (including all 18 quantity-based items)
+        # Get first design to copy properties from (updated items list)
         cur.execute("""
             SELECT has_table, table_quantity, table_price, table_details,
-                   has_chair, chair_quantity, chair_price, chair_details,
-                   has_plants, plants_quantity, plants_price, plants_details,
-                   has_lighting, lighting_quantity, lighting_price, lighting_details,
-                   has_profile_lighting, profile_lighting_quantity, profile_lighting_price, profile_lighting_details,
+                   table_length_ft, table_width_ft, table_height_inch,
+                   has_chair, chair_quantity, chair_price, chair_details, chair_headrest,
+                   has_lighting, lighting_quantity, lighting_price, lighting_details, lighting_length_ft,
+                   has_profile_lighting, profile_lighting_quantity, profile_lighting_price, profile_lighting_details, profile_lighting_length_ft,
                    has_storage, storage_quantity, storage_price, storage_details,
-                   has_accessories, accessories_quantity, accessories_price, accessories_details,
-                   has_big_plants, big_plants_quantity, big_plants_price, big_plants_details,
-                   has_mini_plants, mini_plants_quantity, mini_plants_price, mini_plants_details,
-                   has_frames, frames_quantity, frames_price, frames_details,
-                   has_wall_racks, wall_racks_quantity, wall_racks_price, wall_racks_details,
-                   has_desk_mat, desk_mat_quantity, desk_mat_price, desk_mat_details,
+                   storage_length_ft, storage_width_ft, storage_height_ft,
+                   has_big_plants, big_plants_quantity, big_plants_price, big_plants_details, big_plants_height_ft,
+                   has_mini_plants, mini_plants_quantity, mini_plants_price, mini_plants_details, mini_plants_height_ft,
+                   has_frames, frames_quantity, frames_price, frames_details, frames_size_ft,
+                   has_wall_racks, wall_racks_quantity, wall_racks_price, wall_racks_details, wall_racks_length_ft,
                    has_dustbin, dustbin_quantity, dustbin_price, dustbin_details,
-                   has_floor_mat, floor_mat_quantity, floor_mat_price, floor_mat_details,
-                   has_keyboard, keyboard_quantity, keyboard_price, keyboard_details,
-                   has_mouse, mouse_quantity, mouse_price, mouse_details,
                    has_paint, paint_quantity, paint_price, paint_details,
                    has_wardrobes, wardrobes_quantity, wardrobes_price, wardrobes_details,
+                   has_multi_socket, multi_socket_quantity, multi_socket_price, multi_socket_details,
+                   has_desk_lamp, desk_lamp_quantity, desk_lamp_price, desk_lamp_details,
+                   has_pen_holder, pen_holder_quantity, pen_holder_price, pen_holder_details,
+                   has_laptop_holder, laptop_holder_quantity, laptop_holder_price, laptop_holder_details,
                    price, notes
             FROM lead_designs
             WHERE lead_id = %s
@@ -348,57 +348,85 @@ def add_design(lead_id):
         next_order = result['next_order'] if result else 1
         
         if first_design:
-            # Copy ALL properties from first design (all 17 items with quantities and prices)
+            # Copy ALL properties from first design (updated items with dimensions)
             cur.execute("""
                 INSERT INTO lead_designs (
                     lead_id, design_name, design_image, design_order, media_files,
                     has_table, table_quantity, table_price, table_details,
-                    has_chair, chair_quantity, chair_price, chair_details,
-                    has_plants, plants_quantity, plants_price, plants_details,
-                    has_lighting, lighting_quantity, lighting_price, lighting_details,
-                    has_profile_lighting, profile_lighting_quantity, profile_lighting_price, profile_lighting_details,
+                    table_length_ft, table_width_ft, table_height_inch,
+                    has_chair, chair_quantity, chair_price, chair_details, chair_headrest,
+                    has_lighting, lighting_quantity, lighting_price, lighting_details, lighting_length_ft,
+                    has_profile_lighting, profile_lighting_quantity, profile_lighting_price, profile_lighting_details, profile_lighting_length_ft,
                     has_storage, storage_quantity, storage_price, storage_details,
-                    has_accessories, accessories_quantity, accessories_price, accessories_details,
-                    has_big_plants, big_plants_quantity, big_plants_price, big_plants_details,
-                    has_mini_plants, mini_plants_quantity, mini_plants_price, mini_plants_details,
-                    has_frames, frames_quantity, frames_price, frames_details,
-                    has_wall_racks, wall_racks_quantity, wall_racks_price, wall_racks_details,
-                    has_desk_mat, desk_mat_quantity, desk_mat_price, desk_mat_details,
+                    storage_length_ft, storage_width_ft, storage_height_ft,
+                    has_big_plants, big_plants_quantity, big_plants_price, big_plants_details, big_plants_height_ft,
+                    has_mini_plants, mini_plants_quantity, mini_plants_price, mini_plants_details, mini_plants_height_ft,
+                    has_frames, frames_quantity, frames_price, frames_details, frames_size_ft,
+                    has_wall_racks, wall_racks_quantity, wall_racks_price, wall_racks_details, wall_racks_length_ft,
                     has_dustbin, dustbin_quantity, dustbin_price, dustbin_details,
-                    has_floor_mat, floor_mat_quantity, floor_mat_price, floor_mat_details,
-                    has_keyboard, keyboard_quantity, keyboard_price, keyboard_details,
-                    has_mouse, mouse_quantity, mouse_price, mouse_details,
                     has_paint, paint_quantity, paint_price, paint_details,
                     has_wardrobes, wardrobes_quantity, wardrobes_price, wardrobes_details,
+                    has_multi_socket, multi_socket_quantity, multi_socket_price, multi_socket_details,
+                    has_desk_lamp, desk_lamp_quantity, desk_lamp_price, desk_lamp_details,
+                    has_pen_holder, pen_holder_quantity, pen_holder_price, pen_holder_details,
+                    has_laptop_holder, laptop_holder_quantity, laptop_holder_price, laptop_holder_details,
                     price, notes
                 )
                 VALUES (%s, %s, %s, %s, %s,
-                        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        %s, %s, %s, %s, %s, %s, %s,
+                        %s, %s, %s, %s, %s,
+                        %s, %s, %s, %s, %s,
+                        %s, %s, %s, %s, %s,
+                        %s, %s, %s, %s, %s, %s, %s,
+                        %s, %s, %s, %s, %s,
+                        %s, %s, %s, %s, %s,
+                        %s, %s, %s, %s, %s,
+                        %s, %s, %s, %s, %s,
+                        %s, %s, %s, %s,
+                        %s, %s, %s, %s,
+                        %s, %s, %s, %s,
+                        %s, %s, %s, %s,
+                        %s, %s, %s, %s,
+                        %s, %s, %s, %s,
+                        %s, %s, %s, %s,
+                        %s, %s)
             """, (
                 lead_id, design_name, design_image, next_order, json.dumps(media_files),
+                # Table + dimensions
                 first_design.get('has_table', False), first_design.get('table_quantity', 1), first_design.get('table_price', 0), first_design.get('table_details', ''),
-                first_design.get('has_chair', False), first_design.get('chair_quantity', 1), first_design.get('chair_price', 0), first_design.get('chair_details', ''),
-                first_design.get('has_plants', False), first_design.get('plants_quantity', 1), first_design.get('plants_price', 0), first_design.get('plants_details', ''),
-                first_design.get('has_lighting', False), first_design.get('lighting_quantity', 1), first_design.get('lighting_price', 0), first_design.get('lighting_details', ''),
-                first_design.get('has_profile_lighting', False), first_design.get('profile_lighting_quantity', 1), first_design.get('profile_lighting_price', 0), first_design.get('profile_lighting_details', ''),
+                first_design.get('table_length_ft', 4), first_design.get('table_width_ft', 2), first_design.get('table_height_inch', 29),
+                # Chair + headrest
+                first_design.get('has_chair', False), first_design.get('chair_quantity', 1), first_design.get('chair_price', 0), first_design.get('chair_details', ''), first_design.get('chair_headrest', 'with_headrest'),
+                # Lighting + length
+                first_design.get('has_lighting', False), first_design.get('lighting_quantity', 1), first_design.get('lighting_price', 0), first_design.get('lighting_details', ''), first_design.get('lighting_length_ft', 10),
+                # Profile Lighting + length
+                first_design.get('has_profile_lighting', False), first_design.get('profile_lighting_quantity', 1), first_design.get('profile_lighting_price', 0), first_design.get('profile_lighting_details', ''), first_design.get('profile_lighting_length_ft', 10),
+                # Storage + dimensions
                 first_design.get('has_storage', False), first_design.get('storage_quantity', 1), first_design.get('storage_price', 0), first_design.get('storage_details', ''),
-                first_design.get('has_accessories', False), first_design.get('accessories_quantity', 1), first_design.get('accessories_price', 0), first_design.get('accessories_details', ''),
-                first_design.get('has_big_plants', False), first_design.get('big_plants_quantity', 1), first_design.get('big_plants_price', 0), first_design.get('big_plants_details', ''),
-                first_design.get('has_mini_plants', False), first_design.get('mini_plants_quantity', 1), first_design.get('mini_plants_price', 0), first_design.get('mini_plants_details', ''),
-                first_design.get('has_frames', False), first_design.get('frames_quantity', 1), first_design.get('frames_price', 0), first_design.get('frames_details', ''),
-                first_design.get('has_wall_racks', False), first_design.get('wall_racks_quantity', 1), first_design.get('wall_racks_price', 0), first_design.get('wall_racks_details', ''),
-                first_design.get('has_desk_mat', False), first_design.get('desk_mat_quantity', 1), first_design.get('desk_mat_price', 0), first_design.get('desk_mat_details', ''),
+                first_design.get('storage_length_ft', 3), first_design.get('storage_width_ft', 1.5), first_design.get('storage_height_ft', 6),
+                # Big Plants + height
+                first_design.get('has_big_plants', False), first_design.get('big_plants_quantity', 1), first_design.get('big_plants_price', 0), first_design.get('big_plants_details', ''), first_design.get('big_plants_height_ft', 3),
+                # Mini Plants + height
+                first_design.get('has_mini_plants', False), first_design.get('mini_plants_quantity', 1), first_design.get('mini_plants_price', 0), first_design.get('mini_plants_details', ''), first_design.get('mini_plants_height_ft', 1),
+                # Frames + size
+                first_design.get('has_frames', False), first_design.get('frames_quantity', 1), first_design.get('frames_price', 0), first_design.get('frames_details', ''), first_design.get('frames_size_ft', '2x3'),
+                # Wall Racks + length
+                first_design.get('has_wall_racks', False), first_design.get('wall_racks_quantity', 1), first_design.get('wall_racks_price', 0), first_design.get('wall_racks_details', ''), first_design.get('wall_racks_length_ft', 4),
+                # Dustbin
                 first_design.get('has_dustbin', False), first_design.get('dustbin_quantity', 1), first_design.get('dustbin_price', 0), first_design.get('dustbin_details', ''),
-                first_design.get('has_floor_mat', False), first_design.get('floor_mat_quantity', 1), first_design.get('floor_mat_price', 0), first_design.get('floor_mat_details', ''),
-                first_design.get('has_keyboard', False), first_design.get('keyboard_quantity', 1), first_design.get('keyboard_price', 0), first_design.get('keyboard_details', ''),
-                first_design.get('has_mouse', False), first_design.get('mouse_quantity', 1), first_design.get('mouse_price', 0), first_design.get('mouse_details', ''),
+                # Paint
                 first_design.get('has_paint', False), first_design.get('paint_quantity', 1), first_design.get('paint_price', 0), first_design.get('paint_details', ''),
+                # Wardrobes
                 first_design.get('has_wardrobes', False), first_design.get('wardrobes_quantity', 1), first_design.get('wardrobes_price', 0), first_design.get('wardrobes_details', ''),
+                # Multi Socket
+                first_design.get('has_multi_socket', False), first_design.get('multi_socket_quantity', 1), first_design.get('multi_socket_price', 0), first_design.get('multi_socket_details', ''),
+                # Desk Lamp
+                first_design.get('has_desk_lamp', False), first_design.get('desk_lamp_quantity', 1), first_design.get('desk_lamp_price', 0), first_design.get('desk_lamp_details', ''),
+                # Pen Holder
+                first_design.get('has_pen_holder', False), first_design.get('pen_holder_quantity', 1), first_design.get('pen_holder_price', 0), first_design.get('pen_holder_details', ''),
+                # Laptop Holder
+                first_design.get('has_laptop_holder', False), first_design.get('laptop_holder_quantity', 1), first_design.get('laptop_holder_price', 0), first_design.get('laptop_holder_details', ''),
+                # Pricing
                 first_design.get('price', 0), first_design.get('notes', '')
             ))
             flash('Design added! All items, quantities, and prices copied from first design. You can now customize it.', 'success')
@@ -440,11 +468,12 @@ def update_design(design_id):
         design_name = request.form.get('design_name')
         notes = request.form.get('notes', '')
         
-        # Define all 18 items (including profile_lighting)
+        # Define all items (removed: accessories, desk_mat, floor_mat, keyboard, mouse; added: multi_socket)
         items = [
-            'table', 'chair', 'plants', 'lighting', 'profile_lighting', 'storage', 'accessories',
-            'big_plants', 'mini_plants', 'frames', 'wall_racks', 'desk_mat',
-            'dustbin', 'floor_mat', 'keyboard', 'mouse', 'paint', 'wardrobes'
+            'table', 'chair', 'lighting', 'profile_lighting', 'storage',
+            'big_plants', 'mini_plants', 'frames', 'wall_racks',
+            'dustbin', 'paint', 'wardrobes', 'multi_socket',
+            'desk_lamp', 'pen_holder', 'laptop_holder'
         ]
         
         # Collect data for all items
@@ -465,6 +494,10 @@ def update_design(design_id):
         
         frames_size_ft = request.form.get('frames_size_ft', '2x3')
         wall_racks_length_ft = float(request.form.get('wall_racks_length_ft', 4))
+        
+        # Plant height fields
+        big_plants_height_ft = float(request.form.get('big_plants_height_ft', 3))
+        mini_plants_height_ft = float(request.form.get('mini_plants_height_ft', 1))
         
         chair_headrest = request.form.get('chair_headrest', 'with_headrest')
         
@@ -529,30 +562,28 @@ def update_design(design_id):
             final_price = subtotal - discount_value
         final_price = max(0, final_price)  # Ensure non-negative
         
-        # Build UPDATE query with all 18 items + dimensions
+        # Build UPDATE query with updated items + dimensions
         cur.execute("""
             UPDATE lead_designs
             SET design_name = %s,
                 has_table = %s, table_quantity = %s, table_price = %s, table_details = %s,
                 table_length_ft = %s, table_width_ft = %s, table_height_inch = %s,
                 has_chair = %s, chair_quantity = %s, chair_price = %s, chair_details = %s, chair_headrest = %s,
-                has_plants = %s, plants_quantity = %s, plants_price = %s, plants_details = %s,
                 has_lighting = %s, lighting_quantity = %s, lighting_price = %s, lighting_details = %s, lighting_length_ft = %s,
                 has_profile_lighting = %s, profile_lighting_quantity = %s, profile_lighting_price = %s, profile_lighting_details = %s, profile_lighting_length_ft = %s,
                 has_storage = %s, storage_quantity = %s, storage_price = %s, storage_details = %s,
                 storage_length_ft = %s, storage_width_ft = %s, storage_height_ft = %s,
-                has_accessories = %s, accessories_quantity = %s, accessories_price = %s, accessories_details = %s,
-                has_big_plants = %s, big_plants_quantity = %s, big_plants_price = %s, big_plants_details = %s,
-                has_mini_plants = %s, mini_plants_quantity = %s, mini_plants_price = %s, mini_plants_details = %s,
+                has_big_plants = %s, big_plants_quantity = %s, big_plants_price = %s, big_plants_details = %s, big_plants_height_ft = %s,
+                has_mini_plants = %s, mini_plants_quantity = %s, mini_plants_price = %s, mini_plants_details = %s, mini_plants_height_ft = %s,
                 has_frames = %s, frames_quantity = %s, frames_price = %s, frames_details = %s, frames_size_ft = %s,
                 has_wall_racks = %s, wall_racks_quantity = %s, wall_racks_price = %s, wall_racks_details = %s, wall_racks_length_ft = %s,
-                has_desk_mat = %s, desk_mat_quantity = %s, desk_mat_price = %s, desk_mat_details = %s,
                 has_dustbin = %s, dustbin_quantity = %s, dustbin_price = %s, dustbin_details = %s,
-                has_floor_mat = %s, floor_mat_quantity = %s, floor_mat_price = %s, floor_mat_details = %s,
-                has_keyboard = %s, keyboard_quantity = %s, keyboard_price = %s, keyboard_details = %s,
-                has_mouse = %s, mouse_quantity = %s, mouse_price = %s, mouse_details = %s,
                 has_paint = %s, paint_quantity = %s, paint_price = %s, paint_details = %s,
                 has_wardrobes = %s, wardrobes_quantity = %s, wardrobes_price = %s, wardrobes_details = %s,
+                has_multi_socket = %s, multi_socket_quantity = %s, multi_socket_price = %s, multi_socket_details = %s,
+                has_desk_lamp = %s, desk_lamp_quantity = %s, desk_lamp_price = %s, desk_lamp_details = %s,
+                has_pen_holder = %s, pen_holder_quantity = %s, pen_holder_price = %s, pen_holder_details = %s,
+                has_laptop_holder = %s, laptop_holder_quantity = %s, laptop_holder_price = %s, laptop_holder_details = %s,
                 subtotal = %s, discount_type = %s, discount_value = %s,
                 final_price = %s, price = %s, notes = %s, custom_items = %s
             WHERE id = %s
@@ -563,8 +594,6 @@ def update_design(design_id):
             table_length_ft, table_width_ft, table_height_inch,
             # Chair + headrest
             item_data['chair']['has'], item_data['chair']['quantity'], item_data['chair']['price'], item_data['chair']['details'], chair_headrest,
-            # Plants
-            item_data['plants']['has'], item_data['plants']['quantity'], item_data['plants']['price'], item_data['plants']['details'],
             # Lighting + length
             item_data['lighting']['has'], item_data['lighting']['quantity'], item_data['lighting']['price'], item_data['lighting']['details'], lighting_length_ft,
             # Profile Lighting + length
@@ -572,30 +601,28 @@ def update_design(design_id):
             # Storage + dimensions
             item_data['storage']['has'], item_data['storage']['quantity'], item_data['storage']['price'], item_data['storage']['details'],
             storage_length_ft, storage_width_ft, storage_height_ft,
-            # Accessories
-            item_data['accessories']['has'], item_data['accessories']['quantity'], item_data['accessories']['price'], item_data['accessories']['details'],
-            # Big Plants
-            item_data['big_plants']['has'], item_data['big_plants']['quantity'], item_data['big_plants']['price'], item_data['big_plants']['details'],
-            # Mini Plants
-            item_data['mini_plants']['has'], item_data['mini_plants']['quantity'], item_data['mini_plants']['price'], item_data['mini_plants']['details'],
+            # Big Plants + height
+            item_data['big_plants']['has'], item_data['big_plants']['quantity'], item_data['big_plants']['price'], item_data['big_plants']['details'], big_plants_height_ft,
+            # Mini Plants + height
+            item_data['mini_plants']['has'], item_data['mini_plants']['quantity'], item_data['mini_plants']['price'], item_data['mini_plants']['details'], mini_plants_height_ft,
             # Frames + size
             item_data['frames']['has'], item_data['frames']['quantity'], item_data['frames']['price'], item_data['frames']['details'], frames_size_ft,
             # Wall Racks + length
             item_data['wall_racks']['has'], item_data['wall_racks']['quantity'], item_data['wall_racks']['price'], item_data['wall_racks']['details'], wall_racks_length_ft,
-            # Desk Mat
-            item_data['desk_mat']['has'], item_data['desk_mat']['quantity'], item_data['desk_mat']['price'], item_data['desk_mat']['details'],
             # Dustbin
             item_data['dustbin']['has'], item_data['dustbin']['quantity'], item_data['dustbin']['price'], item_data['dustbin']['details'],
-            # Floor Mat
-            item_data['floor_mat']['has'], item_data['floor_mat']['quantity'], item_data['floor_mat']['price'], item_data['floor_mat']['details'],
-            # Keyboard
-            item_data['keyboard']['has'], item_data['keyboard']['quantity'], item_data['keyboard']['price'], item_data['keyboard']['details'],
-            # Mouse
-            item_data['mouse']['has'], item_data['mouse']['quantity'], item_data['mouse']['price'], item_data['mouse']['details'],
             # Paint
             item_data['paint']['has'], item_data['paint']['quantity'], item_data['paint']['price'], item_data['paint']['details'],
             # Wardrobes
             item_data['wardrobes']['has'], item_data['wardrobes']['quantity'], item_data['wardrobes']['price'], item_data['wardrobes']['details'],
+            # Multi Socket
+            item_data['multi_socket']['has'], item_data['multi_socket']['quantity'], item_data['multi_socket']['price'], item_data['multi_socket']['details'],
+            # Desk Lamp
+            item_data['desk_lamp']['has'], item_data['desk_lamp']['quantity'], item_data['desk_lamp']['price'], item_data['desk_lamp']['details'],
+            # Pen Holder
+            item_data['pen_holder']['has'], item_data['pen_holder']['quantity'], item_data['pen_holder']['price'], item_data['pen_holder']['details'],
+            # Laptop Holder
+            item_data['laptop_holder']['has'], item_data['laptop_holder']['quantity'], item_data['laptop_holder']['price'], item_data['laptop_holder']['details'],
             # Pricing
             subtotal, discount_type, discount_value, final_price, final_price, notes,
             json.dumps(custom_items), design_id

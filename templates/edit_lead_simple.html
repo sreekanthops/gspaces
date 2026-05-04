@@ -886,16 +886,27 @@
                             <label class="form-check-label fw-bold">{{ render_icon('wardrobes') }} Wardrobes</label>
                         </div>
                         <div class="row g-2">
-                            <div class="col-md-3">
-                                <label class="form-label small">Quantity</label>
-                                <input type="number" name="wardrobes_quantity" class="form-control"
-                                       value="{{ design.wardrobes_quantity or 1 }}" min="1"
+                            <div class="col-md-2">
+                                <label class="form-label small">Length (ft)</label>
+                                <input type="number" name="wardrobes_length_ft" class="form-control" step="0.1" min="0"
+                                       value="{{ design.wardrobes_length_ft or 6 }}" placeholder="6"
                                        onchange="calculateItemTotal('wardrobes', {{ design.id }})">
                             </div>
+                            <div class="col-md-2">
+                                <label class="form-label small">Width (ft)</label>
+                                <input type="number" name="wardrobes_width_ft" class="form-control" step="0.1" min="0"
+                                       value="{{ design.wardrobes_width_ft or 2 }}" placeholder="2"
+                                       onchange="calculateItemTotal('wardrobes', {{ design.id }})">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label small">Height (ft)</label>
+                                <input type="number" name="wardrobes_height_ft" class="form-control" step="0.1" min="0"
+                                       value="{{ design.wardrobes_height_ft or 7 }}" placeholder="7">
+                            </div>
                             <div class="col-md-3">
-                                <label class="form-label small">Unit Price (₹)</label>
+                                <label class="form-label small">Price per sq ft (₹)</label>
                                 <input type="number" name="wardrobes_price" class="form-control"
-                                       value="{{ design.wardrobes_price or default_prices.get("wardrobes", 0) }}" min="0"
+                                       value="{{ design.wardrobes_price or default_prices.get('wardrobes', 0) }}" min="0"
                                        onchange="calculateItemTotal('wardrobes', {{ design.id }})">
                             </div>
                             <div class="col-md-3">
@@ -907,7 +918,7 @@
                         <div class="mt-2">
                             <label class="form-label small">Details</label>
                             <textarea name="wardrobes_details" class="form-control" rows="2"
-                                      placeholder="e.g., Sliding door, built-in, walk-in closet">{{ design.wardrobes_details or '' }}</textarea>
+                                      placeholder="e.g., Sliding door wardrobe with mirror">{{ design.wardrobes_details or 'Sliding door wardrobe with organized storage and mirror' }}</textarea>
                         </div>
                     </div>
 
@@ -1158,12 +1169,24 @@
             container.appendChild(newRow);
         }
 
-        // Calculate individual item total (quantity × price)
+        // Calculate individual item total (quantity × price, or for wardrobes: length × width × price)
         function calculateItemTotal(itemName, designId) {
             const form = document.getElementById('updateForm' + designId);
-            const quantity = parseFloat(form.querySelector(`[name="${itemName}_quantity"]`)?.value || 0);
-            const price = parseFloat(form.querySelector(`[name="${itemName}_price"]`)?.value || 0);
-            const total = quantity * price;
+            let total = 0;
+            
+            // Special calculation for wardrobes: length × width × price per sq ft
+            if (itemName === 'wardrobes') {
+                const length = parseFloat(form.querySelector(`[name="wardrobes_length_ft"]`)?.value || 0);
+                const width = parseFloat(form.querySelector(`[name="wardrobes_width_ft"]`)?.value || 0);
+                const pricePerSqFt = parseFloat(form.querySelector(`[name="wardrobes_price"]`)?.value || 0);
+                const sqFt = length * width;
+                total = sqFt * pricePerSqFt;
+            } else {
+                // Normal calculation: quantity × price
+                const quantity = parseFloat(form.querySelector(`[name="${itemName}_quantity"]`)?.value || 0);
+                const price = parseFloat(form.querySelector(`[name="${itemName}_price"]`)?.value || 0);
+                total = quantity * price;
+            }
             
             // Update the total field for this item
             const totalField = document.getElementById(`${itemName}_total_${designId}`);

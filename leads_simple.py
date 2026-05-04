@@ -506,6 +506,11 @@ def update_design(design_id):
         big_plants_height_ft = float(request.form.get('big_plants_height_ft', 3))
         mini_plants_height_ft = float(request.form.get('mini_plants_height_ft', 1))
         
+        # Wardrobe dimensions
+        wardrobes_length_ft = float(request.form.get('wardrobes_length_ft', 6))
+        wardrobes_width_ft = float(request.form.get('wardrobes_width_ft', 2))
+        wardrobes_height_ft = float(request.form.get('wardrobes_height_ft', 7))
+        
         chair_headrest = request.form.get('chair_headrest', 'with_headrest')
         
         for item in items:
@@ -527,9 +532,15 @@ def update_design(design_id):
                 'details': details
             }
             
-            # Calculate subtotal: quantity × price for each item
+            # Calculate subtotal: quantity × price for each item (except wardrobes)
             if has_item:
-                subtotal += quantity * price
+                if item == 'wardrobes':
+                    # For wardrobes: area (length × width) × price per sq ft
+                    area = wardrobes_length_ft * wardrobes_width_ft
+                    subtotal += area * price
+                else:
+                    # Normal items: quantity × price
+                    subtotal += quantity * price
         
         # Handle custom items with prices and quantities
         custom_items = []
@@ -587,6 +598,7 @@ def update_design(design_id):
                 has_dustbin = %s, dustbin_quantity = %s, dustbin_price = %s, dustbin_details = %s,
                 has_paint = %s, paint_quantity = %s, paint_price = %s, paint_details = %s,
                 has_wardrobes = %s, wardrobes_quantity = %s, wardrobes_price = %s, wardrobes_details = %s,
+                wardrobes_length_ft = %s, wardrobes_width_ft = %s, wardrobes_height_ft = %s,
                 has_multi_socket = %s, multi_socket_quantity = %s, multi_socket_price = %s, multi_socket_details = %s,
                 has_desk_lamp = %s, desk_lamp_quantity = %s, desk_lamp_price = %s, desk_lamp_details = %s,
                 has_pen_holder = %s, pen_holder_quantity = %s, pen_holder_price = %s, pen_holder_details = %s,
@@ -620,8 +632,9 @@ def update_design(design_id):
             item_data['dustbin']['has'], item_data['dustbin']['quantity'], item_data['dustbin']['price'], item_data['dustbin']['details'],
             # Paint
             item_data['paint']['has'], item_data['paint']['quantity'], item_data['paint']['price'], item_data['paint']['details'],
-            # Wardrobes
+            # Wardrobes + dimensions
             item_data['wardrobes']['has'], item_data['wardrobes']['quantity'], item_data['wardrobes']['price'], item_data['wardrobes']['details'],
+            wardrobes_length_ft, wardrobes_width_ft, wardrobes_height_ft,
             # Multi Socket
             item_data['multi_socket']['has'], item_data['multi_socket']['quantity'], item_data['multi_socket']['price'], item_data['multi_socket']['details'],
             # Desk Lamp

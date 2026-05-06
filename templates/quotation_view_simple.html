@@ -342,15 +342,30 @@
         .carousel-indicator.active {
             background: white;
         }
+        .designs-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 26px;
+            align-items: stretch;
+        }
+        .designs-grid.single-design-grid {
+            grid-template-columns: minmax(0, 1fr);
+            max-width: 980px;
+            margin: 0 auto;
+        }
+        .design-grid-item {
+            min-width: 0;
+        }
         .design-section {
             background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
             border-radius: 24px;
             padding: 26px;
-            margin-bottom: 30px;
+            margin-bottom: 0;
             border: 1px solid #e5e7eb;
             box-shadow: 0 14px 40px rgba(15, 23, 42, 0.08);
             display: flex;
             flex-direction: column;
+            height: 100%;
         }
         .quote-badge {
             display: inline-flex;
@@ -840,9 +855,9 @@
                     </div>
                 </div>
                 
-                <div class="designs-grid {% if designs|length == 1 %}justify-content-center{% endif %}">
+                <div class="designs-grid {% if designs|length == 1 %}single-design-grid{% endif %}">
                 {% for design in designs %}
-                    <div class="{% if designs|length == 1 %}mx-auto{% endif %}">
+                    <div class="design-grid-item">
                         <div class="design-section h-100" style="{% if loop.index == 1 %}border-top: 5px solid #667eea;{% else %}border-top: 5px solid #764ba2;{% endif %}">
                         <div class="design-topbar">
                             <div>

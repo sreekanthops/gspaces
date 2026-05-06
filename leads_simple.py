@@ -801,14 +801,32 @@ def view_quotation(share_token):
             design['media_files'] = []
         
         # Combine design_image with media_files for carousel
+        # Prefer media_files and only use legacy design_image as fallback.
         all_media = []
-        if design.get('design_image'):
+
+        media_urls = set()
+        for media in design['media_files']:
+            media_url = media.get('url') if isinstance(media, dict) else None
+            if media_url:
+                media_urls.add(media_url)
+                all_media.append(media)
+
+        legacy_design_image = design.get('design_image')
+        if not all_media and legacy_design_image:
             all_media.append({
                 'type': 'image',
-                'url': design['design_image'],
+                'url': legacy_design_image,
                 'is_main': True
             })
-        all_media.extend(design['media_files'])
+        elif legacy_design_image and legacy_design_image not in media_urls:
+            legacy_path = os.path.join('static', legacy_design_image)
+            if os.path.exists(legacy_path):
+                all_media.insert(0, {
+                    'type': 'image',
+                    'url': legacy_design_image,
+                    'is_main': True
+                })
+
         design['all_media'] = all_media
         
         # Fallback: if no media_files but has design_image, create media_files array

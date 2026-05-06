@@ -21,22 +21,29 @@
         }
         
         body {
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            background:
+                radial-gradient(circle at top left, rgba(102,126,234,0.18), transparent 28%),
+                radial-gradient(circle at top right, rgba(118,75,162,0.18), transparent 24%),
+                linear-gradient(135deg, #f5f7fa 0%, #dfe7f5 100%);
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #1f2937;
         }
         .quotation-container {
-            max-width: 1200px;
-            margin: 40px auto;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            max-width: 1280px;
+            margin: 32px auto;
+            background: rgba(255,255,255,0.96);
+            border-radius: 28px;
+            box-shadow: 0 20px 70px rgba(15, 23, 42, 0.12);
             overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.65);
+            backdrop-filter: blur(6px);
         }
         .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #111827 0%, #4f46e5 45%, #7c3aed 100%);
             color: white;
-            padding: 40px;
+            padding: 48px 40px 36px;
             text-align: center;
+            position: relative;
         }
         .company-logo {
             display: flex;
@@ -54,11 +61,75 @@
         .content {
             padding: 40px;
         }
-        .customer-info {
-            background: #f8f9fa;
-            padding: 25px;
-            border-radius: 15px;
+        .summary-strip {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-top: -18px;
             margin-bottom: 30px;
+        }
+        .summary-card {
+            background: #ffffff;
+            border-radius: 18px;
+            padding: 18px 20px;
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+            border: 1px solid #eef2ff;
+        }
+        .summary-label {
+            font-size: 0.82rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #6b7280;
+            margin-bottom: 6px;
+        }
+        .summary-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #111827;
+        }
+        .customer-info {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            padding: 28px;
+            border-radius: 22px;
+            margin-bottom: 30px;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 12px 35px rgba(15, 23, 42, 0.06);
+        }
+        .info-panel-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 14px;
+        }
+        .info-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #eef2ff;
+            color: #4338ca;
+            border-radius: 999px;
+            padding: 8px 14px;
+            font-weight: 600;
+            font-size: 0.92rem;
+            margin: 6px 8px 0 0;
+        }
+        .section-heading {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 22px;
+        }
+        .section-heading h3 {
+            margin: 0;
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #111827;
+        }
+        .section-subtitle {
+            color: #6b7280;
+            font-size: 0.98rem;
+            margin-top: 6px;
         }
         .reference-image, .design-image {
             max-width: 100%;
@@ -164,16 +235,33 @@
             background: white;
         }
         .design-section {
-            background: #f8f9fa;
-            border-radius: 15px;
-            padding: 30px;
+            background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+            border-radius: 24px;
+            padding: 26px;
             margin-bottom: 30px;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 14px 40px rgba(15, 23, 42, 0.08);
+            display: flex;
+            flex-direction: column;
+        }
+        .design-topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .design-subtext {
+            color: #6b7280;
+            font-size: 0.95rem;
+            margin-top: 6px;
         }
         .items-list {
             background: white;
             padding: 25px;
-            border-radius: 10px;
+            border-radius: 18px;
             margin-top: 20px;
+            border: 1px solid #eef2f7;
         }
         .item-row {
             display: flex;
@@ -205,12 +293,20 @@
         .price-tag {
             background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             color: white;
-            padding: 15px 30px;
-            border-radius: 15px;
+            padding: 16px 30px;
+            border-radius: 18px;
             font-size: 1.8rem;
             font-weight: bold;
             display: inline-block;
             margin-top: 20px;
+            box-shadow: 0 12px 30px rgba(5, 150, 105, 0.25);
+        }
+        .reference-card {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 22px;
+            padding: 24px;
+            box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
         }
         /* Image Modal */
         .modal-image {
@@ -270,34 +366,67 @@
 
         <!-- Content -->
         <div class="content">
+            <div class="summary-strip">
+                <div class="summary-card">
+                    <div class="summary-label">Customer</div>
+                    <div class="summary-value">{{ lead.customer_name }}</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-label">Project</div>
+                    <div class="summary-value">{{ lead.project_name or 'Workspace Setup' }}</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-label">Design Options</div>
+                    <div class="summary-value">{{ designs|length }}</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-label">Quoted Value</div>
+                    <div class="summary-value">₹{{ "{:,.0f}".format(total or 0) }}</div>
+                </div>
+            </div>
+
             <!-- Customer Info -->
             <div class="customer-info">
-                <div class="row">
-                    <div class="col-md-6">
-                        <h4><i class="bi bi-person-circle"></i> Customer Details</h4>
-                        <p class="mb-1"><strong>Name:</strong> {{ lead.customer_name }}</p>
+                <div class="row g-4 align-items-start">
+                    <div class="col-lg-7">
+                        <div class="info-panel-title"><i class="bi bi-person-circle"></i> Customer Details</div>
+                        <div class="mb-2"><strong>Name:</strong> {{ lead.customer_name }}</div>
                         {% if lead.customer_email %}
-                        <p class="mb-1"><strong>Email:</strong> {{ lead.customer_email }}</p>
+                        <div class="mb-2"><strong>Email:</strong> {{ lead.customer_email }}</div>
                         {% endif %}
                         {% if lead.customer_phone %}
-                        <p class="mb-1"><strong>Phone:</strong> {{ lead.customer_phone }}</p>
+                        <div class="mb-2"><strong>Phone:</strong> {{ lead.customer_phone }}</div>
+                        {% endif %}
+                        {% if lead.location %}
+                        <div class="mb-2"><strong>Address / Place:</strong> {{ lead.location }}</div>
+                        {% endif %}
+                        {% if lead.notes %}
+                        <div class="mt-3">
+                            <span class="info-pill"><i class="bi bi-stars"></i> {{ lead.notes }}</span>
+                        </div>
                         {% endif %}
                     </div>
-                    <div class="col-md-6 text-end">
-                        <h4><i class="bi bi-file-text"></i> Project Details</h4>
+                    <div class="col-lg-5 text-lg-end">
+                        <div class="info-panel-title"><i class="bi bi-file-text"></i> Project Overview</div>
                         {% if lead.project_name %}
-                        <p class="mb-1"><strong>Project:</strong> {{ lead.project_name }}</p>
+                        <div class="mb-2"><strong>Project:</strong> {{ lead.project_name }}</div>
                         {% endif %}
-                        <p class="mb-1"><strong>Date:</strong> {{ lead.created_at.strftime('%B %d, %Y') }}</p>
-                        <p class="mb-1"><strong>Options:</strong> {{ designs|length }}</p>
+                        <div class="mb-2"><strong>Date:</strong> {{ lead.created_at.strftime('%B %d, %Y') }}</div>
+                        <div class="mb-2"><strong>Options:</strong> {{ designs|length }}</div>
+                        <div class="mb-2"><strong>Total Quote:</strong> ₹{{ "{:,.0f}".format(total or 0) }}</div>
                     </div>
                 </div>
             </div>
 
             <!-- Reference Image -->
             {% if lead.reference_image %}
-            <div class="text-center mb-4">
-                <h4><i class="bi bi-image"></i> Original Image</h4>
+            <div class="reference-card text-center mb-4">
+                <div class="section-heading mb-3">
+                    <div>
+                        <h3><i class="bi bi-image"></i> Reference Image</h3>
+                        <div class="section-subtitle">Original customer-shared inspiration for the setup.</div>
+                    </div>
+                </div>
                 <img src="{{ url_for('static', filename=lead.reference_image) }}"
                      alt="Reference" class="reference-image"
                      onclick="openImageModal(this.src)">
@@ -305,18 +434,39 @@
             {% endif %}
 
             <!-- Design Options -->
-            <h3 class="mb-4"><i class="bi bi-collection"></i> Gspaces Designed Images for you</h3>
+            <div class="section-heading">
+                <div>
+                    <h3><i class="bi bi-collection"></i> Gspaces Designed Images for You</h3>
+                    <div class="section-subtitle">Premium concepts curated to transform the setup into a dream workspace.</div>
+                </div>
+            </div>
             
             <div class="row">
             {% for design in designs %}
                 <div class="col-md-6 mb-4">
-                    <div class="design-section h-100" style="{% if loop.index == 1 %}border-left: 5px solid #667eea;{% else %}border-right: 5px solid #764ba2;{% endif %}">
-                        <h4 class="mb-3">
-                            <span class="badge" style="{% if loop.index == 1 %}background: #667eea;{% else %}background: #764ba2;{% endif %}">
-                                Design {{ loop.index }}
-                            </span>
-                            {{ design.design_name }}
-                        </h4>
+                    <div class="design-section h-100" style="{% if loop.index == 1 %}border-top: 5px solid #667eea;{% else %}border-top: 5px solid #764ba2;{% endif %}">
+                        <div class="design-topbar">
+                            <div>
+                                <h4 class="mb-1">
+                                    <span class="badge" style="{% if loop.index == 1 %}background: #667eea;{% else %}background: #764ba2;{% endif %}">
+                                        Design {{ loop.index }}
+                                    </span>
+                                    {{ design.design_name }}
+                                </h4>
+                                <div class="design-subtext">Carefully planned layout, finishes, accessories, and ergonomic elements.</div>
+                            </div>
+                            <div class="text-end">
+                                {% if design.discount_type and design.discount_type != 'none' and design.discount_value > 0 %}
+                                <span class="badge bg-danger-subtle text-danger-emphasis px-3 py-2">
+                                    {% if design.discount_type == 'percentage' %}
+                                        {{ design.discount_value }}% OFF
+                                    {% else %}
+                                        ₹{{ "{:,.0f}".format(design.discount_value) }} OFF
+                                    {% endif %}
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
                         
                         {% if design.all_media and design.all_media|length > 0 %}
                             <!-- Media Carousel -->

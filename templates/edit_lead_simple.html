@@ -333,7 +333,11 @@
                             </div>
                         </div>
 
-                        {% if design.design_image %}
+                        {% set gallery_images = design.media_files|selectattr('type', 'equalto', 'image')|list if design.media_files else [] %}
+                        {% if gallery_images and gallery_images|length > 0 %}
+                            <img src="{{ url_for('static', filename=gallery_images[0].url) }}"
+                                 alt="Design" class="design-image">
+                        {% elif design.design_image %}
                             <img src="{{ url_for('static', filename=design.design_image) }}"
                                  alt="Design" class="design-image">
                         {% endif %}

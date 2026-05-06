@@ -571,6 +571,13 @@
                 padding: 20px;
                 border-radius: 22px;
             }
+            .reference-layout,
+            .designs-grid {
+                grid-template-columns: 1fr;
+            }
+            .reference-highlights {
+                grid-template-columns: 1fr;
+            }
             .design-topbar,
             .section-heading {
                 flex-direction: column;
@@ -711,31 +718,55 @@
 
             <!-- Reference Image -->
             {% if lead.reference_image %}
-            <div class="reference-card text-center mb-4">
-                <div class="section-heading mb-3">
-                    <div>
-                        <h3><i class="bi bi-image"></i> Reference Image</h3>
-                        <div class="section-subtitle">Original customer-shared inspiration for the setup.</div>
+            <div class="reference-card mb-4">
+                <div class="reference-layout">
+                    <div class="reference-copy text-start">
+                        <div class="section-kicker"><i class="bi bi-image"></i> Inspiration Reference</div>
+                        <h3 class="mb-2">Reference Image</h3>
+                        <div class="section-subtitle">Original customer-shared inspiration used as the creative base for layout planning, material styling, and accessory selection.</div>
+
+                        <div class="reference-highlights">
+                            <div class="reference-highlight">
+                                <span class="label">Design Objective</span>
+                                <span class="value">Transform the setup into a refined dream workspace</span>
+                            </div>
+                            <div class="reference-highlight">
+                                <span class="label">Prepared For</span>
+                                <span class="value">{{ lead.customer_name }}</span>
+                            </div>
+                            <div class="reference-highlight">
+                                <span class="label">Project Focus</span>
+                                <span class="value">{{ lead.project_name or 'Workspace Setup' }}</span>
+                            </div>
+                            <div class="reference-highlight">
+                                <span class="label">Concept Options</span>
+                                <span class="value">{{ designs|length }} curated design{% if designs|length != 1 %}s{% endif %}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="reference-preview-wrap text-center">
+                        <img src="{{ url_for('static', filename=lead.reference_image) }}"
+                             alt="Reference" class="reference-image mb-0"
+                             onclick="openImageModal(this.src)">
                     </div>
                 </div>
-                <img src="{{ url_for('static', filename=lead.reference_image) }}"
-                     alt="Reference" class="reference-image"
-                     onclick="openImageModal(this.src)">
             </div>
             {% endif %}
 
             <!-- Design Options -->
-            <div class="section-heading">
-                <div>
-                    <h3><i class="bi bi-collection"></i> Gspaces Designed Images for You</h3>
-                    <div class="section-subtitle">Premium concepts curated to transform the setup into a dream workspace.</div>
+            <div class="section-card">
+                <div class="section-heading">
+                    <div>
+                        <div class="section-kicker"><i class="bi bi-collection"></i> Curated Concepts</div>
+                        <h3>Gspaces Designed Images for You</h3>
+                        <div class="section-subtitle">Explore thoughtfully developed concepts tailored for this space, balancing aesthetics, comfort, accessories, and practical functionality.</div>
+                    </div>
                 </div>
-            </div>
-            
-            <div class="row {% if designs|length == 1 %}justify-content-center{% endif %}">
-            {% for design in designs %}
-                <div class="{% if designs|length == 1 %}col-lg-10 col-xl-9{% else %}col-md-6{% endif %} mb-4">
-                    <div class="design-section h-100" style="{% if loop.index == 1 %}border-top: 5px solid #667eea;{% else %}border-top: 5px solid #764ba2;{% endif %}">
+                
+                <div class="designs-grid {% if designs|length == 1 %}justify-content-center{% endif %}">
+                {% for design in designs %}
+                    <div class="{% if designs|length == 1 %}mx-auto{% endif %}">
+                        <div class="design-section h-100" style="{% if loop.index == 1 %}border-top: 5px solid #667eea;{% else %}border-top: 5px solid #764ba2;{% endif %}">
                         <div class="design-topbar">
                             <div>
                                 <h4 class="mb-1">

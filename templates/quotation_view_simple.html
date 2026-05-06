@@ -441,9 +441,9 @@
                 </div>
             </div>
             
-            <div class="row">
+            <div class="row {% if designs|length == 1 %}justify-content-center{% endif %}">
             {% for design in designs %}
-                <div class="col-md-6 mb-4">
+                <div class="{% if designs|length == 1 %}col-lg-10 col-xl-9{% else %}col-md-6{% endif %} mb-4">
                     <div class="design-section h-100" style="{% if loop.index == 1 %}border-top: 5px solid #667eea;{% else %}border-top: 5px solid #764ba2;{% endif %}">
                         <div class="design-topbar">
                             <div>

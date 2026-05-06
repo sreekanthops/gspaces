@@ -22,78 +22,186 @@
         
         body {
             background:
-                radial-gradient(circle at top left, rgba(102,126,234,0.18), transparent 28%),
-                radial-gradient(circle at top right, rgba(118,75,162,0.18), transparent 24%),
-                linear-gradient(135deg, #f5f7fa 0%, #dfe7f5 100%);
+                radial-gradient(circle at top left, rgba(102,126,234,0.14), transparent 24%),
+                radial-gradient(circle at top right, rgba(139,92,246,0.14), transparent 20%),
+                linear-gradient(180deg, #eef2ff 0%, #f8fafc 42%, #eef2ff 100%);
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            color: #1f2937;
+            color: #111827;
+        }
+        .quotation-shell {
+            width: min(100%, 1720px);
+            margin: 0 auto;
+            padding: 18px 18px 36px;
         }
         .quotation-container {
-            max-width: 1280px;
-            margin: 32px auto;
-            background: rgba(255,255,255,0.96);
-            border-radius: 28px;
-            box-shadow: 0 20px 70px rgba(15, 23, 42, 0.12);
+            width: 100%;
+            margin: 0;
+            background: rgba(255,255,255,0.98);
+            border-radius: 34px;
+            box-shadow: 0 28px 90px rgba(15, 23, 42, 0.12);
             overflow: hidden;
-            border: 1px solid rgba(255,255,255,0.65);
-            backdrop-filter: blur(6px);
+            border: 1px solid rgba(255,255,255,0.92);
+            backdrop-filter: blur(8px);
         }
         .header {
-            background: linear-gradient(135deg, #111827 0%, #4f46e5 45%, #7c3aed 100%);
+            background:
+                radial-gradient(circle at 20% 20%, rgba(255,255,255,0.18), transparent 18%),
+                radial-gradient(circle at 80% 0%, rgba(255,255,255,0.2), transparent 22%),
+                linear-gradient(135deg, #0f172a 0%, #312e81 38%, #4f46e5 62%, #7c3aed 100%);
             color: white;
-            padding: 48px 40px 36px;
-            text-align: center;
+            padding: 56px 56px 120px;
             position: relative;
+            overflow: hidden;
+        }
+        .header::after {
+            content: '';
+            position: absolute;
+            inset: auto 0 0 0;
+            height: 120px;
+            background: linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.92) 65%, rgba(255,255,255,1) 100%);
+            pointer-events: none;
+        }
+        .hero-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+            gap: 28px;
+            align-items: end;
+            position: relative;
+            z-index: 1;
+        }
+        .hero-copy {
+            max-width: 760px;
+        }
+        .hero-kicker {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 16px;
+            border-radius: 999px;
+            background: rgba(255,255,255,0.14);
+            border: 1px solid rgba(255,255,255,0.18);
+            font-size: 0.9rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            margin-bottom: 18px;
         }
         .company-logo {
             display: flex;
             align-items: center;
-            justify-content: center;
-            gap: 15px;
-            font-size: 2.5rem;
-            font-weight: bold;
-            margin-bottom: 10px;
+            gap: 16px;
+            font-size: 3.3rem;
+            font-weight: 800;
+            line-height: 1;
+            margin-bottom: 18px;
         }
         .company-logo img {
-            height: 60px;
+            height: 72px;
             width: auto;
+            border-radius: 16px;
+            background: rgba(255,255,255,0.9);
+            padding: 6px;
+            box-shadow: 0 16px 40px rgba(15, 23, 42, 0.25);
+        }
+        .hero-title {
+            margin: 0;
+            font-size: clamp(2.2rem, 4vw, 4rem);
+            font-weight: 800;
+            line-height: 1.05;
+            color: #ffffff;
+        }
+        .hero-text {
+            margin: 14px 0 0;
+            max-width: 640px;
+            color: rgba(255,255,255,0.82);
+            font-size: 1.08rem;
+            line-height: 1.7;
+        }
+        .hero-side-card {
+            background: rgba(255,255,255,0.14);
+            border: 1px solid rgba(255,255,255,0.18);
+            border-radius: 28px;
+            padding: 24px;
+            box-shadow: 0 22px 45px rgba(15, 23, 42, 0.16);
+            backdrop-filter: blur(10px);
+        }
+        .hero-side-label {
+            color: rgba(255,255,255,0.7);
+            font-size: 0.86rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 10px;
+        }
+        .hero-side-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #ffffff;
+            margin-bottom: 18px;
+        }
+        .hero-meta-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+        .hero-meta-item {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.14);
+            border-radius: 18px;
+            padding: 14px;
+        }
+        .hero-meta-item .label {
+            display: block;
+            color: rgba(255,255,255,0.66);
+            font-size: 0.74rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 6px;
+        }
+        .hero-meta-item .value {
+            color: #ffffff;
+            font-weight: 700;
+            font-size: 1rem;
         }
         .content {
-            padding: 40px;
+            padding: 0 40px 40px;
+            margin-top: -72px;
+            position: relative;
+            z-index: 2;
         }
         .summary-strip {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 16px;
-            margin-top: -18px;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 18px;
             margin-bottom: 30px;
         }
         .summary-card {
-            background: #ffffff;
-            border-radius: 18px;
-            padding: 18px 20px;
-            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
-            border: 1px solid #eef2ff;
+            background: rgba(255,255,255,0.95);
+            border-radius: 24px;
+            padding: 22px 24px;
+            box-shadow: 0 18px 50px rgba(15, 23, 42, 0.1);
+            border: 1px solid rgba(226,232,240,0.9);
         }
         .summary-label {
-            font-size: 0.82rem;
+            font-size: 0.8rem;
             text-transform: uppercase;
-            letter-spacing: 0.06em;
-            color: #6b7280;
-            margin-bottom: 6px;
+            letter-spacing: 0.08em;
+            color: #64748b;
+            margin-bottom: 10px;
+            font-weight: 700;
         }
         .summary-value {
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: #111827;
+            font-size: clamp(1.35rem, 2vw, 2rem);
+            font-weight: 800;
+            color: #0f172a;
+            line-height: 1.1;
         }
         .customer-info {
-            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-            padding: 28px;
-            border-radius: 22px;
-            margin-bottom: 30px;
-            border: 1px solid #e5e7eb;
-            box-shadow: 0 12px 35px rgba(15, 23, 42, 0.06);
+            background: linear-gradient(135deg, rgba(255,255,255,0.96) 0%, rgba(248,250,252,0.98) 100%);
+            padding: 32px;
+            border-radius: 28px;
+            margin-bottom: 34px;
+            border: 1px solid rgba(226,232,240,0.95);
+            box-shadow: 0 20px 45px rgba(15, 23, 42, 0.08);
         }
         .info-panel-title {
             font-size: 1.05rem;
@@ -355,10 +463,59 @@
         }
         .reference-card {
             background: #fff;
-            border: 1px solid #e5e7eb;
-            border-radius: 22px;
-            padding: 24px;
-            box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+            border: 1px solid rgba(226,232,240,0.95);
+            border-radius: 28px;
+            padding: 28px;
+            box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+        }
+        .section-card {
+            background: rgba(255,255,255,0.96);
+            border: 1px solid rgba(226,232,240,0.95);
+            border-radius: 28px;
+            padding: 28px;
+            box-shadow: 0 18px 42px rgba(15, 23, 42, 0.08);
+            margin-bottom: 34px;
+        }
+        .cta-panel {
+            background: linear-gradient(135deg, #0f172a 0%, #312e81 40%, #4f46e5 100%);
+            border-radius: 30px;
+            padding: 30px;
+            color: #ffffff;
+            box-shadow: 0 24px 60px rgba(49,46,129,0.28);
+        }
+        .cta-title {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 8px;
+            color: #ffffff;
+        }
+        .cta-text {
+            color: rgba(255,255,255,0.8);
+            margin-bottom: 0;
+        }
+        .cta-actions .btn {
+            min-width: 210px;
+            border-radius: 999px;
+            padding: 15px 26px;
+            font-weight: 700;
+        }
+        .btn-quote-primary {
+            background: #ffffff;
+            color: #312e81;
+            border: none;
+        }
+        .btn-quote-primary:hover {
+            background: #eef2ff;
+            color: #312e81;
+        }
+        .btn-quote-secondary {
+            background: rgba(255,255,255,0.14);
+            color: #ffffff;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .btn-quote-secondary:hover {
+            background: rgba(255,255,255,0.22);
+            color: #ffffff;
         }
         /* Image Modal */
         .modal-image {
@@ -367,14 +524,68 @@
             object-fit: contain;
         }
         .footer {
-            background: #f8f9fa;
-            padding: 30px;
+            background: #f8fafc;
+            padding: 34px 30px;
             text-align: center;
             color: #6b7280;
+            border-top: 1px solid rgba(226,232,240,0.95);
+        }
+        @media (max-width: 1200px) {
+            .quotation-shell {
+                padding: 14px 14px 28px;
+            }
+            .hero-layout {
+                grid-template-columns: 1fr;
+            }
+            .content {
+                padding: 0 26px 30px;
+            }
+            .summary-strip {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+        @media (max-width: 768px) {
+            .quotation-shell {
+                padding: 0;
+            }
+            .quotation-container {
+                border-radius: 0;
+            }
+            .header {
+                padding: 32px 20px 94px;
+            }
+            .company-logo {
+                font-size: 2.4rem;
+            }
+            .content {
+                margin-top: -54px;
+                padding: 0 16px 24px;
+            }
+            .summary-strip {
+                grid-template-columns: 1fr;
+            }
+            .customer-info,
+            .reference-card,
+            .section-card,
+            .design-section {
+                padding: 20px;
+                border-radius: 22px;
+            }
+            .design-topbar,
+            .section-heading {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .cta-actions .btn {
+                width: 100%;
+            }
         }
         @media print {
             body {
                 background: white;
+            }
+            .quotation-shell {
+                padding: 0;
             }
             .no-print {
                 display: none;
@@ -405,15 +616,43 @@
         {{- item.description if item and item.description else fallback -}}
     {% endmacro %}
     
-    <div class="quotation-container" style="margin-top: 20px;">
+    <div class="quotation-shell">
+    <div class="quotation-container">
         <!-- Header -->
         <div class="header">
-            <div class="company-logo">
-                <img src="{{ url_for('static', filename='img/gspaces-logo.png') }}" alt="GSpaces Logo">
-                <span>GSPACES</span>
+            <div class="hero-layout">
+                <div class="hero-copy">
+                    <div class="hero-kicker"><i class="bi bi-stars"></i> Premium Workspace Proposal</div>
+                    <div class="company-logo">
+                        <img src="{{ url_for('static', filename='img/gspaces-logo.png') }}" alt="GSpaces Logo">
+                        <span>GSPACES</span>
+                    </div>
+                    <h1 class="hero-title">Workspace Setup Quotation</h1>
+                    <p class="hero-text">Personalized concepts crafted to transform {{ lead.customer_name }}’s setup into a polished, ergonomic, and visually premium workspace.</p>
+                </div>
+                <div class="hero-side-card">
+                    <div class="hero-side-label">Quoted Value</div>
+                    <div class="hero-side-value">₹{{ "{:,.0f}".format(total or 0) }}</div>
+                    <div class="hero-meta-grid">
+                        <div class="hero-meta-item">
+                            <span class="label">Customer</span>
+                            <span class="value">{{ lead.customer_name }}</span>
+                        </div>
+                        <div class="hero-meta-item">
+                            <span class="label">Project</span>
+                            <span class="value">{{ lead.project_name or 'Workspace Setup' }}</span>
+                        </div>
+                        <div class="hero-meta-item">
+                            <span class="label">Options</span>
+                            <span class="value">{{ designs|length }}</span>
+                        </div>
+                        <div class="hero-meta-item">
+                            <span class="label">Date</span>
+                            <span class="value">{{ lead.created_at.strftime('%b %d, %Y') }}</span>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <h2>Workspace Setup Quotation</h2>
-            <p class="mb-0">Premium Home Office Solutions</p>
         </div>
 
         <!-- Content -->
@@ -896,15 +1135,23 @@
             </div>
 
             <!-- Call to Action -->
-            <div class="text-center mt-4 no-print">
-                <button onclick="window.print()" class="btn btn-lg" 
-                        style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 15px 40px; border-radius: 25px;">
-                    <i class="bi bi-printer"></i> Print / Save as PDF
-                </button>
-                <a href="tel:{{ lead.customer_phone or '+91' }}" class="btn btn-success btn-lg ms-2" 
-                   style="padding: 15px 40px; border-radius: 25px;">
-                    <i class="bi bi-telephone"></i> Contact Us
-                </a>
+            <div class="cta-panel no-print">
+                <div class="row g-4 align-items-center">
+                    <div class="col-lg-7">
+                        <div class="cta-title">Ready to build this setup?</div>
+                        <p class="cta-text">Review the proposal, save it as PDF, and connect with Gspaces to finalize your preferred design direction.</p>
+                    </div>
+                    <div class="col-lg-5">
+                        <div class="d-flex flex-column flex-md-row justify-content-lg-end gap-3 cta-actions">
+                            <button onclick="window.print()" class="btn btn-quote-primary btn-lg">
+                                <i class="bi bi-printer"></i> Print / Save as PDF
+                            </button>
+                            <a href="tel:{{ lead.customer_phone or '+91' }}" class="btn btn-quote-secondary btn-lg">
+                                <i class="bi bi-telephone"></i> Contact Us
+                            </a>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -920,6 +1167,7 @@
                 This quotation is valid for 7 days from the date of issue.
             </p>
         </div>
+    </div>
     </div>
 
     <!-- Image Modal -->

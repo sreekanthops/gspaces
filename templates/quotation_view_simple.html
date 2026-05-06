@@ -1089,6 +1089,9 @@
             // Clear existing interval
             stopAutoScroll(designId);
             
+            const inner = document.getElementById('carouselInner' + designId);
+            if (!inner || inner.children.length <= 1) return;
+
             // Auto-scroll every 5 seconds
             state.autoScrollInterval = setInterval(() => {
                 // Check if any video in this carousel is currently playing
@@ -1109,7 +1112,13 @@
                     }
                 }
                 
-                state.currentSlide = (state.currentSlide + 1) % state.totalSlides;
+                const visibleSlides = inner.children.length;
+                if (visibleSlides <= 1) {
+                    stopAutoScroll(designId);
+                    return;
+                }
+
+                state.currentSlide = (state.currentSlide + 1) % visibleSlides;
                 updateCarousel(designId);
             }, 5000);
         }

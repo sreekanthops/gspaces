@@ -640,6 +640,13 @@
                                             {% if item.quantity and item.quantity > 1 %}
                                             <span class="badge bg-primary ms-2">×{{ item.quantity }}</span>
                                             {% endif %}
+                                            {% if item.length or item.breadth or item.height %}
+                                            <span class="badge bg-info ms-2">
+                                                {% if item.length %}L: {{ item.length }}{% endif %}
+                                                {% if item.breadth %}{% if item.length %} × {% endif %}B: {{ item.breadth }}{% endif %}
+                                                {% if item.height %}{% if item.length or item.breadth %} × {% endif %}H: {{ item.height }}{% endif %}
+                                            </span>
+                                            {% endif %}
                                         </div>
                                         {% if item.details %}
                                         <div class="item-details">{{ item.details }}</div>
@@ -865,8 +872,9 @@
                 autoScrollInterval: null
             };
             
-            // Start auto-scroll
-            startAutoScroll(designId);
+            if (totalSlides > 1) {
+                startAutoScroll(designId);
+            }
         }
 
         function moveSlide(designId, direction) {

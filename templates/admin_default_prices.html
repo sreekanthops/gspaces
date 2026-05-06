@@ -164,11 +164,25 @@
                     <div class="price-card {% if not item.is_active %}inactive-item{% endif %}">
                         <div class="card-actions">
                             <button type="button" class="btn btn-sm btn-outline-primary"
-                                    onclick="editItem({{ item.id }}, '{{ item.item_name }}', '{{ item.item_slug }}', '{{ item.icon_emoji }}', '{{ item.icon_image or '' }}', {{ item.default_price }}, '{{ item.description or '' }}', {{ item.display_order }}, {{ item.is_active|lower }})">
+                                    data-item-id="{{ item.id }}"
+                                    data-item-name="{{ item.item_name }}"
+                                    data-item-slug="{{ item.item_slug }}"
+                                    data-item-emoji="{{ item.icon_emoji or '📦' }}"
+                                    data-item-image="{{ item.icon_image or '' }}"
+                                    data-item-price="{{ item.default_price }}"
+                                    data-item-description="{{ item.description or '' }}"
+                                    data-item-order="{{ item.display_order }}"
+                                    data-item-active="{{ 'true' if item.is_active else 'false' }}"
+                                    data-item-has-length="{{ 'true' if item.has_length else 'false' }}"
+                                    data-item-has-breadth="{{ 'true' if item.has_breadth else 'false' }}"
+                                    data-item-has-height="{{ 'true' if item.has_height else 'false' }}"
+                                    onclick="editItemFromButton(this)">
                                 <i class="bi bi-pencil"></i>
                             </button>
                             <button type="button" class="btn btn-sm btn-outline-danger"
-                                    onclick="deleteItem({{ item.id }}, '{{ item.item_name }}')">
+                                    data-item-id="{{ item.id }}"
+                                    data-item-name="{{ item.item_name }}"
+                                    onclick="deleteItemFromButton(this)">
                                 <i class="bi bi-trash"></i>
                             </button>
                         </div>
@@ -195,7 +209,15 @@
                                    value="{{ item.default_price }}"
                                    step="0.01" min="0" required>
                         </div>
-                        <small class="text-muted">{{ item.description or 'No description' }}</small>
+                        <small class="text-muted d-block">{{ item.description or 'No description' }}</small>
+                        <div class="mt-2">
+                            {% if item.has_length %}<span class="badge bg-info-subtle text-info-emphasis me-1">Length</span>{% endif %}
+                            {% if item.has_breadth %}<span class="badge bg-info-subtle text-info-emphasis me-1">Breadth</span>{% endif %}
+                            {% if item.has_height %}<span class="badge bg-info-subtle text-info-emphasis">Height</span>{% endif %}
+                            {% if not item.has_length and not item.has_breadth and not item.has_height %}
+                            <span class="badge bg-secondary-subtle text-secondary-emphasis">No dimensions</span>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
                 {% endfor %}
@@ -265,6 +287,23 @@
                             <textarea name="description" class="form-control" rows="3"></textarea>
                         </div>
                         
+                        <div class="mb-3">
+                            <label class="form-label d-block">Dimension Fields</label>
+                            <div class="form-check">
+                                <input type="checkbox" name="has_length" class="form-check-input" id="add_has_length">
+                                <label class="form-check-label" for="add_has_length">Length</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="checkbox" name="has_breadth" class="form-check-input" id="add_has_breadth">
+                                <label class="form-check-label" for="add_has_breadth">Breadth</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="checkbox" name="has_height" class="form-check-input" id="add_has_height">
+                                <label class="form-check-label" for="add_has_height">Height</label>
+                            </div>
+                            <small class="text-muted">Selected dimensions will be shown in edit leads and custom item rows.</small>
+                        </div>
+
                         <div class="form-check">
                             <input type="checkbox" name="is_active" class="form-check-input" checked>
                             <label class="form-check-label">Active (available for selection)</label>
@@ -331,6 +370,23 @@
                             <textarea name="description" id="edit_description" class="form-control" rows="3"></textarea>
                         </div>
                         
+                        <div class="mb-3">
+                            <label class="form-label d-block">Dimension Fields</label>
+                            <div class="form-check">
+                                <input type="checkbox" name="has_length" id="edit_has_length" class="form-check-input">
+                                <label class="form-check-label" for="edit_has_length">Length</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="checkbox" name="has_breadth" id="edit_has_breadth" class="form-check-input">
+                                <label class="form-check-label" for="edit_has_breadth">Breadth</label>
+                            </div>
+                            <div class="form-check">
+                                <input type="checkbox" name="has_height" id="edit_has_height" class="form-check-input">
+                                <label class="form-check-label" for="edit_has_height">Height</label>
+                            </div>
+                            <small class="text-muted">These controls decide which dimensions appear when this item is used in leads.</small>
+                        </div>
+
                         <div class="form-check">
                             <input type="checkbox" name="is_active" id="edit_is_active" class="form-check-input">
                             <label class="form-check-label">Active (available for selection)</label>
@@ -374,7 +430,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        function editItem(id, name, slug, emoji, image, price, description, order, active) {
+        function editItem(id, name, slug, emoji, image, price, description, order, active, hasLength, hasBreadth, hasHeight) {
             document.getElementById('edit_item_id').value = id;
             document.getElementById('edit_item_name').value = name;
             document.getElementById('edit_item_slug').value = slug;
@@ -383,6 +439,9 @@
             document.getElementById('edit_description').value = description;
             document.getElementById('edit_display_order').value = order;
             document.getElementById('edit_is_active').checked = active;
+            document.getElementById('edit_has_length').checked = hasLength;
+            document.getElementById('edit_has_breadth').checked = hasBreadth;
+            document.getElementById('edit_has_height').checked = hasHeight;
             
             if (image) {
                 document.getElementById('current_icon_info').textContent = 'Current: ' + image;

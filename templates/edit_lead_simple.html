@@ -193,6 +193,7 @@
                 <input type="hidden" name="customer_email" value="{{ lead.customer_email or '' }}">
                 <input type="hidden" name="customer_phone" value="{{ lead.customer_phone or '' }}">
                 <input type="hidden" name="project_name" value="{{ lead.project_name or '' }}">
+                <input type="hidden" name="location" value="{{ lead.location or '' }}">
                 <input type="hidden" name="notes" value="{{ lead.notes or '' }}">
                 <div class="mb-3">
                     <input type="file" name="reference_image" class="form-control" accept="image/*">
@@ -706,7 +707,8 @@
                     <div class="mb-3 p-3" style="background: #fff9c4; border-radius: 10px;">
                         <div class="form-check mb-2">
                             <input type="checkbox" class="form-check-input" name="has_desk_lamp"
-                                   {% if design.has_desk_lamp %}checked{% endif %}>
+                                   {% if design.has_desk_lamp %}checked{% endif %}
+                                   onchange="calculateTotal({{ design.id }})">
                             <label class="form-check-label fw-bold">{{ render_icon('desk_lamp') }} Desk Lamp</label>
                         </div>
                         <div class="row g-2">
@@ -731,7 +733,7 @@
                         <div class="mt-2">
                             <label class="form-label small">Details</label>
                             <textarea name="desk_lamp_details" class="form-control" rows="2"
-                                      placeholder="e.g., LED desk lamp with adjustable brightness">{{ design.desk_lamp_details or '' }}</textarea>
+                                      placeholder="e.g., LED desk lamp with adjustable brightness">{{ design.desk_lamp_details or (default_items|selectattr('item_slug', 'equalto', 'desk_lamp')|map(attribute='description')|first) or '' }}</textarea>
                         </div>
                     </div>
 
@@ -739,8 +741,9 @@
                     <div class="mb-3 p-3" style="background: #e1f5fe; border-radius: 10px;">
                         <div class="form-check mb-2">
                             <input type="checkbox" class="form-check-input" name="has_pen_holder"
-                                   {% if design.has_pen_holder %}checked{% endif %}>
-                            <label class="form-check-label fw-bold">✏️ Pen Holder</label>
+                                   {% if design.has_pen_holder %}checked{% endif %}
+                                   onchange="calculateTotal({{ design.id }})">
+                            <label class="form-check-label fw-bold">{{ render_icon('pen_holder') }} Pen Holder</label>
                         </div>
                         <div class="row g-2">
                             <div class="col-md-3">
@@ -764,7 +767,7 @@
                         <div class="mt-2">
                             <label class="form-label small">Details</label>
                             <textarea name="pen_holder_details" class="form-control" rows="2"
-                                      placeholder="e.g., Wooden pen holder, metal mesh organizer">{{ design.pen_holder_details or '' }}</textarea>
+                                      placeholder="e.g., Wooden pen holder, metal mesh organizer">{{ design.pen_holder_details or (default_items|selectattr('item_slug', 'equalto', 'pen_holder')|map(attribute='description')|first) or '' }}</textarea>
                         </div>
                     </div>
 
@@ -772,8 +775,9 @@
                     <div class="mb-3 p-3" style="background: #f3e5f5; border-radius: 10px;">
                         <div class="form-check mb-2">
                             <input type="checkbox" class="form-check-input" name="has_laptop_holder"
-                                   {% if design.has_laptop_holder %}checked{% endif %}>
-                            <label class="form-check-label fw-bold">💻 Laptop Holder</label>
+                                   {% if design.has_laptop_holder %}checked{% endif %}
+                                   onchange="calculateTotal({{ design.id }})">
+                            <label class="form-check-label fw-bold">{{ render_icon('laptop_holder') }} Laptop Holder</label>
                         </div>
                         <div class="row g-2">
                             <div class="col-md-3">
@@ -797,7 +801,7 @@
                         <div class="mt-2">
                             <label class="form-label small">Details</label>
                             <textarea name="laptop_holder_details" class="form-control" rows="2"
-                                      placeholder="e.g., Vertical laptop stand, adjustable holder">{{ design.laptop_holder_details or '' }}</textarea>
+                                      placeholder="e.g., Vertical laptop stand, adjustable holder">{{ design.laptop_holder_details or (default_items|selectattr('item_slug', 'equalto', 'laptop_holder')|map(attribute='description')|first) or '' }}</textarea>
                         </div>
                     </div>
 
@@ -832,7 +836,7 @@
                         <div class="mt-2">
                             <label class="form-label small">Details</label>
                             <textarea name="dustbin_details" class="form-control" rows="2"
-                                      placeholder="e.g., Stainless steel, pedal bin">{{ design.dustbin_details or '' }}</textarea>
+                                      placeholder="e.g., Stainless steel, pedal bin">{{ design.dustbin_details or (default_items|selectattr('item_slug', 'equalto', 'dustbin')|map(attribute='description')|first) or '' }}</textarea>
                         </div>
                     </div>
 
@@ -869,7 +873,7 @@
                         <div class="mt-2">
                             <label class="form-label small">Details</label>
                             <textarea name="paint_details" class="form-control" rows="2"
-                                      placeholder="e.g., Wall paint, primer, colors">{{ design.paint_details or '' }}</textarea>
+                                      placeholder="e.g., Wall paint, primer, colors">{{ design.paint_details or (default_items|selectattr('item_slug', 'equalto', 'paint')|map(attribute='description')|first) or '' }}</textarea>
                         </div>
                     </div>
 
@@ -918,6 +922,50 @@
                         </div>
                     </div>
 
+                    <!-- 🖱️ Desk Mat -->
+                    <div class="mb-3 p-3" style="background: #ede7f6; border-radius: 10px;">
+                        <div class="form-check mb-2">
+                            <input type="checkbox" class="form-check-input" name="has_desk_mat"
+                                   {% if design.has_desk_mat %}checked{% endif %}
+                                   onchange="calculateTotal({{ design.id }})">
+                            <label class="form-check-label fw-bold">{{ render_icon('desk_mat') }} Desk Mat</label>
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-md-2">
+                                <label class="form-label small">Length</label>
+                                <input type="text" name="desk_mat_length" class="form-control"
+                                       value="{{ design.desk_mat_length or '' }}" placeholder="L">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label small">Height</label>
+                                <input type="text" name="desk_mat_height" class="form-control"
+                                       value="{{ design.desk_mat_height or '' }}" placeholder="H">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label small">Quantity</label>
+                                <input type="number" name="desk_mat_quantity" class="form-control"
+                                       value="{{ design.desk_mat_quantity or 1 }}" min="1"
+                                       onchange="calculateItemTotal('desk_mat', {{ design.id }})">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small">Unit Price (₹)</label>
+                                <input type="number" name="desk_mat_price" class="form-control"
+                                       value="{{ design.desk_mat_price or default_prices.get('desk_mat', 0) }}" min="0"
+                                       onchange="calculateItemTotal('desk_mat', {{ design.id }})">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small">Total (₹)</label>
+                                <input type="text" id="desk_mat_total_{{ design.id }}" class="form-control" readonly
+                                       style="background: #d1c4e9; font-weight: bold;">
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <label class="form-label small">Details</label>
+                            <textarea name="desk_mat_details" class="form-control" rows="2"
+                                      placeholder="Desk mat with clean finish and workspace coverage">{{ design.desk_mat_details or (default_items|selectattr('item_slug', 'equalto', 'desk_mat')|map(attribute='description')|first) or 'Desk mat with premium finish for a neat and comfortable workspace.' }}</textarea>
+                        </div>
+                    </div>
+
                     <!-- 🔌 Multi Socket -->
                     <div class="mb-3 p-3" style="background: #fff3e0; border-radius: 10px;">
                         <div class="form-check mb-2">
@@ -955,46 +1003,80 @@
                     <!-- Custom Items Section -->
                     <div class="mt-4 p-3" style="background: #f0f9ff; border-radius: 10px; border: 2px dashed #667eea;">
                         <h6 class="mb-3"><i class="bi bi-plus-circle"></i> Add Custom Items (Optional)</h6>
-                        <p class="small text-muted mb-3">Select items from default prices or type to search. Icon and price will auto-populate.</p>
+                        <p class="small text-muted mb-3">Select items from default prices or type to search. Icon, price, description, and dimension fields will auto-populate.</p>
                         <div id="customItems{{ design.id }}">
                             {% if design.custom_items %}
                                 {% for item in design.custom_items %}
-                                <div class="custom-item-row mb-2" style="display: flex; gap: 10px; align-items: start;">
-                                    <div style="flex: 2;">
-                                        <input type="text" class="form-control custom-item-name-input"
-                                               placeholder="Select or type item name"
-                                               name="custom_item_name[]" value="{{ item.name }}"
-                                               list="defaultItemsList{{ design.id }}"
-                                               onchange="populateItemDetails(this, {{ design.id }})">
-                                    </div>
-                                    <input type="text" class="form-control" placeholder="Details"
-                                           name="custom_item_details[]" value="{{ item.details }}" style="flex: 2;">
+                                <div class="custom-item-row mb-3 p-3 border rounded" style="background: #fff;">
+                                    <input type="hidden" class="custom-item-slug-value" name="custom_item_slug[]" value="{{ item.slug or '' }}">
                                     <input type="hidden" class="custom-item-icon-value" name="custom_item_icon[]" value="{{ item.icon }}">
-                                    <span class="custom-item-icon-display" style="min-width: 30px; text-align: center; font-size: 1.2rem;">
-                                        {% if item.icon and item.icon.startswith('img/') %}
-                                            <img src="{{ url_for('static', filename=item.icon) }}" style="width: 24px; height: 24px; object-fit: contain;">
-                                        {% else %}
-                                            {{ item.icon or '📦' }}
-                                        {% endif %}
-                                    </span>
-                                    <input type="number" class="form-control" placeholder="Qty"
-                                           name="custom_item_quantity[]" value="{{ item.quantity or 1 }}"
-                                           min="1" style="max-width: 70px;"
-                                           onchange="calculateTotal({{ design.id }})">
-                                    <input type="number" class="form-control custom-item-price-input" placeholder="Price"
-                                           name="custom_item_price[]" value="{{ item.price or 0 }}"
-                                           step="0.01" min="0" style="max-width: 120px;"
-                                           onchange="calculateTotal({{ design.id }})">
-                                    <button type="button" class="btn btn-danger btn-sm"
-                                            onclick="this.parentElement.remove(); calculateTotal({{ design.id }})">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
+                                    <input type="hidden" class="custom-item-has-length" name="custom_item_has_length[]" value="{{ 'true' if item.has_length else 'false' }}">
+                                    <input type="hidden" class="custom-item-has-breadth" name="custom_item_has_breadth[]" value="{{ 'true' if item.has_breadth else 'false' }}">
+                                    <input type="hidden" class="custom-item-has-height" name="custom_item_has_height[]" value="{{ 'true' if item.has_height else 'false' }}">
+
+                                    <div class="row g-2 align-items-start">
+                                        <div class="col-md-3">
+                                            <label class="form-label small">Item</label>
+                                            <input type="text" class="form-control custom-item-name-input"
+                                                   placeholder="Select or type item name"
+                                                   name="custom_item_name[]" value="{{ item.name }}"
+                                                   list="defaultItemsList{{ design.id }}"
+                                                   onchange="populateItemDetails(this, {{ design.id }})">
+                                        </div>
+                                        <div class="col-md-1 text-center">
+                                            <label class="form-label small">Icon</label>
+                                            <div class="custom-item-icon-display" style="min-width: 30px; text-align: center; font-size: 1.2rem; padding-top: 6px;">
+                                                {% if item.icon and item.icon.startswith('img/') %}
+                                                    <img src="{{ url_for('static', filename=item.icon) }}" style="width: 24px; height: 24px; object-fit: contain;">
+                                                {% else %}
+                                                    {{ item.icon or '📦' }}
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label small">Quantity</label>
+                                            <input type="number" class="form-control" placeholder="Qty"
+                                                   name="custom_item_quantity[]" value="{{ item.quantity or 1 }}"
+                                                   min="1" onchange="calculateTotal({{ design.id }})">
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label small">Unit Price (₹)</label>
+                                            <input type="number" class="form-control custom-item-price-input" placeholder="Price"
+                                                   name="custom_item_price[]" value="{{ item.price or 0 }}"
+                                                   step="0.01" min="0" onchange="calculateTotal({{ design.id }})">
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label small">Details</label>
+                                            <textarea class="form-control custom-item-details-input" placeholder="Details"
+                                                      name="custom_item_details[]" rows="2">{{ item.details }}</textarea>
+                                        </div>
+                                        <div class="col-md-1 d-flex align-items-end">
+                                            <button type="button" class="btn btn-danger btn-sm w-100"
+                                                    onclick="this.closest('.custom-item-row').remove(); calculateTotal({{ design.id }})">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div class="row g-2 mt-2 custom-dimensions-row" {% if not item.has_length and not item.has_breadth and not item.has_height %}hidden{% endif %}>
+                                        <div class="col-md-2 custom-length-field" {% if not item.has_length %}hidden{% endif %}>
+                                            <label class="form-label small">Length</label>
+                                            <input type="text" class="form-control" name="custom_item_length[]" value="{{ item.length or '' }}" placeholder="Length">
+                                        </div>
+                                        <div class="col-md-2 custom-breadth-field" {% if not item.has_breadth %}hidden{% endif %}>
+                                            <label class="form-label small">Breadth</label>
+                                            <input type="text" class="form-control" name="custom_item_breadth[]" value="{{ item.breadth or '' }}" placeholder="Breadth">
+                                        </div>
+                                        <div class="col-md-2 custom-height-field" {% if not item.has_height %}hidden{% endif %}>
+                                            <label class="form-label small">Height</label>
+                                            <input type="text" class="form-control" name="custom_item_height[]" value="{{ item.height or '' }}" placeholder="Height">
+                                        </div>
+                                    </div>
                                 </div>
                                 {% endfor %}
                             {% endif %}
                         </div>
                         
-                        <!-- Datalist for autocomplete -->
                         <datalist id="defaultItemsList{{ design.id }}">
                             {% for item in default_items %}
                             <option value="{{ item.item_name }}" data-price="{{ item.default_price }}" data-icon="{{ item.icon_emoji }}" data-icon-image="{{ item.icon_image or '' }}">
@@ -1116,27 +1198,33 @@
             const selectedItem = defaultItems.find(item => item.item_name === itemName);
             
             if (selectedItem) {
-                // Always update price with default price
                 const priceInput = row.querySelector('.custom-item-price-input');
                 if (priceInput) {
                     priceInput.value = selectedItem.default_price || 0;
                 }
+
+                const detailsInput = row.querySelector('.custom-item-details-input');
+                if (detailsInput && (!detailsInput.value || detailsInput.value.trim() === '')) {
+                    detailsInput.value = selectedItem.description || '';
+                }
+
+                const slugInput = row.querySelector('.custom-item-slug-value');
+                if (slugInput) {
+                    slugInput.value = selectedItem.item_slug || '';
+                }
                 
-                // Update icon
                 const iconHidden = row.querySelector('.custom-item-icon-value');
                 const iconDisplay = row.querySelector('.custom-item-icon-display');
                 
                 if (selectedItem.icon_image) {
-                    // Use uploaded image
                     iconDisplay.innerHTML = `<img src="/static/${selectedItem.icon_image}" class="item-icon-img" alt="${itemName}">`;
                     iconHidden.value = selectedItem.icon_image;
                 } else {
-                    // Use emoji
                     iconDisplay.textContent = selectedItem.icon_emoji || '📦';
                     iconHidden.value = selectedItem.icon_emoji || '📦';
                 }
-                
-                // Recalculate total
+
+                applyCustomItemDimensions(row, selectedItem);
                 calculateTotal(designId);
             }
         }
@@ -1144,31 +1232,100 @@
         function addCustomItem(designId) {
             const container = document.getElementById('customItems' + designId);
             const newRow = document.createElement('div');
-            newRow.className = 'custom-item-row mb-2';
-            newRow.style.cssText = 'display: flex; gap: 10px; align-items: start;';
+            newRow.className = 'custom-item-row mb-3 p-3 border rounded';
+            newRow.style.cssText = 'background: #fff;';
             newRow.innerHTML = `
-                <div style="flex: 2;">
-                    <input type="text" class="form-control custom-item-name-input"
-                           placeholder="Select or type item name"
-                           name="custom_item_name[]"
-                           list="defaultItemsList${designId}"
-                           onchange="populateItemDetails(this, ${designId})">
+                <div class="row g-2 align-items-start">
+                    <div class="col-md-3">
+                        <label class="form-label small">Item</label>
+                        <input type="text" class="form-control custom-item-name-input"
+                               placeholder="Select or type item name"
+                               name="custom_item_name[]"
+                               list="defaultItemsList${designId}"
+                               onchange="populateItemDetails(this, ${designId})">
+                        <input type="hidden" class="custom-item-slug-value" name="custom_item_slug[]" value="">
+                    </div>
+                    <div class="col-md-1 text-center">
+                        <label class="form-label small">Icon</label>
+                        <input type="hidden" class="custom-item-icon-value" name="custom_item_icon[]" value="📦">
+                        <div class="custom-item-icon-display" style="min-width: 30px; text-align: center; font-size: 1.2rem; padding-top: 6px;">📦</div>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small">Quantity</label>
+                        <input type="number" class="form-control" placeholder="Qty" name="custom_item_quantity[]"
+                               value="1" min="1" onchange="calculateTotal(${designId})">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small">Unit Price (₹)</label>
+                        <input type="number" class="form-control custom-item-price-input" placeholder="Price" name="custom_item_price[]"
+                               value="0" step="0.01" min="0" onchange="calculateTotal(${designId})">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small">Details</label>
+                        <textarea class="form-control custom-item-details-input" placeholder="Details" name="custom_item_details[]" rows="2"></textarea>
+                    </div>
+                    <div class="col-md-1 d-flex align-items-end">
+                        <button type="button" class="btn btn-danger btn-sm w-100"
+                                onclick="this.closest('.custom-item-row').remove(); calculateTotal(${designId})">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
                 </div>
-                <input type="text" class="form-control" placeholder="Details" name="custom_item_details[]" style="flex: 2;">
-                <input type="hidden" class="custom-item-icon-value" name="custom_item_icon[]" value="📦">
-                <span class="custom-item-icon-display" style="min-width: 30px; text-align: center; font-size: 1.2rem;">📦</span>
-                <input type="number" class="form-control" placeholder="Qty" name="custom_item_quantity[]"
-                       value="1" min="1" style="max-width: 70px;"
-                       onchange="calculateTotal(${designId})">
-                <input type="number" class="form-control custom-item-price-input" placeholder="Price" name="custom_item_price[]"
-                       value="0" step="0.01" min="0" style="max-width: 120px;"
-                       onchange="calculateTotal(${designId})">
-                <button type="button" class="btn btn-danger btn-sm"
-                        onclick="this.parentElement.remove(); calculateTotal(${designId})">
-                    <i class="bi bi-trash"></i>
-                </button>
+                <div class="row g-2 mt-2 custom-dimensions-row" style="display:none;">
+                    <input type="hidden" class="custom-item-has-length" name="custom_item_has_length[]" value="false">
+                    <input type="hidden" class="custom-item-has-breadth" name="custom_item_has_breadth[]" value="false">
+                    <input type="hidden" class="custom-item-has-height" name="custom_item_has_height[]" value="false">
+                    <div class="col-md-2 custom-length-field" style="display:none;">
+                        <label class="form-label small">Length</label>
+                        <input type="text" class="form-control" name="custom_item_length[]" value="" placeholder="Length">
+                    </div>
+                    <div class="col-md-2 custom-breadth-field" style="display:none;">
+                        <label class="form-label small">Breadth</label>
+                        <input type="text" class="form-control" name="custom_item_breadth[]" value="" placeholder="Breadth">
+                    </div>
+                    <div class="col-md-2 custom-height-field" style="display:none;">
+                        <label class="form-label small">Height</label>
+                        <input type="text" class="form-control" name="custom_item_height[]" value="" placeholder="Height">
+                    </div>
+                </div>
             `;
             container.appendChild(newRow);
+        }
+
+        function applyCustomItemDimensions(row, selectedItem) {
+            const dimensionsRow = row.querySelector('.custom-dimensions-row');
+            const lengthField = row.querySelector('.custom-length-field');
+            const breadthField = row.querySelector('.custom-breadth-field');
+            const heightField = row.querySelector('.custom-height-field');
+            const hasLengthInput = row.querySelector('.custom-item-has-length');
+            const hasBreadthInput = row.querySelector('.custom-item-has-breadth');
+            const hasHeightInput = row.querySelector('.custom-item-has-height');
+
+            const hasLength = !!selectedItem?.has_length;
+            const hasBreadth = !!selectedItem?.has_breadth;
+            const hasHeight = !!selectedItem?.has_height;
+
+            if (dimensionsRow) {
+                dimensionsRow.style.display = (hasLength || hasBreadth || hasHeight) ? 'flex' : 'none';
+            }
+            if (lengthField) {
+                lengthField.style.display = hasLength ? 'block' : 'none';
+            }
+            if (breadthField) {
+                breadthField.style.display = hasBreadth ? 'block' : 'none';
+            }
+            if (heightField) {
+                heightField.style.display = hasHeight ? 'block' : 'none';
+            }
+            if (hasLengthInput) {
+                hasLengthInput.value = hasLength ? 'true' : 'false';
+            }
+            if (hasBreadthInput) {
+                hasBreadthInput.value = hasBreadth ? 'true' : 'false';
+            }
+            if (hasHeightInput) {
+                hasHeightInput.value = hasHeight ? 'true' : 'false';
+            }
         }
 
         // Calculate individual item total (quantity × price, or for table/wardrobes: length × width × price)
@@ -1209,7 +1366,7 @@
             const items = [
                 'table', 'chair', 'lighting', 'profile_lighting', 'storage',
                 'big_plants', 'mini_plants', 'frames', 'wall_racks',
-                'dustbin', 'paint', 'wardrobes', 'multi_socket',
+                'dustbin', 'paint', 'wardrobes', 'desk_mat', 'multi_socket',
                 'desk_lamp', 'pen_holder', 'laptop_holder'
             ];
             
@@ -1309,9 +1466,10 @@
             
             // List of all items
             const items = [
-                'table', 'chair', 'plants', 'lighting', 'profile_lighting', 'storage', 'accessories',
+                'table', 'chair', 'lighting', 'profile_lighting', 'storage',
                 'big_plants', 'mini_plants', 'frames', 'wall_racks', 'desk_mat',
-                'dustbin', 'floor_mat', 'keyboard', 'mouse', 'paint', 'wardrobes'
+                'dustbin', 'paint', 'wardrobes', 'multi_socket',
+                'desk_lamp', 'pen_holder', 'laptop_holder'
             ];
             
             // Copy each item's checkbox, quantity, price, and details
@@ -1381,9 +1539,24 @@
 
         // Calculate totals on page load
         document.addEventListener('DOMContentLoaded', function() {
+            const defaultItems = {{ default_items|tojson|safe }};
+
             {% for design in designs %}
             calculateTotal({{ design.id }});
             {% endfor %}
+
+            document.querySelectorAll('.custom-item-row').forEach(function(row) {
+                const slugInput = row.querySelector('.custom-item-slug-value');
+                const nameInput = row.querySelector('.custom-item-name-input');
+                const slug = slugInput ? slugInput.value : '';
+                const itemName = nameInput ? nameInput.value : '';
+                const selectedItem = defaultItems.find(function(item) { return item.item_slug === slug; }) ||
+                                     defaultItems.find(function(item) { return item.item_name === itemName; });
+
+                if (selectedItem) {
+                    applyCustomItemDimensions(row, selectedItem);
+                }
+            });
         });
 
         // ===== MEDIA GALLERY FUNCTIONS =====

@@ -98,10 +98,11 @@ def create_lead():
         
         try:
             customer_name = request.form.get('customer_name')
-            customer_email = request.form.get('customer_email', '')
+            customer_email = request.form.get('customer_email', '').strip()
             customer_phone = request.form.get('customer_phone', '')
             project_name = request.form.get('project_name', '')
-            notes = request.form.get('notes', '')
+            location = request.form.get('location', '').strip()
+            notes = request.form.get('notes', '').strip() or 'Transform your space into a dream workspace setup.'
             
             # Handle main image
             reference_image = None
@@ -120,11 +121,11 @@ def create_lead():
             
             cur.execute("""
                 INSERT INTO leads (customer_name, customer_email, customer_phone,
-                                 project_name, reference_image, notes, share_token, created_by)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                                 project_name, location, reference_image, notes, share_token, created_by)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
                 RETURNING id
             """, (customer_name, customer_email, customer_phone, project_name,
-                  reference_image, notes, share_token, current_user.id))
+                  location, reference_image, notes, share_token, current_user.id))
             
             lead_id = cur.fetchone()[0]
             conn.commit()
@@ -152,11 +153,11 @@ def edit_lead(lead_id):
         try:
             # Update lead info
             customer_name = request.form.get('customer_name')
-            customer_email = request.form.get('customer_email', '')
+            customer_email = request.form.get('customer_email', '').strip()
             customer_phone = request.form.get('customer_phone', '')
             project_name = request.form.get('project_name', '')
-            location = request.form.get('location', '')
-            notes = request.form.get('notes', '')
+            location = request.form.get('location', '').strip()
+            notes = request.form.get('notes', '').strip()
             
             # Get current image
             cur.execute("SELECT reference_image FROM leads WHERE id = %s", (lead_id,))
@@ -240,7 +241,7 @@ def edit_lead(lead_id):
     # Fetch default items with icons and prices from database
     cur.execute("""
         SELECT id, item_name, item_slug, icon_emoji, icon_image, default_price, description,
-               display_order, is_active
+               has_length, has_breadth, has_height, display_order, is_active
         FROM default_items
         WHERE is_active = TRUE
         ORDER BY display_order, item_name
@@ -475,11 +476,11 @@ def update_design(design_id):
         design_name = request.form.get('design_name')
         notes = request.form.get('notes', '')
         
-        # Define all items (removed: accessories, desk_mat, floor_mat, keyboard, mouse; added: multi_socket)
+        # Define all supported items
         items = [
             'table', 'chair', 'lighting', 'profile_lighting', 'storage',
             'big_plants', 'mini_plants', 'frames', 'wall_racks',
-            'dustbin', 'paint', 'wardrobes', 'multi_socket',
+            'dustbin', 'paint', 'wardrobes', 'desk_mat', 'multi_socket',
             'desk_lamp', 'pen_holder', 'laptop_holder'
         ]
         
@@ -511,6 +512,8 @@ def update_design(design_id):
         wardrobes_width_ft = float(request.form.get('wardrobes_width_ft', 2))
         wardrobes_height_ft = float(request.form.get('wardrobes_height_ft', 7))
         
+        desk_mat_length = request.form.get('desk_mat_length', '').strip()
+        desk_mat_height = request.form.get('desk_mat_height', '').strip()
         chair_headrest = request.form.get('chair_headrest', 'with_headrest')
         
         for item in items:
@@ -542,6 +545,8 @@ def update_design(design_id):
                     # For wardrobes: area (length × width) × price per sq ft
                     area = wardrobes_length_ft * wardrobes_width_ft
                     subtotal += area * price
+                elif item == 'desk_mat':
+                    subtotal += quantity * price
                 else:
                     # Normal items: quantity × price
                     subtotal += quantity * price
@@ -553,6 +558,13 @@ def update_design(design_id):
         icons = request.form.getlist('custom_item_icon[]')
         prices = request.form.getlist('custom_item_price[]')
         quantities = request.form.getlist('custom_item_quantity[]')
+        lengths = request.form.getlist('custom_item_length[]')
+        breadths = request.form.getlist('custom_item_breadth[]')
+        heights = request.form.getlist('custom_item_height[]')
+        item_slugs = request.form.getlist('custom_item_slug[]')
+        has_lengths = request.form.getlist('custom_item_has_length[]')
+        has_breadths = request.form.getlist('custom_item_has_breadth[]')
+        has_heights = request.form.getlist('custom_item_has_height[]')
         
         for i in range(len(names)):
             if names[i].strip():
@@ -562,12 +574,26 @@ def update_design(design_id):
                 
                 price_str = prices[i] if i < len(prices) else '0'
                 price = float(price_str) if price_str and price_str.strip() else 0.0
+                length_value = lengths[i].strip() if i < len(lengths) and lengths[i] else ''
+                breadth_value = breadths[i].strip() if i < len(breadths) and breadths[i] else ''
+                height_value = heights[i].strip() if i < len(heights) and heights[i] else ''
+                has_length = i < len(has_lengths) and has_lengths[i] == 'true'
+                has_breadth = i < len(has_breadths) and has_breadths[i] == 'true'
+                has_height = i < len(has_heights) and has_heights[i] == 'true'
+
                 custom_items.append({
                     'name': names[i],
+                    'slug': item_slugs[i] if i < len(item_slugs) else '',
                     'details': details_list[i] if i < len(details_list) else '',
                     'icon': icons[i] if i < len(icons) else '📌',
                     'price': price,
-                    'quantity': qty
+                    'quantity': qty,
+                    'has_length': has_length,
+                    'has_breadth': has_breadth,
+                    'has_height': has_height,
+                    'length': length_value,
+                    'breadth': breadth_value,
+                    'height': height_value
                 })
                 # Add to subtotal
                 subtotal += qty * price
@@ -603,6 +629,8 @@ def update_design(design_id):
                 has_paint = %s, paint_quantity = %s, paint_price = %s, paint_details = %s,
                 has_wardrobes = %s, wardrobes_quantity = %s, wardrobes_price = %s, wardrobes_details = %s,
                 wardrobes_length_ft = %s, wardrobes_width_ft = %s, wardrobes_height_ft = %s,
+                has_desk_mat = %s, desk_mat_quantity = %s, desk_mat_price = %s, desk_mat_details = %s,
+                desk_mat_length = %s, desk_mat_height = %s,
                 has_multi_socket = %s, multi_socket_quantity = %s, multi_socket_price = %s, multi_socket_details = %s,
                 has_desk_lamp = %s, desk_lamp_quantity = %s, desk_lamp_price = %s, desk_lamp_details = %s,
                 has_pen_holder = %s, pen_holder_quantity = %s, pen_holder_price = %s, pen_holder_details = %s,
@@ -639,6 +667,9 @@ def update_design(design_id):
             # Wardrobes + dimensions
             item_data['wardrobes']['has'], item_data['wardrobes']['quantity'], item_data['wardrobes']['price'], item_data['wardrobes']['details'],
             wardrobes_length_ft, wardrobes_width_ft, wardrobes_height_ft,
+            # Desk Mat
+            item_data['desk_mat']['has'], item_data['desk_mat']['quantity'], item_data['desk_mat']['price'], item_data['desk_mat']['details'],
+            desk_mat_length, desk_mat_height,
             # Multi Socket
             item_data['multi_socket']['has'], item_data['multi_socket']['quantity'], item_data['multi_socket']['price'], item_data['multi_socket']['details'],
             # Desk Lamp
@@ -794,7 +825,7 @@ def view_quotation(share_token):
     # Fetch default items with icons for dynamic display
     cur.execute("""
         SELECT id, item_name, item_slug, icon_emoji, icon_image, default_price, description,
-               display_order, is_active
+               has_length, has_breadth, has_height, display_order, is_active
         FROM default_items
         WHERE is_active = TRUE
         ORDER BY display_order, item_name
@@ -840,7 +871,8 @@ def manage_default_prices():
     # Fetch all items from default_items table
     cur.execute("""
         SELECT id, item_name, item_slug, icon_emoji, icon_image,
-               default_price, description, display_order, is_active
+               default_price, description, has_length, has_breadth, has_height,
+               display_order, is_active
         FROM default_items
         ORDER BY display_order, item_name
     """)
@@ -865,6 +897,9 @@ def add_default_item():
         default_price = float(request.form.get('default_price', 0))
         description = request.form.get('description', '')
         display_order = int(request.form.get('display_order', 0))
+        has_length = 'has_length' in request.form
+        has_breadth = 'has_breadth' in request.form
+        has_height = 'has_height' in request.form
         is_active = 'is_active' in request.form
         
         # Handle icon image upload
@@ -907,12 +942,12 @@ def add_default_item():
         
         # Insert new item
         cur.execute("""
-            INSERT INTO default_items 
-            (item_name, item_slug, icon_emoji, icon_image, default_price, 
-             description, display_order, is_active)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            INSERT INTO default_items
+            (item_name, item_slug, icon_emoji, icon_image, default_price,
+             description, has_length, has_breadth, has_height, display_order, is_active)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """, (item_name, item_slug, icon_emoji, icon_image, default_price,
-              description, display_order, is_active))
+              description, has_length, has_breadth, has_height, display_order, is_active))
         
         conn.commit()
         flash(f'Item "{item_name}" added successfully!', 'success')
@@ -941,6 +976,9 @@ def update_default_item():
         default_price = float(request.form.get('default_price', 0))
         description = request.form.get('description', '')
         display_order = int(request.form.get('display_order', 0))
+        has_length = 'has_length' in request.form
+        has_breadth = 'has_breadth' in request.form
+        has_height = 'has_height' in request.form
         is_active = 'is_active' in request.form
         
         # Handle icon image upload
@@ -985,12 +1023,13 @@ def update_default_item():
         cur.execute(f"""
             UPDATE default_items
             SET item_name = %s, item_slug = %s, icon_emoji = %s,
-                default_price = %s, description = %s, display_order = %s,
-                is_active = %s, updated_at = CURRENT_TIMESTAMP
+                default_price = %s, description = %s,
+                has_length = %s, has_breadth = %s, has_height = %s,
+                display_order = %s, is_active = %s, updated_at = CURRENT_TIMESTAMP
                 {icon_image_update}
             WHERE id = %s
         """, (item_name, item_slug, icon_emoji, default_price, description,
-              display_order, is_active, item_id))
+              has_length, has_breadth, has_height, display_order, is_active, item_id))
         
         conn.commit()
         flash(f'Item "{item_name}" updated successfully!', 'success')

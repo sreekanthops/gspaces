@@ -855,7 +855,8 @@ def view_quotation(share_token):
     conn.close()
     
     return render_template('quotation_view_simple.html',
-                         lead=lead, designs=designs, total=total, default_items=default_items)
+                         lead=lead, designs=designs, total=total, default_items=default_items,
+                         current_user=current_user)
 
 @leads_bp.route('/admin/default-prices', methods=['GET', 'POST'])
 @admin_required

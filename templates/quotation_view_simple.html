@@ -838,6 +838,26 @@
                             <div class="expiry-timer-countdown" id="countdown">Calculating...</div>
                         </div>
                     </div>
+                    
+                    <!-- Admin Expiry Controls -->
+                    {% if current_user.is_authenticated and current_user.is_admin %}
+                    <div style="margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap;">
+                        <form method="post" action="/api/update-quotation-expiry" style="display: inline;">
+                            <input type="hidden" name="lead_id" value="{{ lead.id }}">
+                            <input type="hidden" name="action" value="extend">
+                            <button type="submit" style="background: #10b981; color: white; border: none; padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer;">
+                                ➕ Extend 7 Days
+                            </button>
+                        </form>
+                        <form method="post" action="/api/update-quotation-expiry" style="display: inline;">
+                            <input type="hidden" name="lead_id" value="{{ lead.id }}">
+                            <input type="hidden" name="action" value="expire">
+                            <button type="submit" onclick="return confirm('Mark this quotation as expired?')" style="background: #ef4444; color: white; border: none; padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer;">
+                                ❌ Mark Expired
+                            </button>
+                        </form>
+                    </div>
+                    {% endif %}
                     {% endif %}
                 </div>
             </div>

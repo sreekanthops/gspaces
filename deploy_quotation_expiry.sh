@@ -14,21 +14,15 @@ YELLOW='\033[1;33m'
 RED='\033[0;31m'
 NC='\033[0m' # No Color
 
-# Check if running as root or with sudo
-if [ "$EUID" -ne 0 ]; then 
-    echo -e "${RED}Please run with sudo${NC}"
-    exit 1
-fi
-
 # Backup database
 echo -e "${YELLOW}Step 1: Creating database backup...${NC}"
-sudo -u postgres pg_dump gspaces > "gspaces_backup_expiry_$(date +%Y%m%d_%H%M%S).sql"
+sudo -u sri pg_dump gspaces > "gspaces_backup_expiry_$(date +%Y%m%d_%H%M%S).sql"
 echo -e "${GREEN}✓ Database backup created${NC}"
 echo ""
 
 # Run database migration
 echo -e "${YELLOW}Step 2: Running database migration...${NC}"
-sudo -u postgres psql gspaces < add_quotation_expiry.sql
+sudo -u sri psql gspaces < add_quotation_expiry.sql
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}✓ Database migration completed${NC}"
 else

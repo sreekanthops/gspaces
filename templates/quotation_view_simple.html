@@ -1712,7 +1712,7 @@
                 const currentSlide = inner.children[state.currentSlide];
         
         // Feedback functionality
-        let selectedRating = {{ lead.customer_rating or 0 }};
+        let selectedRating = {{ lead.customer_rating|default(0) }};
         console.log('Initial rating:', selectedRating);
         
         // Initialize stars on page load

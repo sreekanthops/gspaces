@@ -1710,14 +1710,6 @@
                 }
 
                 const currentSlide = inner.children[state.currentSlide];
-        
-        // Feedback functionality
-        let selectedRating = {{ lead.customer_rating|default(0) }};
-        console.log('Initial rating:', selectedRating);
-        
-        // Initialize stars on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOMContentLoaded - Initializing feedback feature');
             
             if (selectedRating > 0) {
                 console.log('Setting initial rating:', selectedRating);
@@ -1924,6 +1916,172 @@
                     startAutoScroll(designId);
                 });
             });
+        // Feedback functionality
+        let selectedRating = {{ lead.customer_rating|default(0) }};
+        console.log('Initial rating:', selectedRating);
+        
+        // Initialize stars on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOMContentLoaded - Initializing feedback feature');
+            
+            if (selectedRating > 0) {
+                console.log('Setting initial rating:', selectedRating);
+                setRating(selectedRating);
+            }
+            
+            // Add click handlers to stars
+            const stars = document.querySelectorAll('.rating-star');
+            console.log('Found stars:', stars.length);
+            stars.forEach(star => {
+                star.addEventListener('click', function() {
+                    const rating = parseInt(this.getAttribute('data-rating'));
+                    console.log('Star clicked, rating:', rating);
+                    selectedRating = rating;
+                    setRating(rating);
+                    document.getElementById('feedbackRating').value = rating;
+                });
+            });
+            
+            // Form submit handler
+            const feedbackForm = document.getElementById('feedbackForm');
+            if (feedbackForm) {
+                console.log('Submit handler attached');
+                feedbackForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    submitFeedback(e);
+                    return false;
+                });
+            }
+        });
+        
+        function setRating(rating) {
+            console.log('setRating called with:', rating);
+            const stars = document.querySelectorAll('.rating-star');
+            stars.forEach((star, index) => {
+                if (index < rating) {
+                    star.classList.remove('bi-star');
+                    star.classList.add('bi-star-fill');
+                } else {
+                    star.classList.remove('bi-star-fill');
+                    star.classList.add('bi-star');
+                }
+            });
+        }
+        
+        function submitFeedback(e) {
+            console.log('submitFeedback called');
+            e.preventDefault();
+            
+            const rating = selectedRating;
+            const message = document.getElementById('feedbackMessage').value.trim();
+            const leadId = '{{ lead.id }}';
+            
+            console.log('Submitting:', { rating, message, leadId });
+            
+            if (rating === 0) {
+                alert('Please select a rating');
+                return false;
+            }
+            
+            const submitBtn = document.querySelector('#feedbackForm button[type="submit"]');
+            const errorDiv = document.getElementById('feedbackError');
+            const successDiv = document.getElementById('feedbackSuccess');
+            
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Submitting...';
+            errorDiv.style.display = 'none';
+            successDiv.style.display = 'none';
+            
+            const formData = new FormData();
+            formData.append('lead_id', leadId);
+            formData.append('rating', rating);
+            formData.append('message', message);
+            
+            console.log('Posting to /api/submit-quotation-feedback');
+            
+            fetch('/api/submit-quotation-feedback', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Response:', data);
+                if (data.success) {
+                    successDiv.style.display = 'block';
+                    document.getElementById('feedbackForm').style.display = 'none';
+                    
+                    // Show the submitted feedback
+                    document.getElementById('submittedFeedback').style.display = 'block';
+                    document.getElementById('submittedRating').textContent = rating;
+                    document.getElementById('submittedMessage').textContent = message || 'No additional comments';
+                    
+                    // Update the stars display
+                    const displayStars = document.querySelectorAll('#submittedFeedback .rating-star');
+                    displayStars.forEach((star, index) => {
+                        if (index < rating) {
+                            star.classList.remove('bi-star');
+                            star.classList.add('bi-star-fill');
+                        }
+                    });
+                } else {
+                    errorDiv.style.display = 'block';
+                    document.getElementById('feedbackErrorMessage').textContent = data.message || 'Failed to submit feedback';
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="bi bi-send-fill"></i> Submit Feedback';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                errorDiv.style.display = 'block';
+                document.getElementById('feedbackErrorMessage').textContent = 'An error occurred. Please try again later.';
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="bi bi-send-fill"></i> Submit Feedback';
+            });
+            
+            return false;
+        }
+        
+        function editFeedback() {
+            document.getElementById('submittedFeedback').style.display = 'none';
+            document.getElementById('feedbackForm').style.display = 'block';
+            document.getElementById('feedbackMessage').value = document.getElementById('submittedMessage').textContent;
+            if (document.getElementById('submittedMessage').textContent === 'No additional comments') {
+                document.getElementById('feedbackMessage').value = '';
+            }
+        }
+        
+        function deleteFeedback() {
+            if (!confirm('Are you sure you want to delete your feedback?')) {
+                return;
+            }
+            
+            const leadId = '{{ lead.id }}';
+            const formData = new FormData();
+            formData.append('lead_id', leadId);
+            
+            fetch('/api/delete-quotation-feedback', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('submittedFeedback').style.display = 'none';
+                    document.getElementById('feedbackForm').style.display = 'block';
+                    document.getElementById('feedbackMessage').value = '';
+                    selectedRating = 0;
+                    setRating(0);
+                    document.getElementById('feedbackRating').value = 0;
+                } else {
+                    alert('Failed to delete feedback: ' + (data.message || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while deleting feedback');
+            });
+        }
+
         }
 
         document.addEventListener('DOMContentLoaded', function() {

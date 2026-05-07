@@ -678,6 +678,27 @@
                 display: none;
             }
         }
+        
+        /* Star Rating CSS */
+        .star-rating {
+            direction: rtl;
+            display: inline-flex;
+            gap: 5px;
+        }
+        .star-rating input[type="radio"] {
+            display: none;
+        }
+        .star-rating label {
+            cursor: pointer;
+            color: #cbd5e1;
+            transition: color 0.2s;
+            margin: 0;
+        }
+        .star-rating input[type="radio"]:checked ~ label,
+        .star-rating label:hover,
+        .star-rating label:hover ~ label {
+            color: #fbbf24;
+        }
     </style>
 </head>
 <body>
@@ -1356,11 +1377,29 @@
                         <!-- Simple Feedback Form -->
                         <form id="feedbackForm" method="post" action="/api/submit-quotation-feedback" style="{% if lead.customer_feedback %}display: none;{% endif %}">
                             <input type="hidden" name="lead_id" value="{{ lead.id }}">
-                            <input type="hidden" name="rating" value="0">
+                            
+                            <!-- Star Rating -->
+                            <div class="mb-4">
+                                <label class="form-label" style="font-weight: 600; color: #334155; font-size: 1.05rem;">
+                                    <i class="bi bi-star-fill" style="color: #fbbf24;"></i> Rate this Quotation
+                                </label>
+                                <div class="star-rating" style="font-size: 2rem;">
+                                    <input type="radio" id="star5" name="rating" value="5" {% if lead.customer_rating == 5 %}checked{% endif %} />
+                                    <label for="star5" title="5 stars">★</label>
+                                    <input type="radio" id="star4" name="rating" value="4" {% if lead.customer_rating == 4 %}checked{% endif %} />
+                                    <label for="star4" title="4 stars">★</label>
+                                    <input type="radio" id="star3" name="rating" value="3" {% if lead.customer_rating == 3 %}checked{% endif %} />
+                                    <label for="star3" title="3 stars">★</label>
+                                    <input type="radio" id="star2" name="rating" value="2" {% if lead.customer_rating == 2 %}checked{% endif %} />
+                                    <label for="star2" title="2 stars">★</label>
+                                    <input type="radio" id="star1" name="rating" value="1" {% if lead.customer_rating == 1 %}checked{% endif %} />
+                                    <label for="star1" title="1 star">★</label>
+                                </div>
+                            </div>
                             
                             <div class="mb-4">
                                 <label for="feedbackMessage" class="form-label" style="font-weight: 600; color: #334155; font-size: 1.05rem;">
-                                    <i class="bi bi-pencil-square"></i> Your Feedback or Input
+                                    <i class="bi bi-pencil-square"></i> Your Feedback or Comments (Optional)
                                 </label>
                                 <textarea
                                     class="form-control"

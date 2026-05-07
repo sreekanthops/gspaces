@@ -1290,8 +1290,52 @@ def submit_quotation_feedback():
     except Exception as e:
         print(f"Error submitting feedback: {str(e)}")
         return jsonify({
-            'success': False, 
+            'success': False,
             'message': 'An error occurred while submitting your feedback. Please try again.'
+        }), 500
+
+@leads_bp.route('/api/delete-quotation-feedback', methods=['POST'])
+def delete_quotation_feedback():
+    """Handle customer feedback deletion"""
+    try:
+        lead_id = request.form.get('lead_id')
+        
+        if not lead_id:
+            return jsonify({'success': False, 'message': 'Lead ID is required'}), 400
+        
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
+        # Check if lead exists
+        cur.execute("SELECT id FROM leads WHERE id = %s", (lead_id,))
+        if not cur.fetchone():
+            cur.close()
+            conn.close()
+            return jsonify({'success': False, 'message': 'Quotation not found'}), 404
+        
+        # Delete feedback
+        cur.execute("""
+            UPDATE leads 
+            SET customer_rating = NULL,
+                customer_feedback = NULL,
+                feedback_submitted_at = NULL
+            WHERE id = %s
+        """, (lead_id,))
+        
+        conn.commit()
+        cur.close()
+        conn.close()
+        
+        return jsonify({
+            'success': True, 
+            'message': 'Feedback deleted successfully'
+        })
+        
+    except Exception as e:
+        print(f"Error deleting feedback: {str(e)}")
+        return jsonify({
+            'success': False, 
+            'message': 'An error occurred while deleting feedback. Please try again.'
         }), 500
 
 

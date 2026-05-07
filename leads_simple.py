@@ -6,7 +6,7 @@ Admin creates leads with designs and manual pricing
 import os
 import secrets
 import json
-from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, render_template_string
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 from datetime import datetime

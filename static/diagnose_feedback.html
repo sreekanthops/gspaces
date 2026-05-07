@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Feedback Diagnostic</title>
+</head>
+<body>
+    <h1>Feedback Feature Diagnostic</h1>
+    
+    <h2>Test 1: Basic JavaScript</h2>
+    <p id="test1">Waiting...</p>
+    
+    <h2>Test 2: Form</h2>
+    <form id="testForm" method="post" action="#">
+        <input type="text" name="test" value="test">
+        <button type="submit">Submit</button>
+    </form>
+    <p id="test2">Form not submitted yet</p>
+    
+    <h2>Test 3: Star Click</h2>
+    <div id="stars">
+        <span class="star" data-rating="1" style="cursor: pointer; font-size: 2rem;">⭐</span>
+        <span class="star" data-rating="2" style="cursor: pointer; font-size: 2rem;">⭐</span>
+        <span class="star" data-rating="3" style="cursor: pointer; font-size: 2rem;">⭐</span>
+    </div>
+    <p id="test3">No star clicked</p>
+    
+    <h2>Console Output</h2>
+    <p>Open browser console (F12) to see logs</p>
+    
+    <script>
+        console.log('=== DIAGNOSTIC PAGE LOADED ===');
+        
+        // Test 1: Basic JS
+        document.getElementById('test1').textContent = 'JavaScript is working!';
+        console.log('Test 1: JavaScript working');
+        
+        // Test 2: Form submission
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOMContentLoaded fired');
+            
+            const form = document.getElementById('testForm');
+            console.log('Form found:', !!form);
+            
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    console.log('Form submit prevented!');
+                    document.getElementById('test2').textContent = 'Form submission intercepted by JavaScript!';
+                    document.getElementById('test2').style.color = 'green';
+                    return false;
+                });
+                console.log('Form submit handler attached');
+            }
+            
+            // Test 3: Star clicks
+            const stars = document.querySelectorAll('.star');
+            console.log('Stars found:', stars.length);
+            
+            stars.forEach(star => {
+                star.addEventListener('click', function() {
+                    const rating = this.getAttribute('data-rating');
+                    console.log('Star clicked:', rating);
+                    document.getElementById('test3').textContent = 'Star ' + rating + ' clicked!';
+                    document.getElementById('test3').style.color = 'blue';
+                });
+            });
+            console.log('Star click handlers attached');
+        });
+        
+        console.log('=== DIAGNOSTIC SCRIPT COMPLETE ===');
+    </script>
+</body>
+</html>

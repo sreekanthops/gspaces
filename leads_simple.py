@@ -1244,7 +1244,13 @@ def submit_quotation_feedback():
         
         # Validate input
         if not lead_id:
-            return jsonify({'success': False, 'message': 'Lead ID is required'}), 400
+            return render_template_string('''
+                <div style="max-width: 600px; margin: 50px auto; padding: 40px; text-align: center; font-family: Arial, sans-serif;">
+                    <div style="color: #dc2626; font-size: 48px; margin-bottom: 20px;">❌</div>
+                    <h2 style="color: #dc2626; margin-bottom: 20px;">Error</h2>
+                    <p style="color: #64748b; font-size: 18px;">Lead ID is required</p>
+                </div>
+            '''), 400
         
         # Convert rating to integer
         try:
@@ -1255,23 +1261,38 @@ def submit_quotation_feedback():
             rating = 0
         
         # At least one field should be provided
-        if rating == 0 and not message:
-            return jsonify({'success': False, 'message': 'Please provide a rating or feedback message'}), 400
+        if not message:
+            return render_template_string('''
+                <div style="max-width: 600px; margin: 50px auto; padding: 40px; text-align: center; font-family: Arial, sans-serif;">
+                    <div style="color: #dc2626; font-size: 48px; margin-bottom: 20px;">❌</div>
+                    <h2 style="color: #dc2626; margin-bottom: 20px;">Error</h2>
+                    <p style="color: #64748b; font-size: 18px;">Please provide your feedback</p>
+                </div>
+            '''), 400
         
         # Update database
         conn = get_db_connection()
         cur = conn.cursor()
         
-        # Check if lead exists
-        cur.execute("SELECT id FROM leads WHERE id = %s", (lead_id,))
-        if not cur.fetchone():
+        # Check if lead exists and get share token
+        cur.execute("SELECT share_token FROM leads WHERE id = %s", (lead_id,))
+        result = cur.fetchone()
+        if not result:
             cur.close()
             conn.close()
-            return jsonify({'success': False, 'message': 'Quotation not found'}), 404
+            return render_template_string('''
+                <div style="max-width: 600px; margin: 50px auto; padding: 40px; text-align: center; font-family: Arial, sans-serif;">
+                    <div style="color: #dc2626; font-size: 48px; margin-bottom: 20px;">❌</div>
+                    <h2 style="color: #dc2626; margin-bottom: 20px;">Error</h2>
+                    <p style="color: #64748b; font-size: 18px;">Quotation not found</p>
+                </div>
+            '''), 404
+        
+        share_token = result[0]
         
         # Update feedback
         cur.execute("""
-            UPDATE leads 
+            UPDATE leads
             SET customer_rating = %s,
                 customer_feedback = %s,
                 feedback_submitted_at = CURRENT_TIMESTAMP
@@ -1282,17 +1303,78 @@ def submit_quotation_feedback():
         cur.close()
         conn.close()
         
-        return jsonify({
-            'success': True, 
-            'message': 'Thank you for your feedback!'
-        })
+        # Return beautiful thank you page
+        return render_template_string('''
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Thank You - GSpaces</title>
+                <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+            </head>
+            <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center;">
+                <div style="max-width: 600px; margin: 20px; padding: 60px 40px; background: white; border-radius: 24px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); text-align: center;">
+                    <div style="width: 100px; height: 100px; margin: 0 auto 30px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; animation: scaleIn 0.5s ease-out;">
+                        <i class="bi bi-check-lg" style="font-size: 60px; color: white;"></i>
+                    </div>
+                    
+                    <h1 style="color: #1e293b; font-size: 36px; font-weight: 700; margin-bottom: 20px; line-height: 1.2;">
+                        Thank You for Your Feedback!
+                    </h1>
+                    
+                    <p style="color: #64748b; font-size: 20px; line-height: 1.6; margin-bottom: 30px;">
+                        We appreciate you taking the time to share your thoughts with us.
+                    </p>
+                    
+                    <div style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); padding: 30px; border-radius: 16px; margin-bottom: 40px; border-left: 4px solid #0ea5e9;">
+                        <p style="color: #0c4a6e; font-size: 18px; line-height: 1.8; margin: 0; font-weight: 500;">
+                            <i class="bi bi-heart-fill" style="color: #ef4444; margin-right: 8px;"></i>
+                            We always strive to provide the <strong>best prices</strong> and <strong>exceptional service</strong> to our valued customers.
+                        </p>
+                    </div>
+                    
+                    <a href="/quotation/{{ share_token }}" style="display: inline-block; background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); color: white; padding: 16px 48px; border-radius: 12px; text-decoration: none; font-weight: 600; font-size: 18px; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3); transition: all 0.3s;">
+                        <i class="bi bi-arrow-left-circle" style="margin-right: 8px;"></i>
+                        Back to Quotation
+                    </a>
+                    
+                    <p style="color: #94a3b8; font-size: 14px; margin-top: 40px; margin-bottom: 0;">
+                        <i class="bi bi-envelope" style="margin-right: 6px;"></i>
+                        Need help? Contact us anytime
+                    </p>
+                </div>
+                
+                <style>
+                    @keyframes scaleIn {
+                        from {
+                            transform: scale(0);
+                            opacity: 0;
+                        }
+                        to {
+                            transform: scale(1);
+                            opacity: 1;
+                        }
+                    }
+                    
+                    a:hover {
+                        transform: translateY(-2px);
+                        box-shadow: 0 6px 20px rgba(79, 70, 229, 0.4) !important;
+                    }
+                </style>
+            </body>
+            </html>
+        ''', share_token=share_token)
         
     except Exception as e:
         print(f"Error submitting feedback: {str(e)}")
-        return jsonify({
-            'success': False,
-            'message': 'An error occurred while submitting your feedback. Please try again.'
-        }), 500
+        return render_template_string('''
+            <div style="max-width: 600px; margin: 50px auto; padding: 40px; text-align: center; font-family: Arial, sans-serif;">
+                <div style="color: #dc2626; font-size: 48px; margin-bottom: 20px;">❌</div>
+                <h2 style="color: #dc2626; margin-bottom: 20px;">Error</h2>
+                <p style="color: #64748b; font-size: 18px;">An error occurred while submitting your feedback. Please try again.</p>
+            </div>
+        '''), 500
 
 @leads_bp.route('/api/delete-quotation-feedback', methods=['POST'])
 def delete_quotation_feedback():

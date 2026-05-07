@@ -847,31 +847,46 @@
                     
                     <!-- Admin Expiry Controls -->
                     {% if current_user.is_authenticated and current_user.is_admin %}
-                    <div style="margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap;">
-                        {% if not lead.is_expired %}
-                        <form method="post" action="/api/update-quotation-expiry" style="display: inline;">
+                    <div style="margin-top: 12px;">
+                        <!-- Custom Date Picker -->
+                        <form method="post" action="/api/update-quotation-expiry" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 8px;">
                             <input type="hidden" name="lead_id" value="{{ lead.id }}">
-                            <input type="hidden" name="action" value="extend">
-                            <button type="submit" style="background: #10b981; color: white; border: none; padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer;">
-                                ➕ Extend 7 Days
+                            <input type="hidden" name="action" value="set_date">
+                            <input type="datetime-local" name="custom_date" required
+                                   style="padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.85rem;"
+                                   value="{{ lead.valid_until.strftime('%Y-%m-%dT%H:%M') if lead.valid_until else '' }}">
+                            <button type="submit" style="background: #3b82f6; color: white; border: none; padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer;">
+                                📅 Set Expiry Date
                             </button>
                         </form>
-                        <form method="post" action="/api/update-quotation-expiry" style="display: inline;">
-                            <input type="hidden" name="lead_id" value="{{ lead.id }}">
-                            <input type="hidden" name="action" value="expire">
-                            <button type="submit" onclick="return confirm('Mark this quotation as expired?')" style="background: #ef4444; color: white; border: none; padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer;">
-                                ❌ Mark Expired
-                            </button>
-                        </form>
-                        {% else %}
-                        <form method="post" action="/api/update-quotation-expiry" style="display: inline;">
-                            <input type="hidden" name="lead_id" value="{{ lead.id }}">
-                            <input type="hidden" name="action" value="extend">
-                            <button type="submit" style="background: #10b981; color: white; border: none; padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer;">
-                                ✅ Reactivate (7 Days)
-                            </button>
-                        </form>
-                        {% endif %}
+                        
+                        <!-- Quick Actions -->
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                            {% if not lead.is_expired %}
+                            <form method="post" action="/api/update-quotation-expiry" style="display: inline;">
+                                <input type="hidden" name="lead_id" value="{{ lead.id }}">
+                                <input type="hidden" name="action" value="extend">
+                                <button type="submit" style="background: #10b981; color: white; border: none; padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer;">
+                                    ➕ +7 Days
+                                </button>
+                            </form>
+                            <form method="post" action="/api/update-quotation-expiry" style="display: inline;">
+                                <input type="hidden" name="lead_id" value="{{ lead.id }}">
+                                <input type="hidden" name="action" value="expire">
+                                <button type="submit" onclick="return confirm('Mark this quotation as expired?')" style="background: #ef4444; color: white; border: none; padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer;">
+                                    ❌ Expire Now
+                                </button>
+                            </form>
+                            {% else %}
+                            <form method="post" action="/api/update-quotation-expiry" style="display: inline;">
+                                <input type="hidden" name="lead_id" value="{{ lead.id }}">
+                                <input type="hidden" name="action" value="extend">
+                                <button type="submit" style="background: #10b981; color: white; border: none; padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer;">
+                                    ✅ Reactivate (+7 Days)
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
                     </div>
                     {% endif %}
                     {% endif %}

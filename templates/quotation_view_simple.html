@@ -1712,33 +1712,45 @@
         
         // Feedback functionality
         let selectedRating = {{ lead.customer_rating or 0 }};
+        console.log('Initial rating:', selectedRating);
         
         // Initialize stars on page load
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOMContentLoaded - Initializing feedback feature');
+            
             if (selectedRating > 0) {
+                console.log('Setting initial rating:', selectedRating);
                 setRating(selectedRating);
             }
             
             // Add click handlers to stars
-            document.querySelectorAll('.rating-star').forEach(star => {
+            const stars = document.querySelectorAll('.rating-star');
+            console.log('Found stars:', stars.length);
+            stars.forEach(star => {
                 star.addEventListener('click', function() {
                     const rating = parseInt(this.getAttribute('data-rating'));
+                    console.log('Star clicked, rating:', rating);
                     setRating(rating);
                 });
             });
             
             // Attach form submit handler
             const feedbackForm = document.getElementById('feedbackForm');
+            console.log('Feedback form found:', !!feedbackForm);
             if (feedbackForm) {
                 feedbackForm.addEventListener('submit', submitFeedback);
+                console.log('Submit handler attached');
             }
         });
         
         function setRating(rating) {
+            console.log('setRating called with:', rating);
             selectedRating = rating;
             document.getElementById('feedbackRating').value = rating;
+            console.log('Hidden input value set to:', rating);
             
             const stars = document.querySelectorAll('.rating-star');
+            console.log('Updating', stars.length, 'stars');
             stars.forEach((star, index) => {
                 if (index < rating) {
                     star.classList.remove('bi-star');
@@ -1750,6 +1762,7 @@
                     star.style.color = '#cbd5e1';
                 }
             });
+            console.log('Stars updated successfully');
         }
         
         function showEditForm() {
@@ -1790,10 +1803,13 @@
         }
         
         function submitFeedback(event) {
+            console.log('submitFeedback called');
             event.preventDefault();
             
             const rating = document.getElementById('feedbackRating').value;
             const message = document.getElementById('feedbackMessage').value.trim();
+            console.log('Rating:', rating, 'Message:', message);
+            
             const submitBtn = document.getElementById('submitFeedbackBtn');
             const successDiv = document.getElementById('feedbackSuccess');
             const errorDiv = document.getElementById('feedbackError');
@@ -1804,6 +1820,7 @@
             
             // Validation
             if (rating === '0' && message === '') {
+                console.log('Validation failed - no rating or message');
                 errorDiv.style.display = 'block';
                 document.getElementById('feedbackErrorMessage').textContent = 'Please provide a rating or feedback message.';
                 return false;
@@ -1812,6 +1829,7 @@
             // Disable submit button
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Submitting...';
+            console.log('Submitting feedback...');
             
             // Prepare data
             const formData = new FormData();
@@ -1824,12 +1842,18 @@
                 method: 'POST',
                 body: formData
             })
-            .then(response => response.json())
+            .then(response => {
+                console.log('Response status:', response.status);
+                return response.json();
+            })
             .then(data => {
+                console.log('Response data:', data);
                 if (data.success) {
+                    console.log('Success! Reloading page...');
                     // Reload page to show the feedback
                     window.location.reload();
                 } else {
+                    console.log('Failed:', data.message);
                     errorDiv.style.display = 'block';
                     document.getElementById('feedbackErrorMessage').textContent = data.message || 'Failed to submit feedback. Please try again.';
                     submitBtn.disabled = false;
@@ -1837,7 +1861,7 @@
                 }
             })
             .catch(error => {
-                console.error('Error:', error);
+                console.error('Error submitting feedback:', error);
                 errorDiv.style.display = 'block';
                 document.getElementById('feedbackErrorMessage').textContent = 'An error occurred. Please try again later.';
                 submitBtn.disabled = false;

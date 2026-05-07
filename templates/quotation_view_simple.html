@@ -829,13 +829,19 @@
                         </div>
                     </div>
                     
-                    <!-- Expiry Status - Simple Version -->
+                    <!-- Expiry Status with Dynamic Timer -->
                     {% if lead.valid_until %}
                     <div class="expiry-timer {% if lead.is_expired %}expired{% endif %}" id="expiryTimer">
-                        <div class="expiry-timer-icon">{% if lead.is_expired %}❌{% else %}📅{% endif %}</div>
+                        <div class="expiry-timer-icon">{% if lead.is_expired %}❌{% else %}⏰{% endif %}</div>
                         <div class="expiry-timer-text">
-                            <div class="expiry-timer-label">{% if lead.is_expired %}EXPIRED{% else %}Valid Until{% endif %}</div>
-                            <div class="expiry-timer-countdown">{{ lead.valid_until.strftime('%b %d, %Y') }}</div>
+                            <div class="expiry-timer-label">{% if lead.is_expired %}EXPIRED{% else %}Valid For{% endif %}</div>
+                            <div class="expiry-timer-countdown" id="countdown" data-expiry="{{ lead.valid_until.isoformat() }}" data-expired="{{ '1' if lead.is_expired else '0' }}">
+                                {% if lead.is_expired %}
+                                    EXPIRED
+                                {% else %}
+                                    {{ lead.valid_until.strftime('%b %d, %Y') }}
+                                {% endif %}
+                            </div>
                         </div>
                     </div>
                     
@@ -2079,17 +2085,66 @@
             {% endfor %}
         });
 
-        // Quotation Expiry - Simple version (no JavaScript countdown)
-        // Expiry status shown server-side with admin controls
-        {% if lead.is_expired %}
-        // Show expired overlay
+        // Quotation Expiry Timer - v3.0 WORKING VERSION
         document.addEventListener('DOMContentLoaded', function() {
+            const countdownEl = document.getElementById('countdown');
+            if (!countdownEl) return;
+            
+            const expiryDate = countdownEl.getAttribute('data-expiry');
+            const isExpired = countdownEl.getAttribute('data-expired') === '1';
+            const timerEl = document.getElementById('expiryTimer');
             const overlayEl = document.getElementById('expiredOverlay');
-            if (overlayEl) {
-                overlayEl.classList.add('active');
+            
+            if (!expiryDate) return;
+            
+            const validUntil = new Date(expiryDate);
+            
+            function updateCountdown() {
+                const now = new Date();
+                const diff = validUntil - now;
+                
+                // Check if expired
+                if (diff <= 0 || isExpired) {
+                    countdownEl.textContent = 'EXPIRED';
+                    if (timerEl) timerEl.classList.add('expired');
+                    if (overlayEl) overlayEl.classList.add('active');
+                    return;
+                }
+                
+                // Calculate time remaining
+                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+                
+                // Format countdown text
+                let text = '';
+                if (days > 0) {
+                    text = days + 'd ' + hours + 'h ' + minutes + 'm';
+                } else if (hours > 0) {
+                    text = hours + 'h ' + minutes + 'm ' + seconds + 's';
+                } else if (minutes > 0) {
+                    text = minutes + 'm ' + seconds + 's';
+                } else {
+                    text = seconds + 's';
+                }
+                
+                countdownEl.textContent = text;
+                
+                // Add warning class if less than 24 hours
+                if (timerEl) {
+                    if (days === 0 && hours < 24) {
+                        timerEl.classList.add('warning');
+                    } else {
+                        timerEl.classList.remove('warning');
+                    }
+                }
             }
+            
+            // Update immediately and then every second
+            updateCountdown();
+            setInterval(updateCountdown, 1000);
         });
-        {% endif %}
     </script>
 </body>
 </html>

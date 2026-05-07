@@ -2073,7 +2073,7 @@
         {% if lead.valid_until %}
         (function() {
             const validUntil = new Date('{{ lead.valid_until.isoformat() }}');
-            const isExpired = {{ 'true' if lead.is_expired else 'false' }};
+            const isExpired = {% if lead.is_expired %}true{% else %}false{% endif %};
             const countdownEl = document.getElementById('countdown');
             const timerEl = document.getElementById('expiryTimer');
             const overlayEl = document.getElementById('expiredOverlay');

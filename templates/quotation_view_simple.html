@@ -1277,6 +1277,78 @@
                 </div>
             </div>
         </div>
+        <!-- Customer Feedback Section -->
+        <div class="feedback-section" style="background: linear-gradient(135deg, #f8fafc 0%, #e0e7ff 100%); padding: 48px 56px; margin-top: 32px; border-radius: 24px; border: 1px solid rgba(99, 102, 241, 0.1);">
+            <div class="row align-items-center">
+                <div class="col-lg-12">
+                    <div class="text-center mb-4">
+                        <h3 style="color: #4f46e5; font-weight: 700; font-size: 1.8rem; margin-bottom: 12px;">
+                            <i class="bi bi-chat-heart" style="font-size: 2rem; margin-right: 12px;"></i>
+                            Share Your Thoughts
+                        </h3>
+                        <p style="color: #64748b; font-size: 1.05rem; max-width: 600px; margin: 0 auto;">
+                            We'd love to hear your feedback on this quotation. Your input helps us serve you better!
+                        </p>
+                    </div>
+                    
+                    <div class="feedback-form-container" style="max-width: 800px; margin: 0 auto;">
+                        <form id="feedbackForm" onsubmit="submitFeedback(event)">
+                            <div class="mb-4">
+                                <label for="feedbackRating" class="form-label" style="font-weight: 600; color: #334155; font-size: 1.05rem;">
+                                    <i class="bi bi-star-fill" style="color: #fbbf24;"></i> How would you rate this quotation?
+                                </label>
+                                <div class="rating-stars" style="font-size: 2rem; margin-top: 12px;">
+                                    <i class="bi bi-star rating-star" data-rating="1" onclick="setRating(1)" style="cursor: pointer; color: #cbd5e1; transition: all 0.2s;"></i>
+                                    <i class="bi bi-star rating-star" data-rating="2" onclick="setRating(2)" style="cursor: pointer; color: #cbd5e1; transition: all 0.2s;"></i>
+                                    <i class="bi bi-star rating-star" data-rating="3" onclick="setRating(3)" style="cursor: pointer; color: #cbd5e1; transition: all 0.2s;"></i>
+                                    <i class="bi bi-star rating-star" data-rating="4" onclick="setRating(4)" style="cursor: pointer; color: #cbd5e1; transition: all 0.2s;"></i>
+                                    <i class="bi bi-star rating-star" data-rating="5" onclick="setRating(5)" style="cursor: pointer; color: #cbd5e1; transition: all 0.2s;"></i>
+                                </div>
+                                <input type="hidden" id="feedbackRating" name="rating" value="0">
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label for="feedbackMessage" class="form-label" style="font-weight: 600; color: #334155; font-size: 1.05rem;">
+                                    <i class="bi bi-pencil-square"></i> Your Feedback or Questions
+                                </label>
+                                <textarea 
+                                    class="form-control" 
+                                    id="feedbackMessage" 
+                                    name="message" 
+                                    rows="5" 
+                                    placeholder="Share your thoughts, questions, or suggestions about this quotation..."
+                                    style="border: 2px solid #e2e8f0; border-radius: 12px; padding: 16px; font-size: 1rem; resize: vertical;"
+                                ></textarea>
+                            </div>
+                            
+                            <div class="text-center">
+                                <button 
+                                    type="submit" 
+                                    class="btn btn-lg" 
+                                    id="submitFeedbackBtn"
+                                    style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); color: white; padding: 14px 48px; border-radius: 12px; font-weight: 600; font-size: 1.1rem; border: none; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3); transition: all 0.3s;"
+                                    onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(79, 70, 229, 0.4)';"
+                                    onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(79, 70, 229, 0.3)';"
+                                >
+                                    <i class="bi bi-send-fill"></i> Submit Feedback
+                                </button>
+                            </div>
+                        </form>
+                        
+                        <div id="feedbackSuccess" class="alert alert-success mt-4" style="display: none; border-radius: 12px; border: 2px solid #10b981; background: #d1fae5;">
+                            <i class="bi bi-check-circle-fill" style="color: #059669; font-size: 1.3rem;"></i>
+                            <strong style="color: #065f46;">Thank you!</strong> Your feedback has been submitted successfully.
+                        </div>
+                        
+                        <div id="feedbackError" class="alert alert-danger mt-4" style="display: none; border-radius: 12px;">
+                            <i class="bi bi-exclamation-triangle-fill"></i>
+                            <strong>Error:</strong> <span id="feedbackErrorMessage"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
 
         <!-- Footer -->
         <div class="footer">
@@ -1574,6 +1646,93 @@
                 }
 
                 const currentSlide = inner.children[state.currentSlide];
+        
+        // Feedback functionality
+        let selectedRating = 0;
+        
+        function setRating(rating) {
+            selectedRating = rating;
+            document.getElementById('feedbackRating').value = rating;
+            
+            const stars = document.querySelectorAll('.rating-star');
+            stars.forEach((star, index) => {
+                if (index < rating) {
+                    star.classList.remove('bi-star');
+                    star.classList.add('bi-star-fill');
+                    star.style.color = '#fbbf24';
+                } else {
+                    star.classList.remove('bi-star-fill');
+                    star.classList.add('bi-star');
+                    star.style.color = '#cbd5e1';
+                }
+            });
+        }
+        
+        function submitFeedback(event) {
+            event.preventDefault();
+            
+            const rating = document.getElementById('feedbackRating').value;
+            const message = document.getElementById('feedbackMessage').value.trim();
+            const submitBtn = document.getElementById('submitFeedbackBtn');
+            const successDiv = document.getElementById('feedbackSuccess');
+            const errorDiv = document.getElementById('feedbackError');
+            
+            // Hide previous messages
+            successDiv.style.display = 'none';
+            errorDiv.style.display = 'none';
+            
+            // Validation
+            if (rating === '0' && message === '') {
+                errorDiv.style.display = 'block';
+                document.getElementById('feedbackErrorMessage').textContent = 'Please provide a rating or feedback message.';
+                return;
+            }
+            
+            // Disable submit button
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Submitting...';
+            
+            // Prepare data
+            const formData = new FormData();
+            formData.append('rating', rating);
+            formData.append('message', message);
+            formData.append('lead_id', '{{ lead.id }}');
+            
+            // Submit feedback
+            fetch('/api/submit-quotation-feedback', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    successDiv.style.display = 'block';
+                    document.getElementById('feedbackForm').reset();
+                    setRating(0);
+                    
+                    // Scroll to success message
+                    successDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    
+                    // Re-enable button after 3 seconds
+                    setTimeout(() => {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = '<i class="bi bi-send-fill"></i> Submit Feedback';
+                    }, 3000);
+                } else {
+                    errorDiv.style.display = 'block';
+                    document.getElementById('feedbackErrorMessage').textContent = data.message || 'Failed to submit feedback. Please try again.';
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="bi bi-send-fill"></i> Submit Feedback';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                errorDiv.style.display = 'block';
+                document.getElementById('feedbackErrorMessage').textContent = 'An error occurred. Please try again later.';
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="bi bi-send-fill"></i> Submit Feedback';
+            });
+        }
                 const activeVideo = currentSlide ? currentSlide.querySelector('video') : null;
                 if (activeVideo && !activeVideo.paused && !activeVideo.ended) {
                     return;

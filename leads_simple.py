@@ -1234,6 +1234,67 @@ def delete_design_media(design_id, media_index):
     
     return redirect(url_for('leads.edit_lead', lead_id=lead_id))
 
+@leads_bp.route('/api/submit-quotation-feedback', methods=['POST'])
+def submit_quotation_feedback():
+    """Handle customer feedback submission for quotations"""
+    try:
+        lead_id = request.form.get('lead_id')
+        rating = request.form.get('rating', '0')
+        message = request.form.get('message', '').strip()
+        
+        # Validate input
+        if not lead_id:
+            return jsonify({'success': False, 'message': 'Lead ID is required'}), 400
+        
+        # Convert rating to integer
+        try:
+            rating = int(rating)
+            if rating < 0 or rating > 5:
+                rating = 0
+        except (ValueError, TypeError):
+            rating = 0
+        
+        # At least one field should be provided
+        if rating == 0 and not message:
+            return jsonify({'success': False, 'message': 'Please provide a rating or feedback message'}), 400
+        
+        # Update database
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
+        # Check if lead exists
+        cur.execute("SELECT id FROM leads WHERE id = %s", (lead_id,))
+        if not cur.fetchone():
+            cur.close()
+            conn.close()
+            return jsonify({'success': False, 'message': 'Quotation not found'}), 404
+        
+        # Update feedback
+        cur.execute("""
+            UPDATE leads 
+            SET customer_rating = %s,
+                customer_feedback = %s,
+                feedback_submitted_at = CURRENT_TIMESTAMP
+            WHERE id = %s
+        """, (rating if rating > 0 else None, message if message else None, lead_id))
+        
+        conn.commit()
+        cur.close()
+        conn.close()
+        
+        return jsonify({
+            'success': True, 
+            'message': 'Thank you for your feedback!'
+        })
+        
+    except Exception as e:
+        print(f"Error submitting feedback: {str(e)}")
+        return jsonify({
+            'success': False, 
+            'message': 'An error occurred while submitting your feedback. Please try again.'
+        }), 500
+
+
 def register_leads_routes(app, db_connection_func):
     """Register blueprint with app"""
     global get_db_connection

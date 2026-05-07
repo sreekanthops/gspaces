@@ -753,8 +753,14 @@ def view_quotation(share_token):
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
     
-    # Get lead
-    cur.execute("SELECT * FROM leads WHERE share_token = %s", (share_token,))
+    # Get lead with expiry info
+    cur.execute("""
+        SELECT *,
+               CASE WHEN valid_until IS NOT NULL AND valid_until < CURRENT_TIMESTAMP
+                    THEN TRUE ELSE is_expired END as is_expired
+        FROM leads
+        WHERE share_token = %s
+    """, (share_token,))
     lead = cur.fetchone()
     
     if not lead:
@@ -1421,6 +1427,79 @@ def delete_quotation_feedback():
         print(f"Error deleting feedback: {str(e)}")
         flash('An error occurred while deleting feedback', 'danger')
         return redirect(request.referrer or '/')
+@leads_bp.route('/api/update-quotation-expiry', methods=['POST'])
+@admin_required
+def update_quotation_expiry():
+    """Update quotation expiry date - Admin only"""
+    try:
+        lead_id = request.form.get('lead_id')
+        action = request.form.get('action')  # 'extend' or 'expire' or 'set_date'
+        custom_date = request.form.get('custom_date')  # Optional custom date
+        
+        if not lead_id:
+            flash('Lead ID is required', 'danger')
+            return redirect(request.referrer or '/')
+        
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
+        # Get share token for redirect
+        cur.execute("SELECT share_token FROM leads WHERE id = %s", (lead_id,))
+        result = cur.fetchone()
+        if not result:
+            cur.close()
+            conn.close()
+            flash('Quotation not found', 'danger')
+            return redirect(request.referrer or '/')
+        
+        share_token = result[0]
+        
+        # Update expiry based on action
+        if action == 'extend':
+            # Extend by 7 days from now
+            cur.execute("""
+                UPDATE leads
+                SET valid_until = CURRENT_TIMESTAMP + INTERVAL '7 days',
+                    is_expired = FALSE
+                WHERE id = %s
+            """, (lead_id,))
+            flash('Quotation validity extended by 7 days', 'success')
+            
+        elif action == 'expire':
+            # Mark as expired immediately
+            cur.execute("""
+                UPDATE leads
+                SET is_expired = TRUE
+                WHERE id = %s
+            """, (lead_id,))
+            flash('Quotation marked as expired', 'success')
+            
+        elif action == 'set_date' and custom_date:
+            # Set custom expiry date
+            cur.execute("""
+                UPDATE leads
+                SET valid_until = %s,
+                    is_expired = FALSE
+                WHERE id = %s
+            """, (custom_date, lead_id))
+            flash(f'Quotation expiry set to {custom_date}', 'success')
+        else:
+            flash('Invalid action', 'danger')
+            cur.close()
+            conn.close()
+            return redirect(request.referrer or '/')
+        
+        conn.commit()
+        cur.close()
+        conn.close()
+        
+        return redirect(f'/quotation/{share_token}')
+        
+    except Exception as e:
+        print(f"Error updating expiry: {str(e)}")
+        flash('An error occurred while updating expiry', 'danger')
+        return redirect(request.referrer or '/')
+
 
 
 def register_leads_routes(app, db_connection_func):

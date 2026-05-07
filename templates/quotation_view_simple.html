@@ -699,9 +699,78 @@
         .star-rating label:hover ~ label {
             color: #fbbf24;
         }
+        
+        /* Expiry Timer CSS */
+        .expiry-timer {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 18px;
+            padding: 14px 18px;
+            margin-top: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .expiry-timer.warning {
+            background: rgba(251, 191, 36, 0.15);
+            border-color: rgba(251, 191, 36, 0.3);
+        }
+        .expiry-timer.expired {
+            background: rgba(239, 68, 68, 0.25);
+            border-color: rgba(239, 68, 68, 0.5);
+        }
+        .expiry-timer-icon {
+            font-size: 1.5rem;
+        }
+        .expiry-timer-text {
+            flex: 1;
+        }
+        .expiry-timer-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: rgba(255,255,255,0.7);
+            margin-bottom: 4px;
+        }
+        .expiry-timer-countdown {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #ffffff;
+        }
+        
+        /* Expired Watermark Overlay */
+        .expired-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.92);
+            z-index: 9999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+        }
+        .expired-overlay.active {
+            display: flex;
+        }
+        .expired-watermark {
+            font-size: clamp(4rem, 12vw, 10rem);
+            font-weight: 900;
+            color: rgba(239, 68, 68, 0.15);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            transform: rotate(-25deg);
+            user-select: none;
+            text-align: center;
+            line-height: 1;
+        }
     </style>
 </head>
 <body>
+    <!-- Expired Overlay -->
+    <div class="expired-overlay" id="expiredOverlay">
+        <div class="expired-watermark">EXPIRED</div>
+    </div>
+    
     {% include 'navbar.html' %}
     
     {# Macro to render item icon #}
@@ -759,6 +828,17 @@
                             <span class="value">{{ lead.created_at.strftime('%b %d, %Y') }}</span>
                         </div>
                     </div>
+                    
+                    <!-- Expiry Timer -->
+                    {% if lead.valid_until %}
+                    <div class="expiry-timer" id="expiryTimer">
+                        <div class="expiry-timer-icon">⏰</div>
+                        <div class="expiry-timer-text">
+                            <div class="expiry-timer-label">Quotation Valid For</div>
+                            <div class="expiry-timer-countdown" id="countdown">Calculating...</div>
+                        </div>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -1968,6 +2048,62 @@
                 {% endif %}
             {% endfor %}
         });
+
+        // Quotation Expiry Timer
+        {% if lead.valid_until %}
+        (function() {
+            const validUntil = new Date('{{ lead.valid_until.isoformat() }}');
+            const isExpired = {{ 'true' if lead.is_expired else 'false' }};
+            const countdownEl = document.getElementById('countdown');
+            const timerEl = document.getElementById('expiryTimer');
+            const overlayEl = document.getElementById('expiredOverlay');
+            
+            function updateCountdown() {
+                const now = new Date();
+                const diff = validUntil - now;
+                
+                // Check if expired
+                if (diff <= 0 || isExpired) {
+                    countdownEl.textContent = 'EXPIRED';
+                    timerEl.classList.add('expired');
+                    timerEl.classList.remove('warning');
+                    overlayEl.classList.add('active');
+                    return;
+                }
+                
+                // Calculate time remaining
+                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+                
+                // Format countdown text
+                let text = '';
+                if (days > 0) {
+                    text = `${days}d ${hours}h ${minutes}m`;
+                } else if (hours > 0) {
+                    text = `${hours}h ${minutes}m ${seconds}s`;
+                } else if (minutes > 0) {
+                    text = `${minutes}m ${seconds}s`;
+                } else {
+                    text = `${seconds}s`;
+                }
+                
+                countdownEl.textContent = text;
+                
+                // Add warning class if less than 24 hours
+                if (days === 0 && hours < 24) {
+                    timerEl.classList.add('warning');
+                } else {
+                    timerEl.classList.remove('warning');
+                }
+            }
+            
+            // Update immediately and then every second
+            updateCountdown();
+            setInterval(updateCountdown, 1000);
+        })();
+        {% endif %}
     </script>
 </body>
 </html>

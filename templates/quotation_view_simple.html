@@ -2069,7 +2069,7 @@
             {% endfor %}
         });
 
-        // Quotation Expiry Timer
+        // Quotation Expiry Timer v2.0 - CACHE BUSTER - Updated 2026-05-07 19:12
         {% if lead.valid_until %}
         (function() {
             const validUntil = new Date('{{ lead.valid_until.isoformat() }}');

@@ -1379,26 +1379,31 @@ def submit_quotation_feedback():
 
 @leads_bp.route('/api/delete-quotation-feedback', methods=['POST'])
 def delete_quotation_feedback():
-    """Handle customer feedback deletion"""
+    """Handle customer feedback deletion - Admin only"""
     try:
         lead_id = request.form.get('lead_id')
         
         if not lead_id:
-            return jsonify({'success': False, 'message': 'Lead ID is required'}), 400
+            flash('Lead ID is required', 'danger')
+            return redirect(request.referrer or '/')
         
         conn = get_db_connection()
         cur = conn.cursor()
         
-        # Check if lead exists
-        cur.execute("SELECT id FROM leads WHERE id = %s", (lead_id,))
-        if not cur.fetchone():
+        # Get share token for redirect
+        cur.execute("SELECT share_token FROM leads WHERE id = %s", (lead_id,))
+        result = cur.fetchone()
+        if not result:
             cur.close()
             conn.close()
-            return jsonify({'success': False, 'message': 'Quotation not found'}), 404
+            flash('Quotation not found', 'danger')
+            return redirect(request.referrer or '/')
+        
+        share_token = result[0]
         
         # Delete feedback
         cur.execute("""
-            UPDATE leads 
+            UPDATE leads
             SET customer_rating = NULL,
                 customer_feedback = NULL,
                 feedback_submitted_at = NULL
@@ -1409,17 +1414,13 @@ def delete_quotation_feedback():
         cur.close()
         conn.close()
         
-        return jsonify({
-            'success': True, 
-            'message': 'Feedback deleted successfully'
-        })
+        flash('Feedback deleted successfully', 'success')
+        return redirect(f'/quotation/{share_token}')
         
     except Exception as e:
         print(f"Error deleting feedback: {str(e)}")
-        return jsonify({
-            'success': False, 
-            'message': 'An error occurred while deleting feedback. Please try again.'
-        }), 500
+        flash('An error occurred while deleting feedback', 'danger')
+        return redirect(request.referrer or '/')
 
 
 def register_leads_routes(app, db_connection_func):

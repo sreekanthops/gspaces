@@ -1344,7 +1344,7 @@
                         {% endif %}
                         
                         <!-- Feedback Form -->
-                        <form id="feedbackForm" onsubmit="return submitFeedback(event)" style="{% if lead.customer_rating or lead.customer_feedback %}display: none;{% endif %}">
+                        <form id="feedbackForm" style="{% if lead.customer_rating or lead.customer_feedback %}display: none;{% endif %}">
                             <div class="mb-4">
                                 <label for="feedbackRating" class="form-label" style="font-weight: 600; color: #334155; font-size: 1.05rem;">
                                     <i class="bi bi-star-fill" style="color: #fbbf24;"></i> How would you rate this quotation?
@@ -1723,6 +1723,12 @@
                     setRating(rating);
                 });
             });
+            
+            // Attach form submit handler
+            const feedbackForm = document.getElementById('feedbackForm');
+            if (feedbackForm) {
+                feedbackForm.addEventListener('submit', submitFeedback);
+            }
         });
         
         function setRating(rating) {

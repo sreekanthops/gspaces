@@ -1322,7 +1322,7 @@
                             
                             {% if lead.customer_feedback %}
                             <div class="mb-2">
-                                <strong style="color: #1e40af;">Feedback:</strong>
+                                <strong style="color: #1e40af;">Your Feedback:</strong>
                                 <p style="color: #1e3a8a; margin-top: 8px; white-space: pre-wrap;">{{ lead.customer_feedback }}</p>
                             </div>
                             {% endif %}
@@ -1336,9 +1336,9 @@
                             {% endif %}
                             
                             <div class="text-center mt-3">
-                                <button onclick="showEditForm()" class="btn btn-primary" style="border-radius: 8px;">
-                                    <i class="bi bi-pencil"></i> Edit Feedback
-                                </button>
+                                <p style="color: #10b981; font-weight: 600;">
+                                    <i class="bi bi-check-circle-fill"></i> Thank you for your feedback!
+                                </p>
                             </div>
                         </div>
                         {% endif %}

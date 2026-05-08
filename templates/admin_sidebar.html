@@ -157,5 +157,11 @@
                 <span>Deals</span>
             </a>
         </li>
+        <li class="admin-sidebar-item">
+            <a href="{{ url_for('admin_homepage_banner') }}" class="admin-sidebar-link {% if active_page == 'homepage_banner' %}active{% endif %}">
+                <span class="admin-sidebar-icon">🖼️</span>
+                <span>Homepage Banner</span>
+            </a>
+        </li>
     </ul>
 </div>

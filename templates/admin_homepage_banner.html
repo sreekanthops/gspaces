@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Homepage Banner - Admin Panel</title>
+    <link href="{{ url_for('static', filename='img/favicon.svg') }}" rel="icon">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/main.css') }}" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background: #f8f9fa;
+        }
+        .settings-card {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            padding: 32px;
+            margin-bottom: 24px;
+        }
+        .info-badge {
+            background: #dbeafe;
+            color: #1e40af;
+            padding: 12px 16px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+        }
+        .save-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            padding: 12px 32px;
+            border-radius: 12px;
+            color: white;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .save-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+        .form-label {
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 8px;
+        }
+        .form-control, .form-select {
+            border-radius: 12px;
+            border: 2px solid #e5e7eb;
+            padding: 12px 16px;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        .preview-image {
+            max-width: 100%;
+            height: auto;
+            border-radius: 12px;
+            margin-top: 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        .upload-area {
+            border: 2px dashed #e5e7eb;
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        .upload-area:hover {
+            border-color: #667eea;
+            background: #f9fafb;
+        }
+        .upload-icon {
+            font-size: 48px;
+            color: #9ca3af;
+            margin-bottom: 16px;
+        }
+    </style>
+</head>
+<body>
+    {% include 'navbar.html' %}
+
+    <div class="container-fluid" style="margin-top: 76px; padding: 0;">
+        <div class="row g-0">
+            <!-- Sidebar -->
+            <div class="col-md-2">
+                {% include 'admin_sidebar.html' %}
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-10 p-4">
+                <div class="container-fluid">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2 class="mb-0">
+                            <i class="fas fa-image me-2"></i>Homepage Banner Management
+                        </h2>
+                    </div>
+
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+
+                    <div class="info-badge">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Note:</strong> Upload a new banner image to change the homepage hero section. Recommended size: 1920x1080px for best results.
+                    </div>
+
+                    <div class="settings-card">
+                        <form action="{{ url_for('update_homepage_banner') }}" method="POST" enctype="multipart/form-data">
+                            
+                            <!-- Current Banner Preview -->
+                            {% if banner and banner.banner_image %}
+                            <div class="mb-4">
+                                <label class="form-label">Current Banner</label>
+                                <img src="{{ banner.banner_image }}" alt="Current Banner" class="preview-image">
+                            </div>
+                            {% endif %}
+
+                            <!-- Upload New Banner -->
+                            <div class="mb-4">
+                                <label for="banner_image" class="form-label">
+                                    <i class="fas fa-upload me-2"></i>Upload New Banner Image
+                                </label>
+                                <div class="upload-area" onclick="document.getElementById('banner_image').click()">
+                                    <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                                    <p class="mb-0">Click to upload or drag and drop</p>
+                                    <small class="text-muted">PNG, JPG, JPEG (Max 10MB)</small>
+                                </div>
+                                <input type="file" class="form-control d-none" id="banner_image" name="banner_image" accept="image/*">
+                                <small class="text-muted">Leave empty to keep current banner image</small>
+                            </div>
+
+                            <!-- Banner Title -->
+                            <div class="mb-4">
+                                <label for="title" class="form-label">
+                                    <i class="fas fa-heading me-2"></i>Banner Title
+                                </label>
+                                <input type="text" class="form-control" id="title" name="title" 
+                                       value="{{ banner.title if banner else 'Premium Home Office Setup' }}" required>
+                            </div>
+
+                            <!-- Banner Subtitle -->
+                            <div class="mb-4">
+                                <label for="subtitle" class="form-label">
+                                    <i class="fas fa-align-left me-2"></i>Banner Subtitle
+                                </label>
+                                <textarea class="form-control" id="subtitle" name="subtitle" rows="3" required>{{ banner.subtitle if banner else 'Transform your workspace with complete desk setups designed for productivity, comfort, and style. From WFH to executive offices, we deliver ready-to-use solutions.' }}</textarea>
+                            </div>
+
+                            <!-- Button Text -->
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <label for="button_text" class="form-label">
+                                        <i class="fas fa-mouse-pointer me-2"></i>Button Text
+                                    </label>
+                                    <input type="text" class="form-control" id="button_text" name="button_text" 
+                                           value="{{ banner.button_text if banner else 'Get Started' }}" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="button_link" class="form-label">
+                                        <i class="fas fa-link me-2"></i>Button Link
+                                    </label>
+                                    <input type="text" class="form-control" id="button_link" name="button_link" 
+                                           value="{{ banner.button_link if banner else '/products' }}" required>
+                                </div>
+                            </div>
+
+                            <!-- Video Link -->
+                            <div class="mb-4">
+                                <label for="video_link" class="form-label">
+                                    <i class="fas fa-video me-2"></i>Video Link (YouTube)
+                                </label>
+                                <input type="url" class="form-control" id="video_link" name="video_link" 
+                                       value="{{ banner.video_link if banner else 'https://youtu.be/U7gP16TXE8w?si=s5nXSpjALnLEEx81' }}" 
+                                       placeholder="https://youtu.be/...">
+                                <small class="text-muted">Optional: Add a YouTube video link for the play button</small>
+                            </div>
+
+                            <!-- Submit Button -->
+                            <div class="text-end">
+                                <button type="submit" class="save-btn">
+                                    <i class="fas fa-save me-2"></i>Save Changes
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Preview Section -->
+                    <div class="settings-card">
+                        <h4 class="mb-3">
+                            <i class="fas fa-eye me-2"></i>Live Preview
+                        </h4>
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Changes will be reflected on the homepage after saving. Visit the <a href="{{ url_for('index') }}" target="_blank">homepage</a> to see the live banner.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Preview uploaded image
+        document.getElementById('banner_image').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.querySelector('.preview-image');
+                    if (preview) {
+                        preview.src = e.target.result;
+                    } else {
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.className = 'preview-image';
+                        document.querySelector('.upload-area').after(img);
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    </script>
+</body>
+</html>

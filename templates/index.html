@@ -202,21 +202,23 @@
 {% include 'navbar.html' %}
 <main class="main">
     <!-- home Section -->
-<section id="home" class="home section">
+<section id="home" class="home section" {% if banner and banner.banner_image %}style="background: url('{{ banner.banner_image }}') center center/cover no-repeat fixed;"{% endif %}>
     <div class="container home-content">
         <div class="home-text" data-aos="fade-up" data-aos-delay="100">
             <h2>
-                Premium Home Office Setup Solutions
+                {{ banner.title if banner else 'Premium Home Office Setup' }}
             </h2>
             <p>
-                Transform your workspace with complete desk setups designed for productivity, comfort, and style. From WFH to executive offices, we deliver ready-to-use solutions.
+                {{ banner.subtitle if banner else 'Transform your workspace with complete desk setups designed for productivity, comfort, and style. From WFH to executive offices, we deliver ready-to-use solutions.' }}
             </p>
             <div class="btn-group">
-                <a href="{{ url_for('products') }}" class="btn-primary">Get Started</a>
-                <a href="https://youtu.be/U7gP16TXE8w?si=s5nXSpjALnLEEx81" class="btn-video glightbox">
+                <a href="{{ banner.button_link if banner else url_for('products') }}" class="btn-primary">{{ banner.button_text if banner else 'Get Started' }}</a>
+                {% if banner and banner.video_link %}
+                <a href="{{ banner.video_link }}" class="btn-video glightbox">
                     <i class="bi bi-play-circle-fill"></i>
                     <span>Watch Video</span>
                 </a>
+                {% endif %}
             </div>
         </div>
     </div>

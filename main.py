@@ -1107,16 +1107,28 @@ def index():
             """)
             categories = cursor.fetchall()
             
+            # Get homepage banner
+            cursor.execute("""
+                SELECT banner_image, title, subtitle, button_text, button_link, video_link
+                FROM homepage_banner
+                WHERE is_active = TRUE
+                ORDER BY id DESC
+                LIMIT 1
+            """)
+            banner = cursor.fetchone()
+            
         except Error as e:
             print(f"Error fetching products: {e}")
             flash("Error fetching products from database.", "error")
             categories = []
+            banner = None
         finally:
             if conn:
                 conn.close()
     else:
         flash("Error connecting to database to fetch products.", "error")
         categories = []
+        banner = None
 
     # Get catalogue files
     catalogue_files = get_catalogue_files()
@@ -1131,7 +1143,8 @@ def index():
                            categories=categories,
                            current_sort=sort_by,
                            current_category=category_filter,
-                           current_min_rating=min_rating)
+                           current_min_rating=min_rating,
+                           banner=banner)
 
 # --- CATALOGUE DOWNLOAD ROUTE ---
 @app.route('/download_catalogue/<filename>')
@@ -4475,6 +4488,110 @@ def delete_inquiry(inquiry_id):
             cur.close()
         if conn:
             conn.close()
+
+# --- HOMEPAGE BANNER MANAGEMENT ROUTES ---
+@app.route('/admin/homepage-banner')
+@login_required
+def admin_homepage_banner():
+    """Admin page to manage homepage banner"""
+    if not current_user.is_admin:
+        flash('Access denied. Admin privileges required.', 'error')
+        return redirect(url_for('index'))
+    
+    conn = connect_to_db()
+    if not conn:
+        flash('Database connection error', 'error')
+        return redirect(url_for('index'))
+    
+    try:
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute("SELECT * FROM homepage_banner WHERE is_active = TRUE ORDER BY id DESC LIMIT 1")
+        banner = cur.fetchone()
+        
+        return render_template('admin_homepage_banner.html', banner=banner)
+    
+    except Exception as e:
+        print(f"Error fetching banner: {e}")
+        flash('Error loading banner settings', 'error')
+        return redirect(url_for('index'))
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
+
+@app.route('/admin/homepage-banner/update', methods=['POST'])
+@login_required
+def update_homepage_banner():
+    """Update homepage banner settings"""
+    if not current_user.is_admin:
+        return jsonify({'error': 'Access denied'}), 403
+    
+    conn = connect_to_db()
+    if not conn:
+        return jsonify({'error': 'Database connection failed'}), 500
+    
+    try:
+        # Get form data
+        title = request.form.get('title', 'Premium Home Office Setup')
+        subtitle = request.form.get('subtitle', '')
+        button_text = request.form.get('button_text', 'Get Started')
+        button_link = request.form.get('button_link', '/products')
+        video_link = request.form.get('video_link', '')
+        
+        # Handle file upload
+        banner_image = None
+        if 'banner_image' in request.files:
+            file = request.files['banner_image']
+            if file and file.filename:
+                # Secure the filename
+                filename = secure_filename(file.filename)
+                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                filename = f"banner_{timestamp}_{filename}"
+                
+                # Save to static/img directory
+                upload_path = os.path.join(app.root_path, 'static', 'img', filename)
+                file.save(upload_path)
+                banner_image = f"/static/img/{filename}"
+        
+        cur = conn.cursor()
+        
+        # Deactivate all existing banners
+        cur.execute("UPDATE homepage_banner SET is_active = FALSE")
+        
+        # Insert new banner
+        if banner_image:
+            cur.execute("""
+                INSERT INTO homepage_banner 
+                (banner_image, title, subtitle, button_text, button_link, video_link, is_active)
+                VALUES (%s, %s, %s, %s, %s, %s, TRUE)
+            """, (banner_image, title, subtitle, button_text, button_link, video_link))
+        else:
+            # Update existing banner without changing image
+            cur.execute("""
+                UPDATE homepage_banner 
+                SET title = %s, subtitle = %s, button_text = %s, 
+                    button_link = %s, video_link = %s, is_active = TRUE,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = (SELECT id FROM homepage_banner ORDER BY id DESC LIMIT 1)
+            """, (title, subtitle, button_text, button_link, video_link))
+        
+        conn.commit()
+        flash('Homepage banner updated successfully!', 'success')
+        return redirect(url_for('admin_homepage_banner'))
+    
+    except Exception as e:
+        conn.rollback()
+        print(f"Error updating banner: {e}")
+        flash('Error updating banner', 'error')
+        return redirect(url_for('admin_homepage_banner'))
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
 
 
 @app.route('/products')

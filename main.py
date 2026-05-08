@@ -4931,7 +4931,7 @@ def admin_animated_furniture():
     conn = connect_to_db()
     if not conn:
         flash('Database connection error', 'error')
-        return redirect(url_for('admin_dashboard'))
+        return redirect(url_for('admin_orders'))
     
     try:
         cur = conn.cursor(cursor_factory=RealDictCursor)
@@ -4964,7 +4964,7 @@ def admin_animated_furniture():
     except Exception as e:
         print(f"Error loading animated furniture page: {e}")
         flash('Error loading page', 'error')
-        return redirect(url_for('admin_dashboard'))
+        return redirect(url_for('admin_orders'))
     finally:
         if cur:
             cur.close()

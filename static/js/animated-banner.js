@@ -13,6 +13,9 @@ class AnimatedBanner {
         this.offsetX = 0;
         this.offsetY = 0;
         this.originalPositions = new Map();
+        this.contextMenu = null;
+        this.selectedElement = null;
+        this.baseZIndex = 100;
         
         this.init();
     }
@@ -26,6 +29,9 @@ class AnimatedBanner {
         this.container.style.overflow = 'hidden';
         this.container.style.minHeight = '500px';
         
+        // Create context menu
+        this.createContextMenu();
+        
         // Create furniture elements
         this.createFurnitureElements();
         
@@ -36,6 +42,9 @@ class AnimatedBanner {
         if (this.settings.show_reset_button) {
             this.createResetButton();
         }
+        
+        // Hide context menu on click outside
+        document.addEventListener('click', () => this.hideContextMenu());
     }
     
     createFurnitureElements() {
@@ -118,10 +127,27 @@ class AnimatedBanner {
         document.addEventListener('mousemove', (e) => this.drag(e));
         document.addEventListener('mouseup', () => this.endDrag());
         
+        // Right-click context menu
+        element.addEventListener('contextmenu', (e) => this.showContextMenu(e, element));
+        
         // Touch events for mobile
         element.addEventListener('touchstart', (e) => this.startDrag(e, element), { passive: false });
         document.addEventListener('touchmove', (e) => this.drag(e), { passive: false });
         document.addEventListener('touchend', () => this.endDrag());
+        
+        // Long press for mobile context menu
+        let longPressTimer;
+        element.addEventListener('touchstart', (e) => {
+            longPressTimer = setTimeout(() => {
+                this.showContextMenu(e, element);
+            }, 500);
+        });
+        element.addEventListener('touchend', () => {
+            clearTimeout(longPressTimer);
+        });
+        element.addEventListener('touchmove', () => {
+            clearTimeout(longPressTimer);
+        });
     }
     
     startDrag(e, element) {
@@ -215,6 +241,136 @@ class AnimatedBanner {
         });
         
         // Re-trigger scatter animation
+    
+    createContextMenu() {
+        // Create context menu element
+        this.contextMenu = document.createElement('div');
+        this.contextMenu.className = 'furniture-context-menu';
+        this.contextMenu.style.cssText = `
+            position: fixed;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            padding: 8px 0;
+            z-index: 10000;
+            display: none;
+            min-width: 180px;
+        `;
+        
+        // Menu items
+        const menuItems = [
+            { icon: '⬆️', text: 'Bring to Front', action: 'toFront' },
+            { icon: '⬇️', text: 'Send to Back', action: 'toBack' },
+            { icon: '↗️', text: 'Bring Forward', action: 'forward' },
+            { icon: '↘️', text: 'Send Backward', action: 'backward' }
+        ];
+        
+        menuItems.forEach(item => {
+            const menuItem = document.createElement('div');
+            menuItem.className = 'context-menu-item';
+            menuItem.innerHTML = `<span style="margin-right: 8px;">${item.icon}</span>${item.text}`;
+            menuItem.style.cssText = `
+                padding: 10px 16px;
+                cursor: pointer;
+                transition: background 0.2s;
+                font-size: 14px;
+                display: flex;
+                align-items: center;
+            `;
+            
+            menuItem.addEventListener('mouseenter', () => {
+                menuItem.style.background = '#f0f0f0';
+            });
+            
+            menuItem.addEventListener('mouseleave', () => {
+                menuItem.style.background = 'white';
+            });
+            
+            menuItem.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.handleZIndexAction(item.action);
+                this.hideContextMenu();
+            });
+            
+            this.contextMenu.appendChild(menuItem);
+        });
+        
+        document.body.appendChild(this.contextMenu);
+    }
+    
+    showContextMenu(e, element) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        this.selectedElement = element;
+        
+        // Position context menu
+        const x = e.clientX || (e.touches && e.touches[0].clientX);
+        const y = e.clientY || (e.touches && e.touches[0].clientY);
+        
+        this.contextMenu.style.left = `${x}px`;
+        this.contextMenu.style.top = `${y}px`;
+        this.contextMenu.style.display = 'block';
+        
+        // Adjust if menu goes off screen
+        setTimeout(() => {
+            const rect = this.contextMenu.getBoundingClientRect();
+            if (rect.right > window.innerWidth) {
+                this.contextMenu.style.left = `${x - rect.width}px`;
+            }
+            if (rect.bottom > window.innerHeight) {
+                this.contextMenu.style.top = `${y - rect.height}px`;
+            }
+        }, 0);
+    }
+    
+    hideContextMenu() {
+        if (this.contextMenu) {
+            this.contextMenu.style.display = 'none';
+        }
+    }
+    
+    handleZIndexAction(action) {
+        if (!this.selectedElement) return;
+        
+        const currentZ = parseInt(this.selectedElement.style.zIndex) || this.baseZIndex;
+        
+        switch (action) {
+            case 'toFront':
+                // Find highest z-index
+                const maxZ = Math.max(...this.furnitureElements.map(el => 
+                    parseInt(el.style.zIndex) || this.baseZIndex
+                ));
+                this.selectedElement.style.zIndex = maxZ + 1;
+                break;
+                
+            case 'toBack':
+                // Find lowest z-index
+                const minZ = Math.min(...this.furnitureElements.map(el => 
+                    parseInt(el.style.zIndex) || this.baseZIndex
+                ));
+                this.selectedElement.style.zIndex = minZ - 1;
+                break;
+                
+            case 'forward':
+                // Move one layer up
+                this.selectedElement.style.zIndex = currentZ + 1;
+                break;
+                
+            case 'backward':
+                // Move one layer down
+                this.selectedElement.style.zIndex = currentZ - 1;
+                break;
+        }
+        
+        // Add visual feedback
+        this.selectedElement.style.transition = 'transform 0.2s ease';
+        this.selectedElement.style.transform += ' scale(1.05)';
+        setTimeout(() => {
+            this.selectedElement.style.transform = this.selectedElement.style.transform.replace(' scale(1.05)', '');
+        }, 200);
+    }
         setTimeout(() => this.scatterItems(), 100);
     }
 }

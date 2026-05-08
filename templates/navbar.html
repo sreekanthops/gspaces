@@ -34,8 +34,8 @@
             <ul class="custom-navbar-nav navbar-nav ms-auto mb-2 mb-md-0">
                 {% if current_user.is_authenticated and current_user.is_admin %}
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('admin_orders') }}" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-weight: 600; padding: 8px 20px; border-radius: 25px; margin-right: 15px; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3); transition: all 0.3s ease;">
-                        🎛️ Admin Panel
+                    <a class="nav-link admin-panel-link" href="{{ url_for('admin_orders') }}">
+                        <i class="bi bi-gear-fill"></i> Admin Panel
                     </a>
                 </li>
                 {% endif %}

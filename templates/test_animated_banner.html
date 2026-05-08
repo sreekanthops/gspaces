@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Animated Furniture Banner Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background: #f0f0f0;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            margin-bottom: 10px;
+        }
+        
+        .instructions {
+            background: white;
+            padding: 20px;
+            margin: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .instructions h2 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        
+        .instructions ul {
+            margin-left: 20px;
+        }
+        
+        .instructions li {
+            margin: 5px 0;
+        }
+        
+        #animated-furniture-banner {
+            margin: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            overflow: hidden;
+        }
+        
+        .furniture-item {
+            cursor: grab;
+            transition: transform 0.3s ease;
+        }
+        
+        .furniture-item:active {
+            cursor: grabbing;
+        }
+        
+        .furniture-item:hover {
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+        }
+        
+        .reset-furniture-btn {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            z-index: 2000;
+            padding: 12px 24px;
+            background: white;
+            border: 2px solid #667eea;
+            color: #667eea;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transition: all 0.3s ease;
+        }
+        
+        .reset-furniture-btn:hover {
+            background: #667eea;
+            color: white;
+            transform: scale(1.05);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+        }
+        
+        .stats {
+            background: white;
+            padding: 15px;
+            margin: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 10px;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎨 Interactive Animated Furniture Banner</h1>
+        <p>Drag and arrange furniture items to create your perfect space!</p>
+    </div>
+    
+    <div class="instructions">
+        <h2>📋 How to Use:</h2>
+        <ul>
+            <li>✨ Watch the furniture items scatter when the page loads</li>
+            <li>🖱️ Click and drag any furniture item to move it around</li>
+            <li>📱 On mobile, use touch to drag items</li>
+            <li>🔄 Click the "Reset Layout" button to restore original positions</li>
+            <li>🎯 Items will snap to a grid for easier alignment</li>
+        </ul>
+    </div>
+    
+    <div class="stats">
+        <div class="stat-item">
+            <div class="stat-value" id="itemCount">2</div>
+            <div class="stat-label">Furniture Items</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value">2000ms</div>
+            <div class="stat-label">Scatter Duration</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value">200px</div>
+            <div class="stat-label">Scatter Distance</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value">20px</div>
+            <div class="stat-label">Grid Size</div>
+        </div>
+    </div>
+    
+    <div id="animated-furniture-banner"></div>
+    
+    <script>
+        // Test data with your uploaded images
+        window.furnitureData = [
+            {
+                id: 1,
+                name: 'Office Chair',
+                image_path: '/static/images/furniture/chair.png',
+                category: 'chair',
+                width: 150,
+                height: 180,
+                initial_x: 30,
+                initial_y: 50,
+                scatter_distance: 200,
+                rotation_angle: 0
+            },
+            {
+                id: 2,
+                name: 'Office Desk',
+                image_path: '/static/images/furniture/desk.png',
+                category: 'table',
+                width: 250,
+                height: 200,
+                initial_x: 70,
+                initial_y: 50,
+                scatter_distance: 200,
+                rotation_angle: 0
+            }
+        ];
+        
+        window.bannerSettings = {
+            is_enabled: true,
+            scatter_duration: 2000,
+            scatter_easing: 'ease-out',
+            allow_drag: true,
+            snap_to_grid: true,
+            grid_size: 20,
+            show_reset_button: true,
+            background_color: '#f8f9fa'
+        };
+    </script>
+    <script src="/static/js/animated-banner.js"></script>
+</body>
+</html>

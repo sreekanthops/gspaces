@@ -5340,6 +5340,13 @@ def products():
     # Check if current user is admin
     is_admin = current_user.is_authenticated and getattr(current_user, 'is_admin', False)
     
+
+# --- TEST ANIMATED BANNER ROUTE ---
+@app.route('/test-animated-banner')
+def test_animated_banner():
+    """Test page for animated furniture banner"""
+    return render_template('test_animated_banner.html')
+
     return render_template('products_new.html',
                          products=products,
                          categories=categories,

@@ -336,12 +336,13 @@ h6 {
 }
 
 .index-page .custom-navbar .custom-navbar-nav li a {
-  color: rgba(255, 255, 255, 0.95) !important;
+  color: #ffffff !important;
 }
 
 .index-page .custom-navbar .custom-navbar-nav li a:hover,
 .index-page .custom-navbar .custom-navbar-nav li.active a {
   color: #ffffff !important;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
 }
 
 .index-page .custom-navbar .custom-navbar-cta img {

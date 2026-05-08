@@ -36,6 +36,3 @@ UPDATE homepage_banner SET enable_carousel = TRUE WHERE is_active = TRUE;
 
 COMMENT ON TABLE homepage_carousel_images IS 'Stores multiple banner images for homepage carousel';
 COMMENT ON COLUMN homepage_carousel_images.display_order IS 'Order in which images appear in carousel (0 = first)';
-COMMENT ON COLUMN homepage_carousel_images.slide_duration IS 'Not used here, controlled by homepage_banner.slide_duration';
-
--- Made with Bob

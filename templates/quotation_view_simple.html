@@ -343,62 +343,53 @@
             background: white;
         }
         
-        /* Payment Terms */
+        /* Payment Terms - Compact */
         .payment-terms {
-            margin-top: 24px;
-            padding: 20px;
+            margin-top: 20px;
+            padding: 16px;
             background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-            border-radius: 16px;
+            border-radius: 12px;
             border: 1px solid #bae6fd;
         }
         .payment-terms-title {
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             font-weight: 700;
             color: #0c4a6e;
-            margin-bottom: 14px;
+            margin-bottom: 10px;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
         }
         .payment-steps {
-            display: grid;
-            gap: 10px;
+            display: flex;
+            gap: 8px;
+            align-items: center;
         }
         .payment-step {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 10px 14px;
-            background: white;
-            border-radius: 10px;
-            border-left: 3px solid #0ea5e9;
-        }
-        .payment-step-number {
-            width: 28px;
-            height: 28px;
-            background: linear-gradient(135deg, #0ea5e9, #0284c7);
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 0.85rem;
-            flex-shrink: 0;
-        }
-        .payment-step-content {
             flex: 1;
+            text-align: center;
+            padding: 8px 6px;
+            background: white;
+            border-radius: 8px;
+            border-bottom: 2px solid #0ea5e9;
         }
-        .payment-step-label {
-            font-size: 0.8rem;
-            color: #64748b;
-            font-weight: 600;
+        .payment-step-percent {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: #0ea5e9;
+            display: block;
             margin-bottom: 2px;
         }
-        .payment-step-amount {
-            font-size: 0.95rem;
-            font-weight: 700;
-            color: #0c4a6e;
+        .payment-step-label {
+            font-size: 0.7rem;
+            color: #64748b;
+            font-weight: 600;
+            line-height: 1.2;
+        }
+        .payment-arrow {
+            color: #94a3b8;
+            font-size: 0.9rem;
+            flex-shrink: 0;
         }
         
         .designs-grid {
@@ -906,7 +897,7 @@
                         </div>
                     </div>
                     
-                    <!-- Payment Terms -->
+                    <!-- Payment Terms - Compact -->
                     <div class="payment-terms">
                         <div class="payment-terms-title">
                             <i class="bi bi-credit-card"></i>
@@ -914,25 +905,18 @@
                         </div>
                         <div class="payment-steps">
                             <div class="payment-step">
-                                <div class="payment-step-number">1</div>
-                                <div class="payment-step-content">
-                                    <div class="payment-step-label">Advance Payment</div>
-                                    <div class="payment-step-amount">30% on order confirmation</div>
-                                </div>
+                                <span class="payment-step-percent">30%</span>
+                                <span class="payment-step-label">Advance</span>
                             </div>
+                            <div class="payment-arrow">→</div>
                             <div class="payment-step">
-                                <div class="payment-step-number">2</div>
-                                <div class="payment-step-content">
-                                    <div class="payment-step-label">Progress Payment</div>
-                                    <div class="payment-step-amount">40% during manufacturing</div>
-                                </div>
+                                <span class="payment-step-percent">40%</span>
+                                <span class="payment-step-label">Progress</span>
                             </div>
+                            <div class="payment-arrow">→</div>
                             <div class="payment-step">
-                                <div class="payment-step-number">3</div>
-                                <div class="payment-step-content">
-                                    <div class="payment-step-label">Final Payment</div>
-                                    <div class="payment-step-amount">30% on delivery</div>
-                                </div>
+                                <span class="payment-step-percent">30%</span>
+                                <span class="payment-step-label">Delivery</span>
                             </div>
                         </div>
                     </div>

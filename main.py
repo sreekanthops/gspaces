@@ -1107,28 +1107,39 @@ def index():
             """)
             categories = cursor.fetchall()
             
-            # Get homepage banner
+            # Get homepage carousel settings
             cursor.execute("""
-                SELECT banner_image, title, subtitle, button_text, button_link, video_link
+                SELECT enable_carousel, slide_duration, video_link
                 FROM homepage_banner
                 WHERE is_active = TRUE
                 ORDER BY id DESC
                 LIMIT 1
             """)
-            banner = cursor.fetchone()
+            carousel_settings = cursor.fetchone()
+            
+            # Get carousel images
+            cursor.execute("""
+                SELECT image_url, title, subtitle, button_text, button_link
+                FROM homepage_carousel_images
+                WHERE is_active = TRUE
+                ORDER BY display_order, id
+            """)
+            carousel_images = cursor.fetchall()
             
         except Error as e:
             print(f"Error fetching products: {e}")
             flash("Error fetching products from database.", "error")
             categories = []
-            banner = None
+            carousel_settings = None
+            carousel_images = []
         finally:
             if conn:
                 conn.close()
     else:
         flash("Error connecting to database to fetch products.", "error")
         categories = []
-        banner = None
+        carousel_settings = None
+        carousel_images = []
 
     # Get catalogue files
     catalogue_files = get_catalogue_files()
@@ -1144,7 +1155,8 @@ def index():
                            current_sort=sort_by,
                            current_category=category_filter,
                            current_min_rating=min_rating,
-                           banner=banner)
+                           carousel_settings=carousel_settings,
+                           carousel_images=carousel_images)
 
 # --- CATALOGUE DOWNLOAD ROUTE ---
 @app.route('/download_catalogue/<filename>')
@@ -4588,6 +4600,299 @@ def update_homepage_banner():
         return redirect(url_for('admin_homepage_banner'))
     finally:
         if cur:
+
+# --- HOMEPAGE CAROUSEL MANAGEMENT ROUTES ---
+@app.route('/admin/homepage-carousel')
+@login_required
+def admin_homepage_carousel():
+    """Admin page to manage homepage carousel"""
+    if not current_user.is_admin:
+        flash('Access denied. Admin privileges required.', 'error')
+        return redirect(url_for('index'))
+    
+    conn = connect_to_db()
+    if not conn:
+        flash('Database connection error', 'error')
+        return redirect(url_for('index'))
+    
+    try:
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        
+        # Get carousel settings
+        cur.execute("SELECT * FROM homepage_banner WHERE is_active = TRUE ORDER BY id DESC LIMIT 1")
+        carousel_settings = cur.fetchone()
+        
+        # Get all carousel images
+        cur.execute("""
+            SELECT * FROM homepage_carousel_images 
+            WHERE is_active = TRUE 
+            ORDER BY display_order, id
+        """)
+        carousel_images = cur.fetchall()
+        
+        return render_template('admin_homepage_carousel.html', 
+                             carousel_settings=carousel_settings,
+                             carousel_images=carousel_images)
+    
+    except Exception as e:
+        print(f"Error fetching carousel: {e}")
+        flash('Error loading carousel settings', 'error')
+        return redirect(url_for('index'))
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
+
+@app.route('/admin/carousel/settings/update', methods=['POST'])
+@login_required
+def update_carousel_settings():
+    """Update carousel settings"""
+    if not current_user.is_admin:
+        return jsonify({'error': 'Access denied'}), 403
+    
+    conn = connect_to_db()
+    if not conn:
+        flash('Database connection error', 'error')
+        return redirect(url_for('admin_homepage_carousel'))
+    
+    try:
+        enable_carousel = request.form.get('enable_carousel') == 'on'
+        slide_duration = int(request.form.get('slide_duration', 5)) * 1000  # Convert to milliseconds
+        
+        cur = conn.cursor()
+        cur.execute("""
+            UPDATE homepage_banner 
+            SET enable_carousel = %s, slide_duration = %s, updated_at = CURRENT_TIMESTAMP
+            WHERE is_active = TRUE
+        """, (enable_carousel, slide_duration))
+        
+        conn.commit()
+        flash('Carousel settings updated successfully!', 'success')
+        
+    except Exception as e:
+        conn.rollback()
+        print(f"Error updating carousel settings: {e}")
+        flash('Error updating settings', 'error')
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+    
+    return redirect(url_for('admin_homepage_carousel'))
+
+
+@app.route('/admin/carousel/image/add', methods=['POST'])
+@login_required
+def add_carousel_image():
+    """Add new carousel image with cropping"""
+    if not current_user.is_admin:
+        return jsonify({'error': 'Access denied'}), 403
+    
+    conn = connect_to_db()
+    if not conn:
+        return jsonify({'error': 'Database connection failed'}), 500
+    
+    try:
+        # Get form data
+        title = request.form.get('title', 'Premium Home Office Setup')
+        subtitle = request.form.get('subtitle', '')
+        button_text = request.form.get('button_text', 'Get Started')
+        button_link = request.form.get('button_link', '/products')
+        
+        # Handle cropped image upload
+        if 'image' not in request.files:
+            return jsonify({'error': 'No image provided'}), 400
+        
+        file = request.files['image']
+        if file and file.filename:
+            # Secure the filename
+            filename = secure_filename(file.filename)
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            filename = f"carousel_{timestamp}_{filename}"
+            
+            # Save to static/img directory
+            upload_path = os.path.join(app.root_path, 'static', 'img', filename)
+            file.save(upload_path)
+            image_url = f"/static/img/{filename}"
+            
+            # Get next display order
+            cur = conn.cursor()
+            cur.execute("SELECT COALESCE(MAX(display_order), -1) + 1 FROM homepage_carousel_images WHERE is_active = TRUE")
+            next_order = cur.fetchone()[0]
+            
+            # Insert new carousel image
+            cur.execute("""
+                INSERT INTO homepage_carousel_images 
+                (image_url, title, subtitle, button_text, button_link, display_order, is_active)
+                VALUES (%s, %s, %s, %s, %s, %s, TRUE)
+            """, (image_url, title, subtitle, button_text, button_link, next_order))
+            
+            conn.commit()
+            return jsonify({'success': True, 'message': 'Image added successfully'})
+        
+        return jsonify({'error': 'Invalid file'}), 400
+    
+    except Exception as e:
+        conn.rollback()
+        print(f"Error adding carousel image: {e}")
+        return jsonify({'error': 'Failed to add image'}), 500
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
+
+@app.route('/admin/carousel/image/<int:image_id>')
+@login_required
+def get_carousel_image(image_id):
+    """Get carousel image details"""
+    if not current_user.is_admin:
+        return jsonify({'error': 'Access denied'}), 403
+    
+    conn = connect_to_db()
+    if not conn:
+        return jsonify({'error': 'Database connection failed'}), 500
+    
+    try:
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute("SELECT * FROM homepage_carousel_images WHERE id = %s", (image_id,))
+        image = cur.fetchone()
+        
+        if image:
+            return jsonify(image)
+        return jsonify({'error': 'Image not found'}), 404
+    
+    except Exception as e:
+        print(f"Error fetching image: {e}")
+        return jsonify({'error': 'Failed to fetch image'}), 500
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
+
+@app.route('/admin/carousel/image/<int:image_id>/update', methods=['POST'])
+@login_required
+def update_carousel_image(image_id):
+    """Update carousel image details"""
+    if not current_user.is_admin:
+        return jsonify({'error': 'Access denied'}), 403
+    
+    conn = connect_to_db()
+    if not conn:
+        return jsonify({'error': 'Database connection failed'}), 500
+    
+    try:
+        title = request.form.get('title')
+        subtitle = request.form.get('subtitle')
+        button_text = request.form.get('button_text')
+        button_link = request.form.get('button_link')
+        
+        cur = conn.cursor()
+        cur.execute("""
+            UPDATE homepage_carousel_images 
+            SET title = %s, subtitle = %s, button_text = %s, button_link = %s, 
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = %s
+        """, (title, subtitle, button_text, button_link, image_id))
+        
+        conn.commit()
+        return jsonify({'success': True, 'message': 'Image updated successfully'})
+    
+    except Exception as e:
+        conn.rollback()
+        print(f"Error updating image: {e}")
+        return jsonify({'error': 'Failed to update image'}), 500
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
+
+@app.route('/admin/carousel/image/<int:image_id>/delete', methods=['POST'])
+@login_required
+def delete_carousel_image(image_id):
+    """Delete carousel image"""
+    if not current_user.is_admin:
+        return jsonify({'error': 'Access denied'}), 403
+    
+    conn = connect_to_db()
+    if not conn:
+        return jsonify({'error': 'Database connection failed'}), 500
+    
+    try:
+        cur = conn.cursor()
+        
+        # Get image URL to delete file
+        cur.execute("SELECT image_url FROM homepage_carousel_images WHERE id = %s", (image_id,))
+        result = cur.fetchone()
+        
+        if result:
+            image_url = result[0]
+            # Delete file from filesystem
+            if image_url.startswith('/static/'):
+                file_path = os.path.join(app.root_path, image_url[1:])  # Remove leading /
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+        
+        # Soft delete (set is_active to FALSE)
+        cur.execute("UPDATE homepage_carousel_images SET is_active = FALSE WHERE id = %s", (image_id,))
+        
+        conn.commit()
+        return jsonify({'success': True, 'message': 'Image deleted successfully'})
+    
+    except Exception as e:
+        conn.rollback()
+        print(f"Error deleting image: {e}")
+        return jsonify({'error': 'Failed to delete image'}), 500
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
+
+@app.route('/admin/carousel/order/update', methods=['POST'])
+@login_required
+def update_carousel_order():
+    """Update carousel images order"""
+    if not current_user.is_admin:
+        return jsonify({'error': 'Access denied'}), 403
+    
+    conn = connect_to_db()
+    if not conn:
+        return jsonify({'error': 'Database connection failed'}), 500
+    
+    try:
+        order_data = request.json.get('order', [])
+        
+        cur = conn.cursor()
+        for item in order_data:
+            cur.execute("""
+                UPDATE homepage_carousel_images 
+                SET display_order = %s, updated_at = CURRENT_TIMESTAMP
+                WHERE id = %s
+            """, (item['order'], item['id']))
+        
+        conn.commit()
+        return jsonify({'success': True, 'message': 'Order updated successfully'})
+    
+    except Exception as e:
+        conn.rollback()
+        print(f"Error updating order: {e}")
+        return jsonify({'error': 'Failed to update order'}), 500
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
             cur.close()
         if conn:
             conn.close()

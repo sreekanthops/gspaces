@@ -201,28 +201,249 @@
 
 {% include 'navbar.html' %}
 <main class="main">
-    <!-- home Section -->
-<section id="home" class="home section" {% if banner and banner.banner_image %}style="background: url('{{ banner.banner_image }}') center center/cover no-repeat fixed;"{% endif %}>
-    <div class="container home-content">
-        <div class="home-text" data-aos="fade-up" data-aos-delay="100">
-            <h2>
-                {{ banner.title if banner else 'Premium Home Office Setup' }}
-            </h2>
-            <p>
-                {{ banner.subtitle if banner else 'Transform your workspace with complete desk setups designed for productivity, comfort, and style. From WFH to executive offices, we deliver ready-to-use solutions.' }}
-            </p>
-            <div class="btn-group">
-                <a href="{{ banner.button_link if banner else url_for('products') }}" class="btn-primary">{{ banner.button_text if banner else 'Get Started' }}</a>
-                {% if banner and banner.video_link %}
-                <a href="{{ banner.video_link }}" class="btn-video glightbox">
-                    <i class="bi bi-play-circle-fill"></i>
-                    <span>Watch Video</span>
-                </a>
-                {% endif %}
+    <!-- home Section with Carousel -->
+<section id="home" class="home section">
+    {% if carousel_images and carousel_images|length > 0 %}
+        <!-- Carousel Container -->
+        <div class="homepage-carousel">
+            {% for image in carousel_images %}
+            <div class="carousel-slide {% if loop.first %}active{% endif %}"
+                 style="background: url('{{ image.image_url }}') center center/cover no-repeat;">
+                <div class="carousel-overlay"></div>
+                <div class="container home-content">
+                    <div class="home-text" data-aos="fade-up" data-aos-delay="100">
+                        <h2>{{ image.title or 'Premium Home Office Setup' }}</h2>
+                        <p>{{ image.subtitle or 'Transform your workspace with complete desk setups designed for productivity, comfort, and style.' }}</p>
+                        <div class="btn-group">
+                            <a href="{{ image.button_link or url_for('products') }}" class="btn-primary">
+                                {{ image.button_text or 'Get Started' }}
+                            </a>
+                            {% if carousel_settings and carousel_settings.video_link %}
+                            <a href="{{ carousel_settings.video_link }}" class="btn-video glightbox">
+                                <i class="bi bi-play-circle-fill"></i>
+                                <span>Watch Video</span>
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+            
+            <!-- Carousel Controls (only show if multiple images) -->
+            {% if carousel_images|length > 1 %}
+            <div class="carousel-controls">
+                <button class="carousel-prev" onclick="changeSlide(-1)">
+                    <i class="bi bi-chevron-left"></i>
+                </button>
+                <button class="carousel-next" onclick="changeSlide(1)">
+                    <i class="bi bi-chevron-right"></i>
+                </button>
+            </div>
+            
+            <!-- Carousel Indicators -->
+            <div class="carousel-indicators">
+                {% for image in carousel_images %}
+                <span class="indicator {% if loop.first %}active{% endif %}" onclick="goToSlide({{ loop.index0 }})"></span>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+    {% else %}
+        <!-- Fallback: Single Banner -->
+        <div class="carousel-slide active" style="background: url('/static/img/hero-bg.jpg') center center/cover no-repeat;">
+            <div class="carousel-overlay"></div>
+            <div class="container home-content">
+                <div class="home-text" data-aos="fade-up" data-aos-delay="100">
+                    <h2>Premium Home Office Setup</h2>
+                    <p>Transform your workspace with complete desk setups designed for productivity, comfort, and style. From WFH to executive offices, we deliver ready-to-use solutions.</p>
+                    <div class="btn-group">
+                        <a href="{{ url_for('products') }}" class="btn-primary">Get Started</a>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
+    {% endif %}
 </section>
+
+<style>
+.homepage-carousel {
+    position: relative;
+    width: 100%;
+    min-height: 100vh;
+    overflow: hidden;
+}
+
+.carousel-slide {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 1s ease-in-out;
+    background-attachment: fixed !important;
+}
+
+.carousel-slide.active {
+    opacity: 1;
+    position: relative;
+}
+
+.carousel-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.3);
+    z-index: 1;
+}
+
+.home-content {
+    position: relative;
+    z-index: 2;
+}
+
+.carousel-controls button {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    color: white;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 10;
+    transition: all 0.3s;
+    backdrop-filter: blur(10px);
+}
+
+.carousel-controls button:hover {
+    background: rgba(255, 255, 255, 0.4);
+    transform: translateY(-50%) scale(1.1);
+}
+
+.carousel-prev {
+    left: 20px;
+}
+
+.carousel-next {
+    right: 20px;
+}
+
+.carousel-indicators {
+    position: absolute;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 12px;
+    z-index: 10;
+}
+
+.carousel-indicators .indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    transition: all 0.3s;
+    border: 2px solid rgba(255, 255, 255, 0.8);
+}
+
+.carousel-indicators .indicator.active {
+    background: white;
+    width: 40px;
+    border-radius: 6px;
+}
+
+.carousel-indicators .indicator:hover {
+    background: rgba(255, 255, 255, 0.8);
+}
+
+@media (max-width: 768px) {
+    .carousel-controls button {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .carousel-prev {
+        left: 10px;
+    }
+    
+    .carousel-next {
+        right: 10px;
+    }
+}
+</style>
+
+<script>
+let currentSlide = 0;
+let autoSlideInterval;
+const slides = document.querySelectorAll('.carousel-slide');
+const indicators = document.querySelectorAll('.carousel-indicators .indicator');
+const slideDuration = {{ carousel_settings.slide_duration if carousel_settings and carousel_settings.slide_duration else 5000 }};
+const enableCarousel = {{ 'true' if carousel_settings and carousel_settings.enable_carousel and carousel_images|length > 1 else 'false' }};
+
+function showSlide(n) {
+    if (slides.length === 0) return;
+    
+    // Wrap around
+    if (n >= slides.length) currentSlide = 0;
+    if (n < 0) currentSlide = slides.length - 1;
+    else currentSlide = n;
+    
+    // Hide all slides
+    slides.forEach(slide => slide.classList.remove('active'));
+    indicators.forEach(ind => ind.classList.remove('active'));
+    
+    // Show current slide
+    slides[currentSlide].classList.add('active');
+    if (indicators[currentSlide]) {
+        indicators[currentSlide].classList.add('active');
+    }
+}
+
+function changeSlide(direction) {
+    showSlide(currentSlide + direction);
+    resetAutoSlide();
+}
+
+function goToSlide(n) {
+    showSlide(n);
+    resetAutoSlide();
+}
+
+function nextSlide() {
+    showSlide(currentSlide + 1);
+}
+
+function resetAutoSlide() {
+    if (enableCarousel && slides.length > 1) {
+        clearInterval(autoSlideInterval);
+        autoSlideInterval = setInterval(nextSlide, slideDuration);
+    }
+}
+
+// Start auto-slide if enabled
+if (enableCarousel && slides.length > 1) {
+    autoSlideInterval = setInterval(nextSlide, slideDuration);
+    
+    // Pause on hover
+    document.querySelector('.homepage-carousel')?.addEventListener('mouseenter', () => {
+        clearInterval(autoSlideInterval);
+    });
+    
+    document.querySelector('.homepage-carousel')?.addEventListener('mouseleave', () => {
+        autoSlideInterval = setInterval(nextSlide, slideDuration);
+    });
+}
+</script>
 
     <!-- About Section -->
 

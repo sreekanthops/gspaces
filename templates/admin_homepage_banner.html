@@ -10,72 +10,263 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body {
-            background: #f8f9fa;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
         }
+        
+        .page-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 32px;
+            border-radius: 20px;
+            margin-bottom: 32px;
+            box-shadow: 0 10px 40px rgba(102, 126, 234, 0.3);
+            color: white;
+        }
+        
+        .page-header h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 0;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .page-header p {
+            margin: 8px 0 0;
+            opacity: 0.95;
+            font-size: 1.05rem;
+        }
+        
         .settings-card {
             background: #fff;
-            border-radius: 16px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            padding: 32px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+            padding: 40px;
             margin-bottom: 24px;
+            border: 1px solid rgba(102, 126, 234, 0.1);
+            transition: all 0.3s ease;
         }
+        
+        .settings-card:hover {
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.12);
+            transform: translateY(-2px);
+        }
+        
+        .card-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 3px solid #667eea;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .card-title i {
+            color: #667eea;
+            font-size: 1.6rem;
+        }
+        
         .info-badge {
-            background: #dbeafe;
+            background: linear-gradient(135deg, #dbeafe 0%, #e0e7ff 100%);
             color: #1e40af;
-            padding: 12px 16px;
-            border-radius: 12px;
-            margin-bottom: 24px;
+            padding: 16px 20px;
+            border-radius: 16px;
+            margin-bottom: 32px;
+            border-left: 4px solid #667eea;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
         }
+        
+        .info-badge i {
+            font-size: 1.2rem;
+            margin-right: 8px;
+        }
+        
         .save-btn {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             border: none;
-            padding: 12px 32px;
-            border-radius: 12px;
+            padding: 14px 40px;
+            border-radius: 14px;
             color: white;
-            font-weight: 600;
+            font-weight: 700;
+            font-size: 1.05rem;
+            transition: all 0.3s;
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .save-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(102, 126, 234, 0.5);
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+        }
+        
+        .save-btn i {
+            margin-right: 8px;
+        }
+        
+        .form-label {
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 10px;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .form-label i {
+            color: #667eea;
+            font-size: 1.1rem;
+        }
+        
+        .form-control, .form-select {
+            border-radius: 14px;
+            border: 2px solid #e5e7eb;
+            padding: 14px 18px;
+            font-size: 1rem;
+            transition: all 0.3s;
+            background: #f9fafb;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15);
+            background: white;
+            transform: translateY(-1px);
+        }
+        
+        textarea.form-control {
+            min-height: 120px;
+            resize: vertical;
+        }
+        
+        .preview-section {
+            background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+            padding: 24px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+            border: 2px solid #e5e7eb;
+        }
+        
+        .preview-image {
+            max-width: 100%;
+            height: auto;
+            border-radius: 16px;
+            margin-top: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            border: 4px solid white;
             transition: all 0.3s;
         }
-        .save-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        
+        .preview-image:hover {
+            transform: scale(1.02);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
         }
-        .form-label {
+        
+        .upload-area {
+            border: 3px dashed #cbd5e1;
+            border-radius: 16px;
+            padding: 48px 24px;
+            text-align: center;
+            transition: all 0.3s;
+            cursor: pointer;
+            background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .upload-area::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .upload-area:hover {
+            border-color: #667eea;
+            background: white;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
+        }
+        
+        .upload-area:hover::before {
+            opacity: 1;
+        }
+        
+        .upload-icon {
+            font-size: 64px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 16px;
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .upload-area p {
+            font-size: 1.1rem;
             font-weight: 600;
             color: #374151;
             margin-bottom: 8px;
         }
-        .form-control, .form-select {
-            border-radius: 12px;
-            border: 2px solid #e5e7eb;
-            padding: 12px 16px;
+        
+        .upload-area small {
+            color: #6b7280;
+            font-size: 0.95rem;
         }
-        .form-control:focus, .form-select:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        
+        .input-group-custom {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
         }
-        .preview-image {
-            max-width: 100%;
-            height: auto;
-            border-radius: 12px;
-            margin-top: 16px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        
+        @media (max-width: 768px) {
+            .input-group-custom {
+                grid-template-columns: 1fr;
+            }
         }
-        .upload-area {
-            border: 2px dashed #e5e7eb;
-            border-radius: 12px;
-            padding: 24px;
-            text-align: center;
-            transition: all 0.3s;
-            cursor: pointer;
+        
+        .preview-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
         }
-        .upload-area:hover {
-            border-color: #667eea;
-            background: #f9fafb;
+        
+        .alert {
+            border-radius: 14px;
+            border: none;
+            padding: 16px 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
         }
-        .upload-icon {
-            font-size: 48px;
-            color: #9ca3af;
-            margin-bottom: 16px;
+        
+        .alert-success {
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            color: #065f46;
+        }
+        
+        .alert-danger {
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+            color: #991b1b;
         }
     </style>
 </head>
@@ -92,16 +283,19 @@
             <!-- Main Content -->
             <div class="col-md-10 p-4">
                 <div class="container-fluid">
-                    <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h2 class="mb-0">
-                            <i class="fas fa-image me-2"></i>Homepage Banner Management
+                    <!-- Page Header -->
+                    <div class="page-header">
+                        <h2>
+                            <i class="fas fa-image me-3"></i>Homepage Banner Management
                         </h2>
+                        <p>Customize your homepage hero section with a stunning banner</p>
                     </div>
 
                     {% with messages = get_flashed_messages(with_categories=true) %}
                         {% if messages %}
                             {% for category, message in messages %}
                                 <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show" role="alert">
+                                    <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-circle' }} me-2"></i>
                                     {{ message }}
                                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                                 </div>
@@ -110,17 +304,24 @@
                     {% endwith %}
 
                     <div class="info-badge">
-                        <i class="fas fa-info-circle me-2"></i>
-                        <strong>Note:</strong> Upload a new banner image to change the homepage hero section. Recommended size: 1920x1080px for best results.
+                        <i class="fas fa-lightbulb"></i>
+                        <strong>Pro Tip:</strong> Upload a high-quality banner image (1920x1080px recommended) for the best visual impact on your homepage!
                     </div>
 
                     <div class="settings-card">
+                        <h3 class="card-title">
+                            <i class="fas fa-image"></i>
+                            Banner Image
+                        </h3>
+                        
                         <form action="{{ url_for('update_homepage_banner') }}" method="POST" enctype="multipart/form-data">
                             
                             <!-- Current Banner Preview -->
                             {% if banner and banner.banner_image %}
-                            <div class="mb-4">
-                                <label class="form-label">Current Banner</label>
+                            <div class="preview-section">
+                                <span class="preview-badge">
+                                    <i class="fas fa-eye me-1"></i> Current Banner
+                                </span>
                                 <img src="{{ banner.banner_image }}" alt="Current Banner" class="preview-image">
                             </div>
                             {% endif %}
@@ -128,80 +329,105 @@
                             <!-- Upload New Banner -->
                             <div class="mb-4">
                                 <label for="banner_image" class="form-label">
-                                    <i class="fas fa-upload me-2"></i>Upload New Banner Image
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                    Upload New Banner Image
                                 </label>
                                 <div class="upload-area" onclick="document.getElementById('banner_image').click()">
                                     <i class="fas fa-cloud-upload-alt upload-icon"></i>
-                                    <p class="mb-0">Click to upload or drag and drop</p>
-                                    <small class="text-muted">PNG, JPG, JPEG (Max 10MB)</small>
+                                    <p>Click to upload or drag and drop</p>
+                                    <small>PNG, JPG, JPEG (Max 10MB) • Recommended: 1920x1080px</small>
                                 </div>
                                 <input type="file" class="form-control d-none" id="banner_image" name="banner_image" accept="image/*">
-                                <small class="text-muted">Leave empty to keep current banner image</small>
+                                <small class="text-muted mt-2 d-block">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Leave empty to keep current banner image
+                                </small>
                             </div>
+                    </div>
 
-                            <!-- Banner Title -->
-                            <div class="mb-4">
-                                <label for="title" class="form-label">
-                                    <i class="fas fa-heading me-2"></i>Banner Title
+                    <div class="settings-card">
+                        <h3 class="card-title">
+                            <i class="fas fa-text-height"></i>
+                            Banner Content
+                        </h3>
+
+                        <!-- Banner Title -->
+                        <div class="mb-4">
+                            <label for="title" class="form-label">
+                                <i class="fas fa-heading"></i>
+                                Banner Title
+                            </label>
+                            <input type="text" class="form-control" id="title" name="title"
+                                   value="{{ banner.title if banner else 'Premium Home Office Setup' }}"
+                                   placeholder="Enter catchy banner title..." required>
+                        </div>
+
+                        <!-- Banner Subtitle -->
+                        <div class="mb-4">
+                            <label for="subtitle" class="form-label">
+                                <i class="fas fa-align-left"></i>
+                                Banner Subtitle
+                            </label>
+                            <textarea class="form-control" id="subtitle" name="subtitle" rows="4"
+                                      placeholder="Describe your offering in a compelling way..." required>{{ banner.subtitle if banner else 'Transform your workspace with complete desk setups designed for productivity, comfort, and style. From WFH to executive offices, we deliver ready-to-use solutions.' }}</textarea>
+                        </div>
+
+                        <!-- Button Settings -->
+                        <div class="input-group-custom mb-4">
+                            <div>
+                                <label for="button_text" class="form-label">
+                                    <i class="fas fa-mouse-pointer"></i>
+                                    Button Text
                                 </label>
-                                <input type="text" class="form-control" id="title" name="title" 
-                                       value="{{ banner.title if banner else 'Premium Home Office Setup' }}" required>
+                                <input type="text" class="form-control" id="button_text" name="button_text"
+                                       value="{{ banner.button_text if banner else 'Get Started' }}"
+                                       placeholder="e.g., Get Started, Shop Now" required>
                             </div>
-
-                            <!-- Banner Subtitle -->
-                            <div class="mb-4">
-                                <label for="subtitle" class="form-label">
-                                    <i class="fas fa-align-left me-2"></i>Banner Subtitle
+                            <div>
+                                <label for="button_link" class="form-label">
+                                    <i class="fas fa-link"></i>
+                                    Button Link
                                 </label>
-                                <textarea class="form-control" id="subtitle" name="subtitle" rows="3" required>{{ banner.subtitle if banner else 'Transform your workspace with complete desk setups designed for productivity, comfort, and style. From WFH to executive offices, we deliver ready-to-use solutions.' }}</textarea>
+                                <input type="text" class="form-control" id="button_link" name="button_link"
+                                       value="{{ banner.button_link if banner else '/products' }}"
+                                       placeholder="/products or full URL" required>
                             </div>
+                        </div>
 
-                            <!-- Button Text -->
-                            <div class="row mb-4">
-                                <div class="col-md-6">
-                                    <label for="button_text" class="form-label">
-                                        <i class="fas fa-mouse-pointer me-2"></i>Button Text
-                                    </label>
-                                    <input type="text" class="form-control" id="button_text" name="button_text" 
-                                           value="{{ banner.button_text if banner else 'Get Started' }}" required>
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="button_link" class="form-label">
-                                        <i class="fas fa-link me-2"></i>Button Link
-                                    </label>
-                                    <input type="text" class="form-control" id="button_link" name="button_link" 
-                                           value="{{ banner.button_link if banner else '/products' }}" required>
-                                </div>
-                            </div>
+                        <!-- Video Link -->
+                        <div class="mb-4">
+                            <label for="video_link" class="form-label">
+                                <i class="fas fa-video"></i>
+                                Video Link (Optional)
+                            </label>
+                            <input type="url" class="form-control" id="video_link" name="video_link"
+                                   value="{{ banner.video_link if banner else 'https://youtu.be/U7gP16TXE8w?si=s5nXSpjALnLEEx81' }}"
+                                   placeholder="https://youtu.be/...">
+                            <small class="text-muted mt-2 d-block">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Add a YouTube video link to show a play button on the banner
+                            </small>
+                        </div>
 
-                            <!-- Video Link -->
-                            <div class="mb-4">
-                                <label for="video_link" class="form-label">
-                                    <i class="fas fa-video me-2"></i>Video Link (YouTube)
-                                </label>
-                                <input type="url" class="form-control" id="video_link" name="video_link" 
-                                       value="{{ banner.video_link if banner else 'https://youtu.be/U7gP16TXE8w?si=s5nXSpjALnLEEx81' }}" 
-                                       placeholder="https://youtu.be/...">
-                                <small class="text-muted">Optional: Add a YouTube video link for the play button</small>
-                            </div>
-
-                            <!-- Submit Button -->
-                            <div class="text-end">
-                                <button type="submit" class="save-btn">
-                                    <i class="fas fa-save me-2"></i>Save Changes
-                                </button>
-                            </div>
-                        </form>
+                        <!-- Submit Button -->
+                        <div class="text-center mt-5">
+                            <button type="submit" class="save-btn">
+                                <i class="fas fa-rocket"></i>
+                                Update Banner
+                            </button>
+                        </div>
+                    </form>
                     </div>
 
                     <!-- Preview Section -->
                     <div class="settings-card">
-                        <h4 class="mb-3">
-                            <i class="fas fa-eye me-2"></i>Live Preview
-                        </h4>
+                        <h3 class="card-title">
+                            <i class="fas fa-desktop"></i>
+                            Live Preview
+                        </h3>
                         <div class="alert alert-info">
                             <i class="fas fa-info-circle me-2"></i>
-                            Changes will be reflected on the homepage after saving. Visit the <a href="{{ url_for('index') }}" target="_blank">homepage</a> to see the live banner.
+                            <strong>Preview your changes:</strong> After saving, visit the <a href="{{ url_for('index') }}" target="_blank" style="color: #1e40af; font-weight: 600; text-decoration: underline;">homepage</a> to see your new banner in action!
                         </div>
                     </div>
                 </div>

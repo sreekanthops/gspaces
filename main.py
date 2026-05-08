@@ -4600,6 +4600,10 @@ def update_homepage_banner():
         return redirect(url_for('admin_homepage_banner'))
     finally:
         if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
 
 # --- HOMEPAGE CAROUSEL MANAGEMENT ROUTES ---
 @app.route('/admin/homepage-carousel')

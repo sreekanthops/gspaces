@@ -220,6 +220,16 @@ h6 {
   height: 60px; /* Increased from 50px for all pages */
   width: auto;
   filter: none;
+  background: transparent !important;
+  object-fit: contain;
+  mix-blend-mode: darken; /* Helps remove white background from PNG */
+}
+
+.custom-navbar .navbar-brand {
+  background: transparent !important;
+  padding: 0;
+  display: flex;
+  align-items: center;
 }
 
 .custom-navbar .custom-navbar-nav {

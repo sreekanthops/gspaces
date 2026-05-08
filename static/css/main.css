@@ -223,6 +223,14 @@ h6 {
   background: transparent !important;
   object-fit: contain;
   mix-blend-mode: darken; /* Helps remove white background from PNG */
+  border-radius: 12px; /* Rounded corners */
+  padding: 4px;
+  transition: all 0.3s ease;
+}
+
+.custom-navbar .navbar-brand img:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .custom-navbar .navbar-brand {

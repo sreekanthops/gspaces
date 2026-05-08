@@ -342,6 +342,65 @@
         .carousel-indicator.active {
             background: white;
         }
+        
+        /* Payment Terms */
+        .payment-terms {
+            margin-top: 24px;
+            padding: 20px;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            border-radius: 16px;
+            border: 1px solid #bae6fd;
+        }
+        .payment-terms-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #0c4a6e;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .payment-steps {
+            display: grid;
+            gap: 10px;
+        }
+        .payment-step {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 14px;
+            background: white;
+            border-radius: 10px;
+            border-left: 3px solid #0ea5e9;
+        }
+        .payment-step-number {
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, #0ea5e9, #0284c7);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.85rem;
+            flex-shrink: 0;
+        }
+        .payment-step-content {
+            flex: 1;
+        }
+        .payment-step-label {
+            font-size: 0.8rem;
+            color: #64748b;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+        .payment-step-amount {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #0c4a6e;
+        }
+        
         .designs-grid {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -844,6 +903,37 @@
                         <div class="hero-meta-item">
                             <span class="label">Date</span>
                             <span class="value">{{ lead.created_at.strftime('%b %d, %Y') }}</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Payment Terms -->
+                    <div class="payment-terms">
+                        <div class="payment-terms-title">
+                            <i class="bi bi-credit-card"></i>
+                            Easy Payment Plan
+                        </div>
+                        <div class="payment-steps">
+                            <div class="payment-step">
+                                <div class="payment-step-number">1</div>
+                                <div class="payment-step-content">
+                                    <div class="payment-step-label">Advance Payment</div>
+                                    <div class="payment-step-amount">30% on order confirmation</div>
+                                </div>
+                            </div>
+                            <div class="payment-step">
+                                <div class="payment-step-number">2</div>
+                                <div class="payment-step-content">
+                                    <div class="payment-step-label">Progress Payment</div>
+                                    <div class="payment-step-amount">40% during manufacturing</div>
+                                </div>
+                            </div>
+                            <div class="payment-step">
+                                <div class="payment-step-number">3</div>
+                                <div class="payment-step-content">
+                                    <div class="payment-step-label">Final Payment</div>
+                                    <div class="payment-step-amount">30% on delivery</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     

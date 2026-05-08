@@ -280,13 +280,14 @@ h6 {
 }
 
 .index-page .custom-navbar .custom-navbar-nav li a.admin-panel-link {
-  background: rgba(255, 255, 255, 0.95);
+  background: white;
   color: #667eea !important;
 }
 
 .index-page .custom-navbar .custom-navbar-nav li a.admin-panel-link:hover {
   background: white;
   color: #764ba2 !important;
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.3);
 }
 }
 

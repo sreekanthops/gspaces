@@ -1126,12 +1126,30 @@ def index():
             """)
             carousel_images = cursor.fetchall()
             
+            # Get animated furniture settings
+            cursor.execute("""
+                SELECT * FROM animated_banner_settings WHERE id = 1
+            """)
+            animated_settings = cursor.fetchone()
+            
+            # Get animated furniture items
+            animated_items = []
+            if animated_settings and animated_settings.get('is_enabled'):
+                cursor.execute("""
+                    SELECT * FROM animated_furniture_items
+                    WHERE is_active = TRUE
+                    ORDER BY display_order, id
+                """)
+                animated_items = cursor.fetchall()
+            
         except Error as e:
             print(f"Error fetching products: {e}")
             flash("Error fetching products from database.", "error")
             categories = []
             carousel_settings = None
             carousel_images = []
+            animated_settings = None
+            animated_items = []
         finally:
             if conn:
                 conn.close()
@@ -1140,6 +1158,8 @@ def index():
         categories = []
         carousel_settings = None
         carousel_images = []
+        animated_settings = None
+        animated_items = []
 
     # Get catalogue files
     catalogue_files = get_catalogue_files()
@@ -1156,7 +1176,9 @@ def index():
                            current_category=category_filter,
                            current_min_rating=min_rating,
                            carousel_settings=carousel_settings,
-                           carousel_images=carousel_images)
+                           carousel_images=carousel_images,
+                           animated_settings=animated_settings,
+                           animated_items=animated_items)
 
 # --- CATALOGUE DOWNLOAD ROUTE ---
 @app.route('/download_catalogue/<filename>')
@@ -4896,6 +4918,386 @@ def update_carousel_order():
             cur.close()
         if conn:
             conn.close()
+
+# --- ANIMATED FURNITURE BANNER ROUTES ---
+@app.route('/admin/animated-furniture')
+@login_required
+def admin_animated_furniture():
+    """Admin page for managing animated furniture items"""
+    if not current_user.is_admin:
+        flash('Access denied', 'error')
+        return redirect(url_for('index'))
+    
+    conn = connect_to_db()
+    if not conn:
+        flash('Database connection error', 'error')
+        return redirect(url_for('admin_dashboard'))
+    
+    try:
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        
+        # Get all furniture items
+        cur.execute("""
+            SELECT * FROM animated_furniture_items 
+            ORDER BY display_order ASC, id ASC
+        """)
+        items = cur.fetchall()
+        
+        # Get settings
+        cur.execute("SELECT * FROM animated_banner_settings WHERE id = 1")
+        settings = cur.fetchone()
+        
+        if not settings:
+            # Create default settings if not exists
+            cur.execute("""
+                INSERT INTO animated_banner_settings (id, is_enabled) 
+                VALUES (1, true)
+                RETURNING *
+            """)
+            settings = cur.fetchone()
+            conn.commit()
+        
+        return render_template('admin_animated_furniture.html', 
+                             items=items, 
+                             settings=settings)
+    
+    except Exception as e:
+        print(f"Error loading animated furniture page: {e}")
+        flash('Error loading page', 'error')
+        return redirect(url_for('admin_dashboard'))
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
+
+@app.route('/admin/animated-furniture/settings/update', methods=['POST'])
+@login_required
+def update_animated_furniture_settings():
+    """Update animated banner settings"""
+    if not current_user.is_admin:
+        return jsonify({'error': 'Access denied'}), 403
+    
+    conn = connect_to_db()
+    if not conn:
+        return jsonify({'error': 'Database connection failed'}), 500
+    
+    try:
+        data = request.json
+        cur = conn.cursor()
+        
+        cur.execute("""
+            UPDATE animated_banner_settings 
+            SET is_enabled = %s,
+                scatter_duration = %s,
+                scatter_easing = %s,
+                allow_drag = %s,
+                snap_to_grid = %s,
+                grid_size = %s,
+                show_reset_button = %s,
+                background_color = %s,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = 1
+        """, (
+            data.get('is_enabled', True),
+            data.get('scatter_duration', 2000),
+            data.get('scatter_easing', 'ease-out'),
+            data.get('allow_drag', True),
+            data.get('snap_to_grid', False),
+            data.get('grid_size', 20),
+            data.get('show_reset_button', True),
+            data.get('background_color', '#f8f9fa')
+        ))
+        
+        conn.commit()
+        return jsonify({'success': True, 'message': 'Settings updated successfully'})
+    
+    except Exception as e:
+        conn.rollback()
+        print(f"Error updating settings: {e}")
+        return jsonify({'error': 'Failed to update settings'}), 500
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
+
+@app.route('/admin/animated-furniture/item/add', methods=['POST'])
+@login_required
+def add_animated_furniture_item():
+    """Add new furniture item"""
+    if not current_user.is_admin:
+        return jsonify({'error': 'Access denied'}), 403
+    
+    conn = connect_to_db()
+    if not conn:
+        return jsonify({'error': 'Database connection failed'}), 500
+    
+    try:
+        # Handle file upload
+        if 'image' not in request.files:
+            return jsonify({'error': 'No image provided'}), 400
+        
+        file = request.files['image']
+        if not file or not file.filename:
+            return jsonify({'error': 'Invalid file'}), 400
+        
+        # Secure filename and save
+        filename = secure_filename(file.filename)
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f"furniture_{timestamp}_{filename}"
+        
+        # Create furniture directory if not exists
+        furniture_dir = os.path.join(app.root_path, 'static', 'images', 'furniture')
+        os.makedirs(furniture_dir, exist_ok=True)
+        
+        upload_path = os.path.join(furniture_dir, filename)
+        file.save(upload_path)
+        image_path = f"/static/images/furniture/{filename}"
+        
+        # Get form data
+        name = request.form.get('name')
+        category = request.form.get('category')
+        width = int(request.form.get('width', 100))
+        height = int(request.form.get('height', 100))
+        initial_x = float(request.form.get('initial_x', 50.0))
+        initial_y = float(request.form.get('initial_y', 50.0))
+        scatter_distance = int(request.form.get('scatter_distance', 200))
+        rotation_angle = int(request.form.get('rotation_angle', 0))
+        
+        # Get next display order
+        cur = conn.cursor()
+        cur.execute("SELECT COALESCE(MAX(display_order), -1) + 1 FROM animated_furniture_items")
+        next_order = cur.fetchone()[0]
+        
+        # Insert new item
+        cur.execute("""
+            INSERT INTO animated_furniture_items 
+            (name, image_path, category, width, height, initial_x, initial_y, 
+             scatter_distance, rotation_angle, display_order, is_active)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, TRUE)
+        """, (name, image_path, category, width, height, initial_x, initial_y,
+              scatter_distance, rotation_angle, next_order))
+        
+        conn.commit()
+        return jsonify({'success': True, 'message': 'Item added successfully'})
+    
+    except Exception as e:
+        conn.rollback()
+        print(f"Error adding furniture item: {e}")
+        return jsonify({'error': 'Failed to add item'}), 500
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
+
+@app.route('/admin/animated-furniture/item/<int:item_id>')
+@login_required
+def get_animated_furniture_item(item_id):
+    """Get furniture item details"""
+    if not current_user.is_admin:
+        return jsonify({'error': 'Access denied'}), 403
+    
+    conn = connect_to_db()
+    if not conn:
+        return jsonify({'error': 'Database connection failed'}), 500
+    
+    try:
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute("SELECT * FROM animated_furniture_items WHERE id = %s", (item_id,))
+        item = cur.fetchone()
+        
+        if item:
+            return jsonify(item)
+        return jsonify({'error': 'Item not found'}), 404
+    
+    except Exception as e:
+        print(f"Error fetching item: {e}")
+        return jsonify({'error': 'Failed to fetch item'}), 500
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
+
+@app.route('/admin/animated-furniture/item/<int:item_id>/update', methods=['POST'])
+@login_required
+def update_animated_furniture_item(item_id):
+    """Update furniture item"""
+    if not current_user.is_admin:
+        return jsonify({'error': 'Access denied'}), 403
+    
+    conn = connect_to_db()
+    if not conn:
+        return jsonify({'error': 'Database connection failed'}), 500
+    
+    try:
+        cur = conn.cursor()
+        
+        # Get form data
+        name = request.form.get('name')
+        category = request.form.get('category')
+        width = int(request.form.get('width', 100))
+        height = int(request.form.get('height', 100))
+        initial_x = float(request.form.get('initial_x', 50.0))
+        initial_y = float(request.form.get('initial_y', 50.0))
+        scatter_distance = int(request.form.get('scatter_distance', 200))
+        rotation_angle = int(request.form.get('rotation_angle', 0))
+        
+        # Handle image update if provided
+        image_path = None
+        if 'image' in request.files:
+            file = request.files['image']
+            if file and file.filename:
+                filename = secure_filename(file.filename)
+                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                filename = f"furniture_{timestamp}_{filename}"
+                
+                furniture_dir = os.path.join(app.root_path, 'static', 'images', 'furniture')
+                os.makedirs(furniture_dir, exist_ok=True)
+                
+                upload_path = os.path.join(furniture_dir, filename)
+                file.save(upload_path)
+                image_path = f"/static/images/furniture/{filename}"
+        
+        # Update item
+        if image_path:
+            cur.execute("""
+                UPDATE animated_furniture_items 
+                SET name = %s, image_path = %s, category = %s, width = %s, height = %s,
+                    initial_x = %s, initial_y = %s, scatter_distance = %s, 
+                    rotation_angle = %s, updated_at = CURRENT_TIMESTAMP
+                WHERE id = %s
+            """, (name, image_path, category, width, height, initial_x, initial_y,
+                  scatter_distance, rotation_angle, item_id))
+        else:
+            cur.execute("""
+                UPDATE animated_furniture_items 
+                SET name = %s, category = %s, width = %s, height = %s,
+                    initial_x = %s, initial_y = %s, scatter_distance = %s, 
+                    rotation_angle = %s, updated_at = CURRENT_TIMESTAMP
+                WHERE id = %s
+            """, (name, category, width, height, initial_x, initial_y,
+                  scatter_distance, rotation_angle, item_id))
+        
+        conn.commit()
+        return jsonify({'success': True, 'message': 'Item updated successfully'})
+    
+    except Exception as e:
+        conn.rollback()
+        print(f"Error updating item: {e}")
+        return jsonify({'error': 'Failed to update item'}), 500
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
+
+@app.route('/admin/animated-furniture/item/<int:item_id>/delete', methods=['POST'])
+@login_required
+def delete_animated_furniture_item(item_id):
+    """Delete furniture item"""
+    if not current_user.is_admin:
+        return jsonify({'error': 'Access denied'}), 403
+    
+    conn = connect_to_db()
+    if not conn:
+        return jsonify({'error': 'Database connection failed'}), 500
+    
+    try:
+        cur = conn.cursor()
+        cur.execute("DELETE FROM animated_furniture_items WHERE id = %s", (item_id,))
+        conn.commit()
+        return jsonify({'success': True, 'message': 'Item deleted successfully'})
+    
+    except Exception as e:
+        conn.rollback()
+        print(f"Error deleting item: {e}")
+        return jsonify({'error': 'Failed to delete item'}), 500
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
+
+@app.route('/admin/animated-furniture/item/<int:item_id>/toggle', methods=['POST'])
+@login_required
+def toggle_animated_furniture_item(item_id):
+    """Toggle furniture item active status"""
+    if not current_user.is_admin:
+        return jsonify({'error': 'Access denied'}), 403
+    
+    conn = connect_to_db()
+    if not conn:
+        return jsonify({'error': 'Database connection failed'}), 500
+    
+    try:
+        data = request.json
+        is_active = data.get('is_active', True)
+        
+        cur = conn.cursor()
+        cur.execute("""
+            UPDATE animated_furniture_items 
+            SET is_active = %s, updated_at = CURRENT_TIMESTAMP
+            WHERE id = %s
+        """, (is_active, item_id))
+        
+        conn.commit()
+        return jsonify({'success': True, 'message': 'Status updated successfully'})
+    
+    except Exception as e:
+        conn.rollback()
+        print(f"Error toggling status: {e}")
+        return jsonify({'error': 'Failed to update status'}), 500
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
+
+@app.route('/admin/animated-furniture/order/update', methods=['POST'])
+@login_required
+def update_animated_furniture_order():
+    """Update furniture items display order"""
+    if not current_user.is_admin:
+        return jsonify({'error': 'Access denied'}), 403
+    
+    conn = connect_to_db()
+    if not conn:
+        return jsonify({'error': 'Database connection failed'}), 500
+    
+    try:
+        order_data = request.json.get('order', [])
+        
+        cur = conn.cursor()
+        for item in order_data:
+            cur.execute("""
+                UPDATE animated_furniture_items 
+                SET display_order = %s, updated_at = CURRENT_TIMESTAMP
+                WHERE id = %s
+            """, (item['order'], item['id']))
+        
+        conn.commit()
+        return jsonify({'success': True, 'message': 'Order updated successfully'})
+    
+    except Exception as e:
+        conn.rollback()
+        print(f"Error updating order: {e}")
+        return jsonify({'error': 'Failed to update order'}), 500
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
 
             cur.close()
         if conn:

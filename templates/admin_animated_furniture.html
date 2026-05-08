@@ -1,0 +1,460 @@
+{% extends "admin_base.html" %}
+
+{% block title %}Animated Furniture Manager - Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+    .furniture-preview {
+        background: #f8f9fa;
+        border: 2px dashed #dee2e6;
+        border-radius: 8px;
+        padding: 20px;
+        min-height: 300px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .furniture-item-card {
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+    }
+    
+    .furniture-item-card:hover {
+        border-color: #0d6efd;
+        box-shadow: 0 4px 12px rgba(13, 110, 253, 0.15);
+        transform: translateY(-2px);
+    }
+    
+    .furniture-thumbnail {
+        width: 100%;
+        height: 150px;
+        object-fit: contain;
+        background: #fff;
+        border-radius: 4px;
+        padding: 10px;
+    }
+    
+    .category-badge {
+        font-size: 0.75rem;
+        padding: 4px 8px;
+        border-radius: 12px;
+    }
+    
+    .settings-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+    }
+    
+    .settings-card .form-label {
+        color: rgba(255, 255, 255, 0.9);
+        font-weight: 500;
+    }
+    
+    .settings-card .form-control,
+    .settings-card .form-select {
+        background: rgba(255, 255, 255, 0.95);
+        border: none;
+    }
+    
+    .drag-handle {
+        cursor: move;
+        color: #6c757d;
+    }
+    
+    .sortable-ghost {
+        opacity: 0.4;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">🎨 Animated Furniture Manager</h2>
+                    <p class="text-muted mb-0">Create an interactive banner with draggable furniture items</p>
+                </div>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addFurnitureModal">
+                    <i class="fas fa-plus"></i> Add Furniture Item
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Animation Settings -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card settings-card">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">
+                        <i class="fas fa-cog"></i> Animation Settings
+                    </h5>
+                    <form id="settingsForm">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" id="isEnabled" 
+                                           {% if settings.is_enabled %}checked{% endif %}>
+                                    <label class="form-check-label" for="isEnabled">Enable Animation</label>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" id="allowDrag" 
+                                           {% if settings.allow_drag %}checked{% endif %}>
+                                    <label class="form-check-label" for="allowDrag">Allow Dragging</label>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" id="snapToGrid" 
+                                           {% if settings.snap_to_grid %}checked{% endif %}>
+                                    <label class="form-check-label" for="snapToGrid">Snap to Grid</label>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" id="showResetButton" 
+                                           {% if settings.show_reset_button %}checked{% endif %}>
+                                    <label class="form-check-label" for="showResetButton">Show Reset Button</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-3">
+                                <label for="scatterDuration" class="form-label">Scatter Duration (ms)</label>
+                                <input type="number" class="form-control" id="scatterDuration" 
+                                       value="{{ settings.scatter_duration }}" min="500" max="5000" step="100">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="scatterEasing" class="form-label">Easing Function</label>
+                                <select class="form-select" id="scatterEasing">
+                                    <option value="ease" {% if settings.scatter_easing == 'ease' %}selected{% endif %}>Ease</option>
+                                    <option value="ease-in" {% if settings.scatter_easing == 'ease-in' %}selected{% endif %}>Ease In</option>
+                                    <option value="ease-out" {% if settings.scatter_easing == 'ease-out' %}selected{% endif %}>Ease Out</option>
+                                    <option value="ease-in-out" {% if settings.scatter_easing == 'ease-in-out' %}selected{% endif %}>Ease In Out</option>
+                                    <option value="linear" {% if settings.scatter_easing == 'linear' %}selected{% endif %}>Linear</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="gridSize" class="form-label">Grid Size (px)</label>
+                                <input type="number" class="form-control" id="gridSize" 
+                                       value="{{ settings.grid_size }}" min="10" max="50" step="5">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="backgroundColor" class="form-label">Background Color</label>
+                                <input type="color" class="form-control form-control-color" id="backgroundColor" 
+                                       value="{{ settings.background_color }}">
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-light">
+                                    <i class="fas fa-save"></i> Save Settings
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Furniture Items Grid -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Furniture Items ({{ items|length }})</h5>
+                </div>
+                <div class="card-body">
+                    <div id="furnitureGrid" class="row g-3">
+                        {% for item in items %}
+                        <div class="col-md-3" data-item-id="{{ item.id }}">
+                            <div class="card furniture-item-card h-100">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <span class="drag-handle">
+                                            <i class="fas fa-grip-vertical"></i>
+                                        </span>
+                                        <div>
+                                            <button class="btn btn-sm btn-outline-primary me-1" 
+                                                    onclick="editFurniture({{ item.id }})">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger" 
+                                                    onclick="deleteFurniture({{ item.id }})">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <img src="{{ item.image_path }}" alt="{{ item.name }}" 
+                                         class="furniture-thumbnail mb-2">
+                                    <h6 class="mb-1">{{ item.name }}</h6>
+                                    <span class="badge category-badge bg-primary">{{ item.category }}</span>
+                                    <div class="mt-2 small text-muted">
+                                        <div>Size: {{ item.width }}x{{ item.height }}px</div>
+                                        <div>Position: {{ item.initial_x }}%, {{ item.initial_y }}%</div>
+                                        <div>Scatter: {{ item.scatter_distance }}px</div>
+                                    </div>
+                                    <div class="form-check form-switch mt-2">
+                                        <input class="form-check-input" type="checkbox" 
+                                               id="active{{ item.id }}" 
+                                               {% if item.is_active %}checked{% endif %}
+                                               onchange="toggleActive({{ item.id }}, this.checked)">
+                                        <label class="form-check-label small" for="active{{ item.id }}">
+                                            Active
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Furniture Modal -->
+<div class="modal fade" id="addFurnitureModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add Furniture Item</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="furnitureForm" enctype="multipart/form-data">
+                    <input type="hidden" id="furnitureId" name="id">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="name" class="form-label">Item Name *</label>
+                            <input type="text" class="form-control" id="name" name="name" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="category" class="form-label">Category *</label>
+                            <select class="form-select" id="category" name="category" required>
+                                <option value="chair">Chair</option>
+                                <option value="table">Table</option>
+                                <option value="plant">Plant</option>
+                                <option value="lamp">Lamp</option>
+                                <option value="storage">Storage</option>
+                                <option value="decor">Decor</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="image" class="form-label">PNG Image *</label>
+                        <input type="file" class="form-control" id="image" name="image" 
+                               accept="image/png" required>
+                        <small class="text-muted">Upload a PNG image with transparent background</small>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="width" class="form-label">Width (px)</label>
+                            <input type="number" class="form-control" id="width" name="width" 
+                                   value="100" min="50" max="500">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="height" class="form-label">Height (px)</label>
+                            <input type="number" class="form-control" id="height" name="height" 
+                                   value="100" min="50" max="500">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="initialX" class="form-label">Initial X Position (%)</label>
+                            <input type="number" class="form-control" id="initialX" name="initial_x" 
+                                   value="50" min="0" max="100" step="0.1">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="initialY" class="form-label">Initial Y Position (%)</label>
+                            <input type="number" class="form-control" id="initialY" name="initial_y" 
+                                   value="50" min="0" max="100" step="0.1">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="scatterDistance" class="form-label">Scatter Distance (px)</label>
+                            <input type="number" class="form-control" id="scatterDistance" name="scatter_distance" 
+                                   value="200" min="0" max="500">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="rotationAngle" class="form-label">Rotation Angle (deg)</label>
+                            <input type="number" class="form-control" id="rotationAngle" name="rotation_angle" 
+                                   value="0" min="-180" max="180">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveFurniture()">Save Item</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<script>
+// Initialize Sortable for drag & drop reordering
+const furnitureGrid = document.getElementById('furnitureGrid');
+if (furnitureGrid) {
+    new Sortable(furnitureGrid, {
+        animation: 150,
+        handle: '.drag-handle',
+        ghostClass: 'sortable-ghost',
+        onEnd: function(evt) {
+            updateDisplayOrder();
+        }
+    });
+}
+
+// Save settings
+document.getElementById('settingsForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const settings = {
+        is_enabled: document.getElementById('isEnabled').checked,
+        allow_drag: document.getElementById('allowDrag').checked,
+        snap_to_grid: document.getElementById('snapToGrid').checked,
+        show_reset_button: document.getElementById('showResetButton').checked,
+        scatter_duration: parseInt(document.getElementById('scatterDuration').value),
+        scatter_easing: document.getElementById('scatterEasing').value,
+        grid_size: parseInt(document.getElementById('gridSize').value),
+        background_color: document.getElementById('backgroundColor').value
+    };
+    
+    try {
+        const response = await fetch('/admin/animated-furniture/settings/update', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(settings)
+        });
+        
+        if (response.ok) {
+            alert('Settings saved successfully!');
+        } else {
+            alert('Failed to save settings');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error saving settings');
+    }
+});
+
+// Save furniture item
+async function saveFurniture() {
+    const form = document.getElementById('furnitureForm');
+    const formData = new FormData(form);
+    
+    const id = document.getElementById('furnitureId').value;
+    const url = id ? `/admin/animated-furniture/item/${id}/update` : '/admin/animated-furniture/item/add';
+    
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            body: formData
+        });
+        
+        if (response.ok) {
+            alert('Furniture item saved successfully!');
+            location.reload();
+        } else {
+            alert('Failed to save furniture item');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error saving furniture item');
+    }
+}
+
+// Edit furniture
+function editFurniture(id) {
+    // Fetch item details and populate form
+    fetch(`/admin/animated-furniture/item/${id}`)
+        .then(response => response.json())
+        .then(item => {
+            document.getElementById('furnitureId').value = item.id;
+            document.getElementById('name').value = item.name;
+            document.getElementById('category').value = item.category;
+            document.getElementById('width').value = item.width;
+            document.getElementById('height').value = item.height;
+            document.getElementById('initialX').value = item.initial_x;
+            document.getElementById('initialY').value = item.initial_y;
+            document.getElementById('scatterDistance').value = item.scatter_distance;
+            document.getElementById('rotationAngle').value = item.rotation_angle;
+            document.getElementById('image').removeAttribute('required');
+            
+            const modal = new bootstrap.Modal(document.getElementById('addFurnitureModal'));
+            modal.show();
+        });
+}
+
+// Delete furniture
+async function deleteFurniture(id) {
+    if (!confirm('Are you sure you want to delete this furniture item?')) return;
+    
+    try {
+        const response = await fetch(`/admin/animated-furniture/item/${id}/delete`, {
+            method: 'POST'
+        });
+        
+        if (response.ok) {
+            alert('Furniture item deleted successfully!');
+            location.reload();
+        } else {
+            alert('Failed to delete furniture item');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error deleting furniture item');
+    }
+}
+
+// Toggle active status
+async function toggleActive(id, isActive) {
+    try {
+        const response = await fetch(`/admin/animated-furniture/item/${id}/toggle`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ is_active: isActive })
+        });
+        
+        if (!response.ok) {
+            alert('Failed to update status');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error updating status');
+    }
+}
+
+// Update display order after drag & drop
+async function updateDisplayOrder() {
+    const items = Array.from(document.querySelectorAll('#furnitureGrid > div'));
+    const order = items.map((item, index) => ({
+        id: parseInt(item.dataset.itemId),
+        order: index
+    }));
+    
+    try {
+        await fetch('/admin/animated-furniture/order/update', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ order })
+        });
+    } catch (error) {
+        console.error('Error updating order:', error);
+    }
+}
+</script>
+{% endblock %}

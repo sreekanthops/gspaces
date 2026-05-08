@@ -343,53 +343,106 @@
             background: white;
         }
         
-        /* Payment Terms - Compact */
-        .payment-terms {
-            margin-top: 20px;
-            padding: 16px;
+        /* Payment Terms Section */
+        .payment-terms-section {
             background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-            border-radius: 12px;
+            border-radius: 20px;
+            padding: 28px 32px;
+            margin-bottom: 32px;
             border: 1px solid #bae6fd;
+            box-shadow: 0 4px 15px rgba(14, 165, 233, 0.08);
+        }
+        .payment-terms-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .payment-terms-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #0ea5e9, #0284c7);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
         }
         .payment-terms-title {
-            font-size: 0.85rem;
-            font-weight: 700;
-            color: #0c4a6e;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .payment-steps {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
-        .payment-step {
-            flex: 1;
-            text-align: center;
-            padding: 8px 6px;
-            background: white;
-            border-radius: 8px;
-            border-bottom: 2px solid #0ea5e9;
-        }
-        .payment-step-percent {
             font-size: 1.1rem;
             font-weight: 800;
+            color: #0c4a6e;
+            margin: 0;
+        }
+        .payment-terms-subtitle {
+            font-size: 0.9rem;
+            color: #64748b;
+            margin: 0;
+        }
+        .payment-steps {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+        .payment-step {
+            background: white;
+            border-radius: 14px;
+            padding: 20px;
+            text-align: center;
+            border: 2px solid #e0f2fe;
+            transition: all 0.3s;
+        }
+        .payment-step:hover {
+            border-color: #0ea5e9;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(14, 165, 233, 0.15);
+        }
+        .payment-step-number {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #0ea5e9, #0284c7);
+            color: white;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 0.9rem;
+            margin-bottom: 12px;
+        }
+        .payment-step-percent {
+            font-size: 1.8rem;
+            font-weight: 900;
             color: #0ea5e9;
             display: block;
-            margin-bottom: 2px;
+            margin-bottom: 6px;
+            line-height: 1;
         }
         .payment-step-label {
-            font-size: 0.7rem;
-            color: #64748b;
-            font-weight: 600;
-            line-height: 1.2;
+            font-size: 0.85rem;
+            color: #0c4a6e;
+            font-weight: 700;
+            display: block;
+            margin-bottom: 4px;
         }
-        .payment-arrow {
-            color: #94a3b8;
-            font-size: 0.9rem;
-            flex-shrink: 0;
+        .payment-step-desc {
+            font-size: 0.75rem;
+            color: #64748b;
+            line-height: 1.3;
+        }
+        
+        @media (max-width: 768px) {
+            .payment-terms-section {
+                padding: 20px;
+            }
+            .payment-steps {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+            .payment-step {
+                padding: 16px;
+            }
         }
         
         .designs-grid {
@@ -897,30 +950,6 @@
                         </div>
                     </div>
                     
-                    <!-- Payment Terms - Compact -->
-                    <div class="payment-terms">
-                        <div class="payment-terms-title">
-                            <i class="bi bi-credit-card"></i>
-                            Easy Payment Plan
-                        </div>
-                        <div class="payment-steps">
-                            <div class="payment-step">
-                                <span class="payment-step-percent">30%</span>
-                                <span class="payment-step-label">Advance</span>
-                            </div>
-                            <div class="payment-arrow">→</div>
-                            <div class="payment-step">
-                                <span class="payment-step-percent">40%</span>
-                                <span class="payment-step-label">Progress</span>
-                            </div>
-                            <div class="payment-arrow">→</div>
-                            <div class="payment-step">
-                                <span class="payment-step-percent">30%</span>
-                                <span class="payment-step-label">Delivery</span>
-                            </div>
-                        </div>
-                    </div>
-                    
                     <!-- Expiry Status with Dynamic Timer -->
                     {% if lead.valid_until %}
                     <div class="expiry-timer {% if lead.is_expired %}expired{% endif %}" id="expiryTimer">
@@ -1021,6 +1050,39 @@
                         {% else %}
                             ₹{{ "{:,.0f}".format(total or 0) }}
                         {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Terms Section -->
+            <div class="payment-terms-section">
+                <div class="payment-terms-header">
+                    <div class="payment-terms-icon">
+                        <i class="bi bi-credit-card"></i>
+                    </div>
+                    <div>
+                        <h3 class="payment-terms-title">Flexible Payment Plan</h3>
+                        <p class="payment-terms-subtitle">Pay in 3 easy installments - No hidden charges</p>
+                    </div>
+                </div>
+                <div class="payment-steps">
+                    <div class="payment-step">
+                        <div class="payment-step-number">1</div>
+                        <div class="payment-step-percent">30%</div>
+                        <div class="payment-step-label">Advance Payment</div>
+                        <div class="payment-step-desc">On order confirmation</div>
+                    </div>
+                    <div class="payment-step">
+                        <div class="payment-step-number">2</div>
+                        <div class="payment-step-percent">40%</div>
+                        <div class="payment-step-label">Progress Payment</div>
+                        <div class="payment-step-desc">During manufacturing</div>
+                    </div>
+                    <div class="payment-step">
+                        <div class="payment-step-number">3</div>
+                        <div class="payment-step-percent">30%</div>
+                        <div class="payment-step-label">Final Payment</div>
+                        <div class="payment-step-desc">On delivery & installation</div>
                     </div>
                 </div>
             </div>

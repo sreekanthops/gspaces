@@ -2042,15 +2042,6 @@
             
             return false;
         }
-                const activeVideo = currentSlide ? currentSlide.querySelector('video') : null;
-                if (activeVideo && !activeVideo.paused && !activeVideo.ended) {
-                    return;
-                }
-
-                state.currentSlide = (state.currentSlide + 1) % visibleSlides;
-                updateCarousel(designId);
-            }, 5000);
-        }
 
         function stopAutoScroll(designId) {
             const state = carouselStates[designId];

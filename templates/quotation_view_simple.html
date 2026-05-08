@@ -1869,6 +1869,22 @@
                 }
 
                 const currentSlide = inner.children[state.currentSlide];
+                const video = currentSlide ? currentSlide.querySelector('video') : null;
+                
+                // If current slide has a video that's playing, don't advance
+                if (video && !video.paused && !video.ended) {
+                    return;
+                }
+
+                // Advance to next slide
+                state.currentSlide = (state.currentSlide + 1) % state.totalSlides;
+                updateCarousel(designId);
+            }, 3000); // Auto-advance every 3 seconds
+        }
+
+        // Feedback form initialization
+        document.addEventListener('DOMContentLoaded', function() {
+            const selectedRating = parseInt('{{ feedback.rating if feedback else 0 }}');
             
             if (selectedRating > 0) {
                 console.log('Setting initial rating:', selectedRating);

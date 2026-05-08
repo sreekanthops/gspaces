@@ -808,8 +808,26 @@
                     <p class="hero-text">Personalized concepts crafted to transform {{ lead.customer_name }}’s setup into a polished, ergonomic, and visually premium workspace.</p>
                 </div>
                 <div class="hero-side-card">
-                    <div class="hero-side-label">Quoted Value</div>
-                    <div class="hero-side-value">₹{{ "{:,.0f}".format(total or 0) }}</div>
+                    <div class="hero-side-label">
+                        {% if designs|length > 1 %}
+                        Price Range
+                        {% else %}
+                        Quoted Value
+                        {% endif %}
+                    </div>
+                    <div class="hero-side-value">
+                        {% if designs|length > 1 %}
+                            {% set min_price = designs | map(attribute='price') | min %}
+                            {% set max_price = designs | map(attribute='price') | max %}
+                            {% if min_price == max_price %}
+                                ₹{{ "{:,.0f}".format(min_price) }}
+                            {% else %}
+                                ₹{{ "{:,.0f}".format(min_price) }} - ₹{{ "{:,.0f}".format(max_price) }}
+                            {% endif %}
+                        {% else %}
+                            ₹{{ "{:,.0f}".format(total or 0) }}
+                        {% endif %}
+                    </div>
                     <div class="hero-meta-grid">
                         <div class="hero-meta-item">
                             <span class="label">Customer</span>
@@ -910,8 +928,26 @@
                     <div class="summary-value">{{ designs|length }}</div>
                 </div>
                 <div class="summary-card">
-                    <div class="summary-label">Quoted Value</div>
-                    <div class="summary-value">₹{{ "{:,.0f}".format(total or 0) }}</div>
+                    <div class="summary-label">
+                        {% if designs|length > 1 %}
+                        Price Range
+                        {% else %}
+                        Quoted Value
+                        {% endif %}
+                    </div>
+                    <div class="summary-value">
+                        {% if designs|length > 1 %}
+                            {% set min_price = designs | map(attribute='price') | min %}
+                            {% set max_price = designs | map(attribute='price') | max %}
+                            {% if min_price == max_price %}
+                                ₹{{ "{:,.0f}".format(min_price) }}
+                            {% else %}
+                                ₹{{ "{:,.0f}".format(min_price) }} - ₹{{ "{:,.0f}".format(max_price) }}
+                            {% endif %}
+                        {% else %}
+                            ₹{{ "{:,.0f}".format(total or 0) }}
+                        {% endif %}
+                    </div>
                 </div>
             </div>
 

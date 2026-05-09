@@ -1,258 +1,309 @@
-{% extends "navbar.html" %}
-
-{% block title %}About Us - GSpaces{% endblock %}
-
-{% block content %}
-<style>
-    .about-hero {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 80px 0;
-        text-align: center;
-    }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>About Us - GSpaces | Premium Desk Setup Solutions</title>
+    <meta name="description" content="Learn about GSpaces - India's leading desk setup and office furniture company. Quality craftsmanship, innovative designs, and exceptional customer service.">
     
-    .about-hero h1 {
-        font-size: 3rem;
-        font-weight: 700;
-        margin-bottom: 20px;
-    }
+    <!-- Favicon -->
+    <link href="{{ url_for('static', filename='img/favicon.svg') }}" rel="icon">
     
-    .about-hero p {
-        font-size: 1.2rem;
-        max-width: 800px;
-        margin: 0 auto;
-    }
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Mozilla+Text:wght@200..700&display=swap" rel="stylesheet">
     
-    .about-section {
-        padding: 60px 0;
-    }
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
     
-    .about-card {
-        background: white;
-        border-radius: 15px;
-        padding: 40px;
-        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-        margin-bottom: 30px;
-        transition: transform 0.3s ease;
-    }
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    .about-card:hover {
-        transform: translateY(-5px);
-    }
+    <!-- Main CSS -->
+    <link href="{{ url_for('static', filename='css/main.css') }}" rel="stylesheet">
     
-    .about-card h3 {
-        color: #667eea;
-        font-size: 1.8rem;
-        margin-bottom: 20px;
-    }
-    
-    .about-card p {
-        color: #666;
-        line-height: 1.8;
-        font-size: 1.1rem;
-    }
-    
-    .stats-section {
-        background: #f8f9fa;
-        padding: 60px 0;
-    }
-    
-    .stat-card {
-        text-align: center;
-        padding: 30px;
-    }
-    
-    .stat-card h2 {
-        color: #667eea;
-        font-size: 3rem;
-        font-weight: 700;
-        margin-bottom: 10px;
-    }
-    
-    .stat-card p {
-        color: #666;
-        font-size: 1.1rem;
-    }
-    
-    .values-section {
-        padding: 60px 0;
-    }
-    
-    .value-item {
-        text-align: center;
-        padding: 30px;
-    }
-    
-    .value-icon {
-        width: 80px;
-        height: 80px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0 auto 20px;
-        font-size: 2rem;
-        color: white;
-    }
-    
-    .value-item h4 {
-        color: #333;
-        font-size: 1.5rem;
-        margin-bottom: 15px;
-    }
-    
-    .value-item p {
-        color: #666;
-        line-height: 1.6;
-    }
-</style>
-
-<!-- Hero Section -->
-<div class="about-hero">
-    <div class="container">
-        <h1>About GSpaces</h1>
-        <p>Transforming spaces into extraordinary experiences with innovative furniture solutions and cutting-edge design technology</p>
-    </div>
-</div>
-
-<!-- Main Content -->
-<div class="about-section">
-    <div class="container">
-        <div class="row">
-            <div class="col-md-12">
-                <div class="about-card">
-                    <h3>Who We Are</h3>
-                    <p>GSpaces is a leading furniture and interior design company dedicated to creating beautiful, functional spaces that inspire. With years of experience in the industry, we combine traditional craftsmanship with modern technology to deliver exceptional results.</p>
-                    <p>Our team of skilled designers and craftsmen work closely with clients to understand their vision and bring it to life. From custom furniture pieces to complete interior solutions, we handle every aspect of your project with precision and care.</p>
-                </div>
-            </div>
-        </div>
+    <style>
+        body {
+            font-family: 'Mozilla Text', sans-serif;
+        }
         
-        <div class="row">
-            <div class="col-md-6">
-                <div class="about-card">
-                    <h3>Our Mission</h3>
-                    <p>To revolutionize the furniture industry by combining innovative design, quality craftsmanship, and cutting-edge technology. We strive to make beautiful, functional furniture accessible to everyone while maintaining the highest standards of quality and customer service.</p>
+        .about-hero {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 100px 0 80px;
+            text-align: center;
+            margin-top: 76px;
+        }
+        
+        .about-hero h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+        
+        .about-hero p {
+            font-size: 1.2rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .about-section {
+            padding: 60px 0;
+        }
+        
+        .about-card {
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            transition: transform 0.3s ease;
+        }
+        
+        .about-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .about-card h3 {
+            color: #667eea;
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+        }
+        
+        .about-card p {
+            color: #666;
+            line-height: 1.8;
+            font-size: 1.1rem;
+        }
+        
+        .stats-section {
+            background: #f8f9fa;
+            padding: 60px 0;
+        }
+        
+        .stat-card {
+            text-align: center;
+            padding: 30px;
+        }
+        
+        .stat-card h2 {
+            color: #667eea;
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .stat-card p {
+            color: #666;
+            font-size: 1.1rem;
+        }
+        
+        .values-section {
+            padding: 60px 0;
+        }
+        
+        .value-item {
+            text-align: center;
+            padding: 30px;
+        }
+        
+        .value-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 2rem;
+            color: white;
+        }
+        
+        .value-item h4 {
+            color: #333;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+        
+        .value-item p {
+            color: #666;
+            line-height: 1.6;
+        }
+        
+        .cta-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 60px 0;
+        }
+        
+        .cta-section h2 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+        }
+        
+        .cta-section p {
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+
+<body>
+    {% include 'navbar.html' %}
+    
+    <!-- Hero Section -->
+    <div class="about-hero">
+        <div class="container">
+            <h1>About GSpaces</h1>
+            <p>Transforming spaces into extraordinary experiences with innovative furniture solutions and cutting-edge design technology</p>
+        </div>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="about-section">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="about-card">
+                        <h3>Who We Are</h3>
+                        <p>GSpaces is a leading furniture and interior design company dedicated to creating beautiful, functional spaces that inspire. With years of experience in the industry, we combine traditional craftsmanship with modern technology to deliver exceptional results.</p>
+                        <p>Our team of skilled designers and craftsmen work closely with clients to understand their vision and bring it to life. From custom furniture pieces to complete interior solutions, we handle every aspect of your project with precision and care.</p>
+                    </div>
                 </div>
             </div>
-            <div class="col-md-6">
-                <div class="about-card">
-                    <h3>Our Vision</h3>
-                    <p>To be the most trusted and innovative furniture brand, known for transforming spaces and exceeding customer expectations. We envision a future where every space reflects the unique personality and needs of its occupants.</p>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="about-card">
+                        <h3>Our Mission</h3>
+                        <p>To revolutionize the furniture industry by combining innovative design, quality craftsmanship, and cutting-edge technology. We strive to make beautiful, functional furniture accessible to everyone while maintaining the highest standards of quality and customer service.</p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="about-card">
+                        <h3>Our Vision</h3>
+                        <p>To be the most trusted and innovative furniture brand, known for transforming spaces and exceeding customer expectations. We envision a future where every space reflects the unique personality and needs of its occupants.</p>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
-
-<!-- Stats Section -->
-<div class="stats-section">
-    <div class="container">
-        <div class="row">
-            <div class="col-md-3">
-                <div class="stat-card">
-                    <h2>1000+</h2>
-                    <p>Happy Customers</p>
+    
+    <!-- Stats Section -->
+    <div class="stats-section">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <h2>1000+</h2>
+                        <p>Happy Customers</p>
+                    </div>
                 </div>
-            </div>
-            <div class="col-md-3">
-                <div class="stat-card">
-                    <h2>500+</h2>
-                    <p>Projects Completed</p>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <h2>500+</h2>
+                        <p>Projects Completed</p>
+                    </div>
                 </div>
-            </div>
-            <div class="col-md-3">
-                <div class="stat-card">
-                    <h2>50+</h2>
-                    <p>Expert Team Members</p>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <h2>50+</h2>
+                        <p>Expert Team Members</p>
+                    </div>
                 </div>
-            </div>
-            <div class="col-md-3">
-                <div class="stat-card">
-                    <h2>10+</h2>
-                    <p>Years of Experience</p>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <h2>10+</h2>
+                        <p>Years of Experience</p>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
-
-<!-- Values Section -->
-<div class="values-section">
-    <div class="container">
-        <div class="text-center mb-5">
-            <h2 style="color: #333; font-size: 2.5rem; font-weight: 700;">Our Core Values</h2>
-            <p style="color: #666; font-size: 1.1rem;">The principles that guide everything we do</p>
-        </div>
-        <div class="row">
-            <div class="col-md-4">
-                <div class="value-item">
-                    <div class="value-icon">
-                        <i class="fas fa-star"></i>
+    
+    <!-- Values Section -->
+    <div class="values-section">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 style="color: #333; font-size: 2.5rem; font-weight: 700;">Our Core Values</h2>
+                <p style="color: #666; font-size: 1.1rem;">The principles that guide everything we do</p>
+            </div>
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="value-item">
+                        <div class="value-icon">
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <h4>Quality First</h4>
+                        <p>We never compromise on quality. Every piece of furniture is crafted with attention to detail and built to last.</p>
                     </div>
-                    <h4>Quality First</h4>
-                    <p>We never compromise on quality. Every piece of furniture is crafted with attention to detail and built to last.</p>
+                </div>
+                <div class="col-md-4">
+                    <div class="value-item">
+                        <div class="value-icon">
+                            <i class="fas fa-lightbulb"></i>
+                        </div>
+                        <h4>Innovation</h4>
+                        <p>We embrace new technologies and design trends to provide cutting-edge solutions for modern living.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="value-item">
+                        <div class="value-icon">
+                            <i class="fas fa-heart"></i>
+                        </div>
+                        <h4>Customer Focus</h4>
+                        <p>Your satisfaction is our priority. We listen, understand, and deliver exactly what you need.</p>
+                    </div>
                 </div>
             </div>
-            <div class="col-md-4">
-                <div class="value-item">
-                    <div class="value-icon">
-                        <i class="fas fa-lightbulb"></i>
+            <div class="row mt-4">
+                <div class="col-md-4">
+                    <div class="value-item">
+                        <div class="value-icon">
+                            <i class="fas fa-leaf"></i>
+                        </div>
+                        <h4>Sustainability</h4>
+                        <p>We're committed to eco-friendly practices and sustainable materials in all our products.</p>
                     </div>
-                    <h4>Innovation</h4>
-                    <p>We embrace new technologies and design trends to provide cutting-edge solutions for modern living.</p>
                 </div>
-            </div>
-            <div class="col-md-4">
-                <div class="value-item">
-                    <div class="value-icon">
-                        <i class="fas fa-heart"></i>
+                <div class="col-md-4">
+                    <div class="value-item">
+                        <div class="value-icon">
+                            <i class="fas fa-handshake"></i>
+                        </div>
+                        <h4>Integrity</h4>
+                        <p>We conduct business with honesty, transparency, and respect for all our stakeholders.</p>
                     </div>
-                    <h4>Customer Focus</h4>
-                    <p>Your satisfaction is our priority. We listen, understand, and deliver exactly what you need.</p>
                 </div>
-            </div>
-        </div>
-        <div class="row mt-4">
-            <div class="col-md-4">
-                <div class="value-item">
-                    <div class="value-icon">
-                        <i class="fas fa-leaf"></i>
+                <div class="col-md-4">
+                    <div class="value-item">
+                        <div class="value-icon">
+                            <i class="fas fa-rocket"></i>
+                        </div>
+                        <h4>Excellence</h4>
+                        <p>We continuously strive to exceed expectations and set new standards in the industry.</p>
                     </div>
-                    <h4>Sustainability</h4>
-                    <p>We're committed to eco-friendly practices and sustainable materials in all our products.</p>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="value-item">
-                    <div class="value-icon">
-                        <i class="fas fa-handshake"></i>
-                    </div>
-                    <h4>Integrity</h4>
-                    <p>We conduct business with honesty, transparency, and respect for all our stakeholders.</p>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="value-item">
-                    <div class="value-icon">
-                        <i class="fas fa-rocket"></i>
-                    </div>
-                    <h4>Excellence</h4>
-                    <p>We continuously strive to exceed expectations and set new standards in the industry.</p>
                 </div>
             </div>
         </div>
     </div>
-</div>
-
-<!-- CTA Section -->
-<div class="about-section" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-    <div class="container text-center">
-        <h2 style="font-size: 2.5rem; margin-bottom: 20px;">Ready to Transform Your Space?</h2>
-        <p style="font-size: 1.2rem; margin-bottom: 30px;">Let's work together to create something extraordinary</p>
-        <a href="{{ url_for('contact') }}" class="btn btn-light btn-lg" style="padding: 15px 40px; font-size: 1.1rem;">Get in Touch</a>
+    
+    <!-- CTA Section -->
+    <div class="cta-section text-center">
+        <div class="container">
+            <h2>Ready to Transform Your Space?</h2>
+            <p>Let's work together to create something extraordinary</p>
+            <a href="{{ url_for('contact') }}" class="btn btn-light btn-lg" style="padding: 15px 40px; font-size: 1.1rem;">Get in Touch</a>
+        </div>
     </div>
-</div>
-
-{% endblock %}
+    
+    {% include 'footer.html' %}
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

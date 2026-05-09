@@ -110,15 +110,9 @@
             </a>
         </li>
         <li class="admin-sidebar-item">
-            <a href="{{ url_for('admin_coupons') }}" class="admin-sidebar-link {% if active_page == 'coupons' %}active{% endif %}">
+            <a href="{{ url_for('admin_deals_promotions') }}" class="admin-sidebar-link {% if active_page == 'deals_promotions' %}active{% endif %}">
                 <span class="admin-sidebar-icon">🎁</span>
-                <span>Coupons</span>
-            </a>
-        </li>
-        <li class="admin-sidebar-item">
-            <a href="{{ url_for('admin_referral_coupons') }}" class="admin-sidebar-link {% if active_page == 'referral' %}active{% endif %}">
-                <span class="admin-sidebar-icon">🎯</span>
-                <span>Referral Coupons</span>
+                <span>Deals & Promotions</span>
             </a>
         </li>
         <li class="admin-sidebar-item">
@@ -134,27 +128,15 @@
             </a>
         </li>
         <li class="admin-sidebar-item">
-            <a href="{{ url_for('admin_customers') }}" class="admin-sidebar-link {% if active_page == 'customers' %}active{% endif %}">
-                <span class="admin-sidebar-icon">👤</span>
-                <span>Customers</span>
-            </a>
-        </li>
-        <li class="admin-sidebar-item">
-            <a href="{{ url_for('admin_users.manage_users') }}" class="admin-sidebar-link {% if active_page == 'users' %}active{% endif %}">
+            <a href="{{ url_for('admin_users_management') }}" class="admin-sidebar-link {% if active_page == 'users_management' %}active{% endif %}">
                 <span class="admin-sidebar-icon">👥</span>
-                <span>Manage Users</span>
+                <span>Users Management</span>
             </a>
         </li>
         <li class="admin-sidebar-item">
             <a href="{{ url_for('admin_blogs') }}" class="admin-sidebar-link {% if active_page == 'blogs' %}active{% endif %}">
                 <span class="admin-sidebar-icon">📝</span>
                 <span>Blogs</span>
-            </a>
-        </li>
-        <li class="admin-sidebar-item">
-            <a href="{{ url_for('admin_deals') }}" class="admin-sidebar-link {% if active_page == 'deals' %}active{% endif %}">
-                <span class="admin-sidebar-icon">🔥</span>
-                <span>Deals</span>
             </a>
         </li>
         <li class="admin-sidebar-item">

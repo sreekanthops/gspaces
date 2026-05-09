@@ -3316,6 +3316,25 @@ def delete_coupon(coupon_id):
             conn.close()
     
 
+# Consolidated Admin Pages
+@app.route('/admin/deals-promotions')
+@login_required
+def admin_deals_promotions():
+    """Consolidated page for Deals, Coupons, and Referral Coupons"""
+    if current_user.email not in ADMIN_EMAILS:
+        flash("Access denied. Admin privileges required.", "danger")
+        return redirect(url_for('index'))
+    return render_template('admin_deals_promotions.html')
+
+@app.route('/admin/users-management')
+@login_required
+def admin_users_management():
+    """Consolidated page for Customers and Admin Users"""
+    if current_user.email not in ADMIN_EMAILS:
+        flash("Access denied. Admin privileges required.", "danger")
+        return redirect(url_for('index'))
+    return render_template('admin_users_management.html')
+
 # --- CUSTOMER MANAGEMENT ROUTES ---
 @app.route('/admin/customers')
 @login_required

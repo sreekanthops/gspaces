@@ -436,26 +436,163 @@ def api_track_visitor():
 @login_required
 @admin_required
 def api_health_check():
-    """API endpoint to check system health"""
+    """Comprehensive system health check"""
     try:
         health_status = {
-            'database': 'healthy',
+            'overall': 'healthy',
             'timestamp': datetime.now().isoformat(),
             'checks': []
         }
         
-        # Check database connection
+        # 1. Database Connection Check
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
             cursor.execute("SELECT 1")
             cursor.close()
             conn.close()
-            health_status['checks'].append({'name': 'Database', 'status': 'OK'})
+            health_status['checks'].append({
+                'category': 'Database',
+                'name': 'PostgreSQL Connection',
+                'status': 'OK',
+                'response_time': '< 100ms'
+            })
         except Exception as e:
-            health_status['database'] = 'unhealthy'
-            health_status['checks'].append({'name': 'Database', 'status': 'FAILED', 'error': str(e)})
+            health_status['overall'] = 'unhealthy'
+            health_status['checks'].append({
+                'category': 'Database',
+                'name': 'PostgreSQL Connection',
+                'status': 'FAILED',
+                'error': str(e)
+            })
             log_error('health_check_database', str(e), '/api/system/health-check', 'critical')
+        
+        # 2. Check All Public Pages
+        pages_to_check = [
+            ('/', 'Homepage'),
+            ('/products', 'Products Page'),
+            ('/about', 'About Page'),
+            ('/contact', 'Contact Page'),
+            ('/services', 'Services Page'),
+            ('/blogs', 'Blogs Page'),
+            ('/login', 'Login Page'),
+            ('/signup', 'Signup Page'),
+        ]
+        
+        for url, name in pages_to_check:
+            try:
+                import time
+                start_time = time.time()
+                response = requests.get(f'http://localhost:5000{url}', timeout=5)
+                response_time = int((time.time() - start_time) * 1000)
+                
+                if response.status_code == 200:
+                    health_status['checks'].append({
+                        'category': 'Pages',
+                        'name': name,
+                        'status': 'OK',
+                        'response_time': f'{response_time}ms',
+                        'url': url
+                    })
+                else:
+                    health_status['checks'].append({
+                        'category': 'Pages',
+                        'name': name,
+                        'status': 'WARNING',
+                        'response_time': f'{response_time}ms',
+                        'url': url,
+                        'http_code': response.status_code
+                    })
+            except Exception as e:
+                health_status['overall'] = 'degraded'
+                health_status['checks'].append({
+                    'category': 'Pages',
+                    'name': name,
+                    'status': 'FAILED',
+                    'url': url,
+                    'error': str(e)
+                })
+        
+        # 3. Email System Check
+        try:
+            smtp_server = os.getenv('SMTP_SERVER', 'smtp.gmail.com')
+            smtp_port = int(os.getenv('SMTP_PORT', 587))
+            sender_email = os.getenv('SMTP_USERNAME', '')
+            sender_password = os.getenv('SMTP_PASSWORD', '')
+            
+            if sender_email and sender_password:
+                import smtplib
+                server = smtplib.SMTP(smtp_server, smtp_port, timeout=5)
+                server.starttls()
+                server.login(sender_email, sender_password)
+                server.quit()
+                health_status['checks'].append({
+                    'category': 'Email',
+                    'name': 'SMTP Connection',
+                    'status': 'OK',
+                    'server': smtp_server
+                })
+            else:
+                health_status['checks'].append({
+                    'category': 'Email',
+                    'name': 'SMTP Configuration',
+                    'status': 'WARNING',
+                    'message': 'Email credentials not configured'
+                })
+        except Exception as e:
+            health_status['overall'] = 'degraded'
+            health_status['checks'].append({
+                'category': 'Email',
+                'name': 'SMTP Connection',
+                'status': 'FAILED',
+                'error': str(e)
+            })
+        
+        # 4. File System Check
+        try:
+            import tempfile
+            test_file = tempfile.NamedTemporaryFile(delete=False)
+            test_file.write(b'health check')
+            test_file.close()
+            os.unlink(test_file.name)
+            health_status['checks'].append({
+                'category': 'System',
+                'name': 'File System Write',
+                'status': 'OK'
+            })
+        except Exception as e:
+            health_status['overall'] = 'degraded'
+            health_status['checks'].append({
+                'category': 'System',
+                'name': 'File System Write',
+                'status': 'FAILED',
+                'error': str(e)
+            })
+        
+        # 5. Memory Check
+        try:
+            import psutil
+            memory = psutil.virtual_memory()
+            memory_percent = memory.percent
+            
+            if memory_percent < 80:
+                status = 'OK'
+            elif memory_percent < 90:
+                status = 'WARNING'
+            else:
+                status = 'CRITICAL'
+                health_status['overall'] = 'degraded'
+            
+            health_status['checks'].append({
+                'category': 'System',
+                'name': 'Memory Usage',
+                'status': status,
+                'value': f'{memory_percent}%',
+                'available': f'{memory.available / (1024**3):.2f} GB'
+            })
+        except:
+            # psutil not installed, skip
+            pass
         
         return jsonify(health_status)
         

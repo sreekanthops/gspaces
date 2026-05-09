@@ -49,6 +49,8 @@ function setupUploadHandlers() {
     // File selection
     fileInput.addEventListener('change', function(e) {
         handleFiles(e.target.files);
+        // Clear the input so the same file can be uploaded again
+        e.target.value = '';
     });
     
     // Drag and drop

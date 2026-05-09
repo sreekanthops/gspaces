@@ -140,11 +140,11 @@
     
     <div class="stats">
         <div class="stat-item">
-            <div class="stat-value" id="itemCount">2</div>
+            <div class="stat-value" id="itemCount">{{ furniture_items|length }}</div>
             <div class="stat-label">Furniture Items</div>
         </div>
         <div class="stat-item">
-            <div class="stat-value">2000ms</div>
+            <div class="stat-value">{{ banner_settings.scatter_duration if banner_settings else 2000 }}ms</div>
             <div class="stat-label">Scatter Duration</div>
         </div>
         <div class="stat-item">
@@ -152,7 +152,7 @@
             <div class="stat-label">Scatter Distance</div>
         </div>
         <div class="stat-item">
-            <div class="stat-value">20px</div>
+            <div class="stat-value">{{ banner_settings.grid_size if banner_settings else 20 }}px</div>
             <div class="stat-label">Grid Size</div>
         </div>
     </div>
@@ -160,44 +160,14 @@
     <div id="animated-furniture-banner"></div>
     
     <script>
-        // Test data with your uploaded images
-        window.furnitureData = [
-            {
-                id: 1,
-                name: 'Office Chair',
-                image_path: '/static/images/furniture/chair.png',
-                category: 'chair',
-                width: 150,
-                height: 180,
-                initial_x: 30,
-                initial_y: 50,
-                scatter_distance: 200,
-                rotation_angle: 0
-            },
-            {
-                id: 2,
-                name: 'Office Desk',
-                image_path: '/static/images/furniture/desk.png',
-                category: 'table',
-                width: 250,
-                height: 200,
-                initial_x: 70,
-                initial_y: 50,
-                scatter_distance: 200,
-                rotation_angle: 0
-            }
-        ];
+        // Load data from database
+        window.furnitureData = {{ furniture_items | tojson | safe }};
+        window.bannerSettings = {{ banner_settings | tojson | safe }};
         
-        window.bannerSettings = {
-            is_enabled: true,
-            scatter_duration: 2000,
-            scatter_easing: 'ease-out',
-            allow_drag: true,
-            snap_to_grid: true,
-            grid_size: 20,
-            show_reset_button: true,
-            background_color: '#f8f9fa'
-        };
+        // Debug: Log the data
+        console.log('Furniture Data:', window.furnitureData);
+        console.log('Banner Settings:', window.bannerSettings);
+        console.log('Number of items:', window.furnitureData ? window.furnitureData.length : 0);
     </script>
     <script src="/static/js/animated-banner.js"></script>
 </body>

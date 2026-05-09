@@ -16,6 +16,9 @@ class AnimatedBanner {
         this.contextMenu = null;
         this.selectedElement = null;
         this.baseZIndex = 100;
+        this.rotationControl = null;
+        this.currentRotation = new Map(); // Store rotation for each element
+        this.currentScale = new Map(); // Store scale for each element
         
         this.init();
     }
@@ -32,6 +35,9 @@ class AnimatedBanner {
         // Create context menu
         this.createContextMenu();
         
+        // Create rotation control
+        this.createRotationControl();
+        
         // Create furniture elements
         this.createFurnitureElements();
         
@@ -43,8 +49,13 @@ class AnimatedBanner {
             this.createResetButton();
         }
         
-        // Hide context menu on click outside
-        document.addEventListener('click', () => this.hideContextMenu());
+        // Hide context menu and rotation control on click outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.furniture-item') && !e.target.closest('.rotation-control')) {
+                this.hideContextMenu();
+                this.hideRotationControl();
+            }
+        });
     }
     
     createFurnitureElements() {
@@ -87,6 +98,17 @@ class AnimatedBanner {
                 x: item.initial_x,
                 y: item.initial_y,
                 rotation: item.rotation_angle
+            });
+            
+            // Initialize rotation and scale
+            this.currentRotation.set(element, item.rotation_angle || 0);
+            this.currentScale.set(element, 1.0);
+            
+            // Add click handler to show rotation control
+            element.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.showRotationControl(element);
+                this.hideContextMenu();
             });
             
             // Add drag functionality
@@ -241,6 +263,257 @@ class AnimatedBanner {
         });
         
         // Re-trigger scatter animation
+        setTimeout(() => this.scatterItems(), 100);
+    }
+    createRotationControl() {
+        // Create rotation control widget
+        this.rotationControl = document.createElement('div');
+        this.rotationControl.className = 'rotation-control';
+        this.rotationControl.style.cssText = `
+            position: fixed;
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 50%;
+            width: 120px;
+            height: 120px;
+            display: none;
+            z-index: 10001;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+        `;
+        
+        // Center circle with rotation icon
+        const centerCircle = document.createElement('div');
+        centerCircle.style.cssText = `
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            cursor: move;
+        `;
+        centerCircle.innerHTML = '🔄';
+        centerCircle.title = 'Drag to rotate freely';
+        
+        // Rotation buttons (Left and Right)
+        const leftBtn = this.createRotationButton('◀', -15, 'Rotate Left (15°)');
+        leftBtn.style.cssText += `
+            position: absolute;
+            left: -10px;
+            top: 50%;
+            transform: translateY(-50%);
+        `;
+        
+        const rightBtn = this.createRotationButton('▶', 15, 'Rotate Right (15°)');
+        rightBtn.style.cssText += `
+            position: absolute;
+            right: -10px;
+            top: 50%;
+            transform: translateY(-50%);
+        `;
+        
+        const topBtn = this.createRotationButton('▲', -5, 'Fine Rotate Left (5°)');
+        topBtn.style.cssText += `
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+        `;
+        
+        const bottomBtn = this.createRotationButton('▼', 5, 'Fine Rotate Right (5°)');
+        bottomBtn.style.cssText += `
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+        `;
+        
+        // Size control buttons (diagonal positions)
+        const increaseSizeBtn = this.createSizeButton('+', 0.1, 'Increase Size');
+        increaseSizeBtn.style.cssText += `
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        `;
+        
+        const decreaseSizeBtn = this.createSizeButton('-', -0.1, 'Decrease Size');
+        decreaseSizeBtn.style.cssText += `
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+        `;
+        
+        this.rotationControl.appendChild(centerCircle);
+        this.rotationControl.appendChild(leftBtn);
+        this.rotationControl.appendChild(rightBtn);
+        this.rotationControl.appendChild(topBtn);
+        this.rotationControl.appendChild(bottomBtn);
+        this.rotationControl.appendChild(increaseSizeBtn);
+        this.rotationControl.appendChild(decreaseSizeBtn);
+        
+        // Add drag-to-rotate functionality on center circle
+        let isDraggingRotation = false;
+        let startAngle = 0;
+        
+        centerCircle.addEventListener('mousedown', (e) => {
+            if (!this.selectedElement) return;
+            isDraggingRotation = true;
+            const rect = this.rotationControl.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            startAngle = Math.atan2(e.clientY - centerY, e.clientX - centerX) * (180 / Math.PI);
+            e.stopPropagation();
+        });
+        
+        document.addEventListener('mousemove', (e) => {
+            if (!isDraggingRotation || !this.selectedElement) return;
+            const rect = this.rotationControl.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            const currentAngle = Math.atan2(e.clientY - centerY, e.clientX - centerX) * (180 / Math.PI);
+            const angleDiff = currentAngle - startAngle;
+            
+            const currentRot = this.currentRotation.get(this.selectedElement) || 0;
+            const currentScale = this.currentScale.get(this.selectedElement) || 1;
+            const newRotation = currentRot + angleDiff;
+            this.currentRotation.set(this.selectedElement, newRotation);
+            this.selectedElement.style.transform = `translate(-50%, -50%) rotate(${newRotation}deg) scale(${currentScale})`;
+            
+            startAngle = currentAngle;
+        });
+        
+        document.addEventListener('mouseup', () => {
+            isDraggingRotation = false;
+        });
+        
+        document.body.appendChild(this.rotationControl);
+    }
+    
+    createRotationButton(icon, angle, title) {
+        const btn = document.createElement('button');
+        btn.innerHTML = icon;
+        btn.title = title;
+        btn.style.cssText = `
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background: white;
+            border: 2px solid #667eea;
+            color: #667eea;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            font-weight: bold;
+        `;
+        
+        btn.addEventListener('mouseenter', () => {
+            btn.style.background = '#667eea';
+            btn.style.color = 'white';
+            btn.style.transform = 'scale(1.1)';
+        });
+        
+        btn.addEventListener('mouseleave', () => {
+            btn.style.background = 'white';
+            btn.style.color = '#667eea';
+            btn.style.transform = 'scale(1)';
+        });
+        
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (!this.selectedElement) return;
+            const currentRot = this.currentRotation.get(this.selectedElement) || 0;
+            const currentScale = this.currentScale.get(this.selectedElement) || 1;
+            const newRotation = currentRot + angle;
+            this.currentRotation.set(this.selectedElement, newRotation);
+            this.selectedElement.style.transition = 'transform 0.2s ease';
+            this.selectedElement.style.transform = `translate(-50%, -50%) rotate(${newRotation}deg) scale(${currentScale})`;
+        });
+        
+        return btn;
+    }
+    
+    createSizeButton(icon, scaleChange, title) {
+        const btn = document.createElement('button');
+        btn.innerHTML = icon;
+        btn.title = title;
+        btn.style.cssText = `
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background: white;
+            border: 2px solid #28a745;
+            color: #28a745;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            font-weight: bold;
+        `;
+        
+        btn.addEventListener('mouseenter', () => {
+            btn.style.background = '#28a745';
+            btn.style.color = 'white';
+            btn.style.transform = 'scale(1.1)';
+        });
+        
+        btn.addEventListener('mouseleave', () => {
+            btn.style.background = 'white';
+            btn.style.color = '#28a745';
+            btn.style.transform = 'scale(1)';
+        });
+        
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (!this.selectedElement) return;
+            
+            const currentScale = this.currentScale.get(this.selectedElement) || 1;
+            const newScale = Math.max(0.3, Math.min(3, currentScale + scaleChange)); // Limit between 0.3x and 3x
+            this.currentScale.set(this.selectedElement, newScale);
+            
+            const currentRot = this.currentRotation.get(this.selectedElement) || 0;
+            this.selectedElement.style.transition = 'transform 0.2s ease';
+            this.selectedElement.style.transform = `translate(-50%, -50%) rotate(${currentRot}deg) scale(${newScale})`;
+        });
+        
+        return btn;
+    }
+    
+    showRotationControl(element) {
+        if (!element) return;
+        this.selectedElement = element;
+        
+        // Position rotation control near the element
+        const rect = element.getBoundingClientRect();
+        const controlSize = 120;
+        
+        this.rotationControl.style.display = 'block';
+        this.rotationControl.style.left = `${rect.right + 20}px`;
+        this.rotationControl.style.top = `${rect.top + (rect.height / 2) - (controlSize / 2)}px`;
+        
+        // Initialize rotation if not set
+        if (!this.currentRotation.has(element)) {
+            this.currentRotation.set(element, 0);
+        }
+    }
+    
+    hideRotationControl() {
+        if (this.rotationControl) {
+            this.rotationControl.style.display = 'none';
+        }
+    }
+    
     
     createContextMenu() {
         // Create context menu element
@@ -263,7 +536,10 @@ class AnimatedBanner {
             { icon: '⬆️', text: 'Bring to Front', action: 'toFront' },
             { icon: '⬇️', text: 'Send to Back', action: 'toBack' },
             { icon: '↗️', text: 'Bring Forward', action: 'forward' },
-            { icon: '↘️', text: 'Send Backward', action: 'backward' }
+            { icon: '↘️', text: 'Send Backward', action: 'backward' },
+            { icon: '🔄', text: 'Rotate 90° Right', action: 'rotateRight' },
+            { icon: '↩️', text: 'Rotate 90° Left', action: 'rotateLeft' },
+            { icon: '🔁', text: 'Rotate 360°', action: 'rotate360' }
         ];
         
         menuItems.forEach(item => {
@@ -336,10 +612,15 @@ class AnimatedBanner {
         
         const currentZ = parseInt(this.selectedElement.style.zIndex) || this.baseZIndex;
         
+        // Get current rotation
+        const currentTransform = this.selectedElement.style.transform || '';
+        const rotateMatch = currentTransform.match(/rotate\((-?\d+)deg\)/);
+        let currentRotation = rotateMatch ? parseInt(rotateMatch[1]) : 0;
+        
         switch (action) {
             case 'toFront':
                 // Find highest z-index
-                const maxZ = Math.max(...this.furnitureElements.map(el => 
+                const maxZ = Math.max(...this.furnitureElements.map(el =>
                     parseInt(el.style.zIndex) || this.baseZIndex
                 ));
                 this.selectedElement.style.zIndex = maxZ + 1;
@@ -347,7 +628,7 @@ class AnimatedBanner {
                 
             case 'toBack':
                 // Find lowest z-index
-                const minZ = Math.min(...this.furnitureElements.map(el => 
+                const minZ = Math.min(...this.furnitureElements.map(el =>
                     parseInt(el.style.zIndex) || this.baseZIndex
                 ));
                 this.selectedElement.style.zIndex = minZ - 1;
@@ -362,14 +643,43 @@ class AnimatedBanner {
                 // Move one layer down
                 this.selectedElement.style.zIndex = currentZ - 1;
                 break;
+                
+            case 'rotateRight':
+                // Rotate 90 degrees clockwise
+                currentRotation += 90;
+                this.selectedElement.style.transition = 'transform 0.3s ease';
+                this.selectedElement.style.transform = `translate(-50%, -50%) rotate(${currentRotation}deg)`;
+                break;
+                
+            case 'rotateLeft':
+                // Rotate 90 degrees counter-clockwise
+                currentRotation -= 90;
+                this.selectedElement.style.transition = 'transform 0.3s ease';
+                this.selectedElement.style.transform = `translate(-50%, -50%) rotate(${currentRotation}deg)`;
+                break;
+                
+            case 'rotate360':
+                // Full 360 degree rotation animation
+                this.selectedElement.style.transition = 'transform 1s ease-in-out';
+                const targetRotation = currentRotation + 360;
+                this.selectedElement.style.transform = `translate(-50%, -50%) rotate(${targetRotation}deg)`;
+                // Normalize rotation after animation
+                setTimeout(() => {
+                    this.selectedElement.style.transition = 'none';
+                    this.selectedElement.style.transform = `translate(-50%, -50%) rotate(${currentRotation}deg)`;
+                }, 1000);
+                break;
         }
         
-        // Add visual feedback
-        this.selectedElement.style.transition = 'transform 0.2s ease';
-        this.selectedElement.style.transform += ' scale(1.05)';
-        setTimeout(() => {
-            this.selectedElement.style.transform = this.selectedElement.style.transform.replace(' scale(1.05)', '');
-        }, 200);
+        // Add visual feedback for z-index changes only
+        if (['toFront', 'toBack', 'forward', 'backward'].includes(action)) {
+            this.selectedElement.style.transition = 'transform 0.2s ease';
+            const baseTransform = `translate(-50%, -50%) rotate(${currentRotation}deg)`;
+            this.selectedElement.style.transform = baseTransform + ' scale(1.05)';
+            setTimeout(() => {
+                this.selectedElement.style.transform = baseTransform;
+            }, 200);
+        }
     }
 }
 

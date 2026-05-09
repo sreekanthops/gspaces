@@ -5344,14 +5344,44 @@ def products():
 # --- TEST ANIMATED BANNER ROUTE ---
 @app.route('/test-animated-banner')
 def test_animated_banner():
-    """Test page for animated furniture banner"""
-    return render_template('test_animated_banner.html')
-
-    return render_template('products_new.html',
-                         products=products,
-                         categories=categories,
-                         catalogue_files=catalogue_files,
-                         is_admin=is_admin)
+    """Test page for animated furniture banner - fetches real data from database"""
+    try:
+        conn = connect_to_db()
+        if not conn:
+            raise Exception("Database connection failed")
+            
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        
+        # Fetch active furniture items
+        cursor.execute("""
+            SELECT id, name, image_path, category, width, height,
+                   initial_x, initial_y, scatter_distance, rotation_angle, display_order
+            FROM animated_furniture_items
+            WHERE is_active = true
+            ORDER BY display_order ASC
+        """)
+        furniture_items = cursor.fetchall()
+        
+        # Fetch banner settings
+        cursor.execute("SELECT * FROM animated_banner_settings LIMIT 1")
+        settings = cursor.fetchone()
+        
+        cursor.close()
+        conn.close()
+        
+        print(f"Loaded {len(furniture_items)} furniture items")
+        print(f"Settings: {settings}")
+        
+        return render_template('test_animated_banner.html',
+                             furniture_items=furniture_items,
+                             banner_settings=settings)
+    except Exception as e:
+        print(f"Error loading animated banner test: {e}")
+        import traceback
+        traceback.print_exc()
+        return render_template('test_animated_banner.html',
+                             furniture_items=[],
+                             banner_settings=None)
 
 @app.route('/corporate')
 def corporate():

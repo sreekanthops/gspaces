@@ -5466,10 +5466,10 @@ def upload_workspace_item():
         """, (current_user.id,))
         max_z = cursor.fetchone()[0]
         
-        # Insert new item with random initial position
+        # Insert new item with random initial position (as percentage)
         import random
-        initial_x = random.randint(100, 800)
-        initial_y = random.randint(100, 400)
+        initial_x = random.randint(20, 80)  # 20-80% of container width
+        initial_y = random.randint(20, 80)  # 20-80% of container height
         
         cursor.execute("""
             INSERT INTO user_workspace_items

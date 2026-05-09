@@ -338,20 +338,22 @@
             });
         }
         
-        function uploadFile(file) {
+        async function uploadFile(file) {
             const reader = new FileReader();
             
-            reader.onload = (e) => {
+            reader.onload = async (e) => {
                 const img = new Image();
-                img.onload = () => {
-                    // Add the uploaded image to the banner
-                    addUploadedItemToBanner(e.target.result, file.name, img.width, img.height);
+                img.onload = async () => {
+                    // Save to database first to get real ID
+                    const dbResult = await saveItemToDatabase(e.target.result, file.name, img.width, img.height);
                     
-                    // Show preview
-                    showPreview(e.target.result, file.name);
-                    
-                    // Save to database
-                    saveItemToDatabase(e.target.result, file.name, img.width, img.height);
+                    if (dbResult && dbResult.success) {
+                        // Add the uploaded image to the banner with real database ID
+                        addUploadedItemToBanner(e.target.result, file.name, img.width, img.height, dbResult.item.id);
+                        
+                        // Show preview
+                        showPreview(e.target.result, file.name);
+                    }
                 };
                 img.src = e.target.result;
             };
@@ -359,7 +361,7 @@
             reader.readAsDataURL(file);
         }
         
-        function addUploadedItemToBanner(imageData, fileName, originalWidth, originalHeight) {
+        function addUploadedItemToBanner(imageData, fileName, originalWidth, originalHeight, dbId) {
             // Calculate scaled dimensions (max 200px)
             const maxSize = 200;
             let width = originalWidth;
@@ -373,9 +375,9 @@
             
             uploadedItemsCount++;
             
-            // Create new furniture item data
+            // Create new furniture item data with real database ID
             const newItem = {
-                id: `uploaded_${Date.now()}_${uploadedItemsCount}`,
+                id: dbId,  // Use real database ID
                 name: fileName,
                 image_path: imageData,
                 category: 'uploaded',
@@ -432,8 +434,10 @@
                 
                 const result = await response.json();
                 console.log('Item saved to database:', result);
+                return result;
             } catch (error) {
                 console.error('Failed to save to database:', error);
+                return null;
             }
         }
         

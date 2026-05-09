@@ -543,76 +543,96 @@ if (enableCarousel && slides.length > 1) {
     }
     </style>
 
-    <!-- Stats Section -->
-
-    <section id="stats" class="stats section light-background">
-
-      <div class="container" data-aos="fade-up" data-aos-delay="100">
-
-        <div class="row gy-4">
-
-          <div class="col-lg-3 col-md-6">
-
-            <div class="stats-item d-flex align-items-center w-100 h-100">
-
-              <i class="bi bi-emoji-smile color-blue flex-shrink-0"></i>
-
-              <div>
-
-                <span data-purecounter-start="0" data-purecounter-end="25" data-purecounter-duration="1" class="purecounter"></span> <!-- Number adjusted -->
-
-                <p>Early Adopters</p> <!-- Text changed -->
-
-              </div>
-
+    <!-- Stats Section - Modern Design -->
+    <section id="stats" class="stats section" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 80px 0; position: relative; overflow: hidden;">
+        <!-- Decorative Elements -->
+        <div style="position: absolute; top: -50px; right: -50px; width: 300px; height: 300px; background: rgba(255,255,255,0.1); border-radius: 50%; filter: blur(60px);"></div>
+        <div style="position: absolute; bottom: -100px; left: -100px; width: 400px; height: 400px; background: rgba(255,255,255,0.1); border-radius: 50%; filter: blur(80px);"></div>
+        
+        <div class="container" style="position: relative; z-index: 2;">
+            <!-- Section Title -->
+            <div class="text-center mb-5" data-aos="fade-up">
+                <h2 style="font-size: 2.5rem; font-weight: 700; color: white; margin-bottom: 15px;">
+                    Our Journey So Far
+                </h2>
+                <p style="font-size: 1.1rem; color: rgba(255,255,255,0.9); max-width: 600px; margin: 0 auto;">
+                    Building dream workspaces, one setup at a time
+                </p>
             </div>
 
-          </div><!-- End Stats Item -->
+            <!-- Stats Grid -->
+            <div class="row g-4">
+                <!-- Stat 1 -->
+                <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="100">
+                    <div class="stat-card" style="background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); border-radius: 20px; padding: 40px 30px; text-align: center; border: 1px solid rgba(255,255,255,0.2); transition: all 0.3s ease;">
+                        <div class="stat-icon" style="width: 70px; height: 70px; margin: 0 auto 20px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                            <i class="bi bi-emoji-smile" style="font-size: 2.5rem; color: white;"></i>
+                        </div>
+                        <h3 style="font-size: 3rem; font-weight: 700; color: white; margin-bottom: 10px;">
+                            <span data-purecounter-start="0" data-purecounter-end="50" data-purecounter-duration="2" class="purecounter">50</span>+
+                        </h3>
+                        <p style="color: rgba(255,255,255,0.9); font-size: 1.1rem; font-weight: 500; margin: 0;">Happy Customers</p>
+                    </div>
+                </div>
 
-          <div class="col-lg-3 col-md-6">
+                <!-- Stat 2 -->
+                <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="200">
+                    <div class="stat-card" style="background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); border-radius: 20px; padding: 40px 30px; text-align: center; border: 1px solid rgba(255,255,255,0.2); transition: all 0.3s ease;">
+                        <div class="stat-icon" style="width: 70px; height: 70px; margin: 0 auto 20px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                            <i class="bi bi-box-seam" style="font-size: 2.5rem; color: white;"></i>
+                        </div>
+                        <h3 style="font-size: 3rem; font-weight: 700; color: white; margin-bottom: 10px;">
+                            <span data-purecounter-start="0" data-purecounter-end="30" data-purecounter-duration="2" class="purecounter">30</span>+
+                        </h3>
+                        <p style="color: rgba(255,255,255,0.9); font-size: 1.1rem; font-weight: 500; margin: 0;">Setups Delivered</p>
+                    </div>
+                </div>
 
-            <div class="stats-item d-flex align-items-center w-100 h-100">
+                <!-- Stat 3 -->
+                <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="300">
+                    <div class="stat-card" style="background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); border-radius: 20px; padding: 40px 30px; text-align: center; border: 1px solid rgba(255,255,255,0.2); transition: all 0.3s ease;">
+                        <div class="stat-icon" style="width: 70px; height: 70px; margin: 0 auto 20px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                            <i class="bi bi-star-fill" style="font-size: 2.5rem; color: white;"></i>
+                        </div>
+                        <h3 style="font-size: 3rem; font-weight: 700; color: white; margin-bottom: 10px;">
+                            <span data-purecounter-start="0" data-purecounter-end="100" data-purecounter-duration="2" class="purecounter">100</span>%
+                        </h3>
+                        <p style="color: rgba(255,255,255,0.9); font-size: 1.1rem; font-weight: 500; margin: 0;">Satisfaction Rate</p>
+                    </div>
+                </div>
 
-              <i class="bi bi-journal-richtext color-orange flex-shrink-0"></i>
-
-              <div>
-
-                <span data-purecounter-start="0" data-purecounter-end="10" data-purecounter-duration="1" class="purecounter"></span> <!-- Number adjusted -->
-
-                <p>Setups Delivered</p> <!-- Text changed -->
-
-              </div>
-
+                <!-- Stat 4 -->
+                <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="400">
+                    <div class="stat-card" style="background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); border-radius: 20px; padding: 40px 30px; text-align: center; border: 1px solid rgba(255,255,255,0.2); transition: all 0.3s ease;">
+                        <div class="stat-icon" style="width: 70px; height: 70px; margin: 0 auto 20px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                            <i class="bi bi-lightning-charge-fill" style="font-size: 2.5rem; color: white;"></i>
+                        </div>
+                        <h3 style="font-size: 3rem; font-weight: 700; color: white; margin-bottom: 10px;">
+                            <span data-purecounter-start="0" data-purecounter-end="48" data-purecounter-duration="2" class="purecounter">48</span>h
+                        </h3>
+                        <p style="color: rgba(255,255,255,0.9); font-size: 1.1rem; font-weight: 500; margin: 0;">Avg. Delivery Time</p>
+                    </div>
+                </div>
             </div>
-
-          </div><!-- End Stats Item -->
-
-          <div class="col-lg-3 col-md-6">
-            <div class="stats-item d-flex align-items-center w-100 h-100" data-aos="fade-up" data-aos-delay="400">
-              <i class="bi bi-headset color-green flex-shrink-0"></i>
-              <div>
-                <span data-purecounter-start="0" data-purecounter-end="80" data-purecounter-duration="1" class="purecounter"></span>
-                <p>Feedback Sessions</p>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-lg-3 col-md-6">
-            <div class="stats-item d-flex align-items-center w-100 h-100" data-aos="fade-up" data-aos-delay="400">
-              <i class="bi bi-people color-pink flex-shrink-0"></i>
-              <div>
-                <span data-purecounter-start="0" data-purecounter-end="5" data-purecounter-duration="1" class="purecounter"></span>
-                <p>Team Members</p>
-              </div>
-            </div>
-          </div>
-          <!-- End Stats Item -->
-
         </div>
+    </section>
 
-      </div>
-
-    </section><!-- /Stats Section -->
+    <style>
+    .stat-card:hover {
+        transform: translateY(-10px) scale(1.05);
+        background: rgba(255,255,255,0.25) !important;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    }
+    
+    .stat-card:hover .stat-icon {
+        transform: rotate(360deg);
+        background: rgba(255,255,255,0.3) !important;
+    }
+    
+    .stat-icon {
+        transition: all 0.6s ease;
+    }
+    </style>
 <!-- Services Section START (COMMENTED)
 
 <section id="services" class="services section">

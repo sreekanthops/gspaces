@@ -81,112 +81,153 @@
     </div>
   </div>
 
-  <!-- About Section -->
-  <section class="about section" style="padding: 80px 0;">
+  <!-- Hero Story Section -->
+  <section class="about section" style="padding: 80px 0; background: white;">
     <div class="container">
-      <div class="row align-items-center gy-4">
-        <div class="col-lg-6">
-          <h2 style="font-size: 2.5rem; color: #273d4e; margin-bottom: 20px;">Who We Are</h2>
-          <p style="font-size: 1.1rem; line-height: 1.8; color: #444;">
-            <strong>GSpaces</strong> is India's leading provider of complete desk setup solutions. We specialize in transforming empty spaces into fully functional, aesthetically pleasing workspaces that boost productivity and inspire creativity.
-          </p>
-          <p style="font-size: 1.1rem; line-height: 1.8; color: #444;">
-            Founded with a vision to revolutionize how Indians work from home and in offices, we've helped thousands of professionals, entrepreneurs, and businesses create their dream workspaces.
-          </p>
+      <!-- Our Story -->
+      <div class="row align-items-center mb-5">
+        <div class="col-lg-6 mb-4 mb-lg-0" data-aos="fade-right">
+          <div style="position: relative;">
+            <img src="{{ url_for('static', filename='img/about-2.jpg') }}" class="img-fluid rounded-4" alt="GSpaces Workspace" style="box-shadow: 0 20px 60px rgba(0,0,0,0.15);">
+            <div style="position: absolute; top: -20px; right: -20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);">
+              <h3 style="font-size: 2.5rem; font-weight: 700; margin: 0;">2024</h3>
+              <p style="margin: 0; font-size: 0.9rem;">Founded</p>
+            </div>
+          </div>
         </div>
-        <div class="col-lg-6">
-          <img src="{{ url_for('static', filename='img/about.jpg') }}" class="img-fluid rounded-4" alt="GSpaces Office" width="600" height="400" loading="lazy">
+        <div class="col-lg-6" data-aos="fade-left">
+          <span style="color: #ff4a17; font-weight: 600; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 2px;">Our Story</span>
+          <h2 style="font-size: 2.8rem; color: #273d4e; margin: 15px 0 25px; font-weight: 700; line-height: 1.2;">Transforming Workspaces, One Setup at a Time</h2>
+          <p style="font-size: 1.15rem; line-height: 1.9; color: #555; margin-bottom: 20px;">
+            GSpaces was born from a simple observation: <strong>setting up a productive workspace shouldn't be complicated</strong>. We saw professionals struggling to piece together furniture, accessories, and equipment from multiple vendors, often ending up with mismatched setups that didn't inspire productivity.
+          </p>
+          <p style="font-size: 1.15rem; line-height: 1.9; color: #555;">
+            Today, we're India's fastest-growing workspace solution provider, delivering <strong>complete, ready-to-use desk setups</strong> that combine aesthetics, ergonomics, and functionality—all with free professional installation.
+          </p>
+          <div style="margin-top: 30px; display: flex; gap: 30px; flex-wrap: wrap;">
+            <div>
+              <h4 style="font-size: 2.5rem; color: #667eea; font-weight: 700; margin: 0;">50+</h4>
+              <p style="color: #666; margin: 5px 0 0;">Happy Customers</p>
+            </div>
+            <div>
+              <h4 style="font-size: 2.5rem; color: #667eea; font-weight: 700; margin: 0;">30+</h4>
+              <p style="color: #666; margin: 5px 0 0;">Setups Delivered</p>
+            </div>
+            <div>
+              <h4 style="font-size: 2.5rem; color: #667eea; font-weight: 700; margin: 0;">100%</h4>
+              <p style="color: #666; margin: 5px 0 0;">Satisfaction Rate</p>
+            </div>
+          </div>
         </div>
       </div>
+    </div>
+  </section>
 
-      <!-- Mission & Vision -->
-      <div class="row mt-5">
-        <div class="col-lg-6 mb-4">
-          <div style="background: #f8f9fa; padding: 40px; border-radius: 10px; height: 100%;">
-            <h3 style="color: #ff4a17; margin-bottom: 20px;">Our Mission</h3>
-            <p style="font-size: 1.1rem; line-height: 1.8;">
-              To provide complete, ready-to-use desk setup solutions that combine functionality, aesthetics, and ergonomics, making professional workspaces accessible to everyone across India.
+  <!-- Mission & Values Section -->
+  <section style="padding: 80px 0; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);">
+    <div class="container">
+      <div class="text-center mb-5" data-aos="fade-up">
+        <span style="color: #ff4a17; font-weight: 600; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 2px;">What Drives Us</span>
+        <h2 style="font-size: 2.8rem; color: #273d4e; margin: 15px 0; font-weight: 700;">Our Mission & Values</h2>
+      </div>
+
+      <div class="row g-4">
+        <!-- Mission Card -->
+        <div class="col-lg-6" data-aos="fade-up" data-aos-delay="100">
+          <div style="background: white; padding: 50px 40px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); height: 100%; position: relative; overflow: hidden;">
+            <div style="position: absolute; top: -30px; right: -30px; width: 150px; height: 150px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; opacity: 0.1;"></div>
+            <div style="width: 70px; height: 70px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 15px; display: flex; align-items: center; justify-content: center; margin-bottom: 25px;">
+              <i class="bi bi-bullseye" style="font-size: 2.5rem; color: white;"></i>
+            </div>
+            <h3 style="font-size: 1.8rem; color: #273d4e; margin-bottom: 20px; font-weight: 700;">Our Mission</h3>
+            <p style="font-size: 1.1rem; line-height: 1.8; color: #555;">
+              To make professional, ergonomic workspaces accessible to everyone in India by providing <strong>complete, hassle-free desk setup solutions</strong> that combine quality, aesthetics, and affordability with free installation.
             </p>
           </div>
         </div>
-        <div class="col-lg-6 mb-4">
-          <div style="background: #f8f9fa; padding: 40px; border-radius: 10px; height: 100%;">
-            <h3 style="color: #ff4a17; margin-bottom: 20px;">Our Vision</h3>
-            <p style="font-size: 1.1rem; line-height: 1.8;">
-              To become India's most trusted brand for workspace solutions, helping millions create productive, inspiring work environments that enhance their professional and personal lives.
+
+        <!-- Vision Card -->
+        <div class="col-lg-6" data-aos="fade-up" data-aos-delay="200">
+          <div style="background: white; padding: 50px 40px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); height: 100%; position: relative; overflow: hidden;">
+            <div style="position: absolute; top: -30px; right: -30px; width: 150px; height: 150px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); border-radius: 50%; opacity: 0.1;"></div>
+            <div style="width: 70px; height: 70px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); border-radius: 15px; display: flex; align-items: center; justify-content: center; margin-bottom: 25px;">
+              <i class="bi bi-eye" style="font-size: 2.5rem; color: white;"></i>
+            </div>
+            <h3 style="font-size: 1.8rem; color: #273d4e; margin-bottom: 20px; font-weight: 700;">Our Vision</h3>
+            <p style="font-size: 1.1rem; line-height: 1.8; color: #555;">
+              To become <strong>India's most trusted workspace solutions brand</strong>, transforming how millions of professionals work by creating inspiring, productive environments that enhance both professional success and personal well-being.
             </p>
           </div>
         </div>
       </div>
 
-      <!-- What Makes Us Different -->
-      <div class="row mt-5">
-        <div class="col-12">
-          <h2 style="font-size: 2.5rem; color: #273d4e; margin-bottom: 40px; text-align: center;">What Makes Us Different</h2>
+      <!-- Core Values -->
+      <div class="row mt-5 g-4">
+        <div class="col-12 text-center mb-4" data-aos="fade-up">
+          <h3 style="font-size: 2.2rem; color: #273d4e; font-weight: 700;">Our Core Values</h3>
         </div>
-        <div class="col-lg-3 col-md-6 mb-4">
-          <div style="text-align: center; padding: 30px;">
-            <div style="font-size: 3rem; color: #ff4a17; margin-bottom: 20px;">✓</div>
-            <h4 style="color: #273d4e; margin-bottom: 15px;">Complete Solutions</h4>
-            <p>Everything you need in one package - desk, chair, lighting, accessories, and more.</p>
+        
+        <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="100">
+          <div style="text-align: center; padding: 30px 20px;">
+            <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; box-shadow: 0 8px 20px rgba(67, 233, 123, 0.3);">
+              <i class="bi bi-award" style="font-size: 2.5rem; color: white;"></i>
+            </div>
+            <h4 style="color: #273d4e; margin-bottom: 10px; font-weight: 600;">Quality First</h4>
+            <p style="color: #666; font-size: 0.95rem;">Premium materials and craftsmanship in every setup</p>
           </div>
         </div>
-        <div class="col-lg-3 col-md-6 mb-4">
-          <div style="text-align: center; padding: 30px;">
-            <div style="font-size: 3rem; color: #ff4a17; margin-bottom: 20px;">🚚</div>
-            <h4 style="color: #273d4e; margin-bottom: 15px;">Free Installation</h4>
-            <p>Professional installation included at no extra cost across India.</p>
+
+        <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="200">
+          <div style="text-align: center; padding: 30px 20px;">
+            <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; box-shadow: 0 8px 20px rgba(79, 172, 254, 0.3);">
+              <i class="bi bi-people" style="font-size: 2.5rem; color: white;"></i>
+            </div>
+            <h4 style="color: #273d4e; margin-bottom: 10px; font-weight: 600;">Customer Obsessed</h4>
+            <p style="color: #666; font-size: 0.95rem;">Your satisfaction is our top priority</p>
           </div>
         </div>
-        <div class="col-lg-3 col-md-6 mb-4">
-          <div style="text-align: center; padding: 30px;">
-            <div style="font-size: 3rem; color: #ff4a17; margin-bottom: 20px;">🎨</div>
-            <h4 style="color: #273d4e; margin-bottom: 15px;">Curated Designs</h4>
-            <p>Professionally matched furniture and accessories for perfect aesthetics.</p>
+
+        <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="300">
+          <div style="text-align: center; padding: 30px 20px;">
+            <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; box-shadow: 0 8px 20px rgba(250, 112, 154, 0.3);">
+              <i class="bi bi-lightbulb" style="font-size: 2.5rem; color: white;"></i>
+            </div>
+            <h4 style="color: #273d4e; margin-bottom: 10px; font-weight: 600;">Innovation</h4>
+            <p style="color: #666; font-size: 0.95rem;">Constantly improving our products and services</p>
           </div>
         </div>
-        <div class="col-lg-3 col-md-6 mb-4">
-          <div style="text-align: center; padding: 30px;">
-            <div style="font-size: 3rem; color: #ff4a17; margin-bottom: 20px;">💯</div>
-            <h4 style="color: #273d4e; margin-bottom: 15px;">Quality Guaranteed</h4>
-            <p>Premium materials, ergonomic designs, and manufacturer warranties.</p>
+
+        <div class="col-lg-3 col-md-6" data-aos="fade-up" data-aos-delay="400">
+          <div style="text-align: center; padding: 30px 20px;">
+            <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);">
+              <i class="bi bi-heart" style="font-size: 2.5rem; color: white;"></i>
+            </div>
+            <h4 style="color: #273d4e; margin-bottom: 10px; font-weight: 600;">Integrity</h4>
+            <p style="color: #666; font-size: 0.95rem;">Honest, transparent, and reliable always</p>
           </div>
         </div>
       </div>
+    </div>
+  </section>
 
-      <!-- Our Services -->
-      <div class="row mt-5">
-        <div class="col-12">
-          <h2 style="font-size: 2.5rem; color: #273d4e; margin-bottom: 40px; text-align: center;">Our Services</h2>
-        </div>
-        <div class="col-lg-4 mb-4">
-          <div style="background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); height: 100%;">
-            <h4 style="color: #ff4a17; margin-bottom: 15px;">WFH Desk Setups</h4>
-            <p>Complete work from home solutions with ergonomic furniture, proper lighting, and cable management for maximum productivity.</p>
-          </div>
-        </div>
-        <div class="col-lg-4 mb-4">
-          <div style="background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); height: 100%;">
-            <h4 style="color: #ff4a17; margin-bottom: 15px;">Office Desk Setups</h4>
-            <p>Professional office solutions for businesses, startups, and corporate spaces with bulk pricing and customization options.</p>
-          </div>
-        </div>
-        <div class="col-lg-4 mb-4">
-          <div style="background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); height: 100%;">
-            <h4 style="color: #ff4a17; margin-bottom: 15px;">Executive Setups</h4>
-            <p>Premium executive desk setups with luxury furniture, sophisticated designs, and high-end accessories.</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- CTA -->
-      <div class="row mt-5">
-        <div class="col-12 text-center">
-          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 60px 40px; border-radius: 15px;">
-            <h2 style="color: white; font-size: 2.5rem; margin-bottom: 20px;">Ready to Transform Your Workspace?</h2>
-            <p style="color: white; font-size: 1.2rem; margin-bottom: 30px;">Get started with GSpaces today and create your dream desk setup.</p>
-            <a href="/" class="btn btn-light btn-lg" style="padding: 15px 40px; font-size: 1.1rem;">Explore Our Setups</a>
-          </div>
+  <!-- CTA Section -->
+  <section style="padding: 100px 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); position: relative; overflow: hidden;">
+    <div style="position: absolute; top: -100px; right: -100px; width: 400px; height: 400px; background: rgba(255,255,255,0.1); border-radius: 50%; filter: blur(80px);"></div>
+    <div style="position: absolute; bottom: -150px; left: -150px; width: 500px; height: 500px; background: rgba(255,255,255,0.1); border-radius: 50%; filter: blur(100px);"></div>
+    
+    <div class="container" style="position: relative; z-index: 2;">
+      <div class="text-center" data-aos="fade-up">
+        <h2 style="color: white; font-size: 3rem; margin-bottom: 20px; font-weight: 700;">Ready to Transform Your Workspace?</h2>
+        <p style="color: rgba(255,255,255,0.9); font-size: 1.3rem; margin-bottom: 40px; max-width: 700px; margin-left: auto; margin-right: auto;">
+          Join 50+ happy customers who've already transformed their workspaces with GSpaces
+        </p>
+        <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;">
+          <a href="{{ url_for('products') }}" style="background: white; color: #667eea; padding: 18px 45px; border-radius: 50px; font-weight: 600; text-decoration: none; font-size: 1.1rem; box-shadow: 0 10px 30px rgba(0,0,0,0.2); transition: all 0.3s ease; display: inline-block;">
+            <i class="bi bi-grid-3x3-gap"></i> Browse Setups
+          </a>
+          <a href="{{ url_for('customer_inquiry_page') }}" style="background: rgba(255,255,255,0.2); color: white; padding: 18px 45px; border-radius: 50px; font-weight: 600; text-decoration: none; font-size: 1.1rem; border: 2px solid white; backdrop-filter: blur(10px); transition: all 0.3s ease; display: inline-block;">
+            <i class="bi bi-chat-dots"></i> Get Free Consultation
+          </a>
         </div>
       </div>
     </div>

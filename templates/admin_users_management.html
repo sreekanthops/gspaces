@@ -108,8 +108,8 @@
             </div>
 
             <!-- Main Content -->
-            <div class="col-md-10" style="background: #f8f9fa; min-height: calc(100vh - 76px); padding: 24px;">
-                <div class="admin-card">
+            <div class="col-md-10" style="background: #f8f9fa; min-height: calc(100vh - 76px); padding: 24px; overflow-x: hidden;">
+                <div class="admin-card" style="max-width: 100%; overflow-x: auto;">
                     <div class="card-header-custom">
                         <h2>👥 Users Management</h2>
                         <p>Manage customers and admin users</p>
@@ -170,8 +170,14 @@
                     const parser = new DOMParser();
                     const doc = parser.parseFromString(html, 'text/html');
                     
-                    // Extract main content (skip navbar, sidebar, footer)
-                    const mainContent = doc.querySelector('.col-md-10') || doc.querySelector('.admin-card') || doc.body;
+                    // Extract the admin-container or main content
+                    let mainContent = doc.querySelector('.admin-container');
+                    if (!mainContent) {
+                        mainContent = doc.querySelector('.col-md-10 > div');
+                    }
+                    if (!mainContent) {
+                        mainContent = doc.querySelector('.admin-card');
+                    }
                     
                     // Display content
                     document.getElementById('contentArea').innerHTML = mainContent.innerHTML;

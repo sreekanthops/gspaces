@@ -265,6 +265,84 @@ class AnimatedBanner {
         // Re-trigger scatter animation
         setTimeout(() => this.scatterItems(), 100);
     }
+    
+    addNewItem(item) {
+        // Add item to items array
+        this.items.push(item);
+        
+        // Create the furniture element
+        const element = document.createElement('div');
+        element.className = 'furniture-item';
+        element.dataset.itemId = item.id;
+        element.dataset.category = item.category;
+        element.style.cssText = `
+            position: absolute;
+            left: ${item.initial_x}%;
+            top: ${item.initial_y}%;
+            width: ${item.width}px;
+            height: ${item.height}px;
+            cursor: ${this.settings.allow_drag ? 'grab' : 'default'};
+            transform: translate(-50%, -50%) rotate(${item.rotation_angle}deg);
+            transition: all ${this.settings.scatter_duration}ms ${this.settings.scatter_easing};
+            z-index: ${100 + this.furnitureElements.length};
+            user-select: none;
+            -webkit-user-select: none;
+        `;
+        
+        const img = document.createElement('img');
+        img.src = item.image_path;
+        img.alt = item.name;
+        img.draggable = false;
+        img.style.cssText = `
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            pointer-events: none;
+        `;
+        
+        element.appendChild(img);
+        this.container.appendChild(element);
+        this.furnitureElements.push(element);
+        
+        // Store original position
+        this.originalPositions.set(element, {
+            x: item.initial_x,
+            y: item.initial_y,
+            rotation: item.rotation_angle
+        });
+        
+        // Initialize rotation and scale
+        this.currentRotation.set(element, item.rotation_angle || 0);
+        this.currentScale.set(element, 1.0);
+        
+        // Add click handler to show rotation control
+        element.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.showRotationControl(element);
+            this.hideContextMenu();
+        });
+        
+        // Add drag functionality
+        if (this.settings.allow_drag) {
+            this.addDragListeners(element);
+        }
+        
+        // Animate the new item with a scatter effect
+        setTimeout(() => {
+            const scatterDistance = item.scatter_distance || this.settings.scatter_distance || 200;
+            const angle = Math.random() * Math.PI * 2;
+            const distance = Math.random() * scatterDistance;
+            const scatterX = Math.cos(angle) * distance;
+            const scatterY = Math.sin(angle) * distance;
+            const randomRotation = (Math.random() - 0.5) * 60;
+            
+            element.style.transform = `translate(calc(-50% + ${scatterX}px), calc(-50% + ${scatterY}px)) rotate(${item.rotation_angle + randomRotation}deg)`;
+            
+            setTimeout(() => {
+                element.style.transform = `translate(-50%, -50%) rotate(${item.rotation_angle}deg)`;
+            }, this.settings.scatter_duration);
+        }, 100);
+    }
     createRotationControl() {
         // Create rotation control widget
         this.rotationControl = document.createElement('div');

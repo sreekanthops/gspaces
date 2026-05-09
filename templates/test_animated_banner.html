@@ -119,6 +119,79 @@
             color: #666;
             margin-top: 5px;
         }
+        
+        .upload-section {
+            background: white;
+            padding: 20px;
+            margin: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .upload-section h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+        
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            background: #f8f9ff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .upload-area:hover {
+            background: #eef2ff;
+            border-color: #4f46e5;
+        }
+        
+        .upload-area.dragover {
+            background: #e0e7ff;
+            border-color: #4f46e5;
+            transform: scale(1.02);
+        }
+        
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+        
+        #fileInput {
+            display: none;
+        }
+        
+        .btn-upload {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-upload:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        
+        .upload-preview {
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .preview-image {
+            max-width: 200px;
+            max-height: 200px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
     </style>
 </head>
 <body>
@@ -135,7 +208,23 @@
             <li>📱 On mobile, use touch to drag items</li>
             <li>🔄 Click the "Reset Layout" button to restore original positions</li>
             <li>🎯 Items will snap to a grid for easier alignment</li>
+            <li>📤 Upload your own PNG files to add custom items!</li>
         </ul>
+    </div>
+    
+    <!-- Upload Section -->
+    <div class="upload-section">
+        <h2>📤 Upload Your Own Furniture</h2>
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">🖼️</div>
+            <h3>Drop PNG files here or click to browse</h3>
+            <p style="color: #64748b; margin-top: 10px;">Supports PNG files with transparent backgrounds</p>
+            <input type="file" id="fileInput" accept=".png,image/png" multiple>
+            <button class="btn-upload" onclick="document.getElementById('fileInput').click()">
+                Choose Files
+            </button>
+        </div>
+        <div class="upload-preview" id="uploadPreview"></div>
     </div>
     
     <div class="stats">
@@ -168,7 +257,141 @@
         console.log('Furniture Data:', window.furnitureData);
         console.log('Banner Settings:', window.bannerSettings);
         console.log('Number of items:', window.furnitureData ? window.furnitureData.length : 0);
+        
+        // File upload functionality
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const uploadPreview = document.getElementById('uploadPreview');
+        let uploadedItemsCount = 0;
+        
+        // Prevent default drag behaviors
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, preventDefaults, false);
+            document.body.addEventListener(eventName, preventDefaults, false);
+        });
+        
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        // Highlight drop area when item is dragged over it
+        ['dragenter', 'dragover'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, () => {
+                uploadArea.classList.add('dragover');
+            }, false);
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, () => {
+                uploadArea.classList.remove('dragover');
+            }, false);
+        });
+        
+        // Handle dropped files
+        uploadArea.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            handleFiles(files);
+        }, false);
+        
+        // Handle selected files
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+        
+        function handleFiles(files) {
+            ([...files]).forEach(file => {
+                if (file.type === 'image/png') {
+                    uploadFile(file);
+                } else {
+                    alert('Please upload PNG files only!');
+                }
+            });
+        }
+        
+        function uploadFile(file) {
+            const reader = new FileReader();
+            
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    // Add the uploaded image to the banner
+                    addUploadedItemToBanner(e.target.result, file.name, img.width, img.height);
+                    
+                    // Show preview
+                    showPreview(e.target.result, file.name);
+                };
+                img.src = e.target.result;
+            };
+            
+            reader.readAsDataURL(file);
+        }
+        
+        function addUploadedItemToBanner(imageData, fileName, originalWidth, originalHeight) {
+            // Calculate scaled dimensions (max 200px)
+            const maxSize = 200;
+            let width = originalWidth;
+            let height = originalHeight;
+            
+            if (width > maxSize || height > maxSize) {
+                const ratio = Math.min(maxSize / width, maxSize / height);
+                width = width * ratio;
+                height = height * ratio;
+            }
+            
+            uploadedItemsCount++;
+            
+            // Create new furniture item data
+            const newItem = {
+                id: `uploaded_${uploadedItemsCount}`,
+                name: fileName,
+                image_path: imageData,
+                category: 'uploaded',
+                width: Math.round(width),
+                height: Math.round(height),
+                initial_x: 50,
+                initial_y: 50,
+                scatter_distance: 200,
+                rotation_angle: 0,
+                display_order: window.furnitureData.length + uploadedItemsCount
+            };
+            
+            // Add to furniture data
+            window.furnitureData.push(newItem);
+            
+            // Create and add the element to the banner
+            if (window.animatedBannerInstance) {
+                window.animatedBannerInstance.addNewItem(newItem);
+            }
+            
+            // Update item count
+            document.getElementById('itemCount').textContent = window.furnitureData.length;
+        }
+        
+        function showPreview(imageData, fileName) {
+            uploadPreview.style.display = 'block';
+            
+            const previewItem = document.createElement('div');
+            previewItem.style.cssText = 'display: inline-block; margin: 10px; text-align: center;';
+            previewItem.innerHTML = `
+                <img src="${imageData}" class="preview-image" alt="${fileName}">
+                <p style="margin-top: 5px; font-size: 12px; color: #64748b;">${fileName}</p>
+                <p style="font-size: 11px; color: #10b981; font-weight: 600;">✓ Added to workspace</p>
+            `;
+            
+            uploadPreview.appendChild(previewItem);
+        }
     </script>
     <script src="/static/js/animated-banner.js"></script>
+    <script>
+        // Store the banner instance globally so we can add items dynamically
+        document.addEventListener('DOMContentLoaded', function() {
+            const bannerContainer = document.getElementById('animated-furniture-banner');
+            if (bannerContainer && window.furnitureData && window.bannerSettings) {
+                window.animatedBannerInstance = new AnimatedBanner('animated-furniture-banner', window.furnitureData, window.bannerSettings);
+            }
+        });
+    </script>
 </body>
 </html>

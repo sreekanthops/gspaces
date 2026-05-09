@@ -42,6 +42,9 @@
                 <li class="nav-item {% if request.endpoint == 'index' %}active{% endif %}">
                     <a class="nav-link" href="{{ url_for('index') }}">Home</a>
                 </li>
+                <li class="nav-item {% if request.endpoint == 'about' %}active{% endif %}">
+                    <a class="nav-link" href="{{ url_for('about') }}">About</a>
+                </li>
                 <li class="nav-item {% if request.endpoint == 'corporate' %}active{% endif %}">
                     <a class="nav-link" href="{{ url_for('corporate') }}">Corporate</a>
                 </li>
@@ -54,13 +57,11 @@
                 <li class="nav-item {% if request.endpoint == 'customer_inquiry_page' %}active{% endif %}">
                     <a class="nav-link" href="{{ url_for('customer_inquiry_page') }}">Enquiry</a>
                 </li>
-                {% if current_user.is_authenticated %}
                 <li class="nav-item {% if request.endpoint == 'my_workspace' %}active{% endif %}">
                     <a class="nav-link" href="{{ url_for('my_workspace') }}">
                         <i class="bi bi-palette"></i> Animate
                     </a>
                 </li>
-                {% endif %}
                 <li class="nav-item {% if request.endpoint == 'contact' %}active{% endif %}">
                     <a class="nav-link" href="{{ url_for('contact') }}">Contact</a>
                 </li>

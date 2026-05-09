@@ -4256,6 +4256,11 @@ def serve_sitemap():
         return redirect(url_for('static', filename='sitemap.xml'), code=301)
 
 # --- SEO PAGES ---
+@app.route('/about')
+def about():
+    """About page with company information"""
+    return render_template('about.html')
+
 @app.route('/contact', methods=['GET', 'POST'])
 def contact():
     """Contact Us page with form handling"""

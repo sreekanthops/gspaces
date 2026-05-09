@@ -1,0 +1,321 @@
+{% extends "admin_nav.html" %}
+
+{% block title %}System Health - Admin Panel{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2><i class="fas fa-heartbeat"></i> System Health Monitor</h2>
+            <p class="text-muted">Monitor system errors and health status</p>
+        </div>
+    </div>
+
+    <!-- Error Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-danger text-white">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-exclamation-triangle"></i> Total Errors</h5>
+                    <h2>{{ error_stats.total_errors or 0 }}</h2>
+                    <small>Last 7 days</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-dark text-white">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-skull-crossbones"></i> Critical Errors</h5>
+                    <h2>{{ error_stats.critical_errors or 0 }}</h2>
+                    <small>Requires immediate attention</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-exclamation-circle"></i> High Priority</h5>
+                    <h2>{{ error_stats.high_errors or 0 }}</h2>
+                    <small>Needs attention</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-clock"></i> Last Hour</h5>
+                    <h2>{{ error_stats.last_hour_errors or 0 }}</h2>
+                    <small>Recent errors</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Health Check -->
+    <div class="card mb-4">
+        <div class="card-header bg-success text-white">
+            <h5><i class="fas fa-check-circle"></i> System Health Check</h5>
+        </div>
+        <div class="card-body">
+            <button class="btn btn-primary" onclick="runHealthCheck()">
+                <i class="fas fa-sync-alt"></i> Run Health Check
+            </button>
+            <div id="healthCheckResults" class="mt-3"></div>
+        </div>
+    </div>
+
+    <!-- Recent Errors -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5><i class="fas fa-bug"></i> Recent Errors</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover" id="errorsTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Severity</th>
+                            <th>Type</th>
+                            <th>Endpoint</th>
+                            <th>Message</th>
+                            <th>Time</th>
+                            <th>Notified</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for error in errors %}
+                        <tr class="{% if error.severity == 'critical' %}table-danger{% elif error.severity == 'high' %}table-warning{% endif %}">
+                            <td>{{ error.id }}</td>
+                            <td>
+                                {% if error.severity == 'critical' %}
+                                <span class="badge bg-danger">
+                                    <i class="fas fa-skull-crossbones"></i> CRITICAL
+                                </span>
+                                {% elif error.severity == 'high' %}
+                                <span class="badge bg-warning text-dark">
+                                    <i class="fas fa-exclamation-triangle"></i> HIGH
+                                </span>
+                                {% elif error.severity == 'medium' %}
+                                <span class="badge bg-info">
+                                    <i class="fas fa-info-circle"></i> MEDIUM
+                                </span>
+                                {% else %}
+                                <span class="badge bg-secondary">
+                                    <i class="fas fa-minus-circle"></i> LOW
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td><code>{{ error.error_type }}</code></td>
+                            <td><small>{{ error.endpoint }}</small></td>
+                            <td>
+                                <div style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                    {{ error.error_message }}
+                                </div>
+                            </td>
+                            <td>{{ error.created_at.strftime('%Y-%m-%d %H:%M:%S') if error.created_at else 'N/A' }}</td>
+                            <td>
+                                {% if error.is_notified %}
+                                <span class="badge bg-success">
+                                    <i class="fas fa-check"></i> Yes
+                                </span>
+                                {% else %}
+                                <span class="badge bg-secondary">
+                                    <i class="fas fa-times"></i> No
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-info" onclick="viewErrorDetails({{ error.id }})">
+                                    <i class="fas fa-eye"></i> Details
+                                </button>
+                                <button class="btn btn-sm btn-danger" onclick="deleteError({{ error.id }})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Health Logs -->
+    <div class="card">
+        <div class="card-header">
+            <h5><i class="fas fa-history"></i> Health Check History</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-sm table-striped">
+                    <thead>
+                        <tr>
+                            <th>Check Type</th>
+                            <th>Status</th>
+                            <th>Response Time</th>
+                            <th>Endpoint</th>
+                            <th>Time</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in health_logs %}
+                        <tr>
+                            <td>{{ log.check_type }}</td>
+                            <td>
+                                {% if log.status == 'OK' %}
+                                <span class="badge bg-success">OK</span>
+                                {% else %}
+                                <span class="badge bg-danger">FAILED</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ log.response_time }}ms</td>
+                            <td><small>{{ log.endpoint }}</small></td>
+                            <td>{{ log.created_at.strftime('%Y-%m-%d %H:%M:%S') if log.created_at else 'N/A' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Error Details Modal -->
+<div class="modal fade" id="errorDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Error Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="errorDetailsContent">
+                <div class="text-center">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Initialize DataTable
+$(document).ready(function() {
+    $('#errorsTable').DataTable({
+        order: [[5, 'desc']],
+        pageLength: 25,
+        responsive: true
+    });
+});
+
+function runHealthCheck() {
+    $('#healthCheckResults').html('<div class="alert alert-info"><i class="fas fa-spinner fa-spin"></i> Running health check...</div>');
+    
+    fetch('/api/system/health-check')
+        .then(response => response.json())
+        .then(data => {
+            let html = '<div class="alert alert-success"><i class="fas fa-check-circle"></i> Health check completed</div>';
+            html += '<table class="table table-sm">';
+            html += '<thead><tr><th>Component</th><th>Status</th></tr></thead><tbody>';
+            
+            data.checks.forEach(check => {
+                let statusClass = check.status === 'OK' ? 'success' : 'danger';
+                let statusIcon = check.status === 'OK' ? 'check-circle' : 'times-circle';
+                html += `<tr>
+                    <td>${check.name}</td>
+                    <td><span class="badge bg-${statusClass}"><i class="fas fa-${statusIcon}"></i> ${check.status}</span></td>
+                </tr>`;
+            });
+            
+            html += '</tbody></table>';
+            $('#healthCheckResults').html(html);
+        })
+        .catch(error => {
+            $('#healthCheckResults').html('<div class="alert alert-danger"><i class="fas fa-exclamation-triangle"></i> Health check failed: ' + error + '</div>');
+        });
+}
+
+function viewErrorDetails(errorId) {
+    $('#errorDetailsModal').modal('show');
+    $('#errorDetailsContent').html('<div class="text-center"><div class="spinner-border"></div></div>');
+    
+    fetch(`/api/error/${errorId}/details`)
+        .then(response => response.json())
+        .then(data => {
+            let html = `
+                <div class="row">
+                    <div class="col-12">
+                        <h6>Error Information</h6>
+                        <table class="table table-sm">
+                            <tr><td><strong>Error ID:</strong></td><td>${data.id}</td></tr>
+                            <tr><td><strong>Type:</strong></td><td><code>${data.error_type}</code></td></tr>
+                            <tr><td><strong>Severity:</strong></td><td><span class="badge bg-danger">${data.severity}</span></td></tr>
+                            <tr><td><strong>Endpoint:</strong></td><td>${data.endpoint}</td></tr>
+                            <tr><td><strong>Time:</strong></td><td>${data.created_at}</td></tr>
+                            <tr><td><strong>IP Address:</strong></td><td>${data.ip_address || 'N/A'}</td></tr>
+                        </table>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <h6>Error Message</h6>
+                        <pre class="bg-light p-3 border rounded">${data.error_message}</pre>
+                    </div>
+                </div>
+                ${data.stack_trace ? `
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <h6>Stack Trace</h6>
+                        <pre class="bg-dark text-white p-3 border rounded" style="max-height: 300px; overflow-y: auto;">${data.stack_trace}</pre>
+                    </div>
+                </div>
+                ` : ''}
+            `;
+            $('#errorDetailsContent').html(html);
+        })
+        .catch(error => {
+            $('#errorDetailsContent').html('<div class="alert alert-danger">Error loading details</div>');
+        });
+}
+
+function deleteError(errorId) {
+    if (confirm('Are you sure you want to delete this error log?')) {
+        fetch(`/api/error/${errorId}/delete`, {method: 'DELETE'})
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Error deleting log');
+                }
+            });
+    }
+}
+
+// Auto-refresh every 60 seconds
+setInterval(function() {
+    location.reload();
+}, 60000);
+</script>
+
+<style>
+.card {
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+
+pre {
+    font-size: 0.85em;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.table-responsive {
+    max-height: 600px;
+    overflow-y: auto;
+}
+</style>
+{% endblock %}

@@ -65,6 +65,7 @@ from deals_routes import register_deals_routes
 from performance_config import configure_performance
 from leads_simple import register_leads_routes
 from admin_users_routes import admin_users_bp, set_db_connection_func
+from visitor_tracking_routes import register_visitor_routes
 
 # --- DISPOSABLE EMAIL DOMAINS BLACKLIST ---
 DISPOSABLE_EMAIL_DOMAINS = {
@@ -5619,6 +5620,10 @@ register_leads_routes(app, connect_to_db)
 # Register admin user management blueprint
 set_db_connection_func(connect_to_db)
 app.register_blueprint(admin_users_bp)
+
+# --- VISITOR TRACKING SYSTEM ---
+# Register visitor tracking and system health monitoring
+register_visitor_routes(app, connect_to_db)
 
 # --- APPLICATION BOOTSTRAP ---
 if __name__ == '__main__':

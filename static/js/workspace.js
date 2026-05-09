@@ -1,36 +1,20 @@
 // Workspace Management JavaScript
 // Handles user workspace interactions, uploads, and auto-save
 
-let banner = null;
 let autoSaveEnabled = true;
 let isDirty = false;
+let selectedItem = null;
 
 // Initialize workspace when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Initializing workspace...');
-    initializeWorkspace();
-    setupUploadHandlers();
-    setupAutoSave();
+    console.log('Initializing workspace handlers...');
+    // Wait for AnimatedBanner to be initialized
+    setTimeout(() => {
+        setupUploadHandlers();
+        setupAutoSave();
+        setupDeselectHandler();
+    }, 100);
 });
-
-// Initialize the animated banner with user's items
-function initializeWorkspace() {
-    const container = document.getElementById('animated-furniture-banner');
-    if (!container) {
-        console.error('Banner container not found');
-        return;
-    }
-    
-    // Create single banner instance
-    if (!banner) {
-        banner = new AnimatedBanner(container, window.furnitureData, window.bannerSettings);
-        console.log('Workspace initialized with', window.furnitureData.length, 'items');
-    }
-    
-    // Listen for item changes
-    container.addEventListener('itemMoved', handleItemChange);
-    container.addEventListener('itemRotated', handleItemChange);
-}
 
 // Setup file upload handlers
 function setupUploadHandlers() {
@@ -110,13 +94,17 @@ async function handleFiles(files) {
 
 // Upload single file to server
 async function uploadFile(file) {
+    console.log('Starting upload for file:', file.name);
+    
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
         
         reader.onload = async function(e) {
             const base64Data = e.target.result;
+            console.log('File read complete, data length:', base64Data.length);
             
             try {
+                console.log('Sending upload request to /api/workspace/upload');
                 const response = await fetch('/api/workspace/upload', {
                     method: 'POST',
                     headers: {
@@ -128,9 +116,12 @@ async function uploadFile(file) {
                     })
                 });
                 
+                console.log('Response status:', response.status);
                 const result = await response.json();
+                console.log('Response data:', result);
                 
                 if (result.success) {
+                    console.log('Upload successful, adding item to banner');
                     // Add item to banner
                     addItemToBanner(result.item);
                     
@@ -141,16 +132,19 @@ async function uploadFile(file) {
                     showNotification('Item added successfully', 'success');
                     resolve(result);
                 } else {
+                    console.error('Upload failed:', result.message);
                     showNotification(result.message || 'Upload failed', 'error');
                     reject(new Error(result.message));
                 }
             } catch (error) {
                 console.error('Upload request failed:', error);
+                showNotification('Failed to upload ' + file.name, 'error');
                 reject(error);
             }
         };
         
         reader.onerror = function() {
+            console.error('Failed to read file');
             reject(new Error('Failed to read file'));
         };
         
@@ -160,22 +154,19 @@ async function uploadFile(file) {
 
 // Add new item to the banner
 function addItemToBanner(item) {
-    if (!banner) {
-        console.error('Banner not initialized');
+    if (!window.animatedBannerInstance) {
+        console.error('AnimatedBanner not initialized');
         return;
     }
     
-    // Add to banner's items array
-    banner.items.push(item);
+    console.log('Adding item to banner:', item);
     
-    // Create and add the element
-    const element = banner.createFurnitureElement(item);
-    banner.container.appendChild(element);
+    // Use the existing addNewItem method from AnimatedBanner class (same as test page)
+    window.animatedBannerInstance.addNewItem(item);
+    console.log('Item added successfully using addNewItem:', item.id);
     
-    // Apply scatter animation
-    banner.scatterItem(element, item);
-    
-    console.log('Added item to banner:', item.id);
+    // Update item count
+    document.getElementById('itemCount').textContent = window.furnitureData.length;
 }
 
 // Handle item position/rotation changes
@@ -315,16 +306,25 @@ async function clearWorkspace() {
         const result = await response.json();
         
         if (result.success) {
-            // Clear banner
-            if (banner) {
-                banner.container.innerHTML = '';
-                banner.items = [];
+            // Clear banner using AnimatedBanner instance
+            if (window.animatedBannerInstance) {
+                window.animatedBannerInstance.container.innerHTML = '';
+                window.animatedBannerInstance.items = [];
+                window.animatedBannerInstance.furnitureElements = [];
             }
+            
+            // Clear data
+            window.furnitureData = [];
             
             // Update stats
             updateStats();
             
             showNotification('Workspace cleared', 'success');
+            
+            // Reload page to reinitialize
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
         } else {
             throw new Error(result.message || 'Clear failed');
         }
@@ -371,8 +371,201 @@ function showNotification(message, type = 'info') {
     }, 5000);
 }
 
+// Handle item selection
+function handleItemClick(element) {
+    // Remove previous selection
+    if (selectedItem) {
+        selectedItem.style.outline = 'none';
+        selectedItem.style.boxShadow = '';
+    }
+    
+    // Select new item
+    selectedItem = element;
+    selectedItem.style.outline = '3px solid #667eea';
+    selectedItem.style.boxShadow = '0 0 20px rgba(102, 126, 234, 0.5)';
+    
+    // Show delete button
+    const deleteBtn = document.getElementById('deleteSelectedBtn');
+    if (deleteBtn) {
+        deleteBtn.style.display = 'block';
+    }
+}
+
+// Delete selected item
+async function deleteSelected() {
+    if (!selectedItem) {
+        showNotification('No item selected', 'error');
+        return;
+    }
+    
+    const itemId = selectedItem.dataset.itemId;
+    
+    if (!confirm('Are you sure you want to delete this item?')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/workspace/item/${itemId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            // Remove from DOM
+            selectedItem.remove();
+            selectedItem = null;
+            
+            // Hide delete button
+            const deleteBtn = document.getElementById('deleteSelectedBtn');
+            if (deleteBtn) {
+                deleteBtn.style.display = 'none';
+            }
+            
+            // Update stats
+            updateStats();
+            
+            showNotification('Item deleted successfully', 'success');
+        } else {
+            throw new Error(result.message || 'Delete failed');
+        }
+    } catch (error) {
+        console.error('Delete error:', error);
+        showNotification('Failed to delete item', 'error');
+    }
+}
+
+// Deselect item when clicking outside
+function setupDeselectHandler() {
+    const container = document.getElementById('animated-furniture-banner');
+    if (container) {
+        container.addEventListener('click', function(e) {
+            // If clicking on the container itself (not an item)
+            if (e.target === container) {
+                if (selectedItem) {
+                    selectedItem.style.outline = 'none';
+                    selectedItem.style.boxShadow = '';
+                    selectedItem = null;
+                    
+                    const deleteBtn = document.getElementById('deleteSelectedBtn');
+                    if (deleteBtn) {
+                        deleteBtn.style.display = 'none';
+                    }
+                }
+            }
+        });
+    }
+}
+
+// Handle item selection
+function handleItemClick(element) {
+    // Remove previous selection
+    if (selectedItem) {
+        selectedItem.style.outline = 'none';
+        selectedItem.style.boxShadow = '';
+    }
+    
+    // Select new item
+    selectedItem = element;
+    selectedItem.style.outline = '3px solid #667eea';
+    selectedItem.style.boxShadow = '0 0 20px rgba(102, 126, 234, 0.5)';
+    
+    // Show control panel
+    const controlPanel = document.getElementById('itemControlPanel');
+    if (controlPanel) {
+        controlPanel.style.display = 'block';
+    }
+}
+
+// Close control panel
+function closeControlPanel() {
+    const controlPanel = document.getElementById('itemControlPanel');
+    if (controlPanel) {
+        controlPanel.style.display = 'none';
+    }
+    
+    if (selectedItem) {
+        selectedItem.style.outline = 'none';
+        selectedItem.style.boxShadow = '';
+        selectedItem = null;
+    }
+}
+
+// Rotate item
+function rotateItem(degrees) {
+    if (!selectedItem) return;
+    
+    const transform = selectedItem.style.transform;
+    const match = transform.match(/rotate\(([^)]+)deg\)/);
+    const currentRotation = match ? parseFloat(match[1]) : 0;
+    const newRotation = currentRotation + degrees;
+    
+    // Update transform
+    const translateMatch = transform.match(/translate\(([^,]+),\s*([^)]+)\)/);
+    const scaleMatch = transform.match(/scale\(([^)]+)\)/);
+    
+    const x = translateMatch ? translateMatch[1] : '0px';
+    const y = translateMatch ? translateMatch[2] : '0px';
+    const scale = scaleMatch ? scaleMatch[1] : '1';
+    
+    selectedItem.style.transform = `translate(${x}, ${y}) rotate(${newRotation}deg) scale(${scale})`;
+    handleItemChange();
+}
+
+// Scale item
+function scaleItem(delta) {
+    if (!selectedItem) return;
+    
+    const transform = selectedItem.style.transform;
+    const scaleMatch = transform.match(/scale\(([^)]+)\)/);
+    const currentScale = scaleMatch ? parseFloat(scaleMatch[1]) : 1;
+    const newScale = Math.max(0.1, Math.min(3, currentScale + delta));
+    
+    // Update transform
+    const translateMatch = transform.match(/translate\(([^,]+),\s*([^)]+)\)/);
+    const rotateMatch = transform.match(/rotate\(([^)]+)deg\)/);
+    
+    const x = translateMatch ? translateMatch[1] : '0px';
+    const y = translateMatch ? translateMatch[2] : '0px';
+    const rotation = rotateMatch ? rotateMatch[1] : '0';
+    
+    selectedItem.style.transform = `translate(${x}, ${y}) rotate(${rotation}deg) scale(${newScale})`;
+    handleItemChange();
+}
+
+// Flip item
+function flipItem(direction) {
+    if (!selectedItem) return;
+    
+    const currentTransform = selectedItem.style.transform;
+    
+    if (direction === 'horizontal') {
+        if (currentTransform.includes('scaleX(-1)')) {
+            selectedItem.style.transform = currentTransform.replace('scaleX(-1)', 'scaleX(1)');
+        } else {
+            selectedItem.style.transform = currentTransform + ' scaleX(-1)';
+        }
+    } else if (direction === 'vertical') {
+        if (currentTransform.includes('scaleY(-1)')) {
+            selectedItem.style.transform = currentTransform.replace('scaleY(-1)', 'scaleY(1)');
+        } else {
+            selectedItem.style.transform = currentTransform + ' scaleY(-1)';
+        }
+    }
+    
+    handleItemChange();
+}
+
 // Export functions for global access
 window.saveWorkspace = saveWorkspace;
 window.clearWorkspace = clearWorkspace;
+window.deleteSelected = deleteSelected;
+window.closeControlPanel = closeControlPanel;
+window.rotateItem = rotateItem;
+window.scaleItem = scaleItem;
+window.flipItem = flipItem;
 
 // Made with Bob

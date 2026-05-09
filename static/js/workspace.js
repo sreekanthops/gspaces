@@ -36,21 +36,23 @@ function initializeWorkspace() {
 function setupUploadHandlers() {
     const uploadZone = document.getElementById('uploadZone');
     const fileInput = document.getElementById('fileInput');
+    const uploadButton = document.getElementById('uploadButton');
     
-    if (!uploadZone || !fileInput) return;
+    if (!uploadZone || !fileInput || !uploadButton) return;
     
-    // Click to upload
-    uploadZone.addEventListener('click', function(e) {
-        if (e.target.id !== 'fileInput') {
-            fileInput.click();
-        }
+    // Button click to upload
+    uploadButton.addEventListener('click', function(e) {
+        e.stopPropagation();
+        fileInput.click();
     });
     
     // File selection
     fileInput.addEventListener('change', function(e) {
-        handleFiles(e.target.files);
-        // Clear the input so the same file can be uploaded again
-        e.target.value = '';
+        if (e.target.files && e.target.files.length > 0) {
+            handleFiles(e.target.files);
+            // Clear the input so the same file can be uploaded again
+            e.target.value = '';
+        }
     });
     
     // Drag and drop

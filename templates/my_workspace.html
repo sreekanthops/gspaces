@@ -237,8 +237,8 @@
                         <div class="upload-icon">🖼️</div>
                         <h4>Drop PNG files here or click to browse</h4>
                         <p style="color: #64748b; margin-top: 10px;">Supports PNG files with transparent backgrounds</p>
-                        <input type="file" id="fileInput" accept=".png,image/png" multiple>
-                        <button class="btn-upload" onclick="document.getElementById('fileInput').click()">
+                        <input type="file" id="fileInput" accept=".png,image/png" multiple style="display: none;">
+                        <button class="btn-upload" id="uploadButton" type="button">
                             <i class="bi bi-upload"></i> Choose Files
                         </button>
                     </div>

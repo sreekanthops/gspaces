@@ -4,60 +4,135 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Workspace - GSpaces</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="{{ url_for('static', filename='css/main.css') }}" rel="stylesheet">
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
         body {
+            font-family: Arial, sans-serif;
             background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
             min-height: 100vh;
         }
         
-        .workspace-container {
-            max-width: 1400px;
-            margin: 30px auto;
-            padding: 0 20px;
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
         }
         
-        .workspace-header {
-            background: white;
-            border-radius: 16px;
-            padding: 30px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-        
-        .workspace-header h1 {
-            color: #1e293b;
+        .header h1 {
             margin-bottom: 10px;
         }
         
-        .workspace-header p {
-            color: #64748b;
-            margin: 0;
+        .header .user-info {
+            font-size: 14px;
+            opacity: 0.9;
         }
         
-        .controls-panel {
+        .instructions {
             background: white;
-            border-radius: 16px;
             padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            margin: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
         
-        .upload-zone {
+        .instructions h2 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        
+        .instructions ul {
+            margin-left: 20px;
+        }
+        
+        .instructions li {
+            margin: 5px 0;
+        }
+        
+        #animated-furniture-banner {
+            margin: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            overflow: hidden;
+        }
+        
+        .furniture-item {
+            cursor: grab;
+            transition: transform 0.3s ease;
+        }
+        
+        .furniture-item:active {
+            cursor: grabbing;
+        }
+        
+        .furniture-item:hover {
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+        }
+        
+        .stats {
+            background: white;
+            padding: 15px;
+            margin: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 10px;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .upload-section {
+            background: white;
+            padding: 20px;
+            margin: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .upload-section h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+        
+        .upload-area {
             border: 3px dashed #667eea;
             border-radius: 12px;
-            padding: 30px;
+            padding: 40px;
             text-align: center;
             background: #f8f9ff;
             cursor: pointer;
             transition: all 0.3s ease;
-            margin-bottom: 20px;
         }
         
-        .upload-zone:hover, .upload-zone.dragover {
+        .upload-area:hover {
             background: #eef2ff;
+            border-color: #4f46e5;
+        }
+        
+        .upload-area.dragover {
+            background: #e0e7ff;
             border-color: #4f46e5;
             transform: scale(1.02);
         }
@@ -80,29 +155,13 @@
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
+            margin-top: 15px;
             transition: all 0.3s ease;
         }
         
         .btn-upload:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-        }
-        
-        .btn-save {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            color: white;
-            border: none;
-            padding: 12px 30px;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        
-        .btn-save:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
         }
         
         .btn-clear {
@@ -114,6 +173,7 @@
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
+            margin-left: 10px;
             transition: all 0.3s ease;
         }
         
@@ -122,153 +182,88 @@
             box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
         }
         
-        #animated-furniture-banner {
-            background: white;
-            border-radius: 16px;
-            min-height: 600px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .furniture-item {
-            cursor: grab;
-            transition: transform 0.3s ease;
-        }
-        
-        .furniture-item:active {
-            cursor: grabbing;
-        }
-        
-        .furniture-item:hover {
-            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
-        }
-        
-        .stats-bar {
-            display: flex;
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-        
-        .stat-card {
-            background: white;
-            padding: 15px 20px;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            flex: 1;
-            text-align: center;
-        }
-        
-        .stat-value {
-            font-size: 28px;
-            font-weight: bold;
-            color: #667eea;
-        }
-        
-        .stat-label {
-            font-size: 14px;
-            color: #64748b;
-            margin-top: 5px;
-        }
-        
-        .save-indicator {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: white;
-            padding: 12px 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        .upload-preview {
+            margin-top: 20px;
             display: none;
-            z-index: 9999;
         }
         
-        .save-indicator.saving {
-            display: block;
-            background: #fef3c7;
-            color: #92400e;
+        .preview-image {
+            max-width: 200px;
+            max-height: 200px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
         
-        .save-indicator.saved {
-            display: block;
-            background: #d1fae5;
-            color: #065f46;
+        .back-link {
+            display: inline-block;
+            margin: 20px;
+            padding: 10px 20px;
+            background: white;
+            color: #667eea;
+            text-decoration: none;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .back-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
     </style>
 </head>
 <body>
-    {% include 'navbar.html' %}
-    
-    <div class="workspace-container">
-        <!-- In Progress Banner -->
-        <div class="alert alert-warning alert-dismissible fade show" role="alert" style="border-radius: 16px; border-left: 5px solid #f59e0b;">
-            <h5 class="alert-heading"><i class="bi bi-exclamation-triangle-fill"></i> Feature In Progress</h5>
-            <p class="mb-0">This workspace feature is currently under development and not yet deployed to production. Some features may not work as expected. Thank you for your patience!</p>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <div class="header">
+        <h1>🎨 My Workspace</h1>
+        <p>Create your perfect space by uploading and arranging furniture items!</p>
+        <div class="user-info">
+            <i class="bi bi-person-circle"></i> Logged in as: {{ current_user.username }}
         </div>
-        
-        <!-- Header -->
-        <div class="workspace-header">
-            <h1><i class="bi bi-palette"></i> My Workspace</h1>
-            <p>Create your perfect workspace by uploading and arranging furniture items. Your layout is automatically saved!</p>
-        </div>
-        
-        <!-- Stats Bar -->
-        <div class="stats-bar">
-            <div class="stat-card">
-                <div class="stat-value" id="itemCount">{{ items|length }}</div>
-                <div class="stat-label">Items</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value" id="uploadCount">0</div>
-                <div class="stat-label">Uploaded Today</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value">Auto</div>
-                <div class="stat-label">Save Mode</div>
-            </div>
-        </div>
-        
-        <!-- Controls Panel -->
-        <div class="controls-panel">
-            <div class="row align-items-center">
-                <div class="col-md-8">
-                    <div class="upload-zone" id="uploadZone">
-                        <div class="upload-icon">🖼️</div>
-                        <h4>Drop PNG files here or click to browse</h4>
-                        <p style="color: #64748b; margin-top: 10px;">Supports PNG files with transparent backgrounds</p>
-                        <input type="file" id="fileInput" accept=".png,image/png" multiple style="display: none;">
-                        <button class="btn-upload" id="uploadButton" type="button">
-                            <i class="bi bi-upload"></i> Choose Files
-                        </button>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="d-grid gap-2">
-                        <button class="btn-save" onclick="saveWorkspace()">
-                            <i class="bi bi-save"></i> Save Now
-                        </button>
-                        <button class="btn btn-danger" id="deleteSelectedBtn" onclick="deleteSelected()" style="display: none; padding: 12px 30px; border-radius: 8px; font-size: 16px; font-weight: 600;">
-                            <i class="bi bi-trash-fill"></i> Delete Selected
-                        </button>
-                        <button class="btn-clear" onclick="clearWorkspace()">
-                            <i class="bi bi-trash"></i> Clear All
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Workspace Canvas -->
-        <div id="animated-furniture-banner"></div>
     </div>
     
-    <!-- Save Indicator -->
-    <div class="save-indicator" id="saveIndicator">
-        <i class="bi bi-check-circle"></i> <span id="saveText">Saved</span>
+    <a href="/" class="back-link"><i class="bi bi-arrow-left"></i> Back to Home</a>
+    
+    <div class="instructions">
+        <h2>How to Use</h2>
+        <ul>
+            <li><strong>Upload:</strong> Click "Choose Files" or drag & drop PNG images below</li>
+            <li><strong>Drag:</strong> Click and drag any furniture item to move it around</li>
+            <li><strong>Rotate & Resize:</strong> Click on an item to show rotation/size controls</li>
+            <li><strong>Right-click:</strong> Access additional options (bring forward, send back, etc.)</li>
+            <li><strong>Clear All:</strong> Remove all items from your workspace</li>
+        </ul>
     </div>
     
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <div class="stats">
+        <div class="stat-item">
+            <div class="stat-value" id="itemCount">{{ items|length }}</div>
+            <div class="stat-label">Total Items</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value" id="uploadedCount">0</div>
+            <div class="stat-label">Uploaded This Session</div>
+        </div>
+    </div>
+    
+    <div class="upload-section">
+        <h2>Upload Furniture Items</h2>
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">🖼️</div>
+            <h3>Drop PNG files here or click to browse</h3>
+            <p style="color: #64748b; margin-top: 10px;">Supports PNG files with transparent backgrounds (Max 5MB)</p>
+            <input type="file" id="fileInput" accept=".png,image/png" multiple>
+            <button class="btn-upload" onclick="document.getElementById('fileInput').click()">
+                <i class="bi bi-upload"></i> Choose Files
+            </button>
+            <button class="btn-clear" onclick="clearAllItems()">
+                <i class="bi bi-trash"></i> Clear All
+            </button>
+        </div>
+        <div class="upload-preview" id="uploadPreview"></div>
+    </div>
+    
+    <div id="animated-furniture-banner"></div>
+    
     <script>
         // Load user's workspace data
         window.furnitureData = {{ items | tojson | safe }};
@@ -283,14 +278,193 @@
             background_color: '#ffffff'
         };
         
-        let uploadedToday = 0;
-        let saveTimeout = null;
+        // Debug: Log the data
+        console.log('Furniture Data:', window.furnitureData);
+        console.log('Number of items:', window.furnitureData ? window.furnitureData.length : 0);
         
-        console.log('Loaded workspace items:', window.furnitureData.length);
+        // File upload functionality
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const uploadPreview = document.getElementById('uploadPreview');
+        let uploadedItemsCount = 0;
+        
+        // Prevent default drag behaviors
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, preventDefaults, false);
+            document.body.addEventListener(eventName, preventDefaults, false);
+        });
+        
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        // Highlight drop area when item is dragged over it
+        ['dragenter', 'dragover'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, () => {
+                uploadArea.classList.add('dragover');
+            }, false);
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, () => {
+                uploadArea.classList.remove('dragover');
+            }, false);
+        });
+        
+        // Handle dropped files
+        uploadArea.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            handleFiles(files);
+        }, false);
+        
+        // Handle selected files
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+        
+        function handleFiles(files) {
+            ([...files]).forEach(file => {
+                if (file.type === 'image/png') {
+                    if (file.size > 5 * 1024 * 1024) {
+                        alert('File too large. Max size is 5MB');
+                        return;
+                    }
+                    uploadFile(file);
+                } else {
+                    alert('Please upload PNG files only!');
+                }
+            });
+        }
+        
+        function uploadFile(file) {
+            const reader = new FileReader();
+            
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    // Add the uploaded image to the banner
+                    addUploadedItemToBanner(e.target.result, file.name, img.width, img.height);
+                    
+                    // Show preview
+                    showPreview(e.target.result, file.name);
+                    
+                    // Save to database
+                    saveItemToDatabase(e.target.result, file.name, img.width, img.height);
+                };
+                img.src = e.target.result;
+            };
+            
+            reader.readAsDataURL(file);
+        }
+        
+        function addUploadedItemToBanner(imageData, fileName, originalWidth, originalHeight) {
+            // Calculate scaled dimensions (max 200px)
+            const maxSize = 200;
+            let width = originalWidth;
+            let height = originalHeight;
+            
+            if (width > maxSize || height > maxSize) {
+                const ratio = Math.min(maxSize / width, maxSize / height);
+                width = width * ratio;
+                height = height * ratio;
+            }
+            
+            uploadedItemsCount++;
+            
+            // Create new furniture item data
+            const newItem = {
+                id: `uploaded_${Date.now()}_${uploadedItemsCount}`,
+                name: fileName,
+                image_path: imageData,
+                category: 'uploaded',
+                width: Math.round(width),
+                height: Math.round(height),
+                initial_x: 50,
+                initial_y: 50,
+                scatter_distance: 200,
+                rotation_angle: 0,
+                display_order: window.furnitureData.length + uploadedItemsCount
+            };
+            
+            // Add to furniture data
+            window.furnitureData.push(newItem);
+            
+            // Create and add the element to the banner
+            if (window.animatedBannerInstance) {
+                window.animatedBannerInstance.addNewItem(newItem);
+            }
+            
+            // Update item count
+            document.getElementById('itemCount').textContent = window.furnitureData.length;
+            document.getElementById('uploadedCount').textContent = uploadedItemsCount;
+        }
+        
+        function showPreview(imageData, fileName) {
+            uploadPreview.style.display = 'block';
+            
+            const previewItem = document.createElement('div');
+            previewItem.style.cssText = 'display: inline-block; margin: 10px; text-align: center;';
+            previewItem.innerHTML = `
+                <img src="${imageData}" class="preview-image" alt="${fileName}">
+                <p style="margin-top: 5px; font-size: 12px; color: #64748b;">${fileName}</p>
+                <p style="font-size: 11px; color: #10b981; font-weight: 600;">✓ Added to workspace</p>
+            `;
+            
+            uploadPreview.appendChild(previewItem);
+        }
+        
+        async function saveItemToDatabase(imageData, fileName, width, height) {
+            try {
+                const response = await fetch('/api/workspace/upload', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        name: fileName,
+                        image_data: imageData,
+                        width: Math.round(width > 200 ? 200 : width),
+                        height: Math.round(height > 200 ? 200 : height)
+                    })
+                });
+                
+                const result = await response.json();
+                console.log('Item saved to database:', result);
+            } catch (error) {
+                console.error('Failed to save to database:', error);
+            }
+        }
+        
+        async function clearAllItems() {
+            if (!confirm('Are you sure you want to clear all items from your workspace?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/workspace/clear', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    window.location.reload();
+                } else {
+                    alert('Failed to clear workspace');
+                }
+            } catch (error) {
+                console.error('Failed to clear workspace:', error);
+                alert('Failed to clear workspace');
+            }
+        }
     </script>
     <script src="/static/js/animated-banner.js"></script>
     <script>
-        // Initialize AnimatedBanner instance (same as test page)
+        // Store the banner instance globally so we can add items dynamically
         document.addEventListener('DOMContentLoaded', function() {
             const bannerContainer = document.getElementById('animated-furniture-banner');
             if (bannerContainer && window.furnitureData && window.bannerSettings) {
@@ -299,6 +473,5 @@
             }
         });
     </script>
-    <script src="/static/js/workspace.js"></script>
 </body>
 </html>

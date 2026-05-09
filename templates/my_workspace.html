@@ -532,10 +532,9 @@
                 window.animatedBannerInstance = new AnimatedBanner('animated-furniture-banner', window.furnitureData, window.bannerSettings);
                 console.log('AnimatedBanner initialized with', window.furnitureData.length, 'items');
                 
-                // Add auto-save on mouseup (after dragging)
-                document.addEventListener('mouseup', function() {
-                    scheduleAutoSave();
-                });
+                // AUTO-SAVE DISABLED - Positions are NOT saved
+                // This is now a session-only workspace like the test page
+                // Items will reset to default positions on refresh
             }
         });
     </script>

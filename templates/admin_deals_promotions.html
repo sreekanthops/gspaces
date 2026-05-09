@@ -175,17 +175,38 @@
                     const parser = new DOMParser();
                     const doc = parser.parseFromString(html, 'text/html');
                     
-                    // Extract the admin-container or main content
+                    // Try multiple selectors to find the main content
                     let mainContent = doc.querySelector('.admin-container');
+                    
                     if (!mainContent) {
-                        mainContent = doc.querySelector('.col-md-10 > div');
+                        // Try to get content from col-md-10 (main content area)
+                        const colMd10 = doc.querySelector('.col-md-10');
+                        if (colMd10) {
+                            // Get all direct children except alerts
+                            mainContent = document.createElement('div');
+                            Array.from(colMd10.children).forEach(child => {
+                                if (!child.classList.contains('mb-4') || child.querySelector('.admin-card')) {
+                                    mainContent.appendChild(child.cloneNode(true));
+                                }
+                            });
+                        }
                     }
+                    
                     if (!mainContent) {
                         mainContent = doc.querySelector('.admin-card');
                     }
                     
+                    if (!mainContent) {
+                        // Last resort: get body content
+                        mainContent = doc.body;
+                    }
+                    
                     // Display content
-                    document.getElementById('contentArea').innerHTML = mainContent.innerHTML;
+                    if (mainContent) {
+                        document.getElementById('contentArea').innerHTML = mainContent.innerHTML;
+                    } else {
+                        document.getElementById('contentArea').innerHTML = '<div class="alert alert-warning">Could not load content. Please refresh the page.</div>';
+                    }
                     
                     // Re-execute any scripts in the loaded content
                     const scripts = document.getElementById('contentArea').querySelectorAll('script');

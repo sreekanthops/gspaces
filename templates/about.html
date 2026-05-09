@@ -27,89 +27,140 @@
     <style>
         body {
             font-family: 'Mozilla Text', sans-serif;
+            overflow-x: hidden;
         }
         
         .about-hero {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 100px 0 80px;
+            padding: 120px 0 100px;
             text-align: center;
             margin-top: 76px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .about-hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"><path fill="rgba(255,255,255,0.1)" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,122.7C672,117,768,139,864,138.7C960,139,1056,117,1152,101.3C1248,85,1344,75,1392,69.3L1440,64L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path></svg>') no-repeat bottom;
+            background-size: cover;
+            opacity: 0.3;
         }
         
         .about-hero h1 {
-            font-size: 3rem;
-            font-weight: 700;
-            margin-bottom: 20px;
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 25px;
+            position: relative;
+            z-index: 1;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
         }
         
         .about-hero p {
-            font-size: 1.2rem;
-            max-width: 800px;
+            font-size: 1.3rem;
+            max-width: 900px;
             margin: 0 auto;
+            position: relative;
+            z-index: 1;
+            line-height: 1.8;
         }
         
         .about-section {
-            padding: 60px 0;
-        }
-        
-        .about-card {
+            padding: 80px 0;
             background: white;
-            border-radius: 15px;
-            padding: 40px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-            margin-bottom: 30px;
-            transition: transform 0.3s ease;
         }
         
-        .about-card:hover {
-            transform: translateY(-5px);
+        .section-title {
+            text-align: center;
+            margin-bottom: 60px;
         }
         
-        .about-card h3 {
+        .section-title h2 {
+            font-size: 2.8rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 15px;
+            position: relative;
+            display: inline-block;
+        }
+        
+        .section-title h2::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 4px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 2px;
+        }
+        
+        .section-title p {
+            font-size: 1.2rem;
+            color: #666;
+            margin-top: 20px;
+        }
+        
+        .story-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 20px;
+            padding: 50px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            margin-bottom: 40px;
+        }
+        
+        .story-card h3 {
             color: #667eea;
-            font-size: 1.8rem;
+            font-size: 2rem;
+            margin-bottom: 25px;
+            font-weight: 700;
+        }
+        
+        .story-card p {
+            color: #555;
+            line-height: 2;
+            font-size: 1.15rem;
             margin-bottom: 20px;
         }
         
-        .about-card p {
-            color: #666;
-            line-height: 1.8;
-            font-size: 1.1rem;
+        .mission-vision-section {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 80px 0;
         }
         
-        .stats-section {
-            background: #f8f9fa;
-            padding: 60px 0;
+        .mv-card {
+            background: white;
+            border-radius: 20px;
+            padding: 50px;
+            height: 100%;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.1);
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
         }
         
-        .stat-card {
-            text-align: center;
-            padding: 30px;
+        .mv-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
         
-        .stat-card h2 {
-            color: #667eea;
-            font-size: 3rem;
-            font-weight: 700;
-            margin-bottom: 10px;
+        .mv-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 50px rgba(102, 126, 234, 0.3);
         }
         
-        .stat-card p {
-            color: #666;
-            font-size: 1.1rem;
-        }
-        
-        .values-section {
-            padding: 60px 0;
-        }
-        
-        .value-item {
-            text-align: center;
-            padding: 30px;
-        }
-        
-        .value-icon {
+        .mv-card .icon {
             width: 80px;
             height: 80px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -117,36 +168,144 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 auto 20px;
-            font-size: 2rem;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
             color: white;
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+        
+        .mv-card h3 {
+            color: #333;
+            font-size: 2rem;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+        
+        .mv-card p {
+            color: #666;
+            line-height: 1.9;
+            font-size: 1.1rem;
+        }
+        
+        .values-section {
+            padding: 80px 0;
+            background: white;
+        }
+        
+        .value-item {
+            text-align: center;
+            padding: 40px 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .value-item:hover {
+            transform: scale(1.05);
+        }
+        
+        .value-icon {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 25px;
+            font-size: 2.5rem;
+            color: white;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .value-item:hover .value-icon {
+            transform: rotateY(360deg);
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.5);
         }
         
         .value-item h4 {
             color: #333;
-            font-size: 1.5rem;
+            font-size: 1.6rem;
             margin-bottom: 15px;
+            font-weight: 700;
         }
         
         .value-item p {
             color: #666;
-            line-height: 1.6;
+            line-height: 1.8;
+            font-size: 1.05rem;
         }
         
         .cta-section {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 60px 0;
+            padding: 100px 0;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .cta-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"><path fill="rgba(255,255,255,0.1)" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,122.7C672,117,768,139,864,138.7C960,139,1056,117,1152,101.3C1248,85,1344,75,1392,69.3L1440,64L1440,0L1392,0C1344,0,1248,0,1152,0C1056,0,960,0,864,0C768,0,672,0,576,0C480,0,384,0,288,0C192,0,96,0,48,0L0,0Z"></path></svg>') no-repeat top;
+            background-size: cover;
         }
         
         .cta-section h2 {
-            font-size: 2.5rem;
-            margin-bottom: 20px;
+            font-size: 3rem;
+            margin-bottom: 25px;
+            font-weight: 800;
+            position: relative;
+            z-index: 1;
         }
         
         .cta-section p {
+            font-size: 1.3rem;
+            margin-bottom: 40px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .cta-btn {
+            background: white;
+            color: #667eea;
+            padding: 18px 50px;
             font-size: 1.2rem;
-            margin-bottom: 30px;
+            font-weight: 700;
+            border-radius: 50px;
+            border: none;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .cta-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+            background: #f8f9fa;
+        }
+        
+        @media (max-width: 768px) {
+            .about-hero h1 {
+                font-size: 2.5rem;
+            }
+            
+            .about-hero p {
+                font-size: 1.1rem;
+            }
+            
+            .section-title h2 {
+                font-size: 2rem;
+            }
+            
+            .story-card, .mv-card {
+                padding: 30px;
+            }
         }
     </style>
 </head>
@@ -157,80 +316,62 @@
     <!-- Hero Section -->
     <div class="about-hero">
         <div class="container">
-            <h1>About GSpaces</h1>
-            <p>Transforming spaces into extraordinary experiences with innovative furniture solutions and cutting-edge design technology</p>
+            <h1>Welcome to GSpaces</h1>
+            <p>Where Innovation Meets Craftsmanship. We transform ordinary spaces into extraordinary experiences through cutting-edge design and unparalleled quality.</p>
         </div>
     </div>
     
-    <!-- Main Content -->
+    <!-- Our Story Section -->
     <div class="about-section">
         <div class="container">
-            <div class="row">
-                <div class="col-md-12">
-                    <div class="about-card">
-                        <h3>Who We Are</h3>
-                        <p>GSpaces is a leading furniture and interior design company dedicated to creating beautiful, functional spaces that inspire. With years of experience in the industry, we combine traditional craftsmanship with modern technology to deliver exceptional results.</p>
-                        <p>Our team of skilled designers and craftsmen work closely with clients to understand their vision and bring it to life. From custom furniture pieces to complete interior solutions, we handle every aspect of your project with precision and care.</p>
-                    </div>
-                </div>
+            <div class="section-title">
+                <h2>Our Story</h2>
+                <p>Building Dreams, One Space at a Time</p>
             </div>
             
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="about-card">
-                        <h3>Our Mission</h3>
-                        <p>To revolutionize the furniture industry by combining innovative design, quality craftsmanship, and cutting-edge technology. We strive to make beautiful, functional furniture accessible to everyone while maintaining the highest standards of quality and customer service.</p>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="about-card">
-                        <h3>Our Vision</h3>
-                        <p>To be the most trusted and innovative furniture brand, known for transforming spaces and exceeding customer expectations. We envision a future where every space reflects the unique personality and needs of its occupants.</p>
-                    </div>
-                </div>
+            <div class="story-card">
+                <h3>Who We Are</h3>
+                <p>GSpaces is more than just a furniture company – we're dream builders, space transformers, and innovation pioneers. Founded with a vision to revolutionize how people experience their living and working spaces, we've grown into a trusted name in premium furniture and interior design solutions.</p>
+                <p>Our journey began with a simple belief: everyone deserves a space that inspires them. Today, we combine traditional craftsmanship with cutting-edge technology to create furniture that's not just functional, but transformative. Every piece we create tells a story of dedication, quality, and attention to detail.</p>
+                <p>From custom desk setups to complete office transformations, we work closely with our clients to understand their unique needs and bring their vision to life. Our team of skilled designers and craftsmen pour their expertise and passion into every project, ensuring that each space we touch becomes a masterpiece.</p>
             </div>
         </div>
     </div>
     
-    <!-- Stats Section -->
-    <div class="stats-section">
+    <!-- Mission & Vision Section -->
+    <div class="mission-vision-section">
         <div class="container">
-            <div class="row">
-                <div class="col-md-3">
-                    <div class="stat-card">
-                        <h2>1000+</h2>
-                        <p>Happy Customers</p>
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <div class="mv-card">
+                        <div class="icon">
+                            <i class="fas fa-bullseye"></i>
+                        </div>
+                        <h3>Our Mission</h3>
+                        <p>To revolutionize the furniture industry by seamlessly blending innovative design, superior craftsmanship, and cutting-edge technology. We're committed to making beautiful, functional furniture accessible to everyone while maintaining uncompromising standards of quality and delivering exceptional customer experiences that exceed expectations.</p>
                     </div>
                 </div>
-                <div class="col-md-3">
-                    <div class="stat-card">
-                        <h2>500+</h2>
-                        <p>Projects Completed</p>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="stat-card">
-                        <h2>50+</h2>
-                        <p>Expert Team Members</p>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="stat-card">
-                        <h2>10+</h2>
-                        <p>Years of Experience</p>
+                <div class="col-md-6">
+                    <div class="mv-card">
+                        <div class="icon">
+                            <i class="fas fa-eye"></i>
+                        </div>
+                        <h3>Our Vision</h3>
+                        <p>To become the most trusted and innovative furniture brand globally, renowned for transforming spaces and exceeding customer expectations. We envision a future where every space – whether home or office – reflects the unique personality, needs, and aspirations of its occupants, creating environments that inspire productivity, creativity, and joy.</p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
     
-    <!-- Values Section -->
+    <!-- Core Values Section -->
     <div class="values-section">
         <div class="container">
-            <div class="text-center mb-5">
-                <h2 style="color: #333; font-size: 2.5rem; font-weight: 700;">Our Core Values</h2>
-                <p style="color: #666; font-size: 1.1rem;">The principles that guide everything we do</p>
+            <div class="section-title">
+                <h2>Our Core Values</h2>
+                <p>The Principles That Guide Everything We Do</p>
             </div>
+            
             <div class="row">
                 <div class="col-md-4">
                     <div class="value-item">
@@ -238,7 +379,7 @@
                             <i class="fas fa-star"></i>
                         </div>
                         <h4>Quality First</h4>
-                        <p>We never compromise on quality. Every piece of furniture is crafted with attention to detail and built to last.</p>
+                        <p>We never compromise on quality. Every piece of furniture is crafted with meticulous attention to detail and built to last generations.</p>
                     </div>
                 </div>
                 <div class="col-md-4">
@@ -247,7 +388,7 @@
                             <i class="fas fa-lightbulb"></i>
                         </div>
                         <h4>Innovation</h4>
-                        <p>We embrace new technologies and design trends to provide cutting-edge solutions for modern living.</p>
+                        <p>We embrace new technologies and design trends to provide cutting-edge solutions that define modern living.</p>
                     </div>
                 </div>
                 <div class="col-md-4">
@@ -256,10 +397,11 @@
                             <i class="fas fa-heart"></i>
                         </div>
                         <h4>Customer Focus</h4>
-                        <p>Your satisfaction is our priority. We listen, understand, and deliver exactly what you need.</p>
+                        <p>Your satisfaction is our priority. We listen, understand, and deliver exactly what you need, every single time.</p>
                     </div>
                 </div>
             </div>
+            
             <div class="row mt-4">
                 <div class="col-md-4">
                     <div class="value-item">
@@ -267,7 +409,7 @@
                             <i class="fas fa-leaf"></i>
                         </div>
                         <h4>Sustainability</h4>
-                        <p>We're committed to eco-friendly practices and sustainable materials in all our products.</p>
+                        <p>We're committed to eco-friendly practices and sustainable materials, protecting our planet for future generations.</p>
                     </div>
                 </div>
                 <div class="col-md-4">
@@ -276,7 +418,7 @@
                             <i class="fas fa-handshake"></i>
                         </div>
                         <h4>Integrity</h4>
-                        <p>We conduct business with honesty, transparency, and respect for all our stakeholders.</p>
+                        <p>We conduct business with honesty, transparency, and respect for all our stakeholders and partners.</p>
                     </div>
                 </div>
                 <div class="col-md-4">
@@ -285,7 +427,7 @@
                             <i class="fas fa-rocket"></i>
                         </div>
                         <h4>Excellence</h4>
-                        <p>We continuously strive to exceed expectations and set new standards in the industry.</p>
+                        <p>We continuously strive to exceed expectations and set new standards of excellence in the industry.</p>
                     </div>
                 </div>
             </div>
@@ -293,11 +435,11 @@
     </div>
     
     <!-- CTA Section -->
-    <div class="cta-section text-center">
+    <div class="cta-section">
         <div class="container">
             <h2>Ready to Transform Your Space?</h2>
-            <p>Let's work together to create something extraordinary</p>
-            <a href="{{ url_for('contact') }}" class="btn btn-light btn-lg" style="padding: 15px 40px; font-size: 1.1rem;">Get in Touch</a>
+            <p>Let's work together to create something extraordinary that you'll love for years to come</p>
+            <a href="{{ url_for('contact') }}" class="btn cta-btn">Get in Touch</a>
         </div>
     </div>
     

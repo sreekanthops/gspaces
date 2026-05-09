@@ -173,11 +173,19 @@ class AnimatedBanner {
     }
     
     startDrag(e, element) {
+        // Don't start drag if clicking on rotation control
+        if (e.target.closest('.rotation-control')) {
+            return;
+        }
+        
         e.preventDefault();
         this.draggedElement = element;
         element.style.cursor = 'grabbing';
         element.style.zIndex = 1000;
         element.style.transition = 'none';
+        
+        // Hide rotation control when dragging
+        this.hideRotationControl();
         
         const rect = element.getBoundingClientRect();
         const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
@@ -451,7 +459,10 @@ class AnimatedBanner {
         });
         
         document.addEventListener('mousemove', (e) => {
+            // Don't interfere with item dragging
+            if (this.draggedElement) return;
             if (!isDraggingRotation || !this.selectedElement) return;
+            
             const rect = this.rotationControl.getBoundingClientRect();
             const centerX = rect.left + rect.width / 2;
             const centerY = rect.top + rect.height / 2;
@@ -617,7 +628,8 @@ class AnimatedBanner {
             { icon: '↘️', text: 'Send Backward', action: 'backward' },
             { icon: '🔄', text: 'Rotate 90° Right', action: 'rotateRight' },
             { icon: '↩️', text: 'Rotate 90° Left', action: 'rotateLeft' },
-            { icon: '🔁', text: 'Rotate 360°', action: 'rotate360' }
+            { icon: '🔁', text: 'Rotate 360°', action: 'rotate360' },
+            { icon: '🗑️', text: 'Delete Item', action: 'delete', color: '#dc3545' }
         ];
         
         menuItems.forEach(item => {

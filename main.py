@@ -5406,23 +5406,29 @@ def my_workspace():
         
         # Get user's workspace items
         cursor.execute("""
-            SELECT id, image_data, position_x, position_y, rotation_angle, 
-                   scale_factor, z_index, created_at
+            SELECT id, name, image_data, width, height, position_x, position_y,
+                   rotation_angle, scale_factor, z_index, created_at
             FROM user_workspace_items
             WHERE user_id = %s
             ORDER BY z_index ASC, created_at ASC
         """, (current_user.id,))
         
         items = []
-        for row in cursor.fetchall():
+        for idx, row in enumerate(cursor.fetchall()):
             items.append({
                 'id': row[0],
-                'image_path': row[1],  # Base64 data
-                'position_x': float(row[2]) if row[2] else 0,
-                'position_y': float(row[3]) if row[3] else 0,
-                'rotation_angle': float(row[4]) if row[4] else 0,
-                'scale_factor': float(row[5]) if row[5] else 1.0,
-                'z_index': row[6] if row[6] else 1
+                'name': row[1] or f'Item {idx + 1}',
+                'image_path': row[2],  # Base64 data
+                'category': 'uploaded',
+                'width': int(row[3]) if row[3] else 200,
+                'height': int(row[4]) if row[4] else 200,
+                'initial_x': float(row[5]) if row[5] else 50,
+                'initial_y': float(row[6]) if row[6] else 50,
+                'rotation_angle': float(row[7]) if row[7] else 0,
+                'scale_factor': float(row[8]) if row[8] else 1.0,
+                'z_index': row[9] if row[9] else 1,
+                'scatter_distance': 200,
+                'display_order': idx
             })
         
         cursor.close()
@@ -5467,10 +5473,10 @@ def upload_workspace_item():
         
         cursor.execute("""
             INSERT INTO user_workspace_items
-            (user_id, name, image_data, position_x, position_y, rotation_angle, scale_factor, z_index)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            (user_id, name, image_data, position_x, position_y, rotation_angle, scale_factor, z_index, width, height)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING id
-        """, (current_user.id, filename, image_data, initial_x, initial_y, 0, 1.0, max_z + 1))
+        """, (current_user.id, filename, image_data, initial_x, initial_y, 0, 1.0, max_z + 1, 200, 200))
         
         item_id = cursor.fetchone()[0]
         conn.commit()

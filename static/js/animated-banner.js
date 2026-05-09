@@ -371,8 +371,6 @@ class AnimatedBanner {
             this.selectedElement.style.transform = this.selectedElement.style.transform.replace(' scale(1.05)', '');
         }, 200);
     }
-        setTimeout(() => this.scatterItems(), 100);
-    }
 }
 
 // Initialize when DOM is ready

@@ -255,9 +255,6 @@
             <button class="btn-upload" onclick="document.getElementById('fileInput').click()">
                 <i class="bi bi-upload"></i> Choose Files
             </button>
-            <button class="btn-upload" onclick="saveWorkspace()" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
-                <i class="bi bi-save"></i> Save Positions
-            </button>
             <button class="btn-clear" onclick="clearAllItems()">
                 <i class="bi bi-trash"></i> Clear All
             </button>
@@ -488,9 +485,6 @@
             if (!window.animatedBannerInstance) return;
             
             try {
-                // Show saving indicator
-                alert('Saving workspace...');
-                
                 // Collect all item positions and states
                 const items = [];
                 window.animatedBannerInstance.furnitureElements.forEach((element, index) => {
@@ -514,8 +508,6 @@
                     });
                 });
                 
-                console.log('Saving items:', items);
-                
                 const response = await fetch('/api/workspace/save', {
                     method: 'POST',
                     headers: {
@@ -526,15 +518,8 @@
                 
                 const result = await response.json();
                 console.log('Workspace saved:', result);
-                
-                if (result.success) {
-                    alert('✓ Workspace saved successfully!');
-                } else {
-                    alert('Failed to save: ' + result.message);
-                }
             } catch (error) {
                 console.error('Failed to save workspace:', error);
-                alert('Error saving workspace: ' + error.message);
             }
         }
     </script>
@@ -547,11 +532,10 @@
                 window.animatedBannerInstance = new AnimatedBanner('animated-furniture-banner', window.furnitureData, window.bannerSettings);
                 console.log('AnimatedBanner initialized with', window.furnitureData.length, 'items');
                 
-                // DISABLED AUTO-SAVE - Use manual Save button instead
-                // Auto-save was causing duplicates
-                // document.addEventListener('mouseup', function() {
-                //     scheduleAutoSave();
-                // });
+                // Add auto-save on mouseup (after dragging)
+                document.addEventListener('mouseup', function() {
+                    scheduleAutoSave();
+                });
             }
         });
     </script>

@@ -9,29 +9,90 @@
     <link href="{{ url_for('static', filename='css/main.css') }}" rel="stylesheet">
     <style>
         body {
-            background: #f7f8fc;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
         }
+        
         .admin-card {
             background: #fff;
             border-radius: 24px;
-            box-shadow: 0 18px 40px rgba(17, 24, 39, 0.08);
-            padding: 32px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 0;
             margin-bottom: 24px;
+            overflow: hidden;
         }
+        
+        .card-header-custom {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 32px;
+            color: white;
+            border-bottom: 4px solid #d4af37;
+        }
+        
+        .card-header-custom h2 {
+            margin: 0;
+            font-size: 2rem;
+            font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .card-header-custom p {
+            margin: 8px 0 0;
+            opacity: 0.95;
+            font-size: 1.1rem;
+        }
+        
+        .nav-tabs {
+            background: #f8f9fa;
+            padding: 16px 32px 0;
+            border-bottom: 3px solid #e5e7eb;
+            margin: 0;
+        }
+        
         .nav-tabs .nav-link {
             color: #6b7280;
             font-weight: 600;
             border: none;
-            padding: 12px 24px;
+            padding: 14px 28px;
             margin-right: 8px;
             border-radius: 12px 12px 0 0;
+            transition: all 0.3s ease;
+            font-size: 1.05rem;
+            position: relative;
         }
-        .nav-tabs .nav-link.active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
+        
         .nav-tabs .nav-link:hover:not(.active) {
-            background: #f3f4f6;
+            background: #e5e7eb;
+            transform: translateY(-2px);
+        }
+        
+        .nav-tabs .nav-link.active {
+            background: linear-gradient(135deg, #d4af37 0%, #f4d03f 100%);
+            color: #111827;
+            box-shadow: 0 4px 12px rgba(212, 175, 55, 0.4);
+            transform: translateY(-2px);
+        }
+        
+        .nav-tabs .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: -3px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(135deg, #d4af37 0%, #f4d03f 100%);
+        }
+        
+        #contentArea {
+            padding: 32px;
+            min-height: 500px;
+            background: white;
+        }
+        
+        .spinner-border {
+            width: 3rem;
+            height: 3rem;
+            border-width: 0.3rem;
         }
     </style>
 </head>
@@ -47,13 +108,11 @@
             </div>
 
             <!-- Main Content -->
-            <div class="col-md-10" style="background: #f8f9fa; min-height: calc(100vh - 76px); padding: 24px; border-radius: 16px;">
+            <div class="col-md-10" style="background: transparent; min-height: calc(100vh - 76px); padding: 24px; border-radius: 0;">
                 <div class="admin-card">
-                    <div class="d-flex justify-content-between align-items-center mb-4">
-                        <div>
-                            <h2 class="mb-2">👥 Users Management</h2>
-                            <p class="text-muted mb-0">Manage customers and admin users</p>
-                        </div>
+                    <div class="card-header-custom">
+                        <h2>👥 Users Management</h2>
+                        <p>Manage customers and admin users</p>
                     </div>
 
                     <!-- Tabs Navigation -->

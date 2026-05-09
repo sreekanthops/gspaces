@@ -364,7 +364,7 @@
                                         {% if deal_active %}
                                             <span class="text-decoration-line-through text-muted me-2">₹{{ item.price | float | round(2) }}</span>
                                             <span class="text-success">₹{{ item.display_price | float | round(2) }}</span>
-                                            <span class="badge bg-danger ms-2">{{ discount_percent }}% OFF</span>
+                                            <span class="badge bg-success ms-2">{{ discount_percent }}% OFF</span>
                                         {% else %}
                                             <span>₹{{ item.price | float | round(2) }}</span>
                                         {% endif %}

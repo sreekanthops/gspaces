@@ -1558,7 +1558,7 @@
                                     <span style="text-decoration: line-through; color: #999; font-size: 1.1em;">
                                         ₹{{ "{:,.0f}".format(design.subtotal or design.price) }}
                                     </span>
-                                    <span class="badge bg-danger ms-2" style="font-size: 0.9em;">
+                                    <span class="badge bg-success ms-2" style="font-size: 0.9em;">
                                         {% if design.discount_type == 'percentage' %}
                                             {{ design.discount_value }}% OFF
                                         {% else %}

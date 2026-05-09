@@ -33,14 +33,6 @@
         .nav-tabs .nav-link:hover:not(.active) {
             background: #f3f4f6;
         }
-        .tab-content {
-            padding: 24px 0;
-        }
-        iframe {
-            border: none;
-            width: 100%;
-            min-height: 800px;
-        }
     </style>
 </head>
 <body>
@@ -65,40 +57,26 @@
                     </div>
 
                     <!-- Tabs Navigation -->
-                    <ul class="nav nav-tabs" id="dealsTab" role="tablist">
+                    <ul class="nav nav-tabs mb-4" role="tablist">
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="coupons-tab" data-bs-toggle="tab" data-bs-target="#coupons" type="button" role="tab">
+                            <a class="nav-link active" href="{{ url_for('admin_coupons') }}">
                                 🎫 Coupons
-                            </button>
+                            </a>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="referral-tab" data-bs-toggle="tab" data-bs-target="#referral" type="button" role="tab">
+                            <a class="nav-link" href="{{ url_for('admin_referral_coupons') }}">
                                 🎯 Referral Coupons
-                            </button>
+                            </a>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="deals-tab" data-bs-toggle="tab" data-bs-target="#deals" type="button" role="tab">
+                            <a class="nav-link" href="{{ url_for('admin_deals') }}">
                                 🔥 Deals
-                            </button>
+                            </a>
                         </li>
                     </ul>
 
-                    <!-- Tabs Content -->
-                    <div class="tab-content" id="dealsTabContent">
-                        <!-- Coupons Tab -->
-                        <div class="tab-pane fade show active" id="coupons" role="tabpanel">
-                            <iframe src="{{ url_for('admin_coupons') }}" id="couponsFrame"></iframe>
-                        </div>
-
-                        <!-- Referral Coupons Tab -->
-                        <div class="tab-pane fade" id="referral" role="tabpanel">
-                            <iframe src="{{ url_for('admin_referral_coupons') }}" id="referralFrame"></iframe>
-                        </div>
-
-                        <!-- Deals Tab -->
-                        <div class="tab-pane fade" id="deals" role="tabpanel">
-                            <iframe src="{{ url_for('admin_deals') }}" id="dealsFrame"></iframe>
-                        </div>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> Click on the tabs above to manage different types of promotions.
                     </div>
                 </div>
             </div>
@@ -108,32 +86,5 @@
     {% include 'footer.html' %}
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        // Auto-adjust iframe heights
-        function adjustIframeHeight(iframe) {
-            try {
-                iframe.style.height = iframe.contentWindow.document.body.scrollHeight + 'px';
-            } catch(e) {
-                // Cross-origin, use default height
-                iframe.style.height = '800px';
-            }
-        }
-
-        // Adjust heights when tabs are shown
-        document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(tab => {
-            tab.addEventListener('shown.bs.tab', function (event) {
-                const targetId = event.target.getAttribute('data-bs-target');
-                const iframe = document.querySelector(targetId + ' iframe');
-                if (iframe) {
-                    adjustIframeHeight(iframe);
-                }
-            });
-        });
-
-        // Initial adjustment
-        window.addEventListener('load', function() {
-            document.querySelectorAll('iframe').forEach(adjustIframeHeight);
-        });
-    </script>
 </body>
 </html>

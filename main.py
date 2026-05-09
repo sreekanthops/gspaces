@@ -4256,11 +4256,6 @@ def serve_sitemap():
         return redirect(url_for('static', filename='sitemap.xml'), code=301)
 
 # --- SEO PAGES ---
-@app.route('/about')
-def about():
-    """About page with company information"""
-    return render_template('about_new.html')
-
 @app.route('/contact', methods=['GET', 'POST'])
 def contact():
     """Contact Us page with form handling"""
@@ -5414,10 +5409,6 @@ def test_animated_banner():
 def corporate():
     """Corporate tie-ups page"""
     return render_template('corporate_new.html')
-
-@app.route('/services')
-def services():
-    """Services page with detailed offerings"""
 
 # ============================================
 # USER WORKSPACE ROUTES

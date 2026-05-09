@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Workspace - GSpaces</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/main.css') }}" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+        
+        .workspace-container {
+            max-width: 1400px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        
+        .workspace-header {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .workspace-header h1 {
+            color: #1e293b;
+            margin-bottom: 10px;
+        }
+        
+        .workspace-header p {
+            color: #64748b;
+            margin: 0;
+        }
+        
+        .controls-panel {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .upload-zone {
+            border: 3px dashed #667eea;
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            background: #f8f9ff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+        
+        .upload-zone:hover, .upload-zone.dragover {
+            background: #eef2ff;
+            border-color: #4f46e5;
+            transform: scale(1.02);
+        }
+        
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+        
+        #fileInput {
+            display: none;
+        }
+        
+        .btn-upload {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-upload:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-save {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-save:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+        }
+        
+        .btn-clear {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-clear:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+        }
+        
+        #animated-furniture-banner {
+            background: white;
+            border-radius: 16px;
+            min-height: 600px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .furniture-item {
+            cursor: grab;
+            transition: transform 0.3s ease;
+        }
+        
+        .furniture-item:active {
+            cursor: grabbing;
+        }
+        
+        .furniture-item:hover {
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+        }
+        
+        .stats-bar {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 15px 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            flex: 1;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            color: #64748b;
+            margin-top: 5px;
+        }
+        
+        .save-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: none;
+            z-index: 9999;
+        }
+        
+        .save-indicator.saving {
+            display: block;
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        .save-indicator.saved {
+            display: block;
+            background: #d1fae5;
+            color: #065f46;
+        }
+    </style>
+</head>
+<body>
+    {% include 'navbar.html' %}
+    
+    <div class="workspace-container">
+        <!-- Header -->
+        <div class="workspace-header">
+            <h1><i class="bi bi-palette"></i> My Workspace</h1>
+            <p>Create your perfect workspace by uploading and arranging furniture items. Your layout is automatically saved!</p>
+        </div>
+        
+        <!-- Stats Bar -->
+        <div class="stats-bar">
+            <div class="stat-card">
+                <div class="stat-value" id="itemCount">{{ items|length }}</div>
+                <div class="stat-label">Items</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="uploadCount">0</div>
+                <div class="stat-label">Uploaded Today</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">Auto</div>
+                <div class="stat-label">Save Mode</div>
+            </div>
+        </div>
+        
+        <!-- Controls Panel -->
+        <div class="controls-panel">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <div class="upload-zone" id="uploadZone">
+                        <div class="upload-icon">🖼️</div>
+                        <h4>Drop PNG files here or click to browse</h4>
+                        <p style="color: #64748b; margin-top: 10px;">Supports PNG files with transparent backgrounds</p>
+                        <input type="file" id="fileInput" accept=".png,image/png" multiple>
+                        <button class="btn-upload" onclick="document.getElementById('fileInput').click()">
+                            <i class="bi bi-upload"></i> Choose Files
+                        </button>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-grid gap-2">
+                        <button class="btn-save" onclick="saveWorkspace()">
+                            <i class="bi bi-save"></i> Save Now
+                        </button>
+                        <button class="btn-clear" onclick="clearWorkspace()">
+                            <i class="bi bi-trash"></i> Clear All
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Workspace Canvas -->
+        <div id="animated-furniture-banner"></div>
+    </div>
+    
+    <!-- Save Indicator -->
+    <div class="save-indicator" id="saveIndicator">
+        <i class="bi bi-check-circle"></i> <span id="saveText">Saved</span>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Load user's workspace data
+        window.furnitureData = {{ items | tojson | safe }};
+        window.bannerSettings = {
+            is_enabled: true,
+            scatter_duration: 2000,
+            scatter_easing: 'ease-out',
+            allow_drag: true,
+            snap_to_grid: false,
+            grid_size: 20,
+            show_reset_button: false,
+            background_color: '#ffffff'
+        };
+        
+        let uploadedToday = 0;
+        let saveTimeout = null;
+        
+        console.log('Loaded workspace items:', window.furnitureData.length);
+    </script>
+    <script src="/static/js/animated-banner.js"></script>
+    <script src="/static/js/workspace.js"></script>
+</body>
+</html>

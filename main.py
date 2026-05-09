@@ -5391,6 +5391,200 @@ def corporate():
 @app.route('/services')
 def services():
     """Services page with detailed offerings"""
+
+# ============================================
+# USER WORKSPACE ROUTES
+# ============================================
+
+@app.route('/my-workspace')
+@login_required
+def my_workspace():
+    """User's personal workspace page"""
+    try:
+        conn = connect_to_db()
+        cursor = conn.cursor()
+        
+        # Get user's workspace items
+        cursor.execute("""
+            SELECT id, image_data, position_x, position_y, rotation_angle, 
+                   scale_factor, z_index, created_at
+            FROM user_workspace_items
+            WHERE user_id = %s
+            ORDER BY z_index ASC, created_at ASC
+        """, (current_user.id,))
+        
+        items = []
+        for row in cursor.fetchall():
+            items.append({
+                'id': row[0],
+                'image_path': row[1],  # Base64 data
+                'position_x': float(row[2]) if row[2] else 0,
+                'position_y': float(row[3]) if row[3] else 0,
+                'rotation_angle': float(row[4]) if row[4] else 0,
+                'scale_factor': float(row[5]) if row[5] else 1.0,
+                'z_index': row[6] if row[6] else 1
+            })
+        
+        cursor.close()
+        conn.close()
+        
+        return render_template('my_workspace.html', items=items)
+        
+    except Exception as e:
+        print(f"Error loading workspace: {str(e)}")
+        return render_template('my_workspace.html', items=[])
+
+
+@app.route('/api/workspace/upload', methods=['POST'])
+@login_required
+def upload_workspace_item():
+    """Upload a new item to user's workspace"""
+    try:
+        data = request.get_json()
+        image_data = data.get('image_data')
+        filename = data.get('filename', 'item.png')
+        
+        if not image_data:
+            return jsonify({'success': False, 'message': 'No image data provided'}), 400
+        
+        # Validate base64 data
+        if not image_data.startswith('data:image/png;base64,'):
+            return jsonify({'success': False, 'message': 'Invalid image format. Only PNG supported'}), 400
+        
+        conn = connect_to_db()
+        cursor = conn.cursor()
+        
+        # Get max z_index for this user
+        cursor.execute("""
+            SELECT COALESCE(MAX(z_index), 0) FROM user_workspace_items WHERE user_id = %s
+        """, (current_user.id,))
+        max_z = cursor.fetchone()[0]
+        
+        # Insert new item with random initial position
+        import random
+        initial_x = random.randint(100, 800)
+        initial_y = random.randint(100, 400)
+        
+        cursor.execute("""
+            INSERT INTO user_workspace_items 
+            (user_id, image_data, position_x, position_y, rotation_angle, scale_factor, z_index)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            RETURNING id
+        """, (current_user.id, image_data, initial_x, initial_y, 0, 1.0, max_z + 1))
+        
+        item_id = cursor.fetchone()[0]
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Item uploaded successfully',
+            'item': {
+                'id': item_id,
+                'image_path': image_data,
+                'position_x': initial_x,
+                'position_y': initial_y,
+                'rotation_angle': 0,
+                'scale_factor': 1.0,
+                'z_index': max_z + 1
+            }
+        })
+        
+    except Exception as e:
+        print(f"Error uploading item: {str(e)}")
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@app.route('/api/workspace/save', methods=['POST'])
+@login_required
+def save_workspace_state():
+    """Save workspace item positions and states"""
+    try:
+        data = request.get_json()
+        items = data.get('items', [])
+        
+        if not items:
+            return jsonify({'success': True, 'message': 'No items to save'})
+        
+        conn = connect_to_db()
+        cursor = conn.cursor()
+        
+        # Update each item
+        for item in items:
+            cursor.execute("""
+                UPDATE user_workspace_items
+                SET position_x = %s, position_y = %s, rotation_angle = %s, 
+                    scale_factor = %s, z_index = %s
+                WHERE id = %s AND user_id = %s
+            """, (
+                item.get('position_x', 0),
+                item.get('position_y', 0),
+                item.get('rotation_angle', 0),
+                item.get('scale_factor', 1.0),
+                item.get('z_index', 1),
+                item.get('id'),
+                current_user.id
+            ))
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return jsonify({'success': True, 'message': 'Workspace saved successfully'})
+        
+    except Exception as e:
+        print(f"Error saving workspace: {str(e)}")
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@app.route('/api/workspace/item/<int:item_id>', methods=['DELETE'])
+@login_required
+def delete_workspace_item(item_id):
+    """Delete an item from user's workspace"""
+    try:
+        conn = connect_to_db()
+        cursor = conn.cursor()
+        
+        # Delete only if item belongs to current user
+        cursor.execute("""
+            DELETE FROM user_workspace_items
+            WHERE id = %s AND user_id = %s
+        """, (item_id, current_user.id))
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return jsonify({'success': True, 'message': 'Item deleted successfully'})
+        
+    except Exception as e:
+        print(f"Error deleting item: {str(e)}")
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@app.route('/api/workspace/clear', methods=['POST'])
+@login_required
+def clear_workspace():
+    """Clear all items from user's workspace"""
+    try:
+        conn = connect_to_db()
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            DELETE FROM user_workspace_items WHERE user_id = %s
+        """, (current_user.id,))
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return jsonify({'success': True, 'message': 'Workspace cleared successfully'})
+        
+    except Exception as e:
+        print(f"Error clearing workspace: {str(e)}")
+        return jsonify({'success': False, 'message': str(e)}), 500
+
     return render_template('services.html')
 
 

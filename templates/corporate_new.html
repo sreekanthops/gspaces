@@ -31,79 +31,324 @@
     "description": "WFH setup solutions for IT companies and remote teams with standardized setups, bulk pricing, and end-to-end installation."
   }
   </script>
+
+  <style>
+    .corporate-hero {
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #7e22ce 100%);
+      padding: 120px 0 80px;
+      position: relative;
+      overflow: hidden;
+    }
+    .corporate-hero::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="grid" width="100" height="100" patternUnits="userSpaceOnUse"><path d="M 100 0 L 0 0 0 100" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/></pattern></defs><rect width="100%" height="100%" fill="url(%23grid)"/></svg>');
+      opacity: 0.3;
+    }
+    .feature-card {
+      background: white;
+      border-radius: 24px;
+      padding: 40px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+      transition: all 0.3s ease;
+      height: 100%;
+      border: 2px solid transparent;
+    }
+    .feature-card:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.12);
+      border-color: #667eea;
+    }
+    .feature-icon {
+      width: 80px;
+      height: 80px;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5rem;
+      color: white;
+      margin-bottom: 25px;
+    }
+    .benefit-item {
+      background: white;
+      border-radius: 16px;
+      padding: 30px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+      transition: all 0.3s ease;
+      height: 100%;
+    }
+    .benefit-item:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+    }
+    .benefit-icon {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      color: white;
+      margin-bottom: 20px;
+    }
+    .process-step {
+      text-align: center;
+      position: relative;
+      padding: 30px;
+    }
+    .process-number {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin: 0 auto 20px;
+      box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+    }
+    .cta-section {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 30px;
+      padding: 60px 40px;
+      position: relative;
+      overflow: hidden;
+    }
+    .cta-section::before {
+      content: '';
+      position: absolute;
+      top: -50px;
+      right: -50px;
+      width: 200px;
+      height: 200px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 50%;
+      filter: blur(60px);
+    }
+  </style>
 </head>
 
 <body>
 {% include 'navbar.html' %}
 
 <main class="main">
-  <section id="corporate" class="services section" style="padding-top: 100px;">
-    <!-- Section Title -->
-    <div class="container section-title" data-aos="fade-up">
-      <h2>Corporate Tie-ups</h2>
-      <p>WFH setup solutions for IT companies & remote teams</p>
-    </div>
-
-    <div class="container" data-aos="fade-up" data-aos-delay="100">
-      <div class="row gy-5">
-        <!-- Card 1 -->
-        <div class="col-xl-4 col-md-6" data-aos="zoom-in" data-aos-delay="200">
-          <div class="service-item">
-            <div class="img">
-              <img src="{{ url_for('static', filename='img/services-1.jpg') }}" class="img-fluid" alt="Standardized Setup" width="600" height="400" loading="lazy">
-            </div>
-            <div class="details position-relative">
-              <div class="icon">
-                <i class="bi bi-building"></i>
-              </div>
-              <h3>Standardized Setups</h3>
-              <p>Provide every employee with a consistent, premium workspace — no more random setups.</p>
-            </div>
+  <!-- Hero Section -->
+  <section class="corporate-hero">
+    <div class="container position-relative" style="z-index: 1;">
+      <div class="row align-items-center">
+        <div class="col-lg-7 mb-5 mb-lg-0">
+          <div class="badge px-3 py-2 rounded-pill mb-3" style="font-size: 0.9rem; font-weight: 600; background: white; color: #667eea;">
+            <i class="bi bi-building"></i> For IT Companies & Remote Teams
+          </div>
+          <h1 class="display-3 fw-bold text-white mb-4">Transform Your Team's Work-From-Home Experience</h1>
+          <p class="lead text-white-50 mb-4" style="font-size: 1.3rem;">
+            Partner with GSpaces to provide your employees with standardized, premium workspace setups. Boost productivity, maintain consistency, and simplify WFH management.
+          </p>
+          <div class="d-flex gap-3 flex-wrap">
+            <a href="tel:+917075077384" class="btn btn-light btn-lg rounded-pill px-4">
+              <i class="bi bi-telephone-fill me-2"></i>Call Now
+            </a>
+            <a href="https://wa.me/917075077384?text=Hi%20GSpaces,%20we%20are%20looking%20for%20WFH%20setup%20for%20our%20employees" 
+               class="btn btn-outline-light btn-lg rounded-pill px-4" target="_blank" rel="noopener">
+              <i class="bi bi-whatsapp me-2"></i>WhatsApp Us
+            </a>
           </div>
         </div>
-
-        <!-- Card 2 -->
-        <div class="col-xl-4 col-md-6" data-aos="zoom-in" data-aos-delay="300">
-          <div class="service-item">
-            <div class="img">
-              <img src="{{ url_for('static', filename='img/services-2.jpg') }}" class="img-fluid" alt="Bulk Pricing" width="600" height="400" loading="lazy">
-            </div>
-            <div class="details position-relative">
-              <div class="icon">
-                <i class="bi bi-cash-stack"></i>
-              </div>
-              <h3>Bulk Pricing</h3>
-              <p>Special corporate pricing for teams — better than individual reimbursements.</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Card 3 -->
-        <div class="col-xl-4 col-md-6" data-aos="zoom-in" data-aos-delay="400">
-          <div class="service-item">
-            <div class="img">
-              <img src="{{ url_for('static', filename='img/services-3.jpg') }}" class="img-fluid" alt="End-to-End Setup" width="600" height="400" loading="lazy">
-            </div>
-            <div class="details position-relative">
-              <div class="icon">
-                <i class="bi bi-truck"></i>
-              </div>
-              <h3>End-to-End Setup</h3>
-              <p>We handle delivery, installation & setup — completely hassle-free for your team.</p>
-            </div>
+        <div class="col-lg-5">
+          <div class="text-center">
+            <img src="{{ url_for('static', filename='img/services-1.jpg') }}" class="img-fluid rounded-4 shadow-lg" alt="Corporate Workspace" style="max-width: 100%;">
           </div>
         </div>
       </div>
+    </div>
+  </section>
 
-      <!-- Bottom CTA -->
-      <div class="text-center mt-5">
-        <p class="mb-3">Partner with GSpaces to create organized, productive WFH environments</p>
-        <a href="tel:+917075077384" class="btn btn-dark me-2">
-          <i class="bi bi-telephone"></i> Call Now
-        </a>
-        <a href="https://wa.me/917075077384?text=Hi%20GSpaces,%20we%20are%20looking%20for%20WFH%20setup%20for%20our%20employees" class="btn btn-success">
-          <i class="bi bi-whatsapp"></i> WhatsApp
-        </a>
+  <!-- Main Features -->
+  <section class="py-5" style="padding: 100px 0; background: #f8fafc;">
+    <div class="container">
+      <div class="text-center mb-5">
+        <span class="badge px-3 py-2 rounded-pill mb-3" style="font-size: 0.85rem; font-weight: 600; background: rgba(102, 126, 234, 0.1); color: #667eea;">
+          WHY CHOOSE GSPACES
+        </span>
+        <h2 class="display-5 fw-bold mb-3" style="color: #1e293b;">Complete WFH Setup Solutions</h2>
+        <p class="lead text-muted" style="max-width: 700px; margin: 0 auto;">
+          Everything your team needs for productive remote work, delivered and installed
+        </p>
+      </div>
+
+      <div class="row g-4">
+        <!-- Feature 1 -->
+        <div class="col-lg-4 col-md-6">
+          <div class="feature-card">
+            <div class="feature-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+              <i class="bi bi-building"></i>
+            </div>
+            <h3 class="fw-bold mb-3" style="color: #1e293b; font-size: 1.5rem;">Standardized Setups</h3>
+            <p class="text-muted mb-0" style="line-height: 1.8;">
+              Provide every employee with a consistent, premium workspace. No more random furniture or mismatched setups. Maintain your company's professional standards even at home.
+            </p>
+          </div>
+        </div>
+
+        <!-- Feature 2 -->
+        <div class="col-lg-4 col-md-6">
+          <div class="feature-card">
+            <div class="feature-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+              <i class="bi bi-cash-stack"></i>
+            </div>
+            <h3 class="fw-bold mb-3" style="color: #1e293b; font-size: 1.5rem;">Bulk Pricing</h3>
+            <p class="text-muted mb-0" style="line-height: 1.8;">
+              Special corporate pricing for teams of 10+ employees. More cost-effective than individual reimbursements, with volume discounts and flexible payment terms.
+            </p>
+          </div>
+        </div>
+
+        <!-- Feature 3 -->
+        <div class="col-lg-4 col-md-6">
+          <div class="feature-card">
+            <div class="feature-icon" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+              <i class="bi bi-truck"></i>
+            </div>
+            <h3 class="fw-bold mb-3" style="color: #1e293b; font-size: 1.5rem;">End-to-End Setup</h3>
+            <p class="text-muted mb-0" style="line-height: 1.8;">
+              We handle everything—delivery, installation, and setup at each employee's location. Completely hassle-free for your HR and IT teams. Ready to work in 5 days.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Benefits Section -->
+  <section class="py-5" style="padding: 100px 0;">
+    <div class="container">
+      <div class="text-center mb-5">
+        <span class="badge px-3 py-2 rounded-pill mb-3" style="font-size: 0.85rem; font-weight: 600; background: rgba(102, 126, 234, 0.1); color: #667eea;">
+          BENEFITS
+        </span>
+        <h2 class="display-5 fw-bold mb-3" style="color: #1e293b;">Why Companies Choose GSpaces</h2>
+      </div>
+
+      <div class="row g-4">
+        <div class="col-lg-3 col-md-6">
+          <div class="benefit-item">
+            <div class="benefit-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+              <i class="bi bi-speedometer2"></i>
+            </div>
+            <h4 class="fw-bold mb-2" style="color: #1e293b;">Boost Productivity</h4>
+            <p class="text-muted mb-0" style="font-size: 0.9rem;">Ergonomic setups improve focus and reduce fatigue</p>
+          </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+          <div class="benefit-item">
+            <div class="benefit-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+              <i class="bi bi-shield-check"></i>
+            </div>
+            <h4 class="fw-bold mb-2" style="color: #1e293b;">Quality Assurance</h4>
+            <p class="text-muted mb-0" style="font-size: 0.9rem;">Premium materials with warranty and support</p>
+          </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+          <div class="benefit-item">
+            <div class="benefit-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+              <i class="bi bi-clock-history"></i>
+            </div>
+            <h4 class="fw-bold mb-2" style="color: #1e293b;">Save Time</h4>
+            <p class="text-muted mb-0" style="font-size: 0.9rem;">No HR hassle managing individual purchases</p>
+          </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+          <div class="benefit-item">
+            <div class="benefit-icon" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+              <i class="bi bi-people"></i>
+            </div>
+            <h4 class="fw-bold mb-2" style="color: #1e293b;">Employee Satisfaction</h4>
+            <p class="text-muted mb-0" style="font-size: 0.9rem;">Show you care about their work environment</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Process Section -->
+  <section class="py-5" style="padding: 100px 0; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);">
+    <div class="container">
+      <div class="text-center mb-5">
+        <span class="badge px-3 py-2 rounded-pill mb-3" style="font-size: 0.85rem; font-weight: 600; background: rgba(102, 126, 234, 0.1); color: #667eea;">
+          HOW IT WORKS
+        </span>
+        <h2 class="display-5 fw-bold mb-3" style="color: #1e293b;">Simple 4-Step Process</h2>
+      </div>
+
+      <div class="row g-4">
+        <div class="col-lg-3 col-md-6">
+          <div class="process-step">
+            <div class="process-number">1</div>
+            <h4 class="fw-bold mb-3" style="color: #1e293b;">Contact Us</h4>
+            <p class="text-muted">Share your requirements—number of employees, budget, and timeline</p>
+          </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+          <div class="process-step">
+            <div class="process-number">2</div>
+            <h4 class="fw-bold mb-3" style="color: #1e293b;">Get Quote</h4>
+            <p class="text-muted">Receive customized proposal with bulk pricing and setup options</p>
+          </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+          <div class="process-step">
+            <div class="process-number">3</div>
+            <h4 class="fw-bold mb-3" style="color: #1e293b;">Approve & Order</h4>
+            <p class="text-muted">Finalize the setup design and place your bulk order</p>
+          </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+          <div class="process-step">
+            <div class="process-number">4</div>
+            <h4 class="fw-bold mb-3" style="color: #1e293b;">We Deliver</h4>
+            <p class="text-muted">Complete installation at each employee's location in 5 days</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="py-5" style="padding: 100px 0;">
+    <div class="container">
+      <div class="cta-section position-relative">
+        <div class="row align-items-center position-relative" style="z-index: 1;">
+          <div class="col-lg-8 text-center text-lg-start mb-4 mb-lg-0">
+            <h2 class="display-5 fw-bold text-white mb-3">Ready to Upgrade Your Team's WFH Setup?</h2>
+            <p class="lead text-white-50 mb-0" style="font-size: 1.2rem;">
+              Get a custom quote for your team. Special pricing for 10+ employees.
+            </p>
+          </div>
+          <div class="col-lg-4 text-center text-lg-end">
+            <a href="tel:+917075077384" class="btn btn-light btn-lg rounded-pill px-4 mb-2 d-block d-sm-inline-block">
+              <i class="bi bi-telephone-fill me-2"></i>Call Now
+            </a>
+            <a href="https://wa.me/917075077384?text=Hi%20GSpaces,%20we%20are%20looking%20for%20WFH%20setup%20for%20our%20employees" 
+               class="btn btn-outline-light btn-lg rounded-pill px-4 d-block d-sm-inline-block" target="_blank" rel="noopener">
+              <i class="bi bi-whatsapp me-2"></i>WhatsApp
+            </a>
+          </div>
+        </div>
       </div>
     </div>
   </section>

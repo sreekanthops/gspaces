@@ -319,14 +319,14 @@ h6 {
   background: #ff4a17 !important;
 }
 
-/* Transparent navbar for home page only */
+/* Solid navbar for home page (no transparency) */
 .index-page .custom-navbar {
-  background: transparent !important;
+  background: #ffffff !important;
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
-  box-shadow: none;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .index-page .custom-navbar .navbar-brand img {
@@ -336,57 +336,56 @@ h6 {
 }
 
 .index-page .custom-navbar .custom-navbar-nav li a {
-  color: #ffffff !important;
+  color: #333333 !important;
 }
 
 .index-page .custom-navbar .custom-navbar-nav li a:hover,
 .index-page .custom-navbar .custom-navbar-nav li.active a {
-  color: #ffffff !important;
-  text-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+  color: #ff4a17 !important;
+  text-shadow: none;
 }
 
 .index-page .custom-navbar .custom-navbar-cta img {
-  filter: brightness(0) invert(1) !important;
+  filter: none !important;
 }
 
 /* Make SVG profile icon visible on index page desktop */
 .index-page .custom-navbar .custom-navbar-cta svg {
-  stroke: #ffffff !important;
+  stroke: #333333 !important;
 }
 
 .index-page .badge {
-  background: #5ec4e8 !important;
+  background: #ff4a17 !important;
 }
 
-/* Navbar toggler (hamburger menu) styling - WHITE for index page DESKTOP */
+/* Navbar toggler (hamburger menu) styling - DARK for index page DESKTOP */
 @media (min-width: 769px) {
   .index-page .navbar-toggler {
-    border: 2px solid rgba(255, 255, 255, 0.8) !important;
+    border: 2px solid rgba(0, 0, 0, 0.3) !important;
     padding: 8px 10px;
     border-radius: 4px;
   }
 
   .index-page .navbar-toggler:focus {
-    box-shadow: 0 0 0 0.2rem rgba(255, 255, 255, 0.25) !important;
+    box-shadow: 0 0 0 0.2rem rgba(0, 0, 0, 0.1) !important;
     outline: none;
   }
 
   .index-page .navbar-toggler-icon {
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(255, 255, 255, 1)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2.5' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(0, 0, 0, 0.75)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2.5' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") !important;
     width: 24px;
     height: 24px;
   }
 }
 
-/* Fix for mobile: Use lighter background so logo blends better */
+/* Mobile navbar - solid white background */
 @media (max-width: 768px) {
   .index-page .custom-navbar {
-    background: rgba(255, 255, 255, 0.95) !important; /* Light background instead of dark */
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    background: #ffffff !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   }
   
-  /* Change text color to dark since background is now light */
+  /* Text color already dark */
   .index-page .custom-navbar .custom-navbar-nav li a {
     color: #333333 !important;
   }

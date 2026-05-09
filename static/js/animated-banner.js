@@ -759,6 +759,11 @@ class AnimatedBanner {
                     this.selectedElement.style.transform = `translate(-50%, -50%) rotate(${currentRotation}deg)`;
                 }, 1000);
                 break;
+                
+            case 'delete':
+                // Delete item from workspace
+                this.deleteItem(this.selectedElement);
+                break;
         }
         
         // Add visual feedback for z-index changes only
@@ -769,6 +774,67 @@ class AnimatedBanner {
             setTimeout(() => {
                 this.selectedElement.style.transform = baseTransform;
             }, 200);
+        }
+    }
+    
+    async deleteItem(element) {
+        if (!element) return;
+        
+        // Get item ID from element
+        const itemId = element.dataset.itemId;
+        
+        if (!itemId) {
+            console.error('No item ID found for element');
+            return;
+        }
+        
+        // Confirm deletion
+        if (!confirm('Are you sure you want to delete this item?')) {
+            return;
+        }
+        
+        try {
+            // Call backend API to delete from database
+            const response = await fetch(`/api/workspace/item/${itemId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                // Remove from DOM with animation
+                element.style.transition = 'all 0.3s ease';
+                element.style.opacity = '0';
+                element.style.transform = 'translate(-50%, -50%) scale(0)';
+                
+                setTimeout(() => {
+                    element.remove();
+                    
+                    // Remove from arrays
+                    const index = this.furnitureElements.indexOf(element);
+                    if (index > -1) {
+                        this.furnitureElements.splice(index, 1);
+                        this.items.splice(index, 1);
+                        window.furnitureData.splice(index, 1);
+                    }
+                    
+                    // Update item count in UI
+                    const itemCountEl = document.getElementById('itemCount');
+                    if (itemCountEl) {
+                        itemCountEl.textContent = this.furnitureElements.length;
+                    }
+                    
+                    console.log('Item deleted successfully');
+                }, 300);
+            } else {
+                alert('Failed to delete item: ' + (result.error || 'Unknown error'));
+            }
+        } catch (error) {
+            console.error('Failed to delete item:', error);
+            alert('Failed to delete item. Please try again.');
         }
     }
 }

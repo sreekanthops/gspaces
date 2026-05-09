@@ -5413,9 +5413,12 @@ def my_workspace():
             ORDER BY z_index ASC, created_at ASC
         """, (current_user.id,))
         
+        rows = cursor.fetchall()
+        print(f"[WORKSPACE DEBUG] User {current_user.id} has {len(rows)} items in database")
+        
         items = []
-        for idx, row in enumerate(cursor.fetchall()):
-            items.append({
+        for idx, row in enumerate(rows):
+            item = {
                 'id': row[0],
                 'name': row[1] or f'Item {idx + 1}',
                 'image_path': row[2],  # Base64 data
@@ -5429,15 +5432,20 @@ def my_workspace():
                 'z_index': row[9] if row[9] else 1,
                 'scatter_distance': 200,
                 'display_order': idx
-            })
+            }
+            print(f"[WORKSPACE DEBUG] Item {item['id']}: pos=({item['initial_x']}, {item['initial_y']}), size=({item['width']}, {item['height']})")
+            items.append(item)
         
         cursor.close()
         conn.close()
         
+        print(f"[WORKSPACE DEBUG] Rendering template with {len(items)} items")
         return render_template('my_workspace.html', items=items)
         
     except Exception as e:
-        print(f"Error loading workspace: {str(e)}")
+        print(f"[WORKSPACE ERROR] Error loading workspace: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return render_template('my_workspace.html', items=[])
 
 

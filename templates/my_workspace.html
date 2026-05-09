@@ -279,8 +279,13 @@
         };
         
         // Debug: Log the data
-        console.log('Furniture Data:', window.furnitureData);
-        console.log('Number of items:', window.furnitureData ? window.furnitureData.length : 0);
+        console.log('[WORKSPACE JS] Furniture Data:', window.furnitureData);
+        console.log('[WORKSPACE JS] Number of items:', window.furnitureData ? window.furnitureData.length : 0);
+        if (window.furnitureData && window.furnitureData.length > 0) {
+            window.furnitureData.forEach((item, idx) => {
+                console.log(`[WORKSPACE JS] Item ${idx}: id=${item.id}, pos=(${item.initial_x}, ${item.initial_y}), size=(${item.width}x${item.height})`);
+            });
+        }
         
         // File upload functionality
         const uploadArea = document.getElementById('uploadArea');

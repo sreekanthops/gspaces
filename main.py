@@ -3295,12 +3295,13 @@ def send_custom_order_email(order_id):
 
 
 
-@app.route('/admin/coupons/delete/<int:coupon_id>', methods=['POST'])
+@app.route('/admin/coupons/delete/<int:coupon_id>', methods=['GET', 'POST'])
 @login_required
 def delete_coupon(coupon_id):
     """Delete a coupon"""
     if current_user.email not in ADMIN_EMAILS:
-        return jsonify({"status": "error", "message": "Access denied"}), 403
+        flash("Access denied. Admin privileges required.", "danger")
+        return redirect(url_for('admin_coupons'))
     
     conn = connect_to_db()
     if conn:
@@ -3315,6 +3316,7 @@ def delete_coupon(coupon_id):
         finally:
             conn.close()
     
+    return redirect(url_for('admin_coupons'))
 
 # Consolidated Admin Pages
 @app.route('/admin/deals-promotions')

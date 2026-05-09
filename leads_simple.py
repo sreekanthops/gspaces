@@ -1251,6 +1251,69 @@ def submit_quotation_feedback():
         
         # Validate input
         if not lead_id:
+            return jsonify({'success': False, 'message': 'Lead ID is required'}), 400
+        
+        # Convert rating to integer
+        try:
+            rating = int(rating)
+            if rating < 0 or rating > 5:
+                rating = 0
+        except (ValueError, TypeError):
+            rating = 0
+        
+        # At least one field should be provided
+        if not message:
+            return jsonify({'success': False, 'message': 'Please provide your feedback'}), 400
+        
+        # Update database
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
+        # Check if lead exists and get share token
+        cur.execute("SELECT share_token FROM leads WHERE id = %s", (lead_id,))
+        result = cur.fetchone()
+        if not result:
+            cur.close()
+            conn.close()
+            return jsonify({'success': False, 'message': 'Quotation not found'}), 404
+        
+        share_token = result[0]
+        
+        # Update feedback
+        cur.execute("""
+            UPDATE leads
+            SET customer_rating = %s,
+                customer_feedback = %s,
+                feedback_submitted_at = CURRENT_TIMESTAMP
+            WHERE id = %s
+        """, (rating if rating > 0 else None, message if message else None, lead_id))
+        
+        conn.commit()
+        cur.close()
+        conn.close()
+        
+        # Return JSON success response
+        return jsonify({
+            'success': True,
+            'message': 'Thank you for your feedback!',
+            'share_token': share_token
+        })
+        
+    except Exception as e:
+        print(f"Error submitting feedback: {str(e)}")
+        return jsonify({'success': False, 'message': 'An error occurred while submitting your feedback. Please try again.'}), 500
+
+# Keep the old HTML response version for backwards compatibility (if needed)
+@leads_bp.route('/submit-quotation-feedback-html', methods=['POST'])
+def submit_quotation_feedback_html():
+    """Handle customer feedback submission for quotations - HTML response version"""
+    try:
+        lead_id = request.form.get('lead_id')
+        rating = request.form.get('rating', '0')
+        message = request.form.get('message', '').strip()
+        
+        # Validate input
+        if not lead_id:
             return render_template_string('''
                 <div style="max-width: 600px; margin: 50px auto; padding: 40px; text-align: center; font-family: Arial, sans-serif;">
                     <div style="color: #dc2626; font-size: 48px; margin-bottom: 20px;">❌</div>
@@ -1386,6 +1449,38 @@ def submit_quotation_feedback():
 @leads_bp.route('/api/delete-quotation-feedback', methods=['POST'])
 def delete_quotation_feedback():
     """Handle customer feedback deletion - Admin only"""
+    try:
+        lead_id = request.form.get('lead_id')
+        
+        if not lead_id:
+            return jsonify({'success': False, 'message': 'Lead ID is required'}), 400
+        
+        # Update database
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
+        # Clear feedback
+        cur.execute("""
+            UPDATE leads
+            SET customer_rating = NULL,
+                customer_feedback = NULL,
+                feedback_submitted_at = NULL
+            WHERE id = %s
+        """, (lead_id,))
+        
+        conn.commit()
+        cur.close()
+        conn.close()
+        
+        return jsonify({'success': True, 'message': 'Feedback deleted successfully'})
+        
+    except Exception as e:
+        print(f"Error deleting feedback: {str(e)}")
+        return jsonify({'success': False, 'message': 'An error occurred while deleting feedback'}), 500
+
+@leads_bp.route('/api/delete-quotation-feedback-old', methods=['POST'])
+def delete_quotation_feedback_old():
+    """Handle customer feedback deletion - Admin only - OLD VERSION"""
     try:
         lead_id = request.form.get('lead_id')
         

@@ -461,6 +461,63 @@
                 alert('Failed to clear workspace');
             }
         }
+        
+        // Auto-save workspace when items are moved
+        let saveTimeout = null;
+        
+        function scheduleAutoSave() {
+            // Clear existing timeout
+            if (saveTimeout) {
+                clearTimeout(saveTimeout);
+            }
+            
+            // Schedule save after 2 seconds of inactivity
+            saveTimeout = setTimeout(async () => {
+                await saveWorkspace();
+            }, 2000);
+        }
+        
+        async function saveWorkspace() {
+            if (!window.animatedBannerInstance) return;
+            
+            try {
+                // Collect all item positions and states
+                const items = [];
+                window.animatedBannerInstance.furnitureElements.forEach((element, index) => {
+                    const rect = element.getBoundingClientRect();
+                    const containerRect = element.parentElement.getBoundingClientRect();
+                    
+                    // Calculate position as percentage
+                    const x = ((rect.left + rect.width / 2 - containerRect.left) / containerRect.width) * 100;
+                    const y = ((rect.top + rect.height / 2 - containerRect.top) / containerRect.height) * 100;
+                    
+                    const rotation = window.animatedBannerInstance.currentRotation.get(element) || 0;
+                    const scale = window.animatedBannerInstance.currentScale.get(element) || 1.0;
+                    
+                    items.push({
+                        id: window.furnitureData[index].id,
+                        position_x: x,
+                        position_y: y,
+                        rotation_angle: rotation,
+                        scale_factor: scale,
+                        z_index: parseInt(element.style.zIndex) || index
+                    });
+                });
+                
+                const response = await fetch('/api/workspace/save', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ items: items })
+                });
+                
+                const result = await response.json();
+                console.log('Workspace saved:', result);
+            } catch (error) {
+                console.error('Failed to save workspace:', error);
+            }
+        }
     </script>
     <script src="/static/js/animated-banner.js"></script>
     <script>
@@ -470,6 +527,11 @@
             if (bannerContainer && window.furnitureData && window.bannerSettings) {
                 window.animatedBannerInstance = new AnimatedBanner('animated-furniture-banner', window.furnitureData, window.bannerSettings);
                 console.log('AnimatedBanner initialized with', window.furnitureData.length, 'items');
+                
+                // Add auto-save on mouseup (after dragging)
+                document.addEventListener('mouseup', function() {
+                    scheduleAutoSave();
+                });
             }
         });
     </script>

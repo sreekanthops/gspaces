@@ -269,7 +269,7 @@
         window.furnitureData = {{ items | tojson | safe }};
         window.bannerSettings = {
             is_enabled: true,
-            scatter_duration: 2000,
+            scatter_duration: 0,  // Disable scatter for workspace - items should stay where saved
             scatter_easing: 'ease-out',
             allow_drag: true,
             snap_to_grid: false,

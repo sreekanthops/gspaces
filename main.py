@@ -5466,11 +5466,11 @@ def upload_workspace_item():
         initial_y = random.randint(100, 400)
         
         cursor.execute("""
-            INSERT INTO user_workspace_items 
-            (user_id, image_data, position_x, position_y, rotation_angle, scale_factor, z_index)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            INSERT INTO user_workspace_items
+            (user_id, name, image_data, position_x, position_y, rotation_angle, scale_factor, z_index)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING id
-        """, (current_user.id, image_data, initial_x, initial_y, 0, 1.0, max_z + 1))
+        """, (current_user.id, filename, image_data, initial_x, initial_y, 0, 1.0, max_z + 1))
         
         item_id = cursor.fetchone()[0]
         conn.commit()

@@ -248,6 +248,9 @@
                         <button class="btn-save" onclick="saveWorkspace()">
                             <i class="bi bi-save"></i> Save Now
                         </button>
+                        <button class="btn btn-danger" id="deleteSelectedBtn" onclick="deleteSelected()" style="display: none; padding: 12px 30px; border-radius: 8px; font-size: 16px; font-weight: 600;">
+                            <i class="bi bi-trash-fill"></i> Delete Selected
+                        </button>
                         <button class="btn-clear" onclick="clearWorkspace()">
                             <i class="bi bi-trash"></i> Clear All
                         </button>
@@ -286,6 +289,16 @@
         console.log('Loaded workspace items:', window.furnitureData.length);
     </script>
     <script src="/static/js/animated-banner.js"></script>
+    <script>
+        // Initialize AnimatedBanner instance (same as test page)
+        document.addEventListener('DOMContentLoaded', function() {
+            const bannerContainer = document.getElementById('animated-furniture-banner');
+            if (bannerContainer && window.furnitureData && window.bannerSettings) {
+                window.animatedBannerInstance = new AnimatedBanner('animated-furniture-banner', window.furnitureData, window.bannerSettings);
+                console.log('AnimatedBanner initialized with', window.furnitureData.length, 'items');
+            }
+        });
+    </script>
     <script src="/static/js/workspace.js"></script>
 </body>
 </html>

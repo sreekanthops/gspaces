@@ -41,6 +41,20 @@
             align-items: center;
             gap: 5px;
         }
+        .price-badge {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.98), rgba(5, 150, 105, 0.98));
+            color: white;
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            z-index: 5;
+            box-shadow: 0 8px 20px rgba(5, 150, 105, 0.28);
+            line-height: 1;
+        }
         .design-card:hover {
             transform: translateY(-10px);
             box-shadow: 0 16px 48px rgba(0,0,0,0.2);
@@ -124,6 +138,12 @@
                 <div class="col-md-4 design-item" data-category="{{ design.category }}">
                     <a href="{{ url_for('design_gallery.view_design_gallery', design_id=design.id) }}" class="design-card">
                         <img src="{{ design.image_url }}" alt="{{ design.title }}" class="design-image">
+                        
+                        {% if design.quoted_price %}
+                        <div class="price-badge">
+                            ₹{{ "{:,.0f}".format(design.quoted_price|float) }}
+                        </div>
+                        {% endif %}
                         
                         {% if design.image_count > 1 %}
                         <div class="image-count-badge">

@@ -7,6 +7,7 @@ import os
 from datetime import datetime, timedelta
 import psutil
 import platform
+import requests
 
 system_health_bp = Blueprint('system_health', __name__)
 
@@ -398,7 +399,7 @@ def system_metrics():
     
     try:
         cur.execute("""
-            SELECT 
+            SELECT
                 metric_name,
                 metric_value,
                 unit,
@@ -418,5 +419,160 @@ def system_metrics():
     finally:
         cur.close()
         conn.close()
+
+@system_health_bp.route('/admin/system-health/api/system-logs')
+@login_required
+@admin_required
+def get_system_logs_json():
+    """Get system logs as JSON for AJAX loading"""
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    
+    try:
+        cur.execute("""
+            SELECT
+                id,
+                log_level,
+                log_type,
+                message,
+                route,
+                method,
+                status_code,
+                response_time,
+                TO_CHAR(created_at, 'YYYY-MM-DD HH24:MI:SS') as created_at
+            FROM system_logs
+            ORDER BY created_at DESC
+            LIMIT 50
+        """)
+        logs = cur.fetchall()
+        return jsonify({'logs': logs})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        cur.close()
+        conn.close()
+
+@system_health_bp.route('/admin/system-health/api/api-logs')
+@login_required
+@admin_required
+def get_api_logs_json():
+    """Get API logs as JSON for AJAX loading"""
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    
+    try:
+        cur.execute("""
+            SELECT
+                id,
+                route,
+                method,
+                status_code,
+                response_time,
+                ip_address,
+                TO_CHAR(created_at, 'YYYY-MM-DD HH24:MI:SS') as created_at
+            FROM api_request_logs
+            ORDER BY created_at DESC
+            LIMIT 50
+        """)
+        logs = cur.fetchall()
+        return jsonify({'logs': logs})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        cur.close()
+        conn.close()
+
+@system_health_bp.route('/admin/system-health/api/check-links')
+@login_required
+@admin_required
+def check_links():
+    """Check health of all website links"""
+    import time
+    
+    # Define all important links to check
+    base_url = request.host_url.rstrip('/')
+    links_to_check = [
+        {'url': '/', 'name': 'Homepage'},
+        {'url': '/products', 'name': 'Products Page'},
+        {'url': '/about', 'name': 'About Page'},
+        {'url': '/contact', 'name': 'Contact Page'},
+        {'url': '/services', 'name': 'Services Page'},
+        {'url': '/blogs', 'name': 'Blogs Page'},
+        {'url': '/login', 'name': 'Login Page'},
+        {'url': '/signup', 'name': 'Signup Page'},
+        {'url': '/cart', 'name': 'Cart Page'},
+        {'url': '/admin/orders', 'name': 'Admin Orders'},
+        {'url': '/admin/inquiries', 'name': 'Admin Inquiries'},
+        {'url': '/admin/system-health', 'name': 'System Health'},
+    ]
+    
+    results = []
+    summary = {'total': 0, 'ok': 0, 'warning': 0, 'error': 0}
+    
+    for link in links_to_check:
+        summary['total'] += 1
+        full_url = base_url + link['url']
+        
+        try:
+            start_time = time.time()
+            response = requests.get(full_url, timeout=5, allow_redirects=True)
+            response_time = int((time.time() - start_time) * 1000)
+            
+            if response.status_code == 200:
+                status = 'ok'
+                message = 'OK'
+                summary['ok'] += 1
+            elif response.status_code in [301, 302, 303, 307, 308]:
+                status = 'warning'
+                message = f'Redirect to {response.url}'
+                summary['warning'] += 1
+            else:
+                status = 'error'
+                message = f'HTTP {response.status_code}'
+                summary['error'] += 1
+                
+            results.append({
+                'url': link['url'],
+                'name': link['name'],
+                'status': status,
+                'response_time': response_time,
+                'message': message,
+                'status_code': response.status_code
+            })
+        except requests.exceptions.Timeout:
+            summary['error'] += 1
+            results.append({
+                'url': link['url'],
+                'name': link['name'],
+                'status': 'error',
+                'response_time': 5000,
+                'message': 'Timeout (>5s)',
+                'status_code': 0
+            })
+        except requests.exceptions.ConnectionError:
+            summary['error'] += 1
+            results.append({
+                'url': link['url'],
+                'name': link['name'],
+                'status': 'error',
+                'response_time': 0,
+                'message': 'Connection Error',
+                'status_code': 0
+            })
+        except Exception as e:
+            summary['error'] += 1
+            results.append({
+                'url': link['url'],
+                'name': link['name'],
+                'status': 'error',
+                'response_time': 0,
+                'message': str(e),
+                'status_code': 0
+            })
+    
+    return jsonify({
+        'results': results,
+        'summary': summary
+    })
 
 # Made with Bob

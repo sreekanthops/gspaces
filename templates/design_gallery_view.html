@@ -210,6 +210,7 @@
     <script>
         const images = {{ images|tojson }};
         let currentIndex = 0;
+        let slideInterval;
 
         function showImage(index) {
             currentIndex = index;
@@ -224,6 +225,7 @@
                 document.getElementById('mainVideo').style.display = 'block';
                 document.getElementById('mainVideo').src = currentMedia.video_url;
                 document.getElementById('mainVideo').load();
+                document.getElementById('mainVideo').play();
             } else {
                 document.getElementById('mainImage').style.display = 'block';
                 document.getElementById('mainImage').src = currentMedia.image_url;
@@ -244,10 +246,44 @@
             showImage(currentIndex);
         }
 
+        // Auto-slide functionality
+        function startAutoSlide() {
+            // Clear any existing interval
+            if (slideInterval) clearInterval(slideInterval);
+
+            // Only auto-slide if there are multiple images
+            if (images.length > 1) {
+                slideInterval = setInterval(() => {
+                    changeImage(1);
+                }, 5000); // Change every 5 seconds
+            }
+        }
+
+        function stopAutoSlide() {
+            if (slideInterval) clearInterval(slideInterval);
+        }
+
         // Keyboard navigation
         document.addEventListener('keydown', function(e) {
-            if (e.key === 'ArrowLeft') changeImage(-1);
-            if (e.key === 'ArrowRight') changeImage(1);
+            if (e.key === 'ArrowLeft') {
+                changeImage(-1);
+                startAutoSlide(); // Reset auto-slide timer
+            }
+            if (e.key === 'ArrowRight') {
+                changeImage(1);
+                startAutoSlide(); // Reset auto-slide timer
+            }
+        });
+
+        // Start auto-slide when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            showImage(0); // Show first image
+            startAutoSlide(); // Start auto-sliding
+
+            // Pause on hover
+            const galleryContainer = document.querySelector('.main-image-container');
+            galleryContainer.addEventListener('mouseenter', stopAutoSlide);
+            galleryContainer.addEventListener('mouseleave', startAutoSlide);
         });
     </script>
 </body>

@@ -230,20 +230,176 @@ def public_gallery():
     cur = conn.cursor(cursor_factory=RealDictCursor)
     
     try:
+        # Get all active designs with their image count
         cur.execute("""
-            SELECT 
-                id,
-                title,
-                description,
-                image_url,
-                category
-            FROM design_gallery
-            WHERE is_active = TRUE
-            ORDER BY display_order, created_at DESC
+            SELECT
+                dg.id,
+                dg.title,
+                dg.description,
+                dg.image_url,
+                dg.category,
+                COUNT(di.id) as image_count
+            FROM design_gallery dg
+            LEFT JOIN design_images di ON dg.id = di.design_id
+            WHERE dg.is_active = TRUE
+            GROUP BY dg.id, dg.title, dg.description, dg.image_url, dg.category, dg.display_order, dg.created_at
+            ORDER BY dg.display_order, dg.created_at DESC
         """)
         designs = cur.fetchall()
         
         return render_template('design_gallery_public.html', designs=designs)
+    finally:
+        cur.close()
+        conn.close()
+
+@design_gallery_bp.route('/designs/<int:design_id>')
+def view_design_gallery(design_id):
+    """View all images for a specific design"""
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    
+    try:
+        # Get design details
+        cur.execute("""
+            SELECT id, title, description, category
+            FROM design_gallery
+            WHERE id = %s AND is_active = TRUE
+        """, (design_id,))
+        design = cur.fetchone()
+        
+        if not design:
+            flash('Design not found', 'danger')
+            return redirect(url_for('design_gallery.public_gallery'))
+        
+        # Get all images for this design
+        cur.execute("""
+            SELECT image_url, display_order, is_primary
+            FROM design_images
+            WHERE design_id = %s
+            ORDER BY is_primary DESC, display_order, created_at
+        """, (design_id,))
+        images = cur.fetchall()
+        
+        # If no images in design_images, use the main image_url
+        if not images:
+            cur.execute("SELECT image_url FROM design_gallery WHERE id = %s", (design_id,))
+            main_image = cur.fetchone()
+            if main_image and main_image['image_url']:
+                images = [{'image_url': main_image['image_url'], 'is_primary': True, 'display_order': 0}]
+        
+        return render_template('design_gallery_view.html', design=design, images=images)
+    finally:
+        cur.close()
+        conn.close()
+
+@design_gallery_bp.route('/admin/design-gallery/<int:design_id>/add-image', methods=['POST'])
+@login_required
+@admin_required
+def add_design_image(design_id):
+    """Add additional image to a design"""
+    if 'image' not in request.files:
+        return jsonify({'error': 'No image file provided'}), 400
+    
+    file = request.files['image']
+    if file.filename == '':
+        return jsonify({'error': 'No image selected'}), 400
+    
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        import time
+        filename = f"{int(time.time())}_{filename}"
+        
+        os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+        filepath = os.path.join(UPLOAD_FOLDER, filename)
+        file.save(filepath)
+        
+        image_url = f'/static/img/designs/{filename}'
+        display_order = request.form.get('display_order', 0, type=int)
+        is_primary = request.form.get('is_primary', 'false') == 'true'
+        
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
+        try:
+            # If setting as primary, unset other primary images
+            if is_primary:
+                cur.execute("""
+                    UPDATE design_images
+                    SET is_primary = false
+                    WHERE design_id = %s
+                """, (design_id,))
+            
+            cur.execute("""
+                INSERT INTO design_images (design_id, image_url, display_order, is_primary)
+                VALUES (%s, %s, %s, %s)
+            """, (design_id, image_url, display_order, is_primary))
+            conn.commit()
+            
+            return jsonify({'success': True, 'message': 'Image added successfully', 'image_url': image_url})
+        except Exception as e:
+            conn.rollback()
+            return jsonify({'error': str(e)}), 500
+        finally:
+            cur.close()
+            conn.close()
+    else:
+        return jsonify({'error': 'Invalid file type'}), 400
+
+@design_gallery_bp.route('/admin/design-gallery/<int:design_id>/images')
+@login_required
+@admin_required
+def get_design_images(design_id):
+    """Get all images for a design (AJAX)"""
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    
+    try:
+        cur.execute("""
+            SELECT id, image_url, display_order, is_primary
+            FROM design_images
+            WHERE design_id = %s
+            ORDER BY is_primary DESC, display_order, created_at
+        """, (design_id,))
+        images = cur.fetchall()
+        
+        return jsonify({'images': images})
+    finally:
+        cur.close()
+        conn.close()
+
+@design_gallery_bp.route('/admin/design-gallery/image/<int:image_id>/delete', methods=['POST'])
+@login_required
+@admin_required
+def delete_design_image(image_id):
+    """Delete a design image"""
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    
+    try:
+        # Get image info
+        cur.execute("SELECT image_url FROM design_images WHERE id = %s", (image_id,))
+        image = cur.fetchone()
+        
+        if image:
+            # Delete from database
+            cur.execute("DELETE FROM design_images WHERE id = %s", (image_id,))
+            conn.commit()
+            
+            # Try to delete file
+            try:
+                if image['image_url'].startswith('/static/'):
+                    filepath = image['image_url'][1:]
+                    if os.path.exists(filepath):
+                        os.remove(filepath)
+            except Exception as e:
+                print(f"Error deleting file: {e}")
+            
+            return jsonify({'success': True, 'message': 'Image deleted successfully'})
+        else:
+            return jsonify({'error': 'Image not found'}), 404
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'error': str(e)}), 500
     finally:
         cur.close()
         conn.close()

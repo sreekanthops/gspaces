@@ -22,6 +22,24 @@
             transition: all 0.4s ease;
             margin-bottom: 30px;
             cursor: pointer;
+            text-decoration: none;
+            display: block;
+            color: inherit;
+        }
+        .image-count-badge {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(102, 126, 234, 0.95);
+            color: white;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            z-index: 5;
+            display: flex;
+            align-items: center;
+            gap: 5px;
         }
         .design-card:hover {
             transform: translateY(-10px);
@@ -104,13 +122,26 @@
             {% if designs %}
                 {% for design in designs %}
                 <div class="col-md-4 design-item" data-category="{{ design.category }}">
-                    <div class="design-card">
+                    <a href="{{ url_for('design_gallery.view_design_gallery', design_id=design.id) }}" class="design-card">
                         <img src="{{ design.image_url }}" alt="{{ design.title }}" class="design-image">
+                        
+                        {% if design.image_count > 1 %}
+                        <div class="image-count-badge">
+                            <i class="fas fa-images"></i>
+                            {{ design.image_count }}
+                        </div>
+                        {% endif %}
+                        
                         <div class="design-overlay">
                             <h3 class="design-title">{{ design.title }}</h3>
                             <p class="design-description">{{ design.description }}</p>
+                            {% if design.image_count > 1 %}
+                            <small class="text-white-50">
+                                <i class="fas fa-mouse-pointer"></i> Click to view {{ design.image_count }} images
+                            </small>
+                            {% endif %}
                         </div>
-                    </div>
+                    </a>
                 </div>
                 {% endfor %}
             {% else %}

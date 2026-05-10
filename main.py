@@ -2148,7 +2148,7 @@ def mark_review_helpful(review_id):
 @login_required
 def admin_reviews():
     """Admin page to manage product reviews"""
-    if current_user.email not in ADMIN_EMAILS:
+    if not current_user.is_admin:
         flash("Access denied. Admin privileges required.", "danger")
         return redirect(url_for('index'))
     
@@ -2255,7 +2255,7 @@ def admin_reviews():
 @login_required
 def admin_approve_review(review_id):
     """Approve a review"""
-    if current_user.email not in ADMIN_EMAILS:
+    if not current_user.is_admin:
         flash("Access denied. Admin privileges required.", "danger")
         return redirect(url_for('index'))
     
@@ -2289,7 +2289,7 @@ def admin_approve_review(review_id):
 @login_required
 def admin_delete_review(review_id):
     """Delete a review"""
-    if current_user.email not in ADMIN_EMAILS:
+    if not current_user.is_admin:
         flash("Access denied. Admin privileges required.", "danger")
         return redirect(url_for('index'))
     
@@ -2749,7 +2749,7 @@ total_with_gst = 0
 @login_required
 def admin_coupons():
     """Admin page to manage coupons"""
-    if current_user.email not in ADMIN_EMAILS:
+    if not current_user.is_admin:
         flash("Access denied. Admin privileges required.", "danger")
         return redirect(url_for('index'))
     
@@ -2786,7 +2786,7 @@ def admin_coupons():
 @login_required
 def add_coupon():
     """Add a new coupon"""
-    if current_user.email not in ADMIN_EMAILS:
+    if not current_user.is_admin:
         return jsonify({"status": "error", "message": "Access denied"}), 403
     
     try:
@@ -2846,7 +2846,7 @@ def add_coupon():
 @login_required
 def toggle_coupon(coupon_id):
     """Toggle coupon active status"""
-    if current_user.email not in ADMIN_EMAILS:
+    if not current_user.is_admin:
         return jsonify({"status": "error", "message": "Access denied"}), 403
     
     conn = connect_to_db()
@@ -2868,7 +2868,7 @@ def toggle_coupon(coupon_id):
 @login_required
 def edit_coupon(coupon_id):
     """Edit an existing coupon"""
-    if current_user.email not in ADMIN_EMAILS:
+    if not current_user.is_admin:
         return jsonify({"status": "error", "message": "Access denied"}), 403
     
     try:
@@ -2925,7 +2925,7 @@ def edit_coupon(coupon_id):
 @login_required
 def get_coupon(coupon_id):
     """Get coupon details for editing"""
-    if current_user.email not in ADMIN_EMAILS:
+    if not current_user.is_admin:
         return jsonify({"status": "error", "message": "Access denied"}), 403
     
     conn = connect_to_db()
@@ -3100,7 +3100,7 @@ def admin_orders():
 @login_required
 def update_order_status(order_id):
     """Update order status"""
-    if current_user.email not in ADMIN_EMAILS:
+    if not current_user.is_admin:
         return jsonify({"status": "error", "message": "Access denied"}), 403
     
     new_status = request.form.get('status')
@@ -3171,7 +3171,7 @@ def update_order_status(order_id):
 @login_required
 def admin_view_order(order_id):
     """View detailed order information"""
-    if current_user.email not in ADMIN_EMAILS:
+    if not current_user.is_admin:
         flash("Access denied. Admin privileges required.", "danger")
         return redirect(url_for('index'))
     
@@ -3229,7 +3229,7 @@ def admin_view_order(order_id):
 @login_required
 def send_custom_order_email(order_id):
     """Send custom email to customer about their order"""
-    if current_user.email not in ADMIN_EMAILS:
+    if not current_user.is_admin:
         return jsonify({"status": "error", "message": "Access denied"}), 403
     
     subject = request.form.get('subject', '').strip()
@@ -3299,7 +3299,7 @@ def send_custom_order_email(order_id):
 @login_required
 def delete_coupon(coupon_id):
     """Delete a coupon"""
-    if current_user.email not in ADMIN_EMAILS:
+    if not current_user.is_admin:
         flash("Access denied. Admin privileges required.", "danger")
         return redirect(url_for('admin_coupons'))
     
@@ -3323,7 +3323,7 @@ def delete_coupon(coupon_id):
 @login_required
 def admin_deals_promotions():
     """Consolidated page for Deals, Coupons, and Referral Coupons"""
-    if current_user.email not in ADMIN_EMAILS:
+    if not current_user.is_admin:
         flash("Access denied. Admin privileges required.", "danger")
         return redirect(url_for('index'))
     return render_template('admin_deals_promotions.html')
@@ -3332,7 +3332,7 @@ def admin_deals_promotions():
 @login_required
 def admin_users_management():
     """Consolidated page for Customers and Admin Users"""
-    if current_user.email not in ADMIN_EMAILS:
+    if not current_user.is_admin:
         flash("Access denied. Admin privileges required.", "danger")
         return redirect(url_for('index'))
     return render_template('admin_users_management.html')
@@ -3342,7 +3342,7 @@ def admin_users_management():
 @login_required
 def admin_customers():
     """Admin page to manage customers"""
-    if current_user.email not in ADMIN_EMAILS:
+    if not current_user.is_admin:
         flash("Access denied. Admin privileges required.", "danger")
         return redirect(url_for('index'))
     
@@ -3446,7 +3446,7 @@ def admin_customers():
 @login_required
 def admin_delete_customer(customer_id):
     """Delete a customer and all their data"""
-    if current_user.email not in ADMIN_EMAILS:
+    if not current_user.is_admin:
         flash("Access denied. Admin privileges required.", "danger")
         return redirect(url_for('admin_customers'))
     
@@ -3484,7 +3484,7 @@ def admin_delete_customer(customer_id):
 @login_required
 def admin_bulk_delete_customers():
     """Bulk delete customers"""
-    if current_user.email not in ADMIN_EMAILS:
+    if not current_user.is_admin:
         flash("Access denied. Admin privileges required.", "danger")
         return redirect(url_for('admin_customers'))
     
@@ -3531,7 +3531,7 @@ def admin_bulk_delete_customers():
 @login_required
 def get_customers_list():
     """API endpoint to get list of customers for dropdowns"""
-    if current_user.email not in ADMIN_EMAILS:
+    if not current_user.is_admin:
         return jsonify({"status": "error", "message": "Access denied"}), 403
     
     conn = connect_to_db()
@@ -3561,7 +3561,7 @@ def get_customers_list():
 @login_required
 def admin_customer_detail(customer_id):
     """View detailed customer information"""
-    if current_user.email not in ADMIN_EMAILS:
+    if not current_user.is_admin:
         flash("Access denied. Admin privileges required.", "danger")
         return redirect(url_for('index'))
     

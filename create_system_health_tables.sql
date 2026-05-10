@@ -14,12 +14,14 @@ CREATE TABLE IF NOT EXISTS system_logs (
     method VARCHAR(10),
     status_code INTEGER,
     response_time FLOAT, -- in milliseconds
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_log_level (log_level),
-    INDEX idx_log_type (log_type),
-    INDEX idx_created_at (created_at),
-    INDEX idx_user_id (user_id)
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Create indexes for system_logs
+CREATE INDEX IF NOT EXISTS idx_system_logs_level ON system_logs(log_level);
+CREATE INDEX IF NOT EXISTS idx_system_logs_type ON system_logs(log_type);
+CREATE INDEX IF NOT EXISTS idx_system_logs_created ON system_logs(created_at);
+CREATE INDEX IF NOT EXISTS idx_system_logs_user ON system_logs(user_id);
 
 -- Error Logs Table (for detailed error tracking)
 CREATE TABLE IF NOT EXISTS error_logs (
@@ -36,11 +38,13 @@ CREATE TABLE IF NOT EXISTS error_logs (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     resolved BOOLEAN DEFAULT FALSE,
     resolved_at TIMESTAMP,
-    resolved_by INTEGER REFERENCES users(id),
-    INDEX idx_error_type (error_type),
-    INDEX idx_created_at (created_at),
-    INDEX idx_resolved (resolved)
+    resolved_by INTEGER REFERENCES users(id)
 );
+
+-- Create indexes for error_logs
+CREATE INDEX IF NOT EXISTS idx_error_logs_type ON error_logs(error_type);
+CREATE INDEX IF NOT EXISTS idx_error_logs_created ON error_logs(created_at);
+CREATE INDEX IF NOT EXISTS idx_error_logs_resolved ON error_logs(resolved);
 
 -- System Metrics Table (for performance tracking)
 CREATE TABLE IF NOT EXISTS system_metrics (
@@ -50,10 +54,12 @@ CREATE TABLE IF NOT EXISTS system_metrics (
     metric_value FLOAT NOT NULL,
     unit VARCHAR(20), -- %, MB, GB, ms, etc.
     details JSONB,
-    recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_metric_type (metric_type),
-    INDEX idx_recorded_at (recorded_at)
+    recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Create indexes for system_metrics
+CREATE INDEX IF NOT EXISTS idx_system_metrics_type ON system_metrics(metric_type);
+CREATE INDEX IF NOT EXISTS idx_system_metrics_recorded ON system_metrics(recorded_at);
 
 -- API Request Logs (for tracking all API calls)
 CREATE TABLE IF NOT EXISTS api_request_logs (
@@ -68,12 +74,14 @@ CREATE TABLE IF NOT EXISTS api_request_logs (
     request_headers JSONB,
     request_body JSONB,
     response_size INTEGER, -- in bytes
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_route (route),
-    INDEX idx_status_code (status_code),
-    INDEX idx_created_at (created_at),
-    INDEX idx_user_id (user_id)
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Create indexes for api_request_logs
+CREATE INDEX IF NOT EXISTS idx_api_logs_route ON api_request_logs(route);
+CREATE INDEX IF NOT EXISTS idx_api_logs_status ON api_request_logs(status_code);
+CREATE INDEX IF NOT EXISTS idx_api_logs_created ON api_request_logs(created_at);
+CREATE INDEX IF NOT EXISTS idx_api_logs_user ON api_request_logs(user_id);
 
 -- Create a function to automatically clean old logs
 CREATE OR REPLACE FUNCTION clean_old_logs(days_to_keep INTEGER)
@@ -122,6 +130,7 @@ VALUES
     ('WARNING', 'DATABASE', 'Slow query detected', '/admin/orders', 'GET', 200, 1500.0),
     ('ERROR', 'SYSTEM', 'Failed to send email notification', '/checkout', 'POST', 500, 250.0);
 
+-- Add comments
 COMMENT ON TABLE system_logs IS 'General system activity logs';
 COMMENT ON TABLE error_logs IS 'Detailed error tracking and resolution';
 COMMENT ON TABLE system_metrics IS 'System performance metrics over time';

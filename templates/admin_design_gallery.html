@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Design Gallery - Admin Panel</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="{{ url_for('static', filename='css/main.css') }}" rel="stylesheet">
+    <style>
+        .design-card {
+            position: relative;
+            overflow: hidden;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+            margin-bottom: 24px;
+        }
+        .design-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+        }
+        .design-image {
+            width: 100%;
+            height: 300px;
+            object-fit: cover;
+        }
+        .design-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.7));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 20px;
+        }
+        .design-card:hover .design-overlay {
+            opacity: 1;
+        }
+        .design-info {
+            color: white;
+        }
+        .design-info h5 {
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .design-info p {
+            font-size: 0.9rem;
+            margin-bottom: 0;
+        }
+        .design-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+        }
+        .design-actions .btn {
+            border-radius: 8px;
+            font-weight: 600;
+        }
+        .inactive-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(220, 53, 69, 0.9);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .category-badge {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(102, 126, 234, 0.9);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    {% include 'navbar.html' %}
+    
+    <div class="container-fluid" style="margin-top: 76px; padding: 0;">
+        <div class="row g-0">
+            <!-- Sidebar -->
+            <div class="col-md-2" style="padding: 0;">
+                {% set active_page = 'design_gallery' %}
+                {% include 'admin_sidebar.html' %}
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-10" style="background: #f8f9fa; min-height: calc(100vh - 76px); padding: 24px;">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2><i class="fas fa-images"></i> Design Gallery Management</h2>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDesignModal">
+                        <i class="fas fa-plus"></i> Add New Design
+                    </button>
+                </div>
+
+                <!-- Flash Messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <!-- Design Gallery Grid -->
+                <div class="row">
+                    {% if designs %}
+                        {% for design in designs %}
+                        <div class="col-md-4">
+                            <div class="design-card">
+                                <img src="{{ design.image_url }}" alt="{{ design.title }}" class="design-image">
+                                
+                                {% if not design.is_active %}
+                                <span class="inactive-badge">Inactive</span>
+                                {% endif %}
+                                
+                                <span class="category-badge">{{ design.category|title }}</span>
+                                
+                                <div class="design-overlay">
+                                    <div class="design-info">
+                                        <h5>{{ design.title }}</h5>
+                                        <p>{{ design.description }}</p>
+                                    </div>
+                                    
+                                    <div class="design-actions">
+                                        <button class="btn btn-warning btn-sm" onclick="editDesign({{ design.id }}, '{{ design.title }}', '{{ design.description }}', '{{ design.category }}', {{ design.display_order }})">
+                                            <i class="fas fa-edit"></i> Edit
+                                        </button>
+                                        
+                                        <form method="POST" action="{{ url_for('design_gallery.toggle_design', design_id=design.id) }}" style="display: inline;">
+                                            <button type="submit" class="btn btn-info btn-sm">
+                                                <i class="fas fa-toggle-on"></i> Toggle
+                                            </button>
+                                        </form>
+                                        
+                                        <form method="POST" action="{{ url_for('design_gallery.delete_design', design_id=design.id) }}" style="display: inline;" onsubmit="return confirm('Delete this design?');">
+                                            <button type="submit" class="btn btn-danger btn-sm">
+                                                <i class="fas fa-trash"></i> Delete
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="col-12">
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle"></i> No designs found. Click "Add New Design" to get started.
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Design Modal -->
+    <div class="modal fade" id="addDesignModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-plus"></i> Add New Design</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="POST" action="{{ url_for('design_gallery.add_design') }}" enctype="multipart/form-data">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Title *</label>
+                            <input type="text" class="form-control" id="title" name="title" required placeholder="e.g., Modern Office Setup">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="3" placeholder="Brief description shown on hover"></textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="category" class="form-label">Category</label>
+                            <select class="form-control" id="category" name="category">
+                                <option value="office">Office</option>
+                                <option value="home">Home</option>
+                                <option value="commercial">Commercial</option>
+                                <option value="studio">Studio</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="display_order" class="form-label">Display Order</label>
+                            <input type="number" class="form-control" id="display_order" name="display_order" value="0" min="0">
+                            <small class="text-muted">Lower numbers appear first</small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="image" class="form-label">Image *</label>
+                            <input type="file" class="form-control" id="image" name="image" accept="image/*" required>
+                            <small class="text-muted">Allowed: PNG, JPG, JPEG, GIF, WEBP</small>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Add Design
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Design Modal -->
+    <div class="modal fade" id="editDesignModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-edit"></i> Edit Design</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="editDesignForm">
+                    <div class="modal-body">
+                        <input type="hidden" id="edit_design_id" name="design_id">
+                        
+                        <div class="mb-3">
+                            <label for="edit_title" class="form-label">Title *</label>
+                            <input type="text" class="form-control" id="edit_title" name="title" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="edit_description" class="form-label">Description</label>
+                            <textarea class="form-control" id="edit_description" name="description" rows="3"></textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="edit_category" class="form-label">Category</label>
+                            <select class="form-control" id="edit_category" name="category">
+                                <option value="office">Office</option>
+                                <option value="home">Home</option>
+                                <option value="commercial">Commercial</option>
+                                <option value="studio">Studio</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="edit_display_order" class="form-label">Display Order</label>
+                            <input type="number" class="form-control" id="edit_display_order" name="display_order" min="0">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function editDesign(id, title, description, category, displayOrder) {
+            document.getElementById('edit_design_id').value = id;
+            document.getElementById('edit_title').value = title;
+            document.getElementById('edit_description').value = description;
+            document.getElementById('edit_category').value = category;
+            document.getElementById('edit_display_order').value = displayOrder;
+            
+            const modal = new bootstrap.Modal(document.getElementById('editDesignModal'));
+            modal.show();
+        }
+        
+        document.getElementById('editDesignForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const designId = document.getElementById('edit_design_id').value;
+            const formData = new FormData(this);
+            
+            fetch(`/admin/design-gallery/${designId}/update`, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Error: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                alert('Error updating design: ' + error.message);
+            });
+        });
+    </script>
+</body>
+</html>

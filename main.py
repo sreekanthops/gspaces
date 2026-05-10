@@ -65,6 +65,7 @@ from deals_routes import register_deals_routes
 from performance_config import configure_performance
 from leads_simple import register_leads_routes
 from system_health_routes import system_health_bp
+from design_gallery_routes import design_gallery_bp
 from admin_users_routes import admin_users_bp, set_db_connection_func
 from visitor_tracking_routes import register_visitor_routes
 
@@ -5641,6 +5642,9 @@ set_db_connection_func(connect_to_db)
 # --- SYSTEM HEALTH MONITORING ---
 # Register system health monitoring blueprint
 app.register_blueprint(system_health_bp)
+# --- DESIGN GALLERY ---
+# Register design gallery blueprint
+app.register_blueprint(design_gallery_bp)
 app.register_blueprint(admin_users_bp)
 
 # --- VISITOR TRACKING SYSTEM ---

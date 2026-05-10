@@ -139,7 +139,12 @@
                                     </div>
                                     
                                     <div class="design-actions">
-                                        <button class="btn btn-warning btn-sm" onclick="editDesign({{ design.id }}, '{{ design.title }}', '{{ design.description }}', '{{ design.category }}', {{ design.display_order }})">
+                                        <button class="btn btn-warning btn-sm edit-design-btn"
+                                                data-id="{{ design.id }}"
+                                                data-title="{{ design.title }}"
+                                                data-description="{{ design.description }}"
+                                                data-category="{{ design.category }}"
+                                                data-order="{{ design.display_order }}">
                                             <i class="fas fa-edit"></i> Edit
                                         </button>
                                         
@@ -274,37 +279,50 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        function editDesign(id, title, description, category, displayOrder) {
-            document.getElementById('edit_design_id').value = id;
-            document.getElementById('edit_title').value = title;
-            document.getElementById('edit_description').value = description;
-            document.getElementById('edit_category').value = category;
-            document.getElementById('edit_display_order').value = displayOrder;
+        // Handle edit button clicks using event delegation
+        document.addEventListener('DOMContentLoaded', function() {
+            // Edit button handler
+            document.querySelectorAll('.edit-design-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const id = this.dataset.id;
+                    const title = this.dataset.title;
+                    const description = this.dataset.description;
+                    const category = this.dataset.category;
+                    const displayOrder = this.dataset.order;
+                    
+                    document.getElementById('edit_design_id').value = id;
+                    document.getElementById('edit_title').value = title;
+                    document.getElementById('edit_description').value = description;
+                    document.getElementById('edit_category').value = category;
+                    document.getElementById('edit_display_order').value = displayOrder;
+                    
+                    const modal = new bootstrap.Modal(document.getElementById('editDesignModal'));
+                    modal.show();
+                });
+            });
             
-            const modal = new bootstrap.Modal(document.getElementById('editDesignModal'));
-            modal.show();
-        }
-        
-        document.getElementById('editDesignForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const designId = document.getElementById('edit_design_id').value;
-            const formData = new FormData(this);
-            
-            fetch(`/admin/design-gallery/${designId}/update`, {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    location.reload();
-                } else {
-                    alert('Error: ' + (data.error || 'Unknown error'));
-                }
-            })
-            .catch(error => {
-                alert('Error updating design: ' + error.message);
+            // Edit form submission
+            document.getElementById('editDesignForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const designId = document.getElementById('edit_design_id').value;
+                const formData = new FormData(this);
+                
+                fetch(`/admin/design-gallery/${designId}/update`, {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Error: ' + (data.error || 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    alert('Error updating design: ' + error.message);
+                });
             });
         });
     </script>

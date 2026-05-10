@@ -3331,11 +3331,12 @@ def admin_deals_promotions():
 @app.route('/admin/users-management')
 @login_required
 def admin_users_management():
-    """Consolidated page for Customers and Admin Users"""
+    """Admin users management - redirect to admin users page"""
     if not current_user.is_admin:
         flash("Access denied. Admin privileges required.", "danger")
         return redirect(url_for('index'))
-    return render_template('admin_users_management.html')
+    # Redirect to admin users page (the good one with table)
+    return redirect(url_for('admin_users.manage_users'))
 
 # --- CUSTOMER MANAGEMENT ROUTES ---
 @app.route('/admin/customers')

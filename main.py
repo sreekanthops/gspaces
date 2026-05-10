@@ -3015,7 +3015,7 @@ def admin_gst_settings():
 @login_required
 def admin_orders():
     """Admin page to manage all orders"""
-    if current_user.email not in ADMIN_EMAILS:
+    if not current_user.is_admin:
         flash("Access denied. Admin privileges required.", "danger")
         return redirect(url_for('index'))
     

@@ -107,10 +107,23 @@
             <i class="fas fa-arrow-left"></i> Back to Gallery
         </a>
         
-        <!-- Main Image Display -->
+        <!-- Main Media Display -->
         <div class="main-image-container">
-            <img id="mainImage" src="{{ images[0].image_url if images else '' }}" alt="{{ design.title }}" class="main-image">
-            
+            {% if images[0].media_type == 'video' %}
+            <video id="mainVideo" controls class="main-image" style="display: block;">
+                <source src="{{ images[0].video_url }}" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+            <video id="mainImage" style="display: none;" class="main-image">
+                <source src="{{ images[0].video_url }}" type="video/mp4">
+            </video>
+            {% else %}
+            <img id="mainImage" src="{{ images[0].image_url }}" alt="{{ design.title }}" class="main-image" style="display: block;">
+            <video id="mainVideo" style="display: none;" class="main-image">
+                <source src="{{ images[0].video_url }}" type="video/mp4">
+            </video>
+            {% endif %}
+
             {% if images|length > 1 %}
             <button class="nav-button prev" onclick="changeImage(-1)">
                 <i class="fas fa-chevron-left"></i>
@@ -128,10 +141,18 @@
         {% if images|length > 1 %}
         <div class="thumbnail-container">
             {% for image in images %}
-            <img src="{{ image.image_url }}" 
-                 alt="Thumbnail {{ loop.index }}" 
+            {% if image.media_type == 'video' %}
+            <div class="thumbnail video-thumbnail {% if loop.first %}active{% endif %}"
+                 onclick="showImage({{ loop.index0 }})">
+                <i class="fas fa-play-circle"></i>
+                <span>Video</span>
+            </div>
+            {% else %}
+            <img src="{{ image.image_url }}"
+                 alt="Thumbnail {{ loop.index }}"
                  class="thumbnail {% if loop.first %}active{% endif %}"
                  onclick="showImage({{ loop.index0 }})">
+            {% endif %}
             {% endfor %}
         </div>
         {% endif %}
@@ -155,28 +176,74 @@
     </div>
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <style>
+        .video-thumbnail {
+            width: 120px;
+            height: 120px;
+            background: #000;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 14px;
+            position: relative;
+        }
+        .video-thumbnail:hover {
+            transform: scale(1.05);
+        }
+        .video-thumbnail.active {
+            border-color: #667eea;
+            box-shadow: 0 0 15px rgba(102, 126, 234, 0.5);
+        }
+        .video-thumbnail i {
+            font-size: 32px;
+            margin-bottom: 5px;
+        }
+    </style>
+
     <script>
         const images = {{ images|tojson }};
         let currentIndex = 0;
-        
+
         function showImage(index) {
             currentIndex = index;
-            document.getElementById('mainImage').src = images[index].image_url;
+            const currentMedia = images[index];
+
+            // Hide both media elements
+            document.getElementById('mainImage').style.display = 'none';
+            document.getElementById('mainVideo').style.display = 'none';
+
+            // Show the appropriate media
+            if (currentMedia.media_type === 'video') {
+                document.getElementById('mainVideo').style.display = 'block';
+                document.getElementById('mainVideo').src = currentMedia.video_url;
+                document.getElementById('mainVideo').load();
+            } else {
+                document.getElementById('mainImage').style.display = 'block';
+                document.getElementById('mainImage').src = currentMedia.image_url;
+            }
+
             document.getElementById('currentIndex').textContent = index + 1;
-            
+
             // Update thumbnail active state
-            document.querySelectorAll('.thumbnail').forEach((thumb, i) => {
+            document.querySelectorAll('.thumbnail, .video-thumbnail').forEach((thumb, i) => {
                 thumb.classList.toggle('active', i === index);
             });
         }
-        
+
         function changeImage(direction) {
             currentIndex += direction;
             if (currentIndex < 0) currentIndex = images.length - 1;
             if (currentIndex >= images.length) currentIndex = 0;
             showImage(currentIndex);
         }
-        
+
         // Keyboard navigation
         document.addEventListener('keydown', function(e) {
             if (e.key === 'ArrowLeft') changeImage(-1);

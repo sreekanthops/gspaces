@@ -273,19 +273,27 @@ def view_design_gallery(design_id):
         
         # Get all images for this design
         cur.execute("""
-            SELECT image_url, display_order, is_primary
+            SELECT image_url, video_url, thumbnail_url, media_type,
+                   display_order, is_primary
             FROM design_images
             WHERE design_id = %s
             ORDER BY is_primary DESC, display_order, created_at
         """, (design_id,))
         images = cur.fetchall()
-        
+
         # If no images in design_images, use the main image_url
         if not images:
             cur.execute("SELECT image_url FROM design_gallery WHERE id = %s", (design_id,))
             main_image = cur.fetchone()
             if main_image and main_image['image_url']:
-                images = [{'image_url': main_image['image_url'], 'is_primary': True, 'display_order': 0}]
+                images = [{
+                    'image_url': main_image['image_url'],
+                    'video_url': None,
+                    'thumbnail_url': None,
+                    'media_type': 'image',
+                    'is_primary': True,
+                    'display_order': 0
+                }]
         
         return render_template('design_gallery_view.html', design=design, images=images)
     finally:

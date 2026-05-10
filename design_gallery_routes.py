@@ -230,7 +230,7 @@ def public_gallery():
     cur = conn.cursor(cursor_factory=RealDictCursor)
     
     try:
-        # Get all active designs with their image count and quoted price from synced lead designs
+        # Get all active designs with their image count and original quotation price from synced lead designs
         cur.execute("""
             SELECT
                 dg.id,
@@ -238,7 +238,7 @@ def public_gallery():
                 dg.description,
                 dg.image_url,
                 dg.category,
-                COALESCE(ld.final_price, ld.price) as quoted_price,
+                ld.price as quoted_price,
                 COUNT(di.id) as image_count
             FROM design_gallery dg
             LEFT JOIN design_images di ON dg.id = di.design_id
@@ -252,7 +252,6 @@ def public_gallery():
                 dg.category,
                 dg.display_order,
                 dg.created_at,
-                ld.final_price,
                 ld.price
             ORDER BY dg.display_order, dg.created_at DESC
         """)
@@ -278,7 +277,7 @@ def view_design_gallery(design_id):
                 dg.description,
                 dg.category,
                 dg.lead_design_id,
-                COALESCE(ld.final_price, ld.price) AS quoted_price,
+                ld.price AS quoted_price,
                 ld.notes,
                 ld.custom_items,
                 ld.has_table, ld.table_quantity, ld.table_price, ld.table_details, ld.table_length_ft, ld.table_width_ft, ld.table_height_inch,

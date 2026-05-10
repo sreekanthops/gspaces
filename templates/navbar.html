@@ -55,17 +55,13 @@
                     <a class="nav-link" href="{{ url_for('blogs') }}">Blogs</a>
                 </li>
                 <li class="nav-item {% if request.endpoint == 'design_gallery.public_gallery' %}active{% endif %}">
-                    <a class="nav-link" href="{{ url_for('design_gallery.public_gallery') }}">
-                        <i class="bi bi-images"></i> Designs
-                    </a>
+                    <a class="nav-link" href="{{ url_for('design_gallery.public_gallery') }}">Designs</a>
                 </li>
                 <li class="nav-item {% if request.endpoint == 'customer_inquiry_page' %}active{% endif %}">
                     <a class="nav-link" href="{{ url_for('customer_inquiry_page') }}">Enquiry</a>
                 </li>
                 <li class="nav-item {% if request.endpoint == 'my_workspace' %}active{% endif %}">
-                    <a class="nav-link" href="{{ url_for('my_workspace') }}">
-                        <i class="bi bi-palette"></i> Animate
-                    </a>
+                    <a class="nav-link" href="{{ url_for('my_workspace') }}">Animate</a>
                 </li>
                 <li class="nav-item {% if request.endpoint == 'contact' %}active{% endif %}">
                     <a class="nav-link" href="{{ url_for('contact') }}">Contact</a>

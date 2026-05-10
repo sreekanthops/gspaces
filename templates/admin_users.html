@@ -122,24 +122,31 @@
 
                 <!-- Promote User Form -->
                 <div class="promote-form" style="border-radius: 16px;">
-                    <h4 class="mb-3"><i class="fas fa-user-plus"></i> Promote User to Admin</h4>
+                    <h4 class="mb-3"><i class="fas fa-user-plus"></i> Grant Admin Access</h4>
                     <form method="POST" action="{{ url_for('admin_users.promote_user') }}" class="row g-3">
-                        <div class="col-md-9">
-                            <input type="email" 
-                                   name="email" 
-                                   class="form-control" 
+                        <div class="col-md-6">
+                            <input type="email"
+                                   name="email"
+                                   class="form-control"
                                    placeholder="Enter user's email address"
                                    required>
                         </div>
                         <div class="col-md-3">
+                            <select name="permission_level" class="form-control" required>
+                                <option value="read">Read Only (View)</option>
+                                <option value="write">Write Access (View + Edit)</option>
+                                <option value="full">Full Admin (View + Edit + Delete)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
                             <button type="submit" class="btn w-100">
-                                <i class="fas fa-crown"></i> Promote to Admin
+                                <i class="fas fa-user-shield"></i> Grant Access
                             </button>
                         </div>
                     </form>
                     <small class="d-block mt-2 opacity-75">
-                        <i class="fas fa-info-circle"></i> Enter the email address of the user you want to promote to admin<br>
-                        <i class="fas fa-exclamation-triangle"></i> <strong>Note:</strong> Promoted admins will have limited permissions (no delete access)
+                        <i class="fas fa-info-circle"></i> Enter email and select permission level to grant admin access<br>
+                        <strong>Read:</strong> View only | <strong>Write:</strong> View + Edit | <strong>Full:</strong> View + Edit + Delete
                     </small>
                 </div>
 
@@ -188,16 +195,26 @@
                                         </td>
                                         <td>
                                             {% if user.is_admin %}
-                                                {% if user.admin_level == 1 %}
+                                                {% if user.can_delete %}
                                                     <span class="badge bg-danger">
-                                                        <i class="fas fa-shield-alt"></i> Super Admin
+                                                        <i class="fas fa-crown"></i> Full Admin
                                                     </span>
-                                                    <br><small class="text-muted">Full Access + Delete</small>
-                                                {% else %}
+                                                    <br><small class="text-muted">View + Edit + Delete</small>
+                                                {% elif user.can_write %}
                                                     <span class="badge bg-warning text-dark">
-                                                        <i class="fas fa-user-shield"></i> Regular Admin
+                                                        <i class="fas fa-edit"></i> Write Access
                                                     </span>
-                                                    <br><small class="text-muted">No Delete Access</small>
+                                                    <br><small class="text-muted">View + Edit</small>
+                                                {% elif user.can_read %}
+                                                    <span class="badge bg-info">
+                                                        <i class="fas fa-eye"></i> Read Only
+                                                    </span>
+                                                    <br><small class="text-muted">View Only</small>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">
+                                                        <i class="fas fa-user-shield"></i> Admin
+                                                    </span>
+                                                    <br><small class="text-muted">No Permissions Set</small>
                                                 {% endif %}
                                             {% else %}
                                                 <span class="text-muted">-</span>
@@ -215,25 +232,16 @@
                                             {% endif %}
                                         </td>
                                         <td>
-                                            {% if user.id != current_user.id %}
-                                                <form method="POST" 
-                                                      action="{{ url_for('admin_users.toggle_admin', user_id=user.id) }}"
-                                                      style="display: inline;"
-                                                      onsubmit="return confirm('Are you sure you want to {% if user.is_admin %}remove admin access from{% else %}promote{% endif %} {{ user.name }}?');">
-                                                    {% if user.is_admin %}
-                                                        <button type="submit" class="btn btn-sm btn-outline-danger toggle-btn">
-                                                            <i class="fas fa-user-minus"></i> Remove Admin
-                                                        </button>
-                                                    {% else %}
-                                                        <button type="submit" class="btn btn-sm btn-outline-success toggle-btn">
-                                                            <i class="fas fa-user-plus"></i> Make Admin
-                                                        </button>
-                                                    {% endif %}
-                                                </form>
-                                            {% else %}
-                                                <span class="badge bg-warning text-dark">
+                                            {% if user.id == current_user.id %}
+                                                <span class="badge bg-primary">
                                                     <i class="fas fa-user"></i> You
                                                 </span>
+                                            {% elif user.is_admin %}
+                                                <span class="badge bg-success">
+                                                    <i class="fas fa-check-circle"></i> Admin
+                                                </span>
+                                            {% else %}
+                                                <span class="text-muted">Regular User</span>
                                             {% endif %}
                                         </td>
                                     </tr>
@@ -246,13 +254,13 @@
 
                 <!-- Info Box -->
                 <div class="alert alert-info mt-4">
-                    <h6><i class="fas fa-info-circle"></i> Admin Management Tips:</h6>
+                    <h6><i class="fas fa-info-circle"></i> Admin Permission Levels:</h6>
                     <ul class="mb-0">
-                        <li><strong>Super Admins</strong> (Red badge) have full access including delete operations</li>
-                        <li><strong>Regular Admins</strong> (Yellow badge) can access all features EXCEPT delete operations</li>
-                        <li>When you promote a user by email, they become a Regular Admin with limited permissions</li>
-                        <li>You cannot remove your own admin access for security reasons</li>
-                        <li>Use the "Promote User to Admin" form to quickly add new admins by email</li>
+                        <li><strong>🔴 Full Admin</strong> - Complete access: View + Edit + Delete all data</li>
+                        <li><strong>🟡 Write Access</strong> - Can view and edit data, but cannot delete</li>
+                        <li><strong>🔵 Read Only</strong> - Can only view admin panel, no editing or deleting</li>
+                        <li>Enter user's email and select permission level to grant admin access</li>
+                        <li>Only grant Full Admin access to trusted users</li>
                     </ul>
                 </div>
             </div>

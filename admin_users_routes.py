@@ -44,8 +44,8 @@ def admin_required(f):
     return decorated_function
 
 
-def super_admin_required(f):
-    """Decorator to require super admin access (admin_level = 1)"""
+def delete_permission_required(f):
+    """Decorator to require delete permissions (Full Admin)"""
     @login_required
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -53,23 +53,59 @@ def super_admin_required(f):
             flash('Please log in to access this page', 'danger')
             return redirect(url_for('login'))
         
-        # Check if user is super admin (admin_level = 1)
+        # Check if user is admin
         if not hasattr(current_user, 'is_admin') or not current_user.is_admin:
             flash('Admin access required', 'danger')
             return redirect(url_for('index'))
         
-        # Check admin level for delete permissions
+        # Check delete permissions
         conn = _get_connection()
         if conn:
             try:
                 cur = conn.cursor(cursor_factory=RealDictCursor)
-                cur.execute("SELECT admin_level FROM users WHERE id = %s", (current_user.id,))
+                cur.execute("SELECT can_delete FROM users WHERE id = %s", (current_user.id,))
                 user = cur.fetchone()
                 cur.close()
                 conn.close()
                 
-                if not user or user.get('admin_level', 2) != 1:
-                    flash('Super admin access required for this action', 'danger')
+                if not user or not user.get('can_delete', False):
+                    flash('Delete permission required. Only Full Admins can perform this action.', 'danger')
+                    return redirect(url_for('admin_orders'))
+            except:
+                if conn:
+                    conn.close()
+                flash('Permission check failed', 'danger')
+                return redirect(url_for('admin_orders'))
+        
+        return f(*args, **kwargs)
+    return decorated_function
+
+def write_permission_required(f):
+    """Decorator to require write permissions (Write or Full Admin)"""
+    @login_required
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated:
+            flash('Please log in to access this page', 'danger')
+            return redirect(url_for('login'))
+        
+        # Check if user is admin
+        if not hasattr(current_user, 'is_admin') or not current_user.is_admin:
+            flash('Admin access required', 'danger')
+            return redirect(url_for('index'))
+        
+        # Check write permissions
+        conn = _get_connection()
+        if conn:
+            try:
+                cur = conn.cursor(cursor_factory=RealDictCursor)
+                cur.execute("SELECT can_write, can_delete FROM users WHERE id = %s", (current_user.id,))
+                user = cur.fetchone()
+                cur.close()
+                conn.close()
+                
+                if not user or not (user.get('can_write', False) or user.get('can_delete', False)):
+                    flash('Write permission required. You only have Read access.', 'warning')
                     return redirect(url_for('admin_orders'))
             except:
                 if conn:
@@ -93,14 +129,16 @@ def manage_users():
     try:
         cur = conn.cursor(cursor_factory=RealDictCursor)
         
-        # Get all users with their admin status and permission level
+        # Get all users with their admin status and permissions
         cur.execute("""
             SELECT id, name, email, phone, is_admin,
-                   COALESCE(admin_level, 2) as admin_level,
+                   COALESCE(can_read, FALSE) as can_read,
+                   COALESCE(can_write, FALSE) as can_write,
+                   COALESCE(can_delete, FALSE) as can_delete,
                    wallet_balance, referral_code,
                    (SELECT COUNT(*) FROM orders WHERE user_id = users.id) as order_count
             FROM users
-            ORDER BY is_admin DESC, admin_level ASC, id ASC
+            ORDER BY is_admin DESC, can_delete DESC, can_write DESC, can_read DESC, id ASC
         """)
         users = cur.fetchall()
         
@@ -130,12 +168,18 @@ def manage_users():
 @admin_users_bp.route('/admin/users/promote', methods=['POST'])
 @admin_required
 def promote_user():
-    """Promote a user to admin by email"""
+    """Promote a user to admin by email with specific permissions"""
     email = request.form.get('email', '').strip()
+    permission_level = request.form.get('permission_level', 'read')
     
     if not email:
         flash('Email is required', 'danger')
         return redirect(url_for('admin_users.manage_users'))
+    
+    # Set permissions based on level
+    can_read = True  # All admins can read
+    can_write = permission_level in ['write', 'full']
+    can_delete = permission_level == 'full'
     
     conn = _get_connection()
     if not conn:
@@ -161,15 +205,24 @@ def promote_user():
             conn.close()
             return redirect(url_for('admin_users.manage_users'))
         
-        # Promote to admin with regular admin level (2 = no delete permissions)
+        # Promote to admin with specified permissions
         cur.execute("""
             UPDATE users
-            SET is_admin = true, admin_level = 2
+            SET is_admin = true,
+                can_read = %s,
+                can_write = %s,
+                can_delete = %s
             WHERE email = %s
-        """, (email,))
+        """, (can_read, can_write, can_delete, email))
         conn.commit()
         
-        flash(f'✅ Successfully promoted {user["name"]} ({email}) to admin! (Limited permissions - no delete access)', 'success')
+        permission_text = {
+            'read': 'Read Only (View admin panel)',
+            'write': 'Write Access (View + Edit)',
+            'full': 'Full Admin (View + Edit + Delete)'
+        }.get(permission_level, 'Read Only')
+        
+        flash(f'✅ Successfully promoted {user["name"]} ({email}) to admin with {permission_text}!', 'success')
         
         cur.close()
         conn.close()
@@ -184,10 +237,10 @@ def promote_user():
     return redirect(url_for('admin_users.manage_users'))
 
 
-@admin_users_bp.route('/admin/users/<int:user_id>/toggle-admin', methods=['POST'])
-@admin_required
-def toggle_admin(user_id):
-    """Toggle admin status for a user"""
+@admin_users_bp.route('/admin/users/<int:user_id>/revoke', methods=['POST'])
+@delete_permission_required
+def revoke_admin(user_id):
+    """Revoke admin access from a user (Full Admin only)"""
     
     # Prevent removing own admin access
     if current_user.id == user_id:
@@ -212,13 +265,24 @@ def toggle_admin(user_id):
             conn.close()
             return redirect(url_for('admin_users.manage_users'))
         
-        # Toggle admin status
-        new_status = not user['is_admin']
-        cur.execute("UPDATE users SET is_admin = %s WHERE id = %s", (new_status, user_id))
+        if not user['is_admin']:
+            flash(f'{user["name"]} is not an admin', 'info')
+            cur.close()
+            conn.close()
+            return redirect(url_for('admin_users.manage_users'))
+        
+        # Revoke admin status and all permissions
+        cur.execute("""
+            UPDATE users
+            SET is_admin = false,
+                can_read = false,
+                can_write = false,
+                can_delete = false
+            WHERE id = %s
+        """, (user_id,))
         conn.commit()
         
-        action = 'promoted to' if new_status else 'removed from'
-        flash(f'✅ {user["name"]} has been {action} admin', 'success')
+        flash(f'✅ Admin access revoked from {user["name"]}', 'success')
         
         cur.close()
         conn.close()

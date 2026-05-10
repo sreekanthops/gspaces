@@ -599,7 +599,7 @@ def login():
         conn = connect_to_db()
         if not conn:
             flash("Database connection failed during login.", "error")
-            return render_template('login_new.html', google_client_id=GOOGLE_CLIENT_ID)
+            return render_template('login.html', google_client_id=GOOGLE_CLIENT_ID)
 
         cur = conn.cursor(cursor_factory=RealDictCursor)
         try:
@@ -624,18 +624,18 @@ def login():
                 return redirect(url_for('index'))
             else:
                 flash("Invalid email or password.", "error")
-                return render_template('login_new.html', google_client_id=GOOGLE_CLIENT_ID)
+                return render_template('login.html', google_client_id=GOOGLE_CLIENT_ID)
 
         except Error as e:
             print(f"Login DB error: {e}")
-            return render_template('login_new.html', google_client_id=GOOGLE_CLIENT_ID)
+            return render_template('login.html', google_client_id=GOOGLE_CLIENT_ID)
 
         finally:
             if conn:
                 cur.close()
                 conn.close()
 
-    return render_template('login_new.html', google_client_id=GOOGLE_CLIENT_ID)
+    return render_template('login.html', google_client_id=GOOGLE_CLIENT_ID)
 
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
@@ -652,27 +652,27 @@ def signup():
             # Validate inputs
             if not name or not email or not password or not confirm_password:
                 flash("All fields are required.", "error")
-                return render_template('signup_new.html', google_client_id=GOOGLE_CLIENT_ID)
+                return render_template('signup.html', google_client_id=GOOGLE_CLIENT_ID)
             
             # Check password match
             if password != confirm_password:
                 flash("Passwords do not match.", "error")
-                return render_template('signup_new.html', google_client_id=GOOGLE_CLIENT_ID)
+                return render_template('signup.html', google_client_id=GOOGLE_CLIENT_ID)
             
             # Check password length
             if len(password) < 6:
                 flash("Password must be at least 6 characters long.", "error")
-                return render_template('signup_new.html', google_client_id=GOOGLE_CLIENT_ID)
+                return render_template('signup.html', google_client_id=GOOGLE_CLIENT_ID)
 
             # Check for disposable email
             if is_disposable_email(email):
                 flash("Disposable email addresses are not allowed. Please use a valid email.", "error")
-                return render_template('signup_new.html', google_client_id=GOOGLE_CLIENT_ID)
+                return render_template('signup.html', google_client_id=GOOGLE_CLIENT_ID)
 
             conn = connect_to_db()
             if not conn:
                 flash("Database connection failed.", "error")
-                return render_template('signup_new.html', google_client_id=GOOGLE_CLIENT_ID)
+                return render_template('signup.html', google_client_id=GOOGLE_CLIENT_ID)
             cursor = conn.cursor(cursor_factory=RealDictCursor)
 
             # Check if user already exists
@@ -681,7 +681,7 @@ def signup():
                 flash("Email already registered. Please login.", "error")
                 cursor.close()
                 conn.close()
-                return render_template('signup_new.html', google_client_id=GOOGLE_CLIENT_ID)
+                return render_template('signup.html', google_client_id=GOOGLE_CLIENT_ID)
 
             # Clean up any expired OTPs
             clean_expired_otps(conn)
@@ -710,17 +710,17 @@ def signup():
                 flash("Failed to send verification email. Please try again.", "error")
                 cursor.close()
                 conn.close()
-                return render_template('signup_new.html', google_client_id=GOOGLE_CLIENT_ID)
+                return render_template('signup.html', google_client_id=GOOGLE_CLIENT_ID)
 
         except Exception as e:
             print(f"ERROR: Signup error: {e}")
             flash("Signup failed due to a server error. Please try again.", "error")
-            return render_template('signup_new.html', google_client_id=GOOGLE_CLIENT_ID)
+            return render_template('signup.html', google_client_id=GOOGLE_CLIENT_ID)
         finally:
             if conn:
                 cursor.close()
                 conn.close()
-    return render_template('signup_new.html', google_client_id=GOOGLE_CLIENT_ID)
+    return render_template('signup.html', google_client_id=GOOGLE_CLIENT_ID)
 
 @app.route('/verify-otp', methods=['GET', 'POST'])
 def verify_otp():
@@ -4279,7 +4279,7 @@ def contact():
         flash('Thank you for contacting GSpaces! We will get back to you within 24 hours.', 'success')
         return redirect(url_for('contact'))
     
-    return render_template('contact_new.html')
+    return render_template('contact.html')
 
 # ============================================
 # CUSTOMER INQUIRY SYSTEM
@@ -5362,7 +5362,7 @@ def products():
     # Check if current user is admin
     is_admin = current_user.is_authenticated and getattr(current_user, 'is_admin', False)
     
-    return render_template('products_new.html',
+    return render_template('products.html',
                          products=products,
                          categories=categories,
                          catalogue_files=catalogue_files,
@@ -5413,7 +5413,7 @@ def test_animated_banner():
 @app.route('/corporate')
 def corporate():
     """Corporate tie-ups page"""
-    return render_template('corporate_new.html')
+    return render_template('corporate.html')
 
 # ============================================
 # USER WORKSPACE ROUTES

@@ -54,6 +54,11 @@
                 <li class="nav-item {% if request.endpoint == 'blogs' or request.endpoint == 'blog_detail' %}active{% endif %}">
                     <a class="nav-link" href="{{ url_for('blogs') }}">Blogs</a>
                 </li>
+                <li class="nav-item {% if request.endpoint == 'design_gallery.public_gallery' %}active{% endif %}">
+                    <a class="nav-link" href="{{ url_for('design_gallery.public_gallery') }}">
+                        <i class="bi bi-images"></i> Designs
+                    </a>
+                </li>
                 <li class="nav-item {% if request.endpoint == 'customer_inquiry_page' %}active{% endif %}">
                     <a class="nav-link" href="{{ url_for('customer_inquiry_page') }}">Enquiry</a>
                 </li>

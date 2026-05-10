@@ -429,6 +429,30 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        // Wrapper functions to extract data from button attributes
+        function editItemFromButton(button) {
+            const id = button.dataset.itemId;
+            const name = button.dataset.itemName;
+            const slug = button.dataset.itemSlug;
+            const emoji = button.dataset.itemEmoji;
+            const image = button.dataset.itemImage;
+            const price = button.dataset.itemPrice;
+            const description = button.dataset.itemDescription;
+            const order = button.dataset.itemOrder;
+            const active = button.dataset.itemActive === 'true';
+            const hasLength = button.dataset.itemHasLength === 'true';
+            const hasBreadth = button.dataset.itemHasBreadth === 'true';
+            const hasHeight = button.dataset.itemHasHeight === 'true';
+            
+            editItem(id, name, slug, emoji, image, price, description, order, active, hasLength, hasBreadth, hasHeight);
+        }
+        
+        function deleteItemFromButton(button) {
+            const id = button.dataset.itemId;
+            const name = button.dataset.itemName;
+            deleteItem(id, name);
+        }
+        
     <script>
         function editItem(id, name, slug, emoji, image, price, description, order, active, hasLength, hasBreadth, hasHeight) {
             document.getElementById('edit_item_id').value = id;

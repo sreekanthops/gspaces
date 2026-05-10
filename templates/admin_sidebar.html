@@ -110,9 +110,21 @@
             </a>
         </li>
         <li class="admin-sidebar-item">
-            <a href="{{ url_for('admin_deals_promotions') }}" class="admin-sidebar-link {% if active_page == 'deals_promotions' %}active{% endif %}">
+            <a href="{{ url_for('admin_coupons') }}" class="admin-sidebar-link {% if active_page == 'coupons' %}active{% endif %}">
                 <span class="admin-sidebar-icon">🎁</span>
-                <span>Deals & Promotions</span>
+                <span>Coupons</span>
+            </a>
+        </li>
+        <li class="admin-sidebar-item">
+            <a href="{{ url_for('admin_referral_coupons') }}" class="admin-sidebar-link {% if active_page == 'referral_coupons' %}active{% endif %}">
+                <span class="admin-sidebar-icon">🎯</span>
+                <span>Referral Coupons</span>
+            </a>
+        </li>
+        <li class="admin-sidebar-item">
+            <a href="{{ url_for('admin_deals') }}" class="admin-sidebar-link {% if active_page == 'deals' %}active{% endif %}">
+                <span class="admin-sidebar-icon">🔥</span>
+                <span>Deals</span>
             </a>
         </li>
         <li class="admin-sidebar-item">

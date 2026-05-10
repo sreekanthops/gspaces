@@ -163,5 +163,11 @@
                 <span>Animated Furniture</span>
             </a>
         </li>
+        <li class="admin-sidebar-item">
+            <a href="{{ url_for('system_health.system_health') }}" class="admin-sidebar-link {% if active_page == 'system_health' %}active{% endif %}">
+                <span class="admin-sidebar-icon">💚</span>
+                <span>System Health</span>
+            </a>
+        </li>
     </ul>
 </div>

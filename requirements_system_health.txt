@@ -1,0 +1,4 @@
+# System Health Monitoring Requirements
+# Install these packages for the system health monitoring feature
+
+psutil==5.9.8

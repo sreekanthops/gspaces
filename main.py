@@ -64,6 +64,7 @@ from chatbot_routes import add_chatbot_routes
 from deals_routes import register_deals_routes
 from performance_config import configure_performance
 from leads_simple import register_leads_routes
+from system_health_routes import system_health_bp
 from admin_users_routes import admin_users_bp, set_db_connection_func
 from visitor_tracking_routes import register_visitor_routes
 
@@ -5637,6 +5638,9 @@ register_leads_routes(app, connect_to_db)
 # --- ADMIN USER MANAGEMENT ---
 # Register admin user management blueprint
 set_db_connection_func(connect_to_db)
+# --- SYSTEM HEALTH MONITORING ---
+# Register system health monitoring blueprint
+app.register_blueprint(system_health_bp)
 app.register_blueprint(admin_users_bp)
 
 # --- VISITOR TRACKING SYSTEM ---

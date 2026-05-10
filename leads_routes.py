@@ -109,6 +109,7 @@ def create_lead():
             customer_phone = request.form.get('customer_phone')
             project_name = request.form.get('project_name')
             notes = request.form.get('notes', '')
+            design_category = request.form.get('design_category', 'office')
             
             # Handle reference image upload
             reference_image = None
@@ -127,12 +128,13 @@ def create_lead():
             
             # Insert lead
             cur.execute("""
-                INSERT INTO leads (customer_name, customer_email, customer_phone, 
-                                 project_name, reference_image, notes, share_token, created_by)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                INSERT INTO leads (customer_name, customer_email, customer_phone,
+                                 project_name, reference_image, notes, share_token,
+                                 created_by, design_category)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
                 RETURNING id
             """, (customer_name, customer_email, customer_phone, project_name,
-                  reference_image, notes, share_token, current_user.id))
+                  reference_image, notes, share_token, current_user.id, design_category))
             
             lead_id = cur.fetchone()[0]
             conn.commit()

@@ -90,8 +90,19 @@
             </div>
 
             <div class="mb-3">
+                <label class="form-label"><i class="bi bi-tag"></i> Design Category</label>
+                <select name="design_category" class="form-control">
+                    <option value="office">Office</option>
+                    <option value="home">Home</option>
+                    <option value="commercial">Commercial</option>
+                    <option value="studio">Studio</option>
+                </select>
+                <small class="text-muted">Select the type of space for this design</small>
+            </div>
+
+            <div class="mb-3">
                 <label class="form-label">Reference Image (Main)</label>
-                <input type="file" name="reference_image" class="form-control" 
+                <input type="file" name="reference_image" class="form-control"
                        accept="image/*" onchange="previewImage(event)">
                 <small class="text-muted">Upload main reference image for this project</small>
                 <div id="imagePreview"></div>

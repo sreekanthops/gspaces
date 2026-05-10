@@ -44,6 +44,43 @@ def admin_required(f):
     return decorated_function
 
 
+def super_admin_required(f):
+    """Decorator to require super admin access (admin_level = 1)"""
+    @login_required
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated:
+            flash('Please log in to access this page', 'danger')
+            return redirect(url_for('login'))
+        
+        # Check if user is super admin (admin_level = 1)
+        if not hasattr(current_user, 'is_admin') or not current_user.is_admin:
+            flash('Admin access required', 'danger')
+            return redirect(url_for('index'))
+        
+        # Check admin level for delete permissions
+        conn = _get_connection()
+        if conn:
+            try:
+                cur = conn.cursor(cursor_factory=RealDictCursor)
+                cur.execute("SELECT admin_level FROM users WHERE id = %s", (current_user.id,))
+                user = cur.fetchone()
+                cur.close()
+                conn.close()
+                
+                if not user or user.get('admin_level', 2) != 1:
+                    flash('Super admin access required for this action', 'danger')
+                    return redirect(url_for('admin_orders'))
+            except:
+                if conn:
+                    conn.close()
+                flash('Permission check failed', 'danger')
+                return redirect(url_for('admin_orders'))
+        
+        return f(*args, **kwargs)
+    return decorated_function
+
+
 @admin_users_bp.route('/admin/users')
 @admin_required
 def manage_users():
@@ -56,13 +93,14 @@ def manage_users():
     try:
         cur = conn.cursor(cursor_factory=RealDictCursor)
         
-        # Get all users with their admin status
+        # Get all users with their admin status and permission level
         cur.execute("""
-            SELECT id, name, email, phone, is_admin, 
+            SELECT id, name, email, phone, is_admin,
+                   COALESCE(admin_level, 2) as admin_level,
                    wallet_balance, referral_code,
                    (SELECT COUNT(*) FROM orders WHERE user_id = users.id) as order_count
-            FROM users 
-            ORDER BY is_admin DESC, id ASC
+            FROM users
+            ORDER BY is_admin DESC, admin_level ASC, id ASC
         """)
         users = cur.fetchall()
         
@@ -123,11 +161,15 @@ def promote_user():
             conn.close()
             return redirect(url_for('admin_users.manage_users'))
         
-        # Promote to admin
-        cur.execute("UPDATE users SET is_admin = true WHERE email = %s", (email,))
+        # Promote to admin with regular admin level (2 = no delete permissions)
+        cur.execute("""
+            UPDATE users
+            SET is_admin = true, admin_level = 2
+            WHERE email = %s
+        """, (email,))
         conn.commit()
         
-        flash(f'✅ Successfully promoted {user["name"]} ({email}) to admin!', 'success')
+        flash(f'✅ Successfully promoted {user["name"]} ({email}) to admin! (Limited permissions - no delete access)', 'success')
         
         cur.close()
         conn.close()

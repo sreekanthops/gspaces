@@ -270,11 +270,37 @@ def view_design_gallery(design_id):
     cur = conn.cursor(cursor_factory=RealDictCursor)
     
     try:
-        # Get design details
+        # Get design details with linked quotation data when available
         cur.execute("""
-            SELECT id, title, description, category
-            FROM design_gallery
-            WHERE id = %s AND is_active = TRUE
+            SELECT
+                dg.id,
+                dg.title,
+                dg.description,
+                dg.category,
+                dg.lead_design_id,
+                COALESCE(ld.final_price, ld.price) AS quoted_price,
+                ld.notes,
+                ld.custom_items,
+                ld.has_table, ld.table_quantity, ld.table_price, ld.table_details, ld.table_length_ft, ld.table_width_ft, ld.table_height_inch,
+                ld.has_chair, ld.chair_quantity, ld.chair_price, ld.chair_details, ld.chair_headrest,
+                ld.has_lighting, ld.lighting_quantity, ld.lighting_price, ld.lighting_details, ld.lighting_length_ft,
+                ld.has_profile_lighting, ld.profile_lighting_quantity, ld.profile_lighting_price, ld.profile_lighting_details, ld.profile_lighting_length_ft,
+                ld.has_storage, ld.storage_quantity, ld.storage_price, ld.storage_details, ld.storage_length_ft, ld.storage_width_ft, ld.storage_height_ft,
+                ld.has_big_plants, ld.big_plants_quantity, ld.big_plants_price, ld.big_plants_details, ld.big_plants_height_ft,
+                ld.has_mini_plants, ld.mini_plants_quantity, ld.mini_plants_price, ld.mini_plants_details, ld.mini_plants_height_ft,
+                ld.has_frames, ld.frames_quantity, ld.frames_price, ld.frames_details, ld.frames_size_ft,
+                ld.has_wall_racks, ld.wall_racks_quantity, ld.wall_racks_price, ld.wall_racks_details, ld.wall_racks_length_ft,
+                ld.has_dustbin, ld.dustbin_quantity, ld.dustbin_price, ld.dustbin_details,
+                ld.has_paint, ld.paint_quantity, ld.paint_price, ld.paint_details,
+                ld.has_wardrobes, ld.wardrobes_quantity, ld.wardrobes_price, ld.wardrobes_details, ld.wardrobes_length_ft, ld.wardrobes_width_ft, ld.wardrobes_height_ft,
+                ld.has_desk_mat, ld.desk_mat_quantity, ld.desk_mat_price, ld.desk_mat_details, ld.desk_mat_length, ld.desk_mat_height,
+                ld.has_multi_socket, ld.multi_socket_quantity, ld.multi_socket_price, ld.multi_socket_details,
+                ld.has_desk_lamp, ld.desk_lamp_quantity, ld.desk_lamp_price, ld.desk_lamp_details,
+                ld.has_pen_holder, ld.pen_holder_quantity, ld.pen_holder_price, ld.pen_holder_details,
+                ld.has_laptop_holder, ld.laptop_holder_quantity, ld.laptop_holder_price, ld.laptop_holder_details
+            FROM design_gallery dg
+            LEFT JOIN lead_designs ld ON dg.lead_design_id = ld.id
+            WHERE dg.id = %s AND dg.is_active = TRUE
         """, (design_id,))
         design = cur.fetchone()
         
@@ -306,7 +332,84 @@ def view_design_gallery(design_id):
                     'display_order': 0
                 }]
         
-        return render_template('design_gallery_view.html', design=design, images=images)
+        included_items = []
+
+        def add_item(label, enabled, quantity=None, price=None, details=None, meta=None):
+            if enabled:
+                included_items.append({
+                    'label': label,
+                    'quantity': quantity,
+                    'price': float(price) if price is not None else None,
+                    'details': details,
+                    'meta': [value for value in (meta or []) if value]
+                })
+
+        if design.get('lead_design_id'):
+            add_item(
+                'Table',
+                design.get('has_table'),
+                design.get('table_quantity'),
+                design.get('table_price'),
+                design.get('table_details'),
+                [
+                    f"{design.get('table_length_ft')} ft L" if design.get('table_length_ft') else None,
+                    f"{design.get('table_width_ft')} ft W" if design.get('table_width_ft') else None,
+                    f"{design.get('table_height_inch')} in H" if design.get('table_height_inch') else None
+                ]
+            )
+            add_item('Chair', design.get('has_chair'), design.get('chair_quantity'), design.get('chair_price'), design.get('chair_details'), [design.get('chair_headrest')])
+            add_item('Lighting', design.get('has_lighting'), design.get('lighting_quantity'), design.get('lighting_price'), design.get('lighting_details'), [f"{design.get('lighting_length_ft')} ft" if design.get('lighting_length_ft') else None])
+            add_item('Profile Lighting', design.get('has_profile_lighting'), design.get('profile_lighting_quantity'), design.get('profile_lighting_price'), design.get('profile_lighting_details'), [f"{design.get('profile_lighting_length_ft')} ft" if design.get('profile_lighting_length_ft') else None])
+            add_item(
+                'Storage',
+                design.get('has_storage'),
+                design.get('storage_quantity'),
+                design.get('storage_price'),
+                design.get('storage_details'),
+                [
+                    f"{design.get('storage_length_ft')} ft L" if design.get('storage_length_ft') else None,
+                    f"{design.get('storage_width_ft')} ft W" if design.get('storage_width_ft') else None,
+                    f"{design.get('storage_height_ft')} ft H" if design.get('storage_height_ft') else None
+                ]
+            )
+            add_item('Big Plants', design.get('has_big_plants'), design.get('big_plants_quantity'), design.get('big_plants_price'), design.get('big_plants_details'), [f"{design.get('big_plants_height_ft')} ft height" if design.get('big_plants_height_ft') else None])
+            add_item('Mini Plants', design.get('has_mini_plants'), design.get('mini_plants_quantity'), design.get('mini_plants_price'), design.get('mini_plants_details'), [f"{design.get('mini_plants_height_ft')} ft height" if design.get('mini_plants_height_ft') else None])
+            add_item('Frames', design.get('has_frames'), design.get('frames_quantity'), design.get('frames_price'), design.get('frames_details'), [design.get('frames_size_ft')])
+            add_item('Wall Racks', design.get('has_wall_racks'), design.get('wall_racks_quantity'), design.get('wall_racks_price'), design.get('wall_racks_details'), [f"{design.get('wall_racks_length_ft')} ft" if design.get('wall_racks_length_ft') else None])
+            add_item('Dustbin', design.get('has_dustbin'), design.get('dustbin_quantity'), design.get('dustbin_price'), design.get('dustbin_details'))
+            add_item('Paint', design.get('has_paint'), design.get('paint_quantity'), design.get('paint_price'), design.get('paint_details'))
+            add_item(
+                'Wardrobes',
+                design.get('has_wardrobes'),
+                design.get('wardrobes_quantity'),
+                design.get('wardrobes_price'),
+                design.get('wardrobes_details'),
+                [
+                    f"{design.get('wardrobes_length_ft')} ft L" if design.get('wardrobes_length_ft') else None,
+                    f"{design.get('wardrobes_width_ft')} ft W" if design.get('wardrobes_width_ft') else None,
+                    f"{design.get('wardrobes_height_ft')} ft H" if design.get('wardrobes_height_ft') else None
+                ]
+            )
+            add_item('Desk Mat', design.get('has_desk_mat'), design.get('desk_mat_quantity'), design.get('desk_mat_price'), design.get('desk_mat_details'), [f"{design.get('desk_mat_length')}" if design.get('desk_mat_length') else None, f"{design.get('desk_mat_height')}" if design.get('desk_mat_height') else None])
+            add_item('Multi Socket', design.get('has_multi_socket'), design.get('multi_socket_quantity'), design.get('multi_socket_price'), design.get('multi_socket_details'))
+            add_item('Desk Lamp', design.get('has_desk_lamp'), design.get('desk_lamp_quantity'), design.get('desk_lamp_price'), design.get('desk_lamp_details'))
+            add_item('Pen Holder', design.get('has_pen_holder'), design.get('pen_holder_quantity'), design.get('pen_holder_price'), design.get('pen_holder_details'))
+            add_item('Laptop Holder', design.get('has_laptop_holder'), design.get('laptop_holder_quantity'), design.get('laptop_holder_price'), design.get('laptop_holder_details'))
+
+            for custom_item in (design.get('custom_items') or []):
+                included_items.append({
+                    'label': custom_item.get('name') or 'Custom Item',
+                    'quantity': custom_item.get('quantity'),
+                    'price': float(custom_item.get('price')) if custom_item.get('price') is not None else None,
+                    'details': custom_item.get('details'),
+                    'meta': [
+                        f"L: {custom_item.get('length')}" if custom_item.get('length') else None,
+                        f"B: {custom_item.get('breadth')}" if custom_item.get('breadth') else None,
+                        f"H: {custom_item.get('height')}" if custom_item.get('height') else None
+                    ]
+                })
+
+        return render_template('design_gallery_view.html', design=design, images=images, included_items=included_items)
     finally:
         cur.close()
         conn.close()

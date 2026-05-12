@@ -1525,16 +1525,22 @@
             const sourceCustomItemsContainer = document.getElementById('customItems' + firstDesignId);
             const targetCustomItemsContainer = document.getElementById('customItems' + targetDesignId);
             
+            console.log('Source container:', sourceCustomItemsContainer);
+            console.log('Target container:', targetCustomItemsContainer);
+            
             if (sourceCustomItemsContainer && targetCustomItemsContainer) {
                 // Get all custom item rows from source
                 const sourceCustomRows = sourceCustomItemsContainer.querySelectorAll('.custom-item-row');
+                console.log('Found', sourceCustomRows.length, 'custom items to copy');
                 
                 // Clear existing custom items in target (except the template)
                 const existingTargetRows = targetCustomItemsContainer.querySelectorAll('.custom-item-row');
+                console.log('Removing', existingTargetRows.length, 'existing custom items from target');
                 existingTargetRows.forEach(row => row.remove());
                 
                 // Copy each custom item
-                sourceCustomRows.forEach(sourceRow => {
+                sourceCustomRows.forEach((sourceRow, index) => {
+                    console.log('Copying custom item', index + 1);
                     // Clone the row
                     const newRow = sourceRow.cloneNode(true);
                     
@@ -1563,6 +1569,10 @@
                     // Append to target container
                     targetCustomItemsContainer.appendChild(newRow);
                 });
+                
+                console.log('Custom items copied successfully');
+            } else {
+                console.error('Could not find custom items containers');
             }
             
             // Copy discount settings

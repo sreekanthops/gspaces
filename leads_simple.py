@@ -130,7 +130,7 @@ def get_lead_comments(lead_id):
     
     try:
         cur.execute("""
-            SELECT lc.*, u.username as created_by_name
+            SELECT lc.*, u.name as created_by_name
             FROM lead_comments lc
             LEFT JOIN users u ON lc.created_by = u.id
             WHERE lc.lead_id = %s
@@ -178,7 +178,7 @@ def add_lead_comment(lead_id):
                 'id': new_comment['id'],
                 'comment': new_comment['comment'],
                 'created_at': new_comment['created_at'].isoformat(),
-                'created_by_name': current_user.username
+                'created_by_name': current_user.name
             }
         })
     except Exception as e:

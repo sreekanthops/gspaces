@@ -8,41 +8,105 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/main.css') }}" rel="stylesheet">
     <style>
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
         .gallery-hero {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 80px 0 60px;
+            padding: 100px 0 80px;
             margin-top: 76px;
+            position: relative;
+            overflow: hidden;
         }
+        
+        .gallery-hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="grid" width="100" height="100" patternUnits="userSpaceOnUse"><path d="M 100 0 L 0 0 0 100" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/></pattern></defs><rect width="100%" height="100%" fill="url(%23grid)"/></svg>');
+            opacity: 0.3;
+        }
+        
+        .gallery-hero h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            text-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            position: relative;
+            z-index: 1;
+        }
+        
+        .gallery-hero p {
+            font-size: 1.3rem;
+            opacity: 0.95;
+            position: relative;
+            z-index: 1;
+        }
+        
         .design-card {
             position: relative;
             overflow: hidden;
-            border-radius: 16px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
-            transition: all 0.4s ease;
-            margin-bottom: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-bottom: 35px;
             cursor: pointer;
             text-decoration: none;
             display: block;
             color: inherit;
-            height: 350px;
+            height: 400px;
+            background: white;
+            border: 3px solid transparent;
         }
+        
+        .design-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            z-index: 1;
+        }
+        
+        .design-card:hover::before {
+            opacity: 1;
+        }
+        
+        .design-card:hover {
+            transform: translateY(-15px) scale(1.02);
+            box-shadow: 0 20px 60px rgba(102, 126, 234, 0.4);
+            border-color: rgba(102, 126, 234, 0.3);
+        }
+        
         .design-card-inner {
             position: relative;
             width: 100%;
             height: 100%;
         }
+        
         .media-carousel-mini {
             position: relative;
             width: 100%;
             height: 100%;
             overflow: hidden;
+            border-radius: 17px;
         }
+        
         .media-carousel-inner-mini {
             display: flex;
-            transition: transform 0.5s ease;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
             height: 100%;
         }
+        
         .media-slide-mini {
             min-width: 100%;
             height: 100%;
@@ -50,8 +114,9 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background: #000;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
         }
+        
         .media-slide-mini img,
         .media-slide-mini video {
             max-width: 100%;
@@ -60,87 +125,154 @@
             height: auto;
             object-fit: contain;
         }
+        
         .image-count-badge {
             position: absolute;
-            top: 15px;
-            right: 15px;
-            background: rgba(102, 126, 234, 0.95);
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.95), rgba(118, 75, 162, 0.95));
             color: white;
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            z-index: 5;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        .price-badge {
-            position: absolute;
-            top: 15px;
-            left: 15px;
-            background: linear-gradient(135deg, rgba(16, 185, 129, 0.98), rgba(5, 150, 105, 0.98));
-            color: white;
-            padding: 8px 14px;
-            border-radius: 20px;
+            padding: 8px 16px;
+            border-radius: 25px;
             font-size: 0.9rem;
             font-weight: 700;
-            z-index: 5;
-            box-shadow: 0 8px 20px rgba(5, 150, 105, 0.28);
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            backdrop-filter: blur(10px);
+        }
+        
+        .price-badge {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 10px 18px;
+            border-radius: 25px;
+            font-size: 1.1rem;
+            font-weight: 800;
+            z-index: 10;
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
             line-height: 1;
+            backdrop-filter: blur(10px);
         }
-        .design-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 16px 48px rgba(0,0,0,0.2);
-        }
+        
         .design-image {
             width: 100%;
-            height: 350px;
+            height: 400px;
             object-fit: cover;
-            transition: transform 0.4s ease;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
         }
+        
         .design-card:hover .design-image {
-            transform: scale(1.1);
+            transform: scale(1.15);
         }
+        
         .design-overlay {
             position: absolute;
             bottom: 0;
             left: 0;
             right: 0;
-            background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
-            padding: 30px 20px 20px;
-            transform: translateY(100%);
-            transition: transform 0.4s ease;
+            background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.7) 50%, transparent 100%);
+            padding: 40px 25px 25px;
+            transform: translateY(calc(100% - 80px));
+            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 5;
         }
+        
         .design-card:hover .design-overlay {
             transform: translateY(0);
         }
+        
         .design-title {
             color: white;
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-bottom: 8px;
+            font-size: 1.6rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
         }
+        
         .design-description {
-            color: rgba(255,255,255,0.9);
-            font-size: 0.95rem;
-            margin-bottom: 0;
+            color: rgba(255,255,255,0.95);
+            font-size: 1rem;
+            margin-bottom: 10px;
+            line-height: 1.6;
         }
+        
         .category-filter {
-            margin-bottom: 40px;
+            margin-bottom: 50px;
+            padding: 30px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
         }
+        
         .category-btn {
-            margin: 5px;
-            border-radius: 25px;
-            padding: 10px 24px;
-            font-weight: 600;
-            transition: all 0.3s ease;
+            margin: 8px;
+            border-radius: 30px;
+            padding: 12px 28px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 2px solid #e0e0e0;
+            background: white;
+            color: #666;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         }
+        
+        .category-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+            border-color: #667eea;
+            color: #667eea;
+        }
+        
         .category-btn.active {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border-color: transparent;
+            box-shadow: 0 6px 25px rgba(102, 126, 234, 0.5);
+            transform: translateY(-3px);
         }
+        
+        .view-more-badge {
+            position: absolute;
+            bottom: 25px;
+            left: 25px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .design-item {
+            animation: fadeInUp 0.6s ease-out;
+        }
+        
+        .design-item:nth-child(1) { animation-delay: 0.1s; }
+        .design-item:nth-child(2) { animation-delay: 0.2s; }
+        .design-item:nth-child(3) { animation-delay: 0.3s; }
+        .design-item:nth-child(4) { animation-delay: 0.4s; }
+        .design-item:nth-child(5) { animation-delay: 0.5s; }
+        .design-item:nth-child(6) { animation-delay: 0.6s; }
     </style>
 </head>
 <body>
@@ -216,11 +348,11 @@
                             
                             <div class="design-overlay">
                                 <h3 class="design-title">{{ design.title }}</h3>
-                                <p class="design-description">{{ design.description }}</p>
+                                <p class="design-description">{{ design.description[:100] }}{% if design.description|length > 100 %}...{% endif %}</p>
                                 {% if design.image_count > 1 %}
-                                <small class="text-white-50">
-                                    <i class="fas fa-mouse-pointer"></i> Click to view {{ design.image_count }} images
-                                </small>
+                                <div class="view-more-badge">
+                                    <i class="fas fa-images"></i> {{ design.image_count }} images • Click to explore
+                                </div>
                                 {% endif %}
                             </div>
                         </div>

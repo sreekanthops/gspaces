@@ -340,7 +340,7 @@ def view_design_gallery(design_id):
         
         # Get all images for this design
         cur.execute("""
-            SELECT image_url, video_url, thumbnail_url, media_type,
+            SELECT id, image_url, video_url, thumbnail_url, media_type,
                    display_order, is_primary
             FROM design_images
             WHERE design_id = %s
@@ -354,6 +354,7 @@ def view_design_gallery(design_id):
             main_image = cur.fetchone()
             if main_image and main_image['image_url']:
                 images = [{
+                    'id': None,  # No ID for fallback image
                     'image_url': main_image['image_url'],
                     'video_url': None,
                     'thumbnail_url': None,

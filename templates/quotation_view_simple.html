@@ -976,10 +976,18 @@
                             <span class="label">Project</span>
                             <span class="value">{{ lead.project_name or 'Workspace Setup' }}</span>
                         </div>
+                        {% if designs and designs[0].type %}
                         <div class="hero-meta-item">
-                            <span class="label">Options</span>
-                            <span class="value">{{ designs|length }}</span>
+                            <span class="label">Type</span>
+                            <span class="value">{{ designs[0].type }}</span>
                         </div>
+                        {% endif %}
+                        {% if designs and designs[0].sizes %}
+                        <div class="hero-meta-item">
+                            <span class="label">Size</span>
+                            <span class="value">{{ designs[0].sizes }}</span>
+                        </div>
+                        {% endif %}
                         <div class="hero-meta-item">
                             <span class="label">Date</span>
                             <span class="value">{{ lead.created_at.strftime('%b %d, %Y') }}</span>

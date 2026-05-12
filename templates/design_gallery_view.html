@@ -181,8 +181,8 @@
         }
         .play-pause-btn {
             position: absolute;
-            bottom: 20px;
-            left: 20px;
+            top: 20px;
+            right: 20px;
             background: rgba(255,255,255,0.9);
             border: none;
             width: 50px;
@@ -298,9 +298,6 @@
                             <span class="included-qty">Qty {{ item.quantity }}</span>
                             {% endif %}
                         </div>
-                        {% if item.price is not none %}
-                        <div class="included-price">₹{{ "{:,.0f}".format(item.price) }}</div>
-                        {% endif %}
                         {% if item.details %}
                         <div class="included-details">{{ item.details }}</div>
                         {% endif %}
@@ -440,17 +437,26 @@
             isAutoSliding = !isAutoSliding;
             const btn = document.getElementById('playPauseBtn');
             const icon = btn.querySelector('i');
+            const mainVideo = document.getElementById('mainVideo');
             
             if (isAutoSliding) {
                 btn.classList.add('playing');
-                btn.title = 'Pause auto-slide';
+                btn.title = 'Pause';
                 icon.className = 'fas fa-pause';
                 startAutoSlide();
+                // Play video if current slide is a video
+                if (mainVideo.style.display === 'block') {
+                    mainVideo.play().catch(() => {});
+                }
             } else {
                 btn.classList.remove('playing');
-                btn.title = 'Play auto-slide';
+                btn.title = 'Play';
                 icon.className = 'fas fa-play';
                 stopAutoSlide();
+                // Pause video if current slide is a video
+                if (mainVideo.style.display === 'block') {
+                    mainVideo.pause();
+                }
             }
         }
 

@@ -324,22 +324,13 @@
             }
         }
 
-        // Initialize all mini carousels on page load
+        // Initialize all mini carousels on page load and start auto-play
         document.addEventListener('DOMContentLoaded', function() {
             {% for design in designs %}
                 {% if design.all_media and design.all_media|length > 1 %}
                     initMiniCarousel({{ design.id }}, {{ design.all_media|length }});
-                    
-                    // Add hover events
-                    const card{{ design.id }} = document.getElementById('miniCarousel{{ design.id }}');
-                    if (card{{ design.id }}) {
-                        card{{ design.id }}.closest('.design-card').addEventListener('mouseenter', function() {
-                            startMiniCarousel({{ design.id }});
-                        });
-                        card{{ design.id }}.closest('.design-card').addEventListener('mouseleave', function() {
-                            stopMiniCarousel({{ design.id }});
-                        });
-                    }
+                    // Start auto-play immediately
+                    startMiniCarousel({{ design.id }});
                 {% endif %}
             {% endfor %}
         });

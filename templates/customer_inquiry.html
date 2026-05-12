@@ -266,8 +266,8 @@
             position: fixed;
             top: 0;
             bottom: 0;
-            width: 200px;
-            pointer-events: none;
+            width: 250px;
+            pointer-events: auto;
             z-index: 1;
             overflow: hidden;
         }
@@ -282,58 +282,178 @@
         
         .floating-image {
             position: absolute;
-            width: 150px;
-            height: 150px;
+            width: 200px;
+            height: 200px;
             border-radius: 16px;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
             object-fit: cover;
-            opacity: 0;
-            animation: floatUpDown 20s infinite ease-in-out;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
         
-        .floating-image:nth-child(1) {
-            animation-delay: 0s;
-            left: 20px;
+        .floating-image:hover {
+            transform: scale(1.1) !important;
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4);
+            z-index: 10;
         }
         
-        .floating-image:nth-child(2) {
-            animation-delay: 4s;
-            left: 20px;
+        /* Left side animations - move diagonally */
+        .floating-images.left .floating-image:nth-child(1) {
+            animation: floatDiagonalLeft1 25s infinite ease-in-out;
         }
         
-        .floating-image:nth-child(3) {
-            animation-delay: 8s;
-            left: 20px;
+        .floating-images.left .floating-image:nth-child(2) {
+            animation: floatDiagonalLeft2 28s infinite ease-in-out;
+            animation-delay: 5s;
         }
         
-        .floating-image:nth-child(4) {
-            animation-delay: 12s;
-            left: 20px;
+        .floating-images.left .floating-image:nth-child(3) {
+            animation: floatDiagonalLeft3 30s infinite ease-in-out;
+            animation-delay: 10s;
         }
         
-        .floating-image:nth-child(5) {
-            animation-delay: 16s;
-            left: 20px;
+        .floating-images.left .floating-image:nth-child(4) {
+            animation: floatDiagonalLeft1 27s infinite ease-in-out;
+            animation-delay: 15s;
         }
         
-        @keyframes floatUpDown {
+        .floating-images.left .floating-image:nth-child(5) {
+            animation: floatDiagonalLeft2 29s infinite ease-in-out;
+            animation-delay: 20s;
+        }
+        
+        /* Right side animations - move diagonally */
+        .floating-images.right .floating-image:nth-child(1) {
+            animation: floatDiagonalRight1 26s infinite ease-in-out;
+        }
+        
+        .floating-images.right .floating-image:nth-child(2) {
+            animation: floatDiagonalRight2 29s infinite ease-in-out;
+            animation-delay: 5s;
+        }
+        
+        .floating-images.right .floating-image:nth-child(3) {
+            animation: floatDiagonalRight3 31s infinite ease-in-out;
+            animation-delay: 10s;
+        }
+        
+        .floating-images.right .floating-image:nth-child(4) {
+            animation: floatDiagonalRight1 28s infinite ease-in-out;
+            animation-delay: 15s;
+        }
+        
+        .floating-images.right .floating-image:nth-child(5) {
+            animation: floatDiagonalRight2 30s infinite ease-in-out;
+            animation-delay: 20s;
+        }
+        
+        /* Left side diagonal movements */
+        @keyframes floatDiagonalLeft1 {
             0% {
-                transform: translateY(100vh) rotate(0deg);
-                opacity: 0;
+                transform: translate(0, 100vh) rotate(0deg);
             }
-            5% {
-                opacity: 0.8;
+            25% {
+                transform: translate(50px, 50vh) rotate(90deg);
             }
             50% {
-                transform: translateY(-50vh) rotate(180deg);
-                opacity: 0.8;
+                transform: translate(0, 0) rotate(180deg);
             }
-            95% {
-                opacity: 0.8;
+            75% {
+                transform: translate(50px, -50vh) rotate(270deg);
             }
             100% {
-                transform: translateY(-120vh) rotate(360deg);
-                opacity: 0;
+                transform: translate(0, -120vh) rotate(360deg);
+            }
+        }
+        
+        @keyframes floatDiagonalLeft2 {
+            0% {
+                transform: translate(0, 100vh) rotate(0deg);
+            }
+            25% {
+                transform: translate(-30px, 50vh) rotate(-90deg);
+            }
+            50% {
+                transform: translate(40px, 0) rotate(180deg);
+            }
+            75% {
+                transform: translate(-20px, -50vh) rotate(270deg);
+            }
+            100% {
+                transform: translate(0, -120vh) rotate(360deg);
+            }
+        }
+        
+        @keyframes floatDiagonalLeft3 {
+            0% {
+                transform: translate(0, 100vh) rotate(0deg);
+            }
+            25% {
+                transform: translate(60px, 50vh) rotate(120deg);
+            }
+            50% {
+                transform: translate(-30px, 0) rotate(240deg);
+            }
+            75% {
+                transform: translate(40px, -50vh) rotate(300deg);
+            }
+            100% {
+                transform: translate(0, -120vh) rotate(360deg);
+            }
+        }
+        
+        /* Right side diagonal movements */
+        @keyframes floatDiagonalRight1 {
+            0% {
+                transform: translate(0, 100vh) rotate(0deg);
+            }
+            25% {
+                transform: translate(-50px, 50vh) rotate(-90deg);
+            }
+            50% {
+                transform: translate(0, 0) rotate(-180deg);
+            }
+            75% {
+                transform: translate(-50px, -50vh) rotate(-270deg);
+            }
+            100% {
+                transform: translate(0, -120vh) rotate(-360deg);
+            }
+        }
+        
+        @keyframes floatDiagonalRight2 {
+            0% {
+                transform: translate(0, 100vh) rotate(0deg);
+            }
+            25% {
+                transform: translate(30px, 50vh) rotate(90deg);
+            }
+            50% {
+                transform: translate(-40px, 0) rotate(-180deg);
+            }
+            75% {
+                transform: translate(20px, -50vh) rotate(-270deg);
+            }
+            100% {
+                transform: translate(0, -120vh) rotate(-360deg);
+            }
+        }
+        
+        @keyframes floatDiagonalRight3 {
+            0% {
+                transform: translate(0, 100vh) rotate(0deg);
+            }
+            25% {
+                transform: translate(-60px, 50vh) rotate(-120deg);
+            }
+            50% {
+                transform: translate(30px, 0) rotate(-240deg);
+            }
+            75% {
+                transform: translate(-40px, -50vh) rotate(-300deg);
+            }
+            100% {
+                transform: translate(0, -120vh) rotate(-360deg);
             }
         }
         
@@ -348,22 +468,32 @@
 <body>
     {% include 'navbar.html' %}
     
-    <!-- Floating Images Left Side -->
+    <!-- Floating Images Left Side - Products -->
     <div class="floating-images left">
-        <img src="{{ url_for('static', filename='img/Products/Modern_Desk_Unit.png') }}" class="floating-image" alt="Desk Setup">
-        <img src="{{ url_for('static', filename='img/Products/Ergonomic_Chair.png') }}" class="floating-image" alt="Chair">
-        <img src="{{ url_for('static', filename='img/carousel_20260509_151521_DSC06887_2.jpg') }}" class="floating-image" alt="Office Setup">
-        <img src="{{ url_for('static', filename='img/Products/Screenshot_2025-09-15_at_2.23.32_AM.png') }}" class="floating-image" alt="Workspace">
-        <img src="{{ url_for('static', filename='img/Products/Screenshot_2025-09-15_at_2.19.05_AM.png') }}" class="floating-image" alt="Setup">
+        {% if products %}
+            {% for product in products %}
+                <a href="{{ url_for('product_detail', product_id=product.id) }}" class="floating-image" style="text-decoration: none;">
+                    <img src="{{ url_for('static', filename=product.image_url) }}"
+                         style="width: 100%; height: 100%; object-fit: cover; border-radius: 16px;"
+                         alt="{{ product.name }}"
+                         title="{{ product.name }} - Click to view">
+                </a>
+            {% endfor %}
+        {% endif %}
     </div>
     
-    <!-- Floating Images Right Side -->
+    <!-- Floating Images Right Side - Gallery Designs -->
     <div class="floating-images right">
-        <img src="{{ url_for('static', filename='img/Products/Screenshot_2025-09-15_at_2.12.31_AM.png') }}" class="floating-image" alt="Desk">
-        <img src="{{ url_for('static', filename='img/Products/ChatGPT_Image_Mar_26_2026_04_25_23_PM.png') }}" class="floating-image" alt="Office">
-        <img src="{{ url_for('static', filename='img/Products/f996ebea3a130d8dd1bb5b2f1f938455.jpg') }}" class="floating-image" alt="Furniture">
-        <img src="{{ url_for('static', filename='img/blogs/blog_20_0_20260425100523_base-green.png') }}" class="floating-image" alt="Design">
-        <img src="{{ url_for('static', filename='img/blogs/blog_20_1_20260425100523_Screenshot_2026-04-22_at_10.21.54_PM.png') }}" class="floating-image" alt="Gallery">
+        {% if gallery_designs %}
+            {% for design in gallery_designs %}
+                <a href="{{ url_for('leads_bp.view_lead_simple', lead_id=design.id) }}" class="floating-image" style="text-decoration: none;">
+                    <img src="{{ url_for('static', filename=design.primary_image_url) }}"
+                         style="width: 100%; height: 100%; object-fit: cover; border-radius: 16px;"
+                         alt="{{ design.title }}"
+                         title="{{ design.title }} - Click to view">
+                </a>
+            {% endfor %}
+        {% endif %}
     </div>
     
     <div class="inquiry-container">

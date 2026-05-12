@@ -4291,7 +4291,41 @@ def contact():
 @app.route('/customers')
 def customer_inquiry_page():
     """Customer inquiry form page"""
-    return render_template('customer_inquiry.html')
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        
+        # Fetch main products (limit to 5)
+        cursor.execute("""
+            SELECT id, name, image_url, category
+            FROM products
+            WHERE image_url IS NOT NULL
+            ORDER BY id
+            LIMIT 5
+        """)
+        products = cursor.fetchall()
+        
+        # Fetch gallery designs (limit to 5)
+        cursor.execute("""
+            SELECT id, title, primary_image_url
+            FROM leads
+            WHERE primary_image_url IS NOT NULL
+            ORDER BY id DESC
+            LIMIT 5
+        """)
+        gallery_designs = cursor.fetchall()
+        
+        cursor.close()
+        conn.close()
+        
+        return render_template('customer_inquiry.html',
+                             products=products,
+                             gallery_designs=gallery_designs)
+    except Exception as e:
+        print(f"Error fetching data: {e}")
+        return render_template('customer_inquiry.html',
+                             products=[],
+                             gallery_designs=[])
 
 @app.route('/submit_customer_inquiry', methods=['POST'])
 def submit_customer_inquiry():

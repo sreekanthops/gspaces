@@ -80,7 +80,7 @@ def admin_leads_list():
         FROM leads l
         LEFT JOIN lead_designs ld ON l.id = ld.lead_id
         GROUP BY l.id
-        ORDER BY l.created_at DESC
+        ORDER BY COALESCE(l.is_priority, FALSE) DESC, l.created_at DESC
     """)
     leads = cur.fetchall()
     
@@ -112,6 +112,74 @@ def toggle_lead_priority(lead_id):
         return jsonify({
             'success': True,
             'is_priority': result['is_priority'] if result else False
+        })
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        cur.close()
+        conn.close()
+
+@leads_bp.route('/admin/leads/<int:lead_id>/comments', methods=['GET'])
+@login_required
+@admin_required
+def get_lead_comments(lead_id):
+    """Get all comments for a lead"""
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    
+    try:
+        cur.execute("""
+            SELECT lc.*, u.username as created_by_name
+            FROM lead_comments lc
+            LEFT JOIN users u ON lc.created_by = u.id
+            WHERE lc.lead_id = %s
+            ORDER BY lc.created_at DESC
+        """, (lead_id,))
+        
+        comments = cur.fetchall()
+        
+        return jsonify({
+            'success': True,
+            'comments': [dict(c) for c in comments]
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        cur.close()
+        conn.close()
+
+@leads_bp.route('/admin/leads/<int:lead_id>/comments', methods=['POST'])
+@login_required
+@admin_required
+def add_lead_comment(lead_id):
+    """Add a comment to a lead"""
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    
+    try:
+        comment_text = request.json.get('comment', '').strip()
+        
+        if not comment_text:
+            return jsonify({'success': False, 'error': 'Comment cannot be empty'}), 400
+        
+        cur.execute("""
+            INSERT INTO lead_comments (lead_id, comment, created_by)
+            VALUES (%s, %s, %s)
+            RETURNING id, comment, created_at
+        """, (lead_id, comment_text, current_user.id))
+        
+        new_comment = cur.fetchone()
+        conn.commit()
+        
+        return jsonify({
+            'success': True,
+            'comment': {
+                'id': new_comment['id'],
+                'comment': new_comment['comment'],
+                'created_at': new_comment['created_at'].isoformat(),
+                'created_by_name': current_user.username
+            }
         })
     except Exception as e:
         conn.rollback()

@@ -164,6 +164,28 @@
                                value="{{ lead.customer_phone or '' }}">
                     </div>
                 </div>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label"><i class="bi bi-person-badge"></i> Customer Type</label>
+                        <select name="customer_type" class="form-select">
+                            <option value="Genuine" {% if lead.customer_type == 'Genuine' %}selected{% endif %}>Genuine</option>
+                            <option value="Casual" {% if lead.customer_type == 'Casual' %}selected{% endif %}>Casual</option>
+                        </select>
+                        <small class="text-muted">Classify customer interest level</small>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label"><i class="bi bi-building"></i> Setup Type</label>
+                        <input type="text" name="setup_type" class="form-control"
+                               value="{{ lead.setup_type or '' }}" placeholder="e.g., Office, Home, Commercial">
+                        <small class="text-muted">Type of space setup</small>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label"><i class="bi bi-rulers"></i> Space Size</label>
+                        <input type="text" name="space_size" class="form-control"
+                               value="{{ lead.space_size or '' }}" placeholder="e.g., 1000 sq ft">
+                        <small class="text-muted">Total area of the space</small>
+                    </div>
+                </div>
                 <div class="mb-3">
                     <label class="form-label"><i class="bi bi-geo-alt"></i> Location/Address</label>
                     <textarea name="location" class="form-control" rows="2" placeholder="Enter customer's location or address">{{ lead.location or '' }}</textarea>

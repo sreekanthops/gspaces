@@ -1521,6 +1521,50 @@
                 }
             });
             
+            // Copy custom items from first design
+            const sourceCustomItemsContainer = document.getElementById('customItems' + firstDesignId);
+            const targetCustomItemsContainer = document.getElementById('customItems' + targetDesignId);
+            
+            if (sourceCustomItemsContainer && targetCustomItemsContainer) {
+                // Get all custom item rows from source
+                const sourceCustomRows = sourceCustomItemsContainer.querySelectorAll('.custom-item-row');
+                
+                // Clear existing custom items in target (except the template)
+                const existingTargetRows = targetCustomItemsContainer.querySelectorAll('.custom-item-row');
+                existingTargetRows.forEach(row => row.remove());
+                
+                // Copy each custom item
+                sourceCustomRows.forEach(sourceRow => {
+                    // Clone the row
+                    const newRow = sourceRow.cloneNode(true);
+                    
+                    // Update the onchange events to use target design ID
+                    const qtyInput = newRow.querySelector('[name="custom_item_quantity[]"]');
+                    const priceInput = newRow.querySelector('[name="custom_item_price[]"]');
+                    const removeBtn = newRow.querySelector('.btn-danger');
+                    
+                    if (qtyInput) {
+                        qtyInput.setAttribute('onchange', `calculateTotal(${targetDesignId})`);
+                    }
+                    if (priceInput) {
+                        priceInput.setAttribute('onchange', `calculateTotal(${targetDesignId})`);
+                    }
+                    if (removeBtn) {
+                        removeBtn.setAttribute('onclick', `this.closest('.custom-item-row').remove(); calculateTotal(${targetDesignId})`);
+                    }
+                    
+                    // Update the datalist reference
+                    const nameInput = newRow.querySelector('.custom-item-name-input');
+                    if (nameInput) {
+                        nameInput.setAttribute('list', `defaultItemsList${targetDesignId}`);
+                        nameInput.setAttribute('onchange', `populateItemDetails(this, ${targetDesignId})`);
+                    }
+                    
+                    // Append to target container
+                    targetCustomItemsContainer.appendChild(newRow);
+                });
+            }
+            
             // Copy discount settings
             const sourceDiscountType = sourceForm.querySelector('[name="discount_type"]');
             const targetDiscountType = targetForm.querySelector('[name="discount_type"]');
@@ -1538,7 +1582,7 @@
             // Recalculate totals
             calculateTotal(targetDesignId);
             
-            alert('Items copied successfully from Design 1!');
+            alert('Items copied successfully from Design 1 (including custom items)!');
         }
 
         // Calculate totals on page load

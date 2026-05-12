@@ -1158,8 +1158,20 @@
                         <div class="mb-2"><strong>Project:</strong> {{ lead.project_name }}</div>
                         {% endif %}
                         <div class="mb-2"><strong>Date:</strong> {{ lead.created_at.strftime('%B %d, %Y') }}</div>
-                        <div class="mb-2"><strong>Options:</strong> {{ designs|length }}</div>
-                        <div class="mb-2"><strong>Total Quote:</strong> ₹{{ "{:,.0f}".format(total or 0) }}</div>
+                        <div class="mb-2"><strong>Design Options:</strong> {{ designs|length }}</div>
+                        <div class="mb-2"><strong>Price Range:</strong>
+                            {% if designs|length > 1 %}
+                                {% set min_price = designs | map(attribute='price') | min %}
+                                {% set max_price = designs | map(attribute='price') | max %}
+                                {% if min_price == max_price %}
+                                    ₹{{ "{:,.0f}".format(min_price) }}
+                                {% else %}
+                                    ₹{{ "{:,.0f}".format(min_price) }} - ₹{{ "{:,.0f}".format(max_price) }}
+                                {% endif %}
+                            {% else %}
+                                ₹{{ "{:,.0f}".format(total or 0) }}
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1179,20 +1191,6 @@
                                 <div>
                                     <span class="label">Design Objective</span>
                                     <span class="value">Transform the setup into a refined dream workspace</span>
-                                </div>
-                            </div>
-                            <div class="reference-highlight">
-                                <span class="reference-highlight-icon"><i class="bi bi-person"></i></span>
-                                <div>
-                                    <span class="label">Prepared For</span>
-                                    <span class="value">{{ lead.customer_name }}</span>
-                                </div>
-                            </div>
-                            <div class="reference-highlight">
-                                <span class="reference-highlight-icon"><i class="bi bi-briefcase"></i></span>
-                                <div>
-                                    <span class="label">Project Focus</span>
-                                    <span class="value">{{ lead.project_name or 'Workspace Setup' }}</span>
                                 </div>
                             </div>
                             <div class="reference-highlight">

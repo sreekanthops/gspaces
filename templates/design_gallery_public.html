@@ -25,6 +25,34 @@
             text-decoration: none;
             display: block;
             color: inherit;
+            height: 350px;
+        }
+        .design-card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+        .media-carousel-mini {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+        .media-carousel-inner-mini {
+            display: flex;
+            transition: transform 0.5s ease;
+            height: 100%;
+        }
+        .media-slide-mini {
+            min-width: 100%;
+            height: 100%;
+            flex-shrink: 0;
+        }
+        .media-slide-mini img,
+        .media-slide-mini video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
         .image-count-badge {
             position: absolute;
@@ -125,10 +153,17 @@
         <!-- Category Filter -->
         <div class="category-filter text-center">
             <button class="btn btn-outline-primary category-btn active" onclick="filterCategory('all')">All Designs</button>
-            <button class="btn btn-outline-primary category-btn" onclick="filterCategory('office')">Office</button>
-            <button class="btn btn-outline-primary category-btn" onclick="filterCategory('home')">Home</button>
-            <button class="btn btn-outline-primary category-btn" onclick="filterCategory('commercial')">Commercial</button>
-            <button class="btn btn-outline-primary category-btn" onclick="filterCategory('studio')">Studio</button>
+            {% if categories %}
+                {% for cat in categories %}
+                <button class="btn btn-outline-primary category-btn" onclick="filterCategory('{{ cat.category }}')">
+                    {{ cat.category|title }}
+                </button>
+                {% endfor %}
+            {% else %}
+                <button class="btn btn-outline-primary category-btn" onclick="filterCategory('office')">Office</button>
+                <button class="btn btn-outline-primary category-btn" onclick="filterCategory('home')">Home</button>
+                <button class="btn btn-outline-primary category-btn" onclick="filterCategory('studio')">Studio</button>
+            {% endif %}
         </div>
 
         <!-- Design Grid -->
@@ -137,29 +172,51 @@
                 {% for design in designs %}
                 <div class="col-md-4 design-item" data-category="{{ design.category }}">
                     <a href="{{ url_for('design_gallery.view_design_gallery', design_id=design.id) }}" class="design-card">
-                        <img src="{{ design.image_url }}" alt="{{ design.title }}" class="design-image">
-                        
-                        {% if design.quoted_price %}
-                        <div class="price-badge">
-                            ₹{{ "{:,.0f}".format(design.quoted_price|float) }}
-                        </div>
-                        {% endif %}
-                        
-                        {% if design.image_count > 1 %}
-                        <div class="image-count-badge">
-                            <i class="fas fa-images"></i>
-                            {{ design.image_count }}
-                        </div>
-                        {% endif %}
-                        
-                        <div class="design-overlay">
-                            <h3 class="design-title">{{ design.title }}</h3>
-                            <p class="design-description">{{ design.description }}</p>
-                            {% if design.image_count > 1 %}
-                            <small class="text-white-50">
-                                <i class="fas fa-mouse-pointer"></i> Click to view {{ design.image_count }} images
-                            </small>
+                        <div class="design-card-inner">
+                            {% if design.all_media and design.all_media|length > 1 %}
+                            <!-- Carousel for multiple media -->
+                            <div class="media-carousel-mini" id="miniCarousel{{ design.id }}">
+                                <div class="media-carousel-inner-mini" id="miniCarouselInner{{ design.id }}">
+                                    {% for media in design.all_media %}
+                                    <div class="media-slide-mini">
+                                        {% if media.media_type == 'video' %}
+                                        <video muted loop playsinline>
+                                            <source src="{{ media.video_url }}" type="video/mp4">
+                                        </video>
+                                        {% else %}
+                                        <img src="{{ media.image_url }}" alt="{{ design.title }}">
+                                        {% endif %}
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% else %}
+                            <!-- Single image -->
+                            <img src="{{ design.image_url }}" alt="{{ design.title }}" class="design-image">
                             {% endif %}
+                            
+                            {% if design.quoted_price %}
+                            <div class="price-badge">
+                                ₹{{ "{:,.0f}".format(design.quoted_price|float) }}
+                            </div>
+                            {% endif %}
+                            
+                            {% if design.image_count > 1 %}
+                            <div class="image-count-badge">
+                                <i class="fas fa-images"></i>
+                                {{ design.image_count }}
+                            </div>
+                            {% endif %}
+                            
+                            <div class="design-overlay">
+                                <h3 class="design-title">{{ design.title }}</h3>
+                                <p class="design-description">{{ design.description }}</p>
+                                {% if design.image_count > 1 %}
+                                <small class="text-white-50">
+                                    <i class="fas fa-mouse-pointer"></i> Click to view {{ design.image_count }} images
+                                </small>
+                                {% endif %}
+                            </div>
                         </div>
                     </a>
                 </div>
@@ -195,6 +252,97 @@
                 }
             });
         }
+
+        // Mini carousel functionality
+        const miniCarouselStates = {};
+
+        function initMiniCarousel(designId, totalSlides) {
+            if (totalSlides <= 1) return;
+
+            miniCarouselStates[designId] = {
+                currentSlide: 0,
+                totalSlides: totalSlides,
+                interval: null,
+                isPlaying: false
+            };
+        }
+
+        function startMiniCarousel(designId) {
+            const state = miniCarouselStates[designId];
+            if (!state || state.isPlaying) return;
+
+            state.isPlaying = true;
+            const inner = document.getElementById('miniCarouselInner' + designId);
+            if (!inner) return;
+
+            // Play video if current slide has one
+            const currentSlide = inner.children[state.currentSlide];
+            const video = currentSlide ? currentSlide.querySelector('video') : null;
+            if (video) {
+                video.play().catch(() => {});
+            }
+
+            state.interval = setInterval(() => {
+                state.currentSlide = (state.currentSlide + 1) % state.totalSlides;
+                inner.style.transform = `translateX(-${state.currentSlide * 100}%)`;
+
+                // Pause all videos
+                inner.querySelectorAll('video').forEach(v => {
+                    v.pause();
+                    v.currentTime = 0;
+                });
+
+                // Play current video
+                const newSlide = inner.children[state.currentSlide];
+                const newVideo = newSlide ? newSlide.querySelector('video') : null;
+                if (newVideo) {
+                    newVideo.play().catch(() => {});
+                }
+            }, 2000); // Change every 2 seconds
+        }
+
+        function stopMiniCarousel(designId) {
+            const state = miniCarouselStates[designId];
+            if (!state) return;
+
+            state.isPlaying = false;
+            if (state.interval) {
+                clearInterval(state.interval);
+                state.interval = null;
+            }
+
+            // Pause all videos and reset
+            const inner = document.getElementById('miniCarouselInner' + designId);
+            if (inner) {
+                inner.querySelectorAll('video').forEach(v => {
+                    v.pause();
+                    v.currentTime = 0;
+                });
+                // Reset to first slide
+                state.currentSlide = 0;
+                inner.style.transform = 'translateX(0)';
+            }
+        }
+
+        // Initialize all mini carousels on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            {% for design in designs %}
+                {% if design.all_media and design.all_media|length > 1 %}
+                    initMiniCarousel({{ design.id }}, {{ design.all_media|length }});
+                    
+                    // Add hover events
+                    const card{{ design.id }} = document.getElementById('miniCarousel{{ design.id }}');
+                    if (card{{ design.id }}) {
+                        card{{ design.id }}.closest('.design-card').addEventListener('mouseenter', function() {
+                            startMiniCarousel({{ design.id }});
+                        });
+                        card{{ design.id }}.closest('.design-card').addEventListener('mouseleave', function() {
+                            stopMiniCarousel({{ design.id }});
+                        });
+                    }
+                {% endif %}
+            {% endfor %}
+        });
     </script>
 </body>
 </html>

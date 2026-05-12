@@ -322,6 +322,42 @@
                 right: 5px;
             }
         }
+        .carousel-play-pause {
+            position: absolute;
+            bottom: 15px;
+            left: 15px;
+            background: rgba(255,255,255,0.9);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            color: #333;
+            transition: all 0.3s ease;
+            z-index: 10;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .carousel-play-pause:hover {
+            background: white;
+            transform: scale(1.1);
+        }
+        .carousel-play-pause.playing {
+            background: rgba(102, 126, 234, 0.9);
+            color: white;
+        }
+        @media (max-width: 768px) {
+            .carousel-play-pause {
+                width: 35px;
+                height: 35px;
+                font-size: 14px;
+                bottom: 10px;
+                left: 10px;
+            }
+        }
         .carousel-indicators {
             position: absolute;
             bottom: 15px;
@@ -1234,6 +1270,12 @@
                                 <button class="carousel-nav next" onclick="moveSlide({{ design.id }}, 1)">
                                     <i class="bi bi-chevron-right"></i>
                                 </button>
+                                <!-- Play/Pause Button -->
+                                <button class="carousel-play-pause playing" id="playPauseBtn{{ design.id }}"
+                                        onclick="toggleCarouselAutoSlide({{ design.id }})"
+                                        title="Pause auto-slide">
+                                    <i class="bi bi-pause-fill"></i>
+                                </button>
                                 {% endif %}
                             </div>
                         {% endif %}
@@ -1963,7 +2005,8 @@
                 currentSlide: 0,
                 totalSlides: totalSlides,
                 autoScrollInterval: null,
-                restartTimeout: null
+                restartTimeout: null,
+                isAutoSliding: true
             };
 
             bindCarouselVideoEvents(designId);
@@ -1972,6 +2015,27 @@
                 startAutoScroll(designId);
             } else {
                 playCurrentSlideVideo(designId);
+            }
+        }
+
+        function toggleCarouselAutoSlide(designId) {
+            const state = carouselStates[designId];
+            if (!state) return;
+
+            state.isAutoSliding = !state.isAutoSliding;
+            const btn = document.getElementById('playPauseBtn' + designId);
+            const icon = btn.querySelector('i');
+
+            if (state.isAutoSliding) {
+                btn.classList.add('playing');
+                btn.title = 'Pause auto-slide';
+                icon.className = 'bi bi-pause-fill';
+                startAutoScroll(designId);
+            } else {
+                btn.classList.remove('playing');
+                btn.title = 'Play auto-slide';
+                icon.className = 'bi bi-play-fill';
+                stopAutoScroll(designId);
             }
         }
 
@@ -2028,7 +2092,7 @@
 
         function startAutoScroll(designId) {
             const state = carouselStates[designId];
-            if (!state || state.totalSlides <= 1) return;
+            if (!state || state.totalSlides <= 1 || !state.isAutoSliding) return;
 
             stopAutoScroll(designId);
 

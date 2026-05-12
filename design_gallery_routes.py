@@ -230,7 +230,7 @@ def public_gallery():
     cur = conn.cursor(cursor_factory=RealDictCursor)
     
     try:
-        # Get all active designs with their image count and original quotation price from synced lead designs
+        # Get all active designs with their media and pricing
         cur.execute("""
             SELECT
                 dg.id,
@@ -239,6 +239,7 @@ def public_gallery():
                 dg.image_url,
                 dg.category,
                 ld.price as quoted_price,
+                ld.type as design_type,
                 COUNT(di.id) as image_count
             FROM design_gallery dg
             LEFT JOIN design_images di ON dg.id = di.design_id
@@ -252,12 +253,42 @@ def public_gallery():
                 dg.category,
                 dg.display_order,
                 dg.created_at,
-                ld.price
+                ld.price,
+                ld.type
             ORDER BY dg.display_order, dg.created_at DESC
         """)
         designs = cur.fetchall()
         
-        return render_template('design_gallery_public.html', designs=designs)
+        # Get all media for each design for carousel
+        for design in designs:
+            cur.execute("""
+                SELECT image_url, video_url, media_type, display_order
+                FROM design_images
+                WHERE design_id = %s
+                ORDER BY is_primary DESC, display_order, created_at
+            """, (design['id'],))
+            design['all_media'] = cur.fetchall()
+            
+            # If no media in design_images, use main image
+            if not design['all_media']:
+                design['all_media'] = [{
+                    'image_url': design['image_url'],
+                    'video_url': None,
+                    'media_type': 'image',
+                    'display_order': 0
+                }]
+        
+        # Get active categories dynamically
+        cur.execute("""
+            SELECT DISTINCT category, COUNT(*) as count
+            FROM design_gallery
+            WHERE is_active = TRUE AND category IS NOT NULL
+            GROUP BY category
+            ORDER BY count DESC
+        """)
+        categories = cur.fetchall()
+        
+        return render_template('design_gallery_public.html', designs=designs, categories=categories)
     finally:
         cur.close()
         conn.close()
@@ -524,5 +555,82 @@ def delete_design_image(image_id):
     finally:
         cur.close()
         conn.close()
+
+@design_gallery_bp.route('/admin/design-gallery/<int:design_id>/manage-media')
+@login_required
+@admin_required
+def manage_design_media(design_id):
+    """Page to manage media for a specific design"""
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    
+    try:
+        # Get design details
+        cur.execute("SELECT * FROM design_gallery WHERE id = %s", (design_id,))
+        design = cur.fetchone()
+        
+        if not design:
+            flash('Design not found', 'danger')
+            return redirect(url_for('design_gallery.admin_design_gallery'))
+        
+        # Get all media for this design
+        cur.execute("""
+            SELECT id, image_url, video_url, media_type, display_order, is_primary
+            FROM design_images
+            WHERE design_id = %s
+            ORDER BY is_primary DESC, display_order, created_at
+        """, (design_id,))
+        media_files = cur.fetchall()
+        
+        return render_template('admin_design_media.html', design=design, media_files=media_files)
+    finally:
+        cur.close()
+        conn.close()
+
+@design_gallery_bp.route('/admin/design-gallery/<int:design_id>/set-primary/<int:image_id>', methods=['POST'])
+@login_required
+@admin_required
+def set_primary_image(design_id, image_id):
+    """Set an image as primary for a design"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    try:
+        # Unset all primary images for this design
+        cur.execute("""
+            UPDATE design_images
+            SET is_primary = FALSE
+            WHERE design_id = %s
+        """, (design_id,))
+        
+        # Set the selected image as primary
+        cur.execute("""
+            UPDATE design_images
+            SET is_primary = TRUE
+            WHERE id = %s AND design_id = %s
+        """, (image_id, design_id))
+        
+        # Get the new primary image URL
+        cur.execute("SELECT image_url FROM design_images WHERE id = %s", (image_id,))
+        result = cur.fetchone()
+        
+        if result:
+            # Update design_gallery main image
+            cur.execute("""
+                UPDATE design_gallery
+                SET image_url = %s, updated_at = NOW()
+                WHERE id = %s
+            """, (result[0], design_id))
+        
+        conn.commit()
+        flash('Primary image updated successfully', 'success')
+    except Exception as e:
+        conn.rollback()
+        flash(f'Error setting primary image: {str(e)}', 'danger')
+    finally:
+        cur.close()
+        conn.close()
+    
+    return redirect(url_for('design_gallery.manage_design_media', design_id=design_id))
 
 # Made with Bob

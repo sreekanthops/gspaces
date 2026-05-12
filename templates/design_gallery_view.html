@@ -179,6 +179,33 @@
             font-size: 14px;
             z-index: 10;
         }
+        .play-pause-btn {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(255,255,255,0.9);
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: #333;
+            transition: all 0.3s ease;
+            z-index: 10;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .play-pause-btn:hover {
+            background: white;
+            transform: scale(1.1);
+        }
+        .play-pause-btn.playing {
+            background: rgba(102, 126, 234, 0.9);
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -217,6 +244,9 @@
             <div class="image-counter">
                 <span id="currentIndex">1</span> / {{ images|length }}
             </div>
+            <button class="play-pause-btn playing" id="playPauseBtn" onclick="toggleAutoSlide()" title="Pause auto-slide">
+                <i class="fas fa-pause"></i>
+            </button>
             {% endif %}
         </div>
         
@@ -338,24 +368,27 @@
         const images = {{ images|tojson }};
         let currentIndex = 0;
         let slideInterval;
+        let isAutoSliding = true;
 
         function showImage(index) {
             currentIndex = index;
             const currentMedia = images[index];
 
             // Hide both media elements
-            document.getElementById('mainImage').style.display = 'none';
-            document.getElementById('mainVideo').style.display = 'none';
+            const mainImage = document.getElementById('mainImage');
+            const mainVideo = document.getElementById('mainVideo');
+            mainImage.style.display = 'none';
+            mainVideo.style.display = 'none';
 
             // Show the appropriate media
             if (currentMedia.media_type === 'video') {
-                document.getElementById('mainVideo').style.display = 'block';
-                document.getElementById('mainVideo').src = currentMedia.video_url;
-                document.getElementById('mainVideo').load();
-                document.getElementById('mainVideo').play();
+                mainVideo.style.display = 'block';
+                mainVideo.src = currentMedia.video_url;
+                mainVideo.load();
+                mainVideo.play();
             } else {
-                document.getElementById('mainImage').style.display = 'block';
-                document.getElementById('mainImage').src = currentMedia.image_url;
+                mainImage.style.display = 'block';
+                mainImage.src = currentMedia.image_url;
             }
 
             document.getElementById('currentIndex').textContent = index + 1;
@@ -378,39 +411,88 @@
             // Clear any existing interval
             if (slideInterval) clearInterval(slideInterval);
 
-            // Only auto-slide if there are multiple images
-            if (images.length > 1) {
+            // Only auto-slide if there are multiple images and auto-slide is enabled
+            if (images.length > 1 && isAutoSliding) {
                 slideInterval = setInterval(() => {
+                    const currentMedia = images[currentIndex];
+                    const mainVideo = document.getElementById('mainVideo');
+                    
+                    // If current slide is a video and it's still playing, don't advance
+                    if (currentMedia.media_type === 'video' && mainVideo.style.display === 'block') {
+                        if (!mainVideo.paused && !mainVideo.ended) {
+                            return; // Wait for video to complete
+                        }
+                    }
+                    
                     changeImage(1);
-                }, 5000); // Change every 5 seconds
+                }, 5000); // Check every 5 seconds
             }
         }
 
         function stopAutoSlide() {
-            if (slideInterval) clearInterval(slideInterval);
+            if (slideInterval) {
+                clearInterval(slideInterval);
+                slideInterval = null;
+            }
+        }
+
+        function toggleAutoSlide() {
+            isAutoSliding = !isAutoSliding;
+            const btn = document.getElementById('playPauseBtn');
+            const icon = btn.querySelector('i');
+            
+            if (isAutoSliding) {
+                btn.classList.add('playing');
+                btn.title = 'Pause auto-slide';
+                icon.className = 'fas fa-pause';
+                startAutoSlide();
+            } else {
+                btn.classList.remove('playing');
+                btn.title = 'Play auto-slide';
+                icon.className = 'fas fa-play';
+                stopAutoSlide();
+            }
         }
 
         // Keyboard navigation
         document.addEventListener('keydown', function(e) {
             if (e.key === 'ArrowLeft') {
                 changeImage(-1);
-                startAutoSlide(); // Reset auto-slide timer
+                if (isAutoSliding) startAutoSlide(); // Reset auto-slide timer
             }
             if (e.key === 'ArrowRight') {
                 changeImage(1);
-                startAutoSlide(); // Reset auto-slide timer
+                if (isAutoSliding) startAutoSlide(); // Reset auto-slide timer
+            }
+            if (e.key === ' ') {
+                e.preventDefault();
+                toggleAutoSlide();
             }
         });
 
         // Start auto-slide when page loads
         document.addEventListener('DOMContentLoaded', function() {
             showImage(0); // Show first image
+            
+            // Set up video event listeners
+            const mainVideo = document.getElementById('mainVideo');
+            mainVideo.addEventListener('ended', function() {
+                // When video ends, advance to next slide if auto-sliding
+                if (isAutoSliding && images.length > 1) {
+                    changeImage(1);
+                }
+            });
+            
             startAutoSlide(); // Start auto-sliding
 
             // Pause on hover
             const galleryContainer = document.querySelector('.main-image-container');
-            galleryContainer.addEventListener('mouseenter', stopAutoSlide);
-            galleryContainer.addEventListener('mouseleave', startAutoSlide);
+            galleryContainer.addEventListener('mouseenter', function() {
+                if (isAutoSliding) stopAutoSlide();
+            });
+            galleryContainer.addEventListener('mouseleave', function() {
+                if (isAutoSliding) startAutoSlide();
+            });
         });
     </script>
 </body>

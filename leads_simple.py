@@ -73,9 +73,10 @@ def admin_leads_list():
     cur = conn.cursor(cursor_factory=RealDictCursor)
     
     cur.execute("""
-        SELECT l.*, 
+        SELECT l.*,
                COUNT(ld.id) as design_count,
-               SUM(ld.price) as total_value
+               MIN(ld.price) as min_price,
+               MAX(ld.price) as max_price
         FROM leads l
         LEFT JOIN lead_designs ld ON l.id = ld.lead_id
         GROUP BY l.id

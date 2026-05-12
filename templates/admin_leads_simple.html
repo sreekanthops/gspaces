@@ -107,8 +107,8 @@
             </div>
             <div class="col-md-4">
                 <div class="stats-card">
-                    <div class="stats-number">₹{{ "%.0f"|format(leads|selectattr('total_value')|sum(attribute='total_value')|default(0)) }}</div>
-                    <div class="text-muted">Total Value</div>
+                    <div class="stats-number">{{ leads|selectattr('design_count')|selectattr('design_count', 'gt', 0)|list|length }}</div>
+                    <div class="text-muted">Active Leads</div>
                 </div>
             </div>
         </div>
@@ -143,7 +143,15 @@
                             <strong>{{ lead.design_count }}</strong> designs
                         </div>
                         <div class="text-success">
-                            <strong>₹{{ "%.0f"|format(lead.total_value or 0) }}</strong>
+                            {% if lead.min_price and lead.max_price %}
+                                {% if lead.min_price == lead.max_price %}
+                                    <strong>₹{{ "%.0f"|format(lead.min_price) }}</strong>
+                                {% else %}
+                                    <strong>₹{{ "%.0f"|format(lead.min_price) }} - ₹{{ "%.0f"|format(lead.max_price) }}</strong>
+                                {% endif %}
+                            {% else %}
+                                <strong>-</strong>
+                            {% endif %}
                         </div>
                     </div>
                     <div class="col-md-2 text-end">

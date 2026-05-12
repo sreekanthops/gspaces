@@ -89,6 +89,37 @@ def admin_leads_list():
     
     return render_template('admin_leads_simple.html', leads=leads)
 
+@leads_bp.route('/admin/leads/<int:lead_id>/toggle-priority', methods=['POST'])
+@login_required
+@admin_required
+def toggle_lead_priority(lead_id):
+    """Toggle priority status of a lead"""
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    
+    try:
+        # Toggle the priority
+        cur.execute("""
+            UPDATE leads
+            SET is_priority = NOT COALESCE(is_priority, FALSE)
+            WHERE id = %s
+            RETURNING is_priority
+        """, (lead_id,))
+        
+        result = cur.fetchone()
+        conn.commit()
+        
+        return jsonify({
+            'success': True,
+            'is_priority': result['is_priority'] if result else False
+        })
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        cur.close()
+        conn.close()
+
 @leads_bp.route('/admin/leads/create', methods=['GET', 'POST'])
 @admin_required
 def create_lead():
@@ -106,6 +137,7 @@ def create_lead():
             notes = request.form.get('notes', '').strip() or 'Transform your space into a dream workspace setup.'
             setup_type = request.form.get('setup_type', '').strip()
             space_size = request.form.get('space_size', '').strip()
+            customer_type = request.form.get('customer_type', 'genuine')
             
             # Handle main image
             reference_image = None
@@ -125,12 +157,12 @@ def create_lead():
             cur.execute("""
                 INSERT INTO leads (customer_name, customer_email, customer_phone,
                                  project_name, location, reference_image, notes, share_token, created_by,
-                                 setup_type, space_size)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                                 setup_type, space_size, customer_type)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 RETURNING id
             """, (customer_name, customer_email, customer_phone, project_name,
                   location, reference_image, notes, share_token, current_user.id,
-                  setup_type, space_size))
+                  setup_type, space_size, customer_type))
             
             lead_id = cur.fetchone()[0]
             conn.commit()

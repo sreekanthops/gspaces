@@ -89,15 +89,25 @@
                 <small class="text-muted">City, state, or full address</small>
             </div>
 
-            <div class="mb-3">
-                <label class="form-label"><i class="bi bi-tag"></i> Design Category</label>
-                <select name="design_category" class="form-control">
-                    <option value="office">Office</option>
-                    <option value="home">Home</option>
-                    <option value="commercial">Commercial</option>
-                    <option value="studio">Studio</option>
-                </select>
-                <small class="text-muted">Select the type of space for this design</small>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label"><i class="bi bi-tag"></i> Design Category</label>
+                    <select name="design_category" class="form-control">
+                        <option value="office">Office</option>
+                        <option value="home">Home</option>
+                        <option value="commercial">Commercial</option>
+                        <option value="studio">Studio</option>
+                    </select>
+                    <small class="text-muted">Select the type of space for this design</small>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label"><i class="bi bi-person-check"></i> Customer Type</label>
+                    <select name="customer_type" class="form-control">
+                        <option value="genuine" selected>Genuine</option>
+                        <option value="casual">Casual</option>
+                    </select>
+                    <small class="text-muted">Helps prioritize follow-ups</small>
+                </div>
             </div>
 
             <div class="row">

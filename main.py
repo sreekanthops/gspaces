@@ -4308,7 +4308,7 @@ def customer_inquiry_page():
         # Fetch gallery designs (limit to 5)
         cursor.execute("""
             SELECT id, title, primary_image_url
-            FROM leads
+            FROM design_gallery
             WHERE primary_image_url IS NOT NULL
             ORDER BY id DESC
             LIMIT 5

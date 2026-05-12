@@ -149,6 +149,14 @@
                             <i class="bi bi-envelope"></i> {{ lead.customer_email or 'No email' }} |
                             <i class="bi bi-telephone"></i> {{ lead.customer_phone or 'No phone' }}
                         </small>
+                        {% if lead.latest_comment %}
+                        <div class="mt-2 p-2 bg-light rounded">
+                            <small class="text-muted">
+                                <i class="bi bi-chat-quote"></i> <strong>Latest:</strong>
+                                {{ lead.latest_comment[:80] }}{% if lead.latest_comment|length > 80 %}...{% endif %}
+                            </small>
+                        </div>
+                        {% endif %}
                     </div>
                     <div class="col-md-2 text-center">
                         <div class="mb-2">
@@ -306,13 +314,20 @@
                 });
 
                 return `
-                    <div class="card mb-3">
+                    <div class="card mb-3" id="comment-${comment.id}">
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-start mb-2">
                                 <strong class="text-primary">
                                     <i class="bi bi-person-circle"></i> ${comment.created_by_name || 'Admin'}
                                 </strong>
-                                <small class="text-muted">${formattedDate}</small>
+                                <div>
+                                    <small class="text-muted me-2">${formattedDate}</small>
+                                    <button class="btn btn-sm btn-outline-danger"
+                                            onclick="deleteComment(${comment.id})"
+                                            title="Delete comment">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
                             </div>
                             <p class="mb-0" style="white-space: pre-wrap;">${comment.comment}</p>
                         </div>
@@ -347,6 +362,40 @@
             })
             .catch(error => {
                 alert('Error adding comment: ' + error);
+            });
+        }
+
+        function deleteComment(commentId) {
+            if (!confirm('Delete this comment?')) {
+                return;
+            }
+
+            fetch(`/admin/leads/comments/${commentId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Remove the comment from DOM with animation
+                    const commentEl = document.getElementById(`comment-${commentId}`);
+                    if (commentEl) {
+                        commentEl.style.transition = 'opacity 0.3s';
+                        commentEl.style.opacity = '0';
+                        setTimeout(() => {
+                            loadComments(); // Reload to update the list
+                            // Also reload the page to update the latest comment display
+                            location.reload();
+                        }, 300);
+                    }
+                } else {
+                    alert('Error: ' + (data.error || 'Failed to delete comment'));
+                }
+            })
+            .catch(error => {
+                alert('Error deleting comment: ' + error);
             });
         }
 

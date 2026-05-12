@@ -76,10 +76,19 @@ def admin_leads_list():
         SELECT l.*,
                COUNT(ld.id) as design_count,
                MIN(ld.price) as min_price,
-               MAX(ld.price) as max_price
+               MAX(ld.price) as max_price,
+               lc.comment as latest_comment,
+               lc.created_at as latest_comment_date
         FROM leads l
         LEFT JOIN lead_designs ld ON l.id = ld.lead_id
-        GROUP BY l.id
+        LEFT JOIN LATERAL (
+            SELECT comment, created_at
+            FROM lead_comments
+            WHERE lead_id = l.id
+            ORDER BY created_at DESC
+            LIMIT 1
+        ) lc ON true
+        GROUP BY l.id, lc.comment, lc.created_at
         ORDER BY COALESCE(l.is_priority, FALSE) DESC, l.created_at DESC
     """)
     leads = cur.fetchall()
@@ -181,6 +190,35 @@ def add_lead_comment(lead_id):
                 'created_by_name': current_user.name
             }
         })
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        cur.close()
+        conn.close()
+
+@leads_bp.route('/admin/leads/comments/<int:comment_id>', methods=['DELETE'])
+@login_required
+@admin_required
+def delete_lead_comment(comment_id):
+    """Delete a comment"""
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    
+    try:
+        cur.execute("""
+            DELETE FROM lead_comments
+            WHERE id = %s
+            RETURNING id
+        """, (comment_id,))
+        
+        deleted = cur.fetchone()
+        conn.commit()
+        
+        if deleted:
+            return jsonify({'success': True})
+        else:
+            return jsonify({'success': False, 'error': 'Comment not found'}), 404
     except Exception as e:
         conn.rollback()
         return jsonify({'success': False, 'error': str(e)}), 500

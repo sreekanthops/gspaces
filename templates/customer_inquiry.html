@@ -39,9 +39,9 @@
         }
         
         .inquiry-container {
-            max-width: 900px;
+            max-width: 1200px;
             margin: 40px auto;
-            padding: 0 20px;
+            padding: 0 270px;
         }
         
         .inquiry-card {
@@ -468,51 +468,51 @@
 <body>
     {% include 'navbar.html' %}
     
-    <!-- Floating Images Left Side - Products -->
+    <!-- Floating Images Left Side - Gallery Designs -->
     <div class="floating-images left">
-        {% if products and products|length > 0 %}
-            {% for product in products %}
-                <a href="{{ url_for('product_detail', product_id=product.id) }}" class="floating-image" style="text-decoration: none;">
-                    <img src="{{ url_for('static', filename=product.image_url) }}"
+        {% if gallery_designs and gallery_designs|length > 4 %}
+            {% for design in gallery_designs[:5] %}
+                <a href="{{ url_for('design_gallery_bp.view_design', design_id=design.id) }}" class="floating-image" style="text-decoration: none;">
+                    <img src="{{ url_for('static', filename=design.primary_image_url) }}"
                          style="width: 100%; height: 100%; object-fit: cover; border-radius: 16px;"
-                         alt="{{ product.name }}"
-                         title="{{ product.name }} - Click to view">
+                         alt="{{ design.title }}"
+                         title="{{ design.title }} - Click to view">
                 </a>
             {% endfor %}
         {% else %}
-            <!-- Fallback static images - Main product showcase images -->
-            <a href="/products" class="floating-image" style="text-decoration: none;">
+            <!-- Fallback static images - Gallery showcase images -->
+            <a href="/designs" class="floating-image" style="text-decoration: none;">
                 <img src="{{ url_for('static', filename='img/carousel_20260509_151521_DSC06887_2.jpg') }}"
                      style="width: 100%; height: 100%; object-fit: cover; border-radius: 16px;"
                      alt="Office Setup">
             </a>
-            <a href="/products" class="floating-image" style="text-decoration: none;">
+            <a href="/designs" class="floating-image" style="text-decoration: none;">
                 <img src="{{ url_for('static', filename='img/services-1.jpg') }}"
                      style="width: 100%; height: 100%; object-fit: cover; border-radius: 16px;"
-                     alt="Workspace Solutions">
+                     alt="Workspace Design">
             </a>
-            <a href="/products" class="floating-image" style="text-decoration: none;">
+            <a href="/designs" class="floating-image" style="text-decoration: none;">
                 <img src="{{ url_for('static', filename='img/services-2.jpg') }}"
                      style="width: 100%; height: 100%; object-fit: cover; border-radius: 16px;"
-                     alt="Office Furniture">
+                     alt="Office Design">
             </a>
-            <a href="/products" class="floating-image" style="text-decoration: none;">
+            <a href="/designs" class="floating-image" style="text-decoration: none;">
                 <img src="{{ url_for('static', filename='img/services-3.jpg') }}"
                      style="width: 100%; height: 100%; object-fit: cover; border-radius: 16px;"
-                     alt="Desk Setups">
+                     alt="Desk Setup">
             </a>
-            <a href="/products" class="floating-image" style="text-decoration: none;">
+            <a href="/designs" class="floating-image" style="text-decoration: none;">
                 <img src="{{ url_for('static', filename='img/about.jpg') }}"
                      style="width: 100%; height: 100%; object-fit: cover; border-radius: 16px;"
-                     alt="Modern Office">
+                     alt="Modern Gallery">
             </a>
         {% endif %}
     </div>
     
     <!-- Floating Images Right Side - Gallery Designs -->
     <div class="floating-images right">
-        {% if gallery_designs and gallery_designs|length > 0 %}
-            {% for design in gallery_designs %}
+        {% if gallery_designs and gallery_designs|length > 5 %}
+            {% for design in gallery_designs[5:] %}
                 <a href="{{ url_for('design_gallery_bp.view_design', design_id=design.id) }}" class="floating-image" style="text-decoration: none;">
                     <img src="{{ url_for('static', filename=design.primary_image_url) }}"
                          style="width: 100%; height: 100%; object-fit: cover; border-radius: 16px;"

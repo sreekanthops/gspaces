@@ -137,7 +137,7 @@
                             </button>
                             <h5 class="mb-0">{{ lead.customer_name }}</h5>
                             {% if lead.customer_type %}
-                            <span class="badge {% if lead.customer_type == 'genuine' %}bg-success{% else %}bg-secondary{% endif %}">
+                            <span class="badge {% if lead.customer_type == 'Genuine' %}bg-success{% else %}bg-warning{% endif %}">
                                 {{ lead.customer_type|title }}
                             </span>
                             {% endif %}

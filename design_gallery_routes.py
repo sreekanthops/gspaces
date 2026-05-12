@@ -624,14 +624,12 @@ def set_primary_image(design_id, image_id):
             """, (result[0], design_id))
         
         conn.commit()
-        flash('Primary image updated successfully', 'success')
+        return jsonify({'success': True, 'message': 'Primary image updated successfully'})
     except Exception as e:
         conn.rollback()
-        flash(f'Error setting primary image: {str(e)}', 'danger')
+        return jsonify({'success': False, 'error': str(e)}), 500
     finally:
         cur.close()
         conn.close()
-    
-    return redirect(url_for('design_gallery.manage_design_media', design_id=design_id))
 
 # Made with Bob

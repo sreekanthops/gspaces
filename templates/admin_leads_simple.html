@@ -254,13 +254,18 @@
                             <i class="bi bi-briefcase"></i>
                             {% if lead.project_name %}{{ lead.project_name }}{% else %}No project name{% endif %}
                         </p>
-                        <div class="d-flex gap-3 mb-2">
+                        <div class="d-flex gap-3 mb-2 flex-wrap">
                             <small class="text-muted">
                                 <i class="bi bi-envelope-fill"></i> {{ lead.customer_email or 'No email' }}
                             </small>
                             <small class="text-muted">
                                 <i class="bi bi-telephone-fill"></i> {{ lead.customer_phone or 'No phone' }}
                             </small>
+                            {% if lead.location %}
+                            <small class="text-muted">
+                                <i class="bi bi-geo-alt-fill"></i> {{ lead.location }}
+                            </small>
+                            {% endif %}
                         </div>
                         {% if lead.latest_comment %}
                         <div class="latest-comment-box">

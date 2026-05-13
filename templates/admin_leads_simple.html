@@ -70,19 +70,51 @@
             margin-bottom: 12px;
         }
         .latest-comment-box {
-            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
-            border-left: 4px solid #28a745;
             padding: 12px 15px;
             border-radius: 8px;
             margin-top: 12px;
+            transition: all 0.3s ease;
+        }
+        /* Green for Genuine customers */
+        .latest-comment-box.genuine {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            border-left: 4px solid #28a745;
             box-shadow: 0 2px 8px rgba(40, 167, 69, 0.15);
         }
-        .latest-comment-box i {
+        .latest-comment-box.genuine i {
             color: #28a745;
             font-size: 1.1rem;
         }
-        .latest-comment-text {
+        .latest-comment-box.genuine .latest-comment-text {
             color: #155724;
+        }
+        /* Yellow/Orange for Casual customers */
+        .latest-comment-box.casual {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffe69c 100%);
+            border-left: 4px solid #ffc107;
+            box-shadow: 0 2px 8px rgba(255, 193, 7, 0.15);
+        }
+        .latest-comment-box.casual i {
+            color: #ff9800;
+            font-size: 1.1rem;
+        }
+        .latest-comment-box.casual .latest-comment-text {
+            color: #856404;
+        }
+        /* Blue for customers without type */
+        .latest-comment-box.default {
+            background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+            border-left: 4px solid #17a2b8;
+            box-shadow: 0 2px 8px rgba(23, 162, 184, 0.15);
+        }
+        .latest-comment-box.default i {
+            color: #17a2b8;
+            font-size: 1.1rem;
+        }
+        .latest-comment-box.default .latest-comment-text {
+            color: #0c5460;
+        }
+        .latest-comment-text {
             font-size: 0.9rem;
             font-weight: 500;
             margin: 0;
@@ -268,7 +300,7 @@
                             {% endif %}
                         </div>
                         {% if lead.latest_comment %}
-                        <div class="latest-comment-box">
+                        <div class="latest-comment-box {% if lead.customer_type == 'Genuine' %}genuine{% elif lead.customer_type == 'Casual' %}casual{% else %}default{% endif %}">
                             <p class="latest-comment-text">
                                 <i class="bi bi-chat-quote-fill"></i>
                                 <strong>Latest Update:</strong>

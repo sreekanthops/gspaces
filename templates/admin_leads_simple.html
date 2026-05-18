@@ -404,7 +404,7 @@
                                     data-lead-id="{{ lead.id }}"
                                     title="{% if lead.is_priority %}Remove priority{% else %}Mark as priority{% endif %}">
                                 <i class="bi bi-star{% if lead.is_priority %}-fill{% endif %}"
-                                   style="font-size: 1.5rem; color: {% if lead.is_priority %}#ffc107{% else %}#ddd{% endif %};"></i>
+                                   style="font-size: 1.5rem; color: {{ '#ffc107' if lead.is_priority else '#ddd' }};"></i>
                             </button>
                             <h3 class="lead-title mb-0">{{ lead.customer_name }}</h3>
                             {% if lead.customer_type %}
@@ -432,9 +432,17 @@
                             <span class="badge bg-light text-dark">
                                 <i class="bi bi-envelope-fill"></i> {{ lead.customer_email or 'No email' }}
                             </span>
+                            {% if lead.customer_phone %}
+                            <a class="badge bg-light text-dark text-decoration-none"
+                               href="https://wa.me/{{ lead.customer_phone|replace('+', '')|replace(' ', '')|replace('-', '')|replace('(', '')|replace(')', '') }}"
+                               target="_blank" rel="noopener noreferrer">
+                                <i class="bi bi-whatsapp"></i> {{ lead.customer_phone }}
+                            </a>
+                            {% else %}
                             <span class="badge bg-light text-dark">
-                                <i class="bi bi-telephone-fill"></i> {{ lead.customer_phone or 'No phone' }}
+                                <i class="bi bi-telephone-fill"></i> No phone
                             </span>
+                            {% endif %}
                             {% if lead.location %}
                             <span class="badge bg-light text-dark">
                                 <i class="bi bi-geo-alt-fill"></i> {{ lead.location }}

@@ -163,6 +163,78 @@
             text-transform: uppercase;
             letter-spacing: 1px;
         }
+        .lead-tabs-wrapper {
+            background: white;
+            border-radius: 16px;
+            padding: 16px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+            margin-bottom: 24px;
+        }
+        .lead-tab-grid {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 12px;
+        }
+        .lead-tab {
+            display: block;
+            text-decoration: none;
+            color: #2c3e50;
+            background: #f8f9fa;
+            border: 2px solid transparent;
+            border-radius: 14px;
+            padding: 16px 12px;
+            transition: all 0.25s ease;
+            min-height: 96px;
+        }
+        .lead-tab:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+            color: #2c3e50;
+        }
+        .lead-tab.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: #5b6ee1;
+            box-shadow: 0 10px 24px rgba(102, 126, 234, 0.3);
+        }
+        .lead-tab-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+        .lead-tab-count {
+            font-size: 1.8rem;
+            font-weight: 800;
+            line-height: 1;
+        }
+        .lead-tab-subtext {
+            font-size: 0.82rem;
+            opacity: 0.85;
+        }
+        .lead-meta {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+        .lead-meta .badge {
+            border-radius: 10px;
+            padding: 8px 12px;
+        }
+        .section-move-bar {
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 1px dashed #dee2e6;
+        }
+        .reminder-alert-card {
+            background: linear-gradient(135deg, #fff4e5 0%, #ffe1b8 100%);
+            border: 1px solid #ffc078;
+            border-radius: 14px;
+            padding: 14px 16px;
+            margin-bottom: 16px;
+        }
         .action-btn {
             border-radius: 8px;
             font-weight: 600;
@@ -197,6 +269,16 @@
         }
         .star-button:hover {
             transform: scale(1.2);
+        }
+        @media (max-width: 1200px) {
+            .lead-tab-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+        @media (max-width: 768px) {
+            .lead-tab-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -233,28 +315,78 @@
         <div class="row mb-4">
             <div class="col-md-4">
                 <div class="stats-card">
-                    <div class="stats-number">{{ leads|length }}</div>
+                    <div class="stats-number">{{ stats.total_leads }}</div>
                     <div class="text-muted">Total Leads</div>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="stats-card">
-                    <div class="stats-number">{{ leads|selectattr('design_count')|sum(attribute='design_count') }}</div>
+                    <div class="stats-number">{{ stats.total_designs }}</div>
                     <div class="text-muted">Total Designs</div>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="stats-card">
-                    <div class="stats-number">{{ leads|selectattr('design_count')|selectattr('design_count', 'gt', 0)|list|length }}</div>
+                    <div class="stats-number">{{ stats.active_leads }}</div>
                     <div class="text-muted">Active Leads</div>
                 </div>
             </div>
         </div>
 
-        <!-- Leads List -->
+        {% if reminder_notifications %}
+        <div id="reminderAlerts">
+            {% for reminder in reminder_notifications %}
+            <div class="reminder-alert-card">
+                <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+                    <div>
+                        <strong><i class="bi bi-bell-fill"></i> Reminder:</strong>
+                        {{ reminder.customer_name }}
+                        {% if reminder.project_name %}<span class="text-muted">— {{ reminder.project_name }}</span>{% endif %}
+                        <div class="small mt-1">{{ reminder.reminder_comment }}</div>
+                    </div>
+                    <span class="badge bg-dark">
+                        In {{ reminder.hours_left }} hour{% if reminder.hours_left != 1 %}s{% endif %}
+                    </span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="lead-tabs-wrapper">
+            <div class="lead-tab-grid">
+                {% set tab_meta = {
+                    'star': {'label': 'Star', 'icon': 'star-fill', 'subtext': 'Yet to be customer'},
+                    'confirmed': {'label': 'Confirmed', 'icon': 'check2-circle', 'subtext': 'Confirmed customers'},
+                    'delivered': {'label': 'Delivered', 'icon': 'truck', 'subtext': 'Completed deliveries'},
+                    'reminders': {'label': 'Reminders', 'icon': 'alarm', 'subtext': 'Upcoming follow-ups'},
+                    'leads': {'label': 'Leads', 'icon': 'people-fill', 'subtext': 'All open leads'}
+                } %}
+                {% for section in lead_sections %}
+                <a href="{{ url_for('leads.admin_leads_list', section=section) }}"
+                   class="lead-tab {% if active_section == section %}active{% endif %}">
+                    <div class="lead-tab-label">
+                        <i class="bi bi-{{ tab_meta[section].icon }}"></i>
+                        <span>{{ tab_meta[section].label }}</span>
+                    </div>
+                    <div class="lead-tab-count">{{ section_counts[section] }}</div>
+                    <div class="lead-tab-subtext">{{ tab_meta[section].subtext }}</div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+            <div>
+                <h4 class="mb-0 text-capitalize">{{ active_section }}</h4>
+                <small class="text-muted">Current selected section is highlighted and shown below</small>
+            </div>
+            <span class="badge bg-primary">{{ section_counts[active_section] }} items</span>
+        </div>
+
         {% if leads %}
             {% for lead in leads %}
-            <div class="lead-card {% if lead.is_priority %}priority-lead{% endif %}">
+            <div class="lead-card {% if lead.is_priority %}priority-lead{% endif %}" data-lead-id="{{ lead.id }}">
                 <div class="row align-items-center">
                     <div class="col-md-2">
                         {% if lead.reference_image %}
@@ -266,41 +398,58 @@
                             </div>
                         {% endif %}
                     </div>
-                    <div class="col-md-6">
-                        <div class="d-flex align-items-center gap-2 mb-2">
-                            <button class="star-button"
-                                    onclick="togglePriority({{ lead.id }}, this)"
+                    <div class="col-md-5">
+                        <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+                            <button class="star-button js-toggle-priority"
+                                    data-lead-id="{{ lead.id }}"
                                     title="{% if lead.is_priority %}Remove priority{% else %}Mark as priority{% endif %}">
                                 <i class="bi bi-star{% if lead.is_priority %}-fill{% endif %}"
                                    style="font-size: 1.5rem; color: {% if lead.is_priority %}#ffc107{% else %}#ddd{% endif %};"></i>
                             </button>
                             <h3 class="lead-title mb-0">{{ lead.customer_name }}</h3>
                             {% if lead.customer_type %}
-                            <span class="badge {% if lead.customer_type == 'Genuine' %}bg-success{% else %}bg-warning text-dark{% endif %}">
-                                <i class="bi bi-{% if lead.customer_type == 'Genuine' %}check-circle{% else %}clock{% endif %}"></i>
+                            <span class="badge {% if lead.customer_type|lower == 'genuine' %}bg-success{% else %}bg-warning text-dark{% endif %}">
+                                <i class="bi bi-{% if lead.customer_type|lower == 'genuine' %}check-circle{% else %}clock{% endif %}"></i>
                                 {{ lead.customer_type|title }}
                             </span>
                             {% endif %}
+                            <span class="badge bg-dark text-white text-capitalize">{{ lead.lead_section or 'leads' }}</span>
                         </div>
                         <p class="lead-subtitle">
                             <i class="bi bi-briefcase"></i>
                             {% if lead.project_name %}{{ lead.project_name }}{% else %}No project name{% endif %}
                         </p>
-                        <div class="d-flex gap-3 mb-2 flex-wrap">
-                            <small class="text-muted">
+                        <div class="lead-meta">
+                            <span class="badge bg-light text-dark">
+                                <i class="bi bi-calendar-event"></i>
+                                Added:
+                                {% if lead.created_at %}
+                                    {{ lead.created_at.strftime('%d %b %Y, %I:%M %p') }}
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </span>
+                            <span class="badge bg-light text-dark">
                                 <i class="bi bi-envelope-fill"></i> {{ lead.customer_email or 'No email' }}
-                            </small>
-                            <small class="text-muted">
+                            </span>
+                            <span class="badge bg-light text-dark">
                                 <i class="bi bi-telephone-fill"></i> {{ lead.customer_phone or 'No phone' }}
-                            </small>
+                            </span>
                             {% if lead.location %}
-                            <small class="text-muted">
+                            <span class="badge bg-light text-dark">
                                 <i class="bi bi-geo-alt-fill"></i> {{ lead.location }}
-                            </small>
+                            </span>
+                            {% endif %}
+                            {% if lead.reminder_date and (lead.lead_section == 'reminders') %}
+                            <span class="badge bg-warning text-dark">
+                                <i class="bi bi-alarm"></i>
+                                Reminder:
+                                {{ lead.reminder_date.strftime('%d %b %Y, %I:%M %p') }}
+                            </span>
                             {% endif %}
                         </div>
                         {% if lead.latest_comment %}
-                        <div class="latest-comment-box {% if lead.customer_type == 'Genuine' %}genuine{% elif lead.customer_type == 'Casual' %}casual{% else %}default{% endif %}">
+                        <div class="latest-comment-box {% if lead.customer_type|lower == 'genuine' %}genuine{% elif lead.customer_type|lower == 'casual' %}casual{% else %}default{% endif %}">
                             <p class="latest-comment-text">
                                 <i class="bi bi-chat-quote-fill"></i>
                                 <strong>Latest Update:</strong>
@@ -308,6 +457,25 @@
                             </p>
                         </div>
                         {% endif %}
+                        <div class="section-move-bar">
+                            <div class="row g-2 align-items-center">
+                                <div class="col-md-8">
+                                    <select class="form-select" id="sectionSelect{{ lead.id }}">
+                                        <option value="star" {% if (lead.lead_section or 'leads') == 'star' %}selected{% endif %}>Star</option>
+                                        <option value="confirmed" {% if lead.lead_section == 'confirmed' %}selected{% endif %}>Confirmed</option>
+                                        <option value="delivered" {% if lead.lead_section == 'delivered' %}selected{% endif %}>Delivered</option>
+                                        <option value="reminders" {% if lead.lead_section == 'reminders' %}selected{% endif %}>Reminders</option>
+                                        <option value="leads" {% if (lead.lead_section or 'leads') == 'leads' %}selected{% endif %}>Leads</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4 d-grid">
+                                    <button type="button" class="btn btn-outline-primary js-handle-section-move"
+                                            data-lead-id="{{ lead.id }}">
+                                        <i class="bi bi-arrow-left-right"></i> Move
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <div class="col-md-2 text-center">
                         <div class="mb-3">
@@ -329,15 +497,16 @@
                             <div class="badge bg-secondary">No pricing</div>
                         {% endif %}
                     </div>
-                    <div class="col-md-2">
+                    <div class="col-md-3">
                         <div class="d-grid gap-2">
                             <a href="{{ url_for('leads.edit_lead', lead_id=lead.id) }}"
                                class="btn btn-primary action-btn">
                                 <i class="bi bi-pencil-fill"></i> Edit
                             </a>
                             <button type="button"
-                                    class="btn btn-info action-btn"
-                                    onclick="openCommentsModal({{ lead.id }}, '{{ lead.customer_name }}')">
+                                    class="btn btn-info action-btn js-open-comments"
+                                    data-lead-id="{{ lead.id }}"
+                                    data-lead-name="{{ lead.customer_name }}">
                                 <i class="bi bi-chat-dots-fill"></i> Comments
                             </button>
                             <a href="{{ url_for('leads.view_quotation', share_token=lead.share_token) }}"
@@ -358,12 +527,12 @@
             </div>
             {% endfor %}
         {% else %}
-            <div class="text-center py-5">
+            <div class="text-center py-5 bg-white rounded-4 shadow-sm">
                 <i class="bi bi-inbox" style="font-size: 4rem; color: #ccc;"></i>
-                <h4 class="mt-3">No leads yet</h4>
-                <p class="text-muted">Create your first lead to get started</p>
+                <h4 class="mt-3">No leads in this section</h4>
+                <p class="text-muted">Move or create leads to see them here</p>
                 <a href="{{ url_for('leads.create_lead') }}" class="btn btn-create mt-3">
-                    <i class="bi bi-plus-circle"></i> Create First Lead
+                    <i class="bi bi-plus-circle"></i> Create New Lead
                 </a>
             </div>
         {% endif %}
@@ -404,13 +573,62 @@
         </div>
     </div>
 
+    <div class="modal fade" id="reminderModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-alarm"></i> Set Reminder</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="reminderLeadId">
+                    <div class="mb-3">
+                        <label class="form-label">Reminder Date & Time</label>
+                        <input type="datetime-local" id="reminderDate" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Comment</label>
+                        <textarea id="reminderComment" class="form-control" rows="3"
+                                  placeholder="What should this reminder say?"></textarea>
+                    </div>
+                    <button class="btn btn-primary w-100" onclick="submitReminderMove()">
+                        <i class="bi bi-check-circle"></i> Save Reminder
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         let currentLeadId = null;
         let commentsModal = null;
+        let reminderModal = null;
+        let lastReminderPayload = '';
 
         document.addEventListener('DOMContentLoaded', function() {
             commentsModal = new bootstrap.Modal(document.getElementById('commentsModal'));
+            reminderModal = new bootstrap.Modal(document.getElementById('reminderModal'));
+
+            document.querySelectorAll('.js-toggle-priority').forEach(button => {
+                button.addEventListener('click', function() {
+                    togglePriority(this.dataset.leadId, this);
+                });
+            });
+
+            document.querySelectorAll('.js-handle-section-move').forEach(button => {
+                button.addEventListener('click', function() {
+                    handleSectionMove(this.dataset.leadId);
+                });
+            });
+
+            document.querySelectorAll('.js-open-comments').forEach(button => {
+                button.addEventListener('click', function() {
+                    openCommentsModal(this.dataset.leadId, this.dataset.leadName);
+                });
+            });
+
+            initializeReminderNotifications();
         });
 
         function openCommentsModal(leadId, leadName) {
@@ -555,6 +773,60 @@
             });
         }
 
+        function handleSectionMove(leadId) {
+            const selectedSection = document.getElementById(`sectionSelect${leadId}`).value;
+            if (selectedSection === 'reminders') {
+                document.getElementById('reminderLeadId').value = leadId;
+                document.getElementById('reminderDate').value = '';
+                document.getElementById('reminderComment').value = '';
+                reminderModal.show();
+                return;
+            }
+
+            moveLeadToSection(leadId, { lead_section: selectedSection });
+        }
+
+        function submitReminderMove() {
+            const leadId = document.getElementById('reminderLeadId').value;
+            const reminderDate = document.getElementById('reminderDate').value;
+            const reminderComment = document.getElementById('reminderComment').value.trim();
+
+            if (!reminderDate) {
+                alert('Please select reminder date and time');
+                return;
+            }
+
+            moveLeadToSection(leadId, {
+                lead_section: 'reminders',
+                reminder_date: reminderDate,
+                reminder_comment: reminderComment
+            }, true);
+        }
+
+        function moveLeadToSection(leadId, payload, closeReminder = false) {
+            fetch(`/admin/leads/${leadId}/move-section`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    if (closeReminder) {
+                        reminderModal.hide();
+                    }
+                    location.href = `{{ url_for('leads.admin_leads_list') }}?section=${data.lead.lead_section}`;
+                } else {
+                    alert('Error: ' + (data.error || 'Failed to move lead'));
+                }
+            })
+            .catch(error => {
+                alert('Error moving lead: ' + error);
+            });
+        }
+
         function togglePriority(leadId, button) {
             fetch(`/admin/leads/${leadId}/toggle-priority`, {
                 method: 'POST',
@@ -565,7 +837,6 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Toggle the star icon and color
                     const icon = button.querySelector('i');
                     const isPriority = data.is_priority;
                     
@@ -580,6 +851,10 @@
                         icon.style.color = '#ccc';
                         button.title = 'Mark as priority';
                     }
+
+                    if (data.lead_section && data.lead_section !== '{{ active_section }}') {
+                        location.href = `{{ url_for('leads.admin_leads_list') }}?section=${data.lead_section}`;
+                    }
                 } else {
                     alert('Error: ' + (data.error || 'Failed to toggle priority'));
                 }
@@ -587,6 +862,69 @@
             .catch(error => {
                 alert('Error toggling priority: ' + error);
             });
+        }
+
+        function initializeReminderNotifications() {
+            if ('Notification' in window && Notification.permission === 'default') {
+                Notification.requestPermission();
+            }
+            checkReminderNotifications();
+            setInterval(checkReminderNotifications, 6 * 60 * 60 * 1000);
+        }
+
+        function checkReminderNotifications() {
+            fetch('/admin/leads/reminders/pending')
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.success || !data.reminders) {
+                        return;
+                    }
+
+                    const payload = JSON.stringify(data.reminders);
+                    if (payload === lastReminderPayload) {
+                        return;
+                    }
+                    lastReminderPayload = payload;
+
+                    data.reminders.forEach(reminder => {
+                        const message = `You have ${reminder.reminder_comment} in ${reminder.hours_left} hour(s)`;
+                        showInPageReminder(reminder, message);
+
+                        if ('Notification' in window && Notification.permission === 'granted') {
+                            new Notification('GSpaces Reminder', {
+                                body: `${reminder.customer_name}: ${message}`,
+                                icon: '{{ url_for("static", filename="img/favicon.svg") }}'
+                            });
+                        }
+                    });
+                })
+                .catch(error => console.error('Reminder notification error:', error));
+        }
+
+        function showInPageReminder(reminder, message) {
+            const wrapper = document.getElementById('reminderAlerts') || createReminderAlertsWrapper();
+            const alert = document.createElement('div');
+            alert.className = 'reminder-alert-card';
+            alert.innerHTML = `
+                <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+                    <div>
+                        <strong><i class="bi bi-bell-fill"></i> Reminder:</strong>
+                        ${reminder.customer_name}
+                        ${reminder.project_name ? `<span class="text-muted">— ${reminder.project_name}</span>` : ''}
+                        <div class="small mt-1">${message}</div>
+                    </div>
+                    <span class="badge bg-dark">Due at ${new Date(reminder.reminder_date).toLocaleString('en-IN')}</span>
+                </div>
+            `;
+            wrapper.prepend(alert);
+        }
+
+        function createReminderAlertsWrapper() {
+            const wrapper = document.createElement('div');
+            wrapper.id = 'reminderAlerts';
+            const target = document.querySelector('.lead-tabs-wrapper');
+            target.parentNode.insertBefore(wrapper, target);
+            return wrapper;
         }
     </script>
 </body>

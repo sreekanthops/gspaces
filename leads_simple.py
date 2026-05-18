@@ -9,7 +9,7 @@ import json
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, render_template_string
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
-from datetime import datetime
+from datetime import datetime, timedelta
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
@@ -65,13 +65,25 @@ def admin_required(f):
 # ADMIN ROUTES
 # ============================================================================
 
+LEAD_SECTIONS = ['star', 'confirmed', 'delivered', 'reminders', 'leads']
+
+
+def normalize_lead_section(section):
+    section = (section or 'leads').strip().lower()
+    if section not in LEAD_SECTIONS:
+        return 'leads'
+    return section
+
+
 @leads_bp.route('/admin/leads')
 @admin_required
 def admin_leads_list():
-    """List all leads"""
+    """List all leads grouped into admin pipeline sections"""
+    active_section = normalize_lead_section(request.args.get('section', 'leads'))
+
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
-    
+
     cur.execute("""
         SELECT l.*,
                COUNT(ld.id) as design_count,
@@ -89,14 +101,220 @@ def admin_leads_list():
             LIMIT 1
         ) lc ON true
         GROUP BY l.id, lc.comment, lc.created_at
-        ORDER BY COALESCE(l.is_priority, FALSE) DESC, l.created_at DESC
+        ORDER BY
+            CASE COALESCE(l.lead_section, 'leads')
+                WHEN 'star' THEN 1
+                WHEN 'confirmed' THEN 2
+                WHEN 'delivered' THEN 3
+                WHEN 'reminders' THEN 4
+                ELSE 5
+            END,
+            COALESCE(l.is_priority, FALSE) DESC,
+            l.created_at DESC
     """)
-    leads = cur.fetchall()
-    
+    all_leads = cur.fetchall()
+
+    sectioned_leads = {section: [] for section in LEAD_SECTIONS}
+    for lead in all_leads:
+        current_section = normalize_lead_section(lead.get('lead_section'))
+        if current_section == 'star':
+            lead['is_priority'] = True
+        sectioned_leads[current_section].append(lead)
+
+    section_counts = {section: len(sectioned_leads[section]) for section in LEAD_SECTIONS}
+
+    reminder_notifications = []
+    now = datetime.now()
+    lookahead_hours = 6
+    lookahead_time = now + timedelta(hours=lookahead_hours)
+
+    for lead in sectioned_leads['reminders']:
+        reminder_date = lead.get('reminder_date')
+        reminder_completed = lead.get('reminder_completed', False)
+        if reminder_date and not reminder_completed and now <= reminder_date <= lookahead_time:
+            hours_left = max(0, int(round((reminder_date - now).total_seconds() / 3600.0)))
+            reminder_notifications.append({
+                'lead_id': lead['id'],
+                'customer_name': lead['customer_name'],
+                'project_name': lead.get('project_name'),
+                'reminder_comment': lead.get('reminder_comment') or lead.get('reminder_notes') or 'Reminder follow-up pending',
+                'reminder_date': reminder_date.isoformat(),
+                'hours_left': hours_left
+            })
+
+    stats = {
+        'total_leads': len(all_leads),
+        'total_designs': sum((lead.get('design_count') or 0) for lead in all_leads),
+        'active_leads': sum(1 for lead in all_leads if (lead.get('design_count') or 0) > 0)
+    }
+
     cur.close()
     conn.close()
-    
-    return render_template('admin_leads_simple.html', leads=leads)
+
+    return render_template(
+        'admin_leads_simple.html',
+        leads=sectioned_leads[active_section],
+        sectioned_leads=sectioned_leads,
+        section_counts=section_counts,
+        active_section=active_section,
+        lead_sections=LEAD_SECTIONS,
+        reminder_notifications=reminder_notifications,
+        stats=stats
+    )
+
+
+@leads_bp.route('/admin/leads/<int:lead_id>/move-section', methods=['POST'])
+@login_required
+@admin_required
+def move_lead_section(lead_id):
+    """Move a lead into one of the five admin sections"""
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+
+    try:
+        payload = request.get_json(silent=True) or {}
+        lead_section = normalize_lead_section(payload.get('lead_section'))
+        reminder_date_raw = (payload.get('reminder_date') or '').strip()
+        reminder_comment = (payload.get('reminder_comment') or '').strip()
+        reminder_completed = bool(payload.get('reminder_completed', False))
+
+        reminder_date = None
+        lead_status = 'lead'
+        is_priority = lead_section == 'star'
+
+        if lead_section == 'confirmed':
+            lead_status = 'customer'
+        elif lead_section == 'reminders':
+            lead_status = 'reminder'
+            if not reminder_date_raw:
+                return jsonify({'success': False, 'error': 'Reminder date/time is required'}), 400
+            try:
+                reminder_date = datetime.fromisoformat(reminder_date_raw)
+            except ValueError:
+                return jsonify({'success': False, 'error': 'Invalid reminder date/time'}), 400
+
+        if lead_section == 'delivered':
+            reminder_completed = True
+
+        cur.execute("""
+            UPDATE leads
+            SET lead_section = %s,
+                lead_status = %s,
+                is_priority = %s,
+                reminder_date = %s,
+                reminder_comment = CASE
+                    WHEN %s = 'reminders' THEN NULLIF(%s, '')
+                    ELSE reminder_comment
+                END,
+                reminder_notes = CASE
+                    WHEN %s = 'reminders' THEN NULLIF(%s, '')
+                    ELSE reminder_notes
+                END,
+                reminder_completed = CASE
+                    WHEN %s = 'reminders' THEN %s
+                    WHEN %s = 'delivered' THEN TRUE
+                    ELSE FALSE
+                END,
+                reminder_last_notified_at = CASE
+                    WHEN %s = 'reminders' THEN NULL
+                    ELSE reminder_last_notified_at
+                END
+            WHERE id = %s
+            RETURNING id, lead_section, lead_status, reminder_date, reminder_comment, reminder_completed, is_priority
+        """, (
+            lead_section,
+            lead_status,
+            is_priority,
+            reminder_date,
+            lead_section, reminder_comment,
+            lead_section, reminder_comment,
+            lead_section, reminder_completed,
+            lead_section,
+            lead_section,
+            lead_id
+        ))
+
+        updated = cur.fetchone()
+        if not updated:
+            conn.rollback()
+            return jsonify({'success': False, 'error': 'Lead not found'}), 404
+
+        conn.commit()
+
+        return jsonify({
+            'success': True,
+            'lead': {
+                'id': updated['id'],
+                'lead_section': updated['lead_section'],
+                'lead_status': updated['lead_status'],
+                'reminder_date': updated['reminder_date'].isoformat() if updated['reminder_date'] else None,
+                'reminder_comment': updated['reminder_comment'],
+                'reminder_completed': updated['reminder_completed'],
+                'is_priority': updated['is_priority']
+            }
+        })
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        cur.close()
+        conn.close()
+
+
+@leads_bp.route('/admin/leads/reminders/pending')
+@login_required
+@admin_required
+def pending_lead_reminders():
+    """Return reminders due within the next 6 hours for in-page notifications"""
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+
+    try:
+        now = datetime.now()
+        lookahead_time = now + timedelta(hours=6)
+
+        cur.execute("""
+            SELECT id, customer_name, project_name, reminder_date,
+                   COALESCE(reminder_comment, reminder_notes) AS reminder_comment,
+                   reminder_last_notified_at
+            FROM leads
+            WHERE COALESCE(lead_section, 'leads') = 'reminders'
+              AND COALESCE(reminder_completed, FALSE) = FALSE
+              AND reminder_date IS NOT NULL
+              AND reminder_date BETWEEN %s AND %s
+            ORDER BY reminder_date ASC
+        """, (now, lookahead_time))
+        reminders = cur.fetchall()
+
+        notifications = []
+        for reminder in reminders:
+            hours_left = max(0, int(round((reminder['reminder_date'] - now).total_seconds() / 3600.0)))
+            notifications.append({
+                'lead_id': reminder['id'],
+                'customer_name': reminder['customer_name'],
+                'project_name': reminder.get('project_name'),
+                'reminder_comment': reminder.get('reminder_comment') or 'Reminder follow-up pending',
+                'reminder_date': reminder['reminder_date'].isoformat(),
+                'hours_left': hours_left
+            })
+
+        cur.execute("""
+            UPDATE leads
+            SET reminder_last_notified_at = %s
+            WHERE COALESCE(lead_section, 'leads') = 'reminders'
+              AND COALESCE(reminder_completed, FALSE) = FALSE
+              AND reminder_date BETWEEN %s AND %s
+        """, (now, now, lookahead_time))
+        conn.commit()
+
+        return jsonify({'success': True, 'reminders': notifications})
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        cur.close()
+        conn.close()
+
 
 @leads_bp.route('/admin/leads/<int:lead_id>/toggle-priority', methods=['POST'])
 @login_required
@@ -107,12 +325,16 @@ def toggle_lead_priority(lead_id):
     cur = conn.cursor(cursor_factory=RealDictCursor)
     
     try:
-        # Toggle the priority
         cur.execute("""
             UPDATE leads
-            SET is_priority = NOT COALESCE(is_priority, FALSE)
+            SET is_priority = NOT COALESCE(is_priority, FALSE),
+                lead_section = CASE
+                    WHEN NOT COALESCE(is_priority, FALSE) THEN 'star'
+                    WHEN COALESCE(lead_section, 'leads') = 'star' THEN 'leads'
+                    ELSE COALESCE(lead_section, 'leads')
+                END
             WHERE id = %s
-            RETURNING is_priority
+            RETURNING is_priority, lead_section
         """, (lead_id,))
         
         result = cur.fetchone()
@@ -120,7 +342,8 @@ def toggle_lead_priority(lead_id):
         
         return jsonify({
             'success': True,
-            'is_priority': result['is_priority'] if result else False
+            'is_priority': result['is_priority'] if result else False,
+            'lead_section': result['lead_section'] if result else 'leads'
         })
     except Exception as e:
         conn.rollback()
@@ -263,12 +486,12 @@ def create_lead():
             cur.execute("""
                 INSERT INTO leads (customer_name, customer_email, customer_phone,
                                  project_name, location, reference_image, notes, share_token, created_by,
-                                 setup_type, space_size, customer_type)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                                 setup_type, space_size, customer_type, lead_section, lead_status)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 RETURNING id
             """, (customer_name, customer_email, customer_phone, project_name,
                   location, reference_image, notes, share_token, current_user.id,
-                  setup_type, space_size, customer_type))
+                  setup_type, space_size, customer_type, 'leads', 'lead'))
             
             lead_id = cur.fetchone()[0]
             conn.commit()

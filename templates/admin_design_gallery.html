@@ -118,6 +118,11 @@
                     {% endif %}
                 {% endwith %}
 
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    Lead-linked designs stay inactive until admin approval. When activated, the approved design is also created automatically in Setups.
+                </div>
+
                 <!-- Design Gallery Grid -->
                 <div class="row">
                     {% if designs %}
@@ -135,7 +140,15 @@
                                 <div class="design-overlay">
                                     <div class="design-info">
                                         <h5>{{ design.title }}</h5>
-                                        <p>{{ design.description }}</p>
+                                        <p class="mb-2">{{ design.description }}</p>
+                                        {% if design.quoted_price %}
+                                        <p class="mb-1"><strong>Lead Price:</strong> ₹{{ "%.0f"|format(design.quoted_price) }}</p>
+                                        {% endif %}
+                                        {% if design.auto_synced %}
+                                        <p class="mb-1"><strong>Source:</strong> Lead Design{% if design.lead_design_name %} — {{ design.lead_design_name }}{% endif %}</p>
+                                        {% else %}
+                                        <p class="mb-1"><strong>Source:</strong> Manual Gallery Entry</p>
+                                        {% endif %}
                                     </div>
                                     
                                     <div class="design-actions">
@@ -149,8 +162,8 @@
                                         </button>
                                         
                                         <form method="POST" action="{{ url_for('design_gallery.toggle_design', design_id=design.id) }}" style="display: inline;">
-                                            <button type="submit" class="btn btn-info btn-sm">
-                                                <i class="fas fa-toggle-on"></i> Toggle
+                                            <button type="submit" class="btn btn-{{ 'success' if not design.is_active else 'secondary' }} btn-sm">
+                                                <i class="fas fa-toggle-on"></i> {{ 'Activate' if not design.is_active else 'Deactivate' }}
                                             </button>
                                         </form>
                                         
@@ -216,6 +229,9 @@
                             <label for="image" class="form-label">Image *</label>
                             <input type="file" class="form-control" id="image" name="image" accept="image/*" required>
                             <small class="text-muted">Allowed: PNG, JPG, JPEG, GIF, WEBP</small>
+                        </div>
+                        <div class="alert alert-info mb-0">
+                            New gallery designs are added as inactive. Activate them later to publish in Design Gallery.
                         </div>
                     </div>
                     <div class="modal-footer">

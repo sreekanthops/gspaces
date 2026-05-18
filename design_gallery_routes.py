@@ -5,6 +5,7 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 import os
 from werkzeug.utils import secure_filename
+import shutil
 
 design_gallery_bp = Blueprint('design_gallery', __name__)
 
@@ -44,17 +45,22 @@ def admin_design_gallery():
     
     try:
         cur.execute("""
-            SELECT 
-                id,
-                title,
-                description,
-                image_url,
-                display_order,
-                is_active,
-                category,
-                created_at
-            FROM design_gallery
-            ORDER BY display_order, created_at DESC
+            SELECT
+                dg.id,
+                dg.title,
+                dg.description,
+                dg.image_url,
+                dg.display_order,
+                dg.is_active,
+                dg.category,
+                dg.created_at,
+                dg.lead_design_id,
+                dg.auto_synced,
+                ld.price AS quoted_price,
+                ld.design_name AS lead_design_name
+            FROM design_gallery dg
+            LEFT JOIN lead_designs ld ON dg.lead_design_id = ld.id
+            ORDER BY dg.display_order, dg.created_at DESC
         """)
         designs = cur.fetchall()
         
@@ -87,7 +93,7 @@ def add_design():
         flash('No image selected', 'danger')
         return redirect(url_for('design_gallery.admin_design_gallery'))
     
-    if file and allowed_file(file.filename):
+    if file and file.filename and allowed_file(file.filename):
         filename = secure_filename(file.filename)
         # Add timestamp to filename to avoid conflicts
         import time
@@ -106,9 +112,9 @@ def add_design():
         
         try:
             cur.execute("""
-                INSERT INTO design_gallery (title, description, image_url, display_order, category, created_by)
-                VALUES (%s, %s, %s, %s, %s, %s)
-            """, (title, description, image_url, display_order, category, current_user.id))
+                INSERT INTO design_gallery (title, description, image_url, display_order, category, created_by, is_active)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+            """, (title, description, image_url, display_order, category, current_user.id, False))
             conn.commit()
             flash(f'Design "{title}" added successfully', 'success')
         except Exception as e:
@@ -201,19 +207,128 @@ def delete_design(design_id):
 @login_required
 @admin_required
 def toggle_design(design_id):
-    """Toggle active status of a design"""
+    """Toggle active status of a design and auto-create setup for approved lead designs"""
     conn = get_db_connection()
-    cur = conn.cursor()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
     
     try:
         cur.execute("""
+            SELECT dg.id, dg.title, dg.description, dg.image_url, dg.category, dg.is_active,
+                   dg.lead_design_id, dg.auto_synced,
+                   ld.price, ld.design_name, ld.notes, ld.media_files
+            FROM design_gallery dg
+            LEFT JOIN lead_designs ld ON dg.lead_design_id = ld.id
+            WHERE dg.id = %s
+        """, (design_id,))
+        design = cur.fetchone()
+
+        if not design:
+            flash('Design not found', 'danger')
+            return redirect(url_for('design_gallery.admin_design_gallery'))
+
+        new_status = not bool(design['is_active'])
+
+        cur.execute("""
             UPDATE design_gallery
-            SET is_active = NOT is_active,
+            SET is_active = %s,
                 updated_at = NOW()
             WHERE id = %s
-        """, (design_id,))
+        """, (new_status, design_id,))
+
+        setup_created = False
+
+        if new_status and design.get('lead_design_id'):
+            product_name = f"{design['title']} (Get What You See)"
+            cur.execute("""
+                SELECT id FROM products
+                WHERE name = %s
+                LIMIT 1
+            """, (product_name,))
+            existing_product = cur.fetchone()
+
+            if not existing_product:
+                product_description = (
+                    design.get('notes')
+                    or design.get('description')
+                    or f"Auto-created from approved lead design: {design['title']}"
+                )
+                product_price = float(design.get('price') or 0)
+                product_category = (design.get('category') or 'office').title()
+                source_image_path = (design.get('image_url') or '').lstrip('/')
+
+                cur.execute("""
+                    INSERT INTO products (name, category, rating, price, description, image_url, created_by)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                    RETURNING id
+                """, (
+                    product_name,
+                    product_category,
+                    5.0,
+                    product_price,
+                    product_description,
+                    '',
+                    current_user.email
+                ))
+                inserted_product = cur.fetchone()
+                if not inserted_product:
+                    raise ValueError('Failed to create setup product for activated design')
+                product_id = inserted_product['id']
+
+                product_folder = os.path.join('static', 'img', 'Products', str(product_id))
+                os.makedirs(product_folder, exist_ok=True)
+
+                final_main_image = os.path.join(product_folder, f"{product_id}.jpg")
+                final_main_image_url = f"img/Products/{product_id}/{product_id}.jpg"
+
+                if source_image_path and os.path.exists(source_image_path):
+                    shutil.copy2(source_image_path, final_main_image)
+                    cur.execute(
+                        "UPDATE products SET image_url = %s WHERE id = %s",
+                        (final_main_image_url, product_id)
+                    )
+
+                media_files = design.get('media_files') or []
+                sub_image_index = 1
+                for media in media_files:
+                    if (media or {}).get('type') != 'image':
+                        continue
+
+                    media_url = (media or {}).get('url') or ''
+                    normalized_media_path = media_url.lstrip('/')
+                    if normalized_media_path.startswith('static/'):
+                        file_system_path = normalized_media_path
+                    elif normalized_media_path:
+                        file_system_path = os.path.join('static', normalized_media_path)
+                    else:
+                        file_system_path = ''
+
+                    if not file_system_path or not os.path.exists(file_system_path):
+                        continue
+
+                    if source_image_path and os.path.normpath(file_system_path) == os.path.normpath(source_image_path):
+                        continue
+
+                    sub_filename = f"{product_id}_sub{sub_image_index}.jpg"
+                    sub_target = os.path.join(product_folder, sub_filename)
+                    shutil.copy2(file_system_path, sub_target)
+
+                    cur.execute("""
+                        INSERT INTO product_sub_images (product_id, image_url, description)
+                        VALUES (%s, %s, %s)
+                    """, (
+                        product_id,
+                        f"img/Products/{product_id}/{sub_filename}",
+                        design.get('description') or design.get('notes') or design['title']
+                    ))
+                    sub_image_index += 1
+
+                setup_created = True
+
         conn.commit()
-        flash('Design status updated', 'success')
+        if setup_created:
+            flash('Design activated and setup created successfully', 'success')
+        else:
+            flash('Design status updated', 'success')
     except Exception as e:
         conn.rollback()
         flash(f'Error updating design: {str(e)}', 'danger')
@@ -457,7 +572,7 @@ def add_design_image(design_id):
     if file.filename == '':
         return jsonify({'error': 'No image selected'}), 400
     
-    if file and allowed_file(file.filename):
+    if file and file.filename and allowed_file(file.filename):
         filename = secure_filename(file.filename)
         import time
         filename = f"{int(time.time())}_{filename}"

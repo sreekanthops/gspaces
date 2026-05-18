@@ -75,6 +75,16 @@ def normalize_lead_section(section):
     return section
 
 
+def get_leads_table_columns(cur):
+    """Return available columns for leads table"""
+    cur.execute("""
+        SELECT column_name
+        FROM information_schema.columns
+        WHERE table_name = 'leads'
+    """)
+    return {row['column_name'] for row in cur.fetchall()}
+
+
 @leads_bp.route('/admin/leads')
 @admin_required
 def admin_leads_list():
@@ -84,8 +94,60 @@ def admin_leads_list():
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
 
-    cur.execute("""
+    leads_columns = get_leads_table_columns(cur)
+    has_lead_section = 'lead_section' in leads_columns
+    has_reminder_comment = 'reminder_comment' in leads_columns
+    has_reminder_completed = 'reminder_completed' in leads_columns
+    has_reminder_last_notified_at = 'reminder_last_notified_at' in leads_columns
+    has_reminder_date = 'reminder_date' in leads_columns
+    has_reminder_notes = 'reminder_notes' in leads_columns
+    has_lead_status = 'lead_status' in leads_columns
+    has_is_priority = 'is_priority' in leads_columns
+
+    lead_section_select = "COALESCE(l.lead_section, 'leads') AS lead_section" if has_lead_section else """
+        CASE
+            WHEN COALESCE(l.is_priority, FALSE) = TRUE THEN 'star'
+            WHEN COALESCE(l.lead_status, 'lead') = 'customer' THEN 'confirmed'
+            WHEN COALESCE(l.lead_status, 'lead') = 'reminder' THEN 'reminders'
+            ELSE 'leads'
+        END AS lead_section
+    """
+    reminder_comment_select = "l.reminder_comment" if has_reminder_comment else (
+        "l.reminder_notes AS reminder_comment" if has_reminder_notes else "NULL AS reminder_comment"
+    )
+    reminder_completed_select = "COALESCE(l.reminder_completed, FALSE) AS reminder_completed" if has_reminder_completed else "FALSE AS reminder_completed"
+    reminder_date_select = "l.reminder_date" if has_reminder_date else "NULL AS reminder_date"
+    reminder_notes_select = "l.reminder_notes" if has_reminder_notes else "NULL AS reminder_notes"
+    lead_status_select = "COALESCE(l.lead_status, 'lead') AS lead_status" if has_lead_status else "NULL AS lead_status"
+    is_priority_select = "COALESCE(l.is_priority, FALSE) AS is_priority" if has_is_priority else "FALSE AS is_priority"
+    order_by_section = """
+        CASE
+            WHEN COALESCE(l.is_priority, FALSE) = TRUE THEN 1
+            WHEN COALESCE(l.lead_status, 'lead') = 'customer' THEN 2
+            WHEN COALESCE(l.lead_status, 'lead') = 'reminder' THEN 4
+            ELSE 5
+        END
+    """
+    if has_lead_section:
+        order_by_section = """
+            CASE COALESCE(l.lead_section, 'leads')
+                WHEN 'star' THEN 1
+                WHEN 'confirmed' THEN 2
+                WHEN 'delivered' THEN 3
+                WHEN 'reminders' THEN 4
+                ELSE 5
+            END
+        """
+
+    cur.execute(f"""
         SELECT l.*,
+               {lead_section_select},
+               {reminder_comment_select},
+               {reminder_completed_select},
+               {reminder_date_select},
+               {reminder_notes_select},
+               {lead_status_select},
+               {is_priority_select},
                COUNT(ld.id) as design_count,
                MIN(ld.price) as min_price,
                MAX(ld.price) as max_price,
@@ -102,13 +164,7 @@ def admin_leads_list():
         ) lc ON true
         GROUP BY l.id, lc.comment, lc.created_at
         ORDER BY
-            CASE COALESCE(l.lead_section, 'leads')
-                WHEN 'star' THEN 1
-                WHEN 'confirmed' THEN 2
-                WHEN 'delivered' THEN 3
-                WHEN 'reminders' THEN 4
-                ELSE 5
-            END,
+            {order_by_section},
             COALESCE(l.is_priority, FALSE) DESC,
             l.created_at DESC
     """)
@@ -196,43 +252,61 @@ def move_lead_section(lead_id):
         if lead_section == 'delivered':
             reminder_completed = True
 
-        cur.execute("""
+        leads_columns = get_leads_table_columns(cur)
+        has_lead_section = 'lead_section' in leads_columns
+        has_reminder_comment = 'reminder_comment' in leads_columns
+        has_reminder_completed = 'reminder_completed' in leads_columns
+        has_reminder_last_notified_at = 'reminder_last_notified_at' in leads_columns
+        has_reminder_date = 'reminder_date' in leads_columns
+        has_reminder_notes = 'reminder_notes' in leads_columns
+        has_lead_status = 'lead_status' in leads_columns
+        has_is_priority = 'is_priority' in leads_columns
+
+        set_clauses = []
+        values = []
+
+        if has_lead_section:
+            set_clauses.append("lead_section = %s")
+            values.append(lead_section)
+
+        if has_lead_status:
+            set_clauses.append("lead_status = %s")
+            values.append(lead_status)
+
+        if has_is_priority:
+            set_clauses.append("is_priority = %s")
+            values.append(is_priority)
+
+        if has_reminder_date:
+            set_clauses.append("reminder_date = %s")
+            values.append(reminder_date)
+
+        if has_reminder_comment:
+            set_clauses.append("reminder_comment = %s")
+            values.append(reminder_comment if lead_section == 'reminders' else None)
+
+        if has_reminder_notes:
+            set_clauses.append("reminder_notes = %s")
+            values.append(reminder_comment if lead_section == 'reminders' else None)
+
+        if has_reminder_completed:
+            set_clauses.append("reminder_completed = %s")
+            values.append(reminder_completed if lead_section == 'reminders' else (True if lead_section == 'delivered' else False))
+
+        if has_reminder_last_notified_at:
+            set_clauses.append("reminder_last_notified_at = %s")
+            values.append(None if lead_section == 'reminders' else None)
+
+        if not set_clauses:
+            return jsonify({'success': False, 'error': 'Leads table is missing required status columns'}), 500
+
+        values.append(lead_id)
+        cur.execute(f"""
             UPDATE leads
-            SET lead_section = %s,
-                lead_status = %s,
-                is_priority = %s,
-                reminder_date = %s,
-                reminder_comment = CASE
-                    WHEN %s = 'reminders' THEN NULLIF(%s, '')
-                    ELSE reminder_comment
-                END,
-                reminder_notes = CASE
-                    WHEN %s = 'reminders' THEN NULLIF(%s, '')
-                    ELSE reminder_notes
-                END,
-                reminder_completed = CASE
-                    WHEN %s = 'reminders' THEN %s
-                    WHEN %s = 'delivered' THEN TRUE
-                    ELSE FALSE
-                END,
-                reminder_last_notified_at = CASE
-                    WHEN %s = 'reminders' THEN NULL
-                    ELSE reminder_last_notified_at
-                END
+            SET {", ".join(set_clauses)}
             WHERE id = %s
-            RETURNING id, lead_section, lead_status, reminder_date, reminder_comment, reminder_completed, is_priority
-        """, (
-            lead_section,
-            lead_status,
-            is_priority,
-            reminder_date,
-            lead_section, reminder_comment,
-            lead_section, reminder_comment,
-            lead_section, reminder_completed,
-            lead_section,
-            lead_section,
-            lead_id
-        ))
+            RETURNING id, customer_name, project_name, created_at
+        """, values)
 
         updated = cur.fetchone()
         if not updated:
@@ -245,12 +319,12 @@ def move_lead_section(lead_id):
             'success': True,
             'lead': {
                 'id': updated['id'],
-                'lead_section': updated['lead_section'],
-                'lead_status': updated['lead_status'],
-                'reminder_date': updated['reminder_date'].isoformat() if updated['reminder_date'] else None,
-                'reminder_comment': updated['reminder_comment'],
-                'reminder_completed': updated['reminder_completed'],
-                'is_priority': updated['is_priority']
+                'lead_section': lead_section,
+                'lead_status': lead_status,
+                'reminder_date': reminder_date.isoformat() if reminder_date else None,
+                'reminder_comment': reminder_comment if lead_section == 'reminders' else None,
+                'reminder_completed': reminder_completed if lead_section == 'reminders' else (lead_section == 'delivered'),
+                'is_priority': is_priority
             }
         })
     except Exception as e:
@@ -270,16 +344,36 @@ def pending_lead_reminders():
     cur = conn.cursor(cursor_factory=RealDictCursor)
 
     try:
+        leads_columns = get_leads_table_columns(cur)
+        has_lead_section = 'lead_section' in leads_columns
+        has_reminder_comment = 'reminder_comment' in leads_columns
+        has_reminder_completed = 'reminder_completed' in leads_columns
+        has_reminder_last_notified_at = 'reminder_last_notified_at' in leads_columns
+        has_reminder_date = 'reminder_date' in leads_columns
+        has_reminder_notes = 'reminder_notes' in leads_columns
+        has_lead_status = 'lead_status' in leads_columns
+
+        if not has_reminder_date:
+            return jsonify({'success': True, 'reminders': []})
+
         now = datetime.now()
         lookahead_time = now + timedelta(hours=6)
 
-        cur.execute("""
+        reminder_comment_select = "COALESCE(reminder_comment, reminder_notes)" if has_reminder_comment and has_reminder_notes else (
+            "reminder_comment" if has_reminder_comment else (
+                "reminder_notes" if has_reminder_notes else "'Reminder follow-up pending'"
+            )
+        )
+
+        reminder_where = "COALESCE(lead_section, 'leads') = 'reminders'" if has_lead_section else "COALESCE(lead_status, 'lead') = 'reminder'"
+        reminder_completed_where = "COALESCE(reminder_completed, FALSE) = FALSE" if has_reminder_completed else "TRUE"
+
+        cur.execute(f"""
             SELECT id, customer_name, project_name, reminder_date,
-                   COALESCE(reminder_comment, reminder_notes) AS reminder_comment,
-                   reminder_last_notified_at
+                   {reminder_comment_select} AS reminder_comment
             FROM leads
-            WHERE COALESCE(lead_section, 'leads') = 'reminders'
-              AND COALESCE(reminder_completed, FALSE) = FALSE
+            WHERE {reminder_where}
+              AND {reminder_completed_where}
               AND reminder_date IS NOT NULL
               AND reminder_date BETWEEN %s AND %s
             ORDER BY reminder_date ASC
@@ -298,13 +392,15 @@ def pending_lead_reminders():
                 'hours_left': hours_left
             })
 
-        cur.execute("""
-            UPDATE leads
-            SET reminder_last_notified_at = %s
-            WHERE COALESCE(lead_section, 'leads') = 'reminders'
-              AND COALESCE(reminder_completed, FALSE) = FALSE
-              AND reminder_date BETWEEN %s AND %s
-        """, (now, now, lookahead_time))
+        if has_reminder_last_notified_at:
+            cur.execute(f"""
+                UPDATE leads
+                SET reminder_last_notified_at = %s
+                WHERE {reminder_where}
+                  AND {reminder_completed_where}
+                  AND reminder_date BETWEEN %s AND %s
+            """, (now, now, lookahead_time))
+
         conn.commit()
 
         return jsonify({'success': True, 'reminders': notifications})

@@ -579,15 +579,35 @@ def create_lead():
             # Generate share token
             share_token = secrets.token_urlsafe(16)
             
-            cur.execute("""
-                INSERT INTO leads (customer_name, customer_email, customer_phone,
-                                 project_name, location, reference_image, notes, share_token, created_by,
-                                 setup_type, space_size, customer_type, lead_section, lead_status)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            leads_columns = get_leads_table_columns(conn.cursor(cursor_factory=RealDictCursor))
+
+            insert_columns = [
+                'customer_name', 'customer_email', 'customer_phone',
+                'project_name', 'location', 'reference_image', 'notes',
+                'share_token', 'created_by', 'setup_type', 'space_size', 'customer_type'
+            ]
+            insert_values = [
+                customer_name, customer_email, customer_phone,
+                project_name, location, reference_image, notes,
+                share_token, current_user.id, setup_type, space_size, customer_type
+            ]
+
+            if 'lead_section' in leads_columns:
+                insert_columns.append('lead_section')
+                insert_values.append('leads')
+
+            if 'lead_status' in leads_columns:
+                insert_columns.append('lead_status')
+                insert_values.append('lead')
+
+            placeholders = ', '.join(['%s'] * len(insert_columns))
+            column_list = ', '.join(insert_columns)
+
+            cur.execute(f"""
+                INSERT INTO leads ({column_list})
+                VALUES ({placeholders})
                 RETURNING id
-            """, (customer_name, customer_email, customer_phone, project_name,
-                  location, reference_image, notes, share_token, current_user.id,
-                  setup_type, space_size, customer_type, 'leads', 'lead'))
+            """, insert_values)
             
             lead_id = cur.fetchone()[0]
             conn.commit()

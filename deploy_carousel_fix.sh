@@ -11,7 +11,7 @@ RED='\033[0;31m'
 NC='\033[0m' # No Color
 
 echo -e "${YELLOW}Step 1: Cleaning up database - removing inactive carousel images${NC}"
-sudo -u postgres psql -d gspaces -f fix_carousel_cleanup.sql
+PGPASSWORD=gspaces2025 psql -U sri -d gspaces -h localhost -f fix_carousel_cleanup.sql
 
 echo -e "\n${YELLOW}Step 2: Pulling latest template changes from git${NC}"
 git pull origin setups

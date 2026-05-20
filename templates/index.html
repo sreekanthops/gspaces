@@ -203,7 +203,7 @@
 <main class="main">
     <!-- home Section with Carousel -->
 <section id="home" class="home section">
-    {% if carousel_images and carousel_images|length > 0 %}
+    {% if carousel_settings and carousel_settings.enable_carousel and carousel_images and carousel_images|length > 0 %}
         <!-- Carousel Container -->
         <div class="homepage-carousel">
             {% for image in carousel_images %}
@@ -250,8 +250,8 @@
             {% endif %}
         </div>
     {% else %}
-        <!-- Fallback: Single Banner -->
-        <div class="carousel-slide active" style="background: url('/static/img/hero-bg.jpg') center center/cover no-repeat;">
+        <!-- Fallback: Single Static Banner (only when carousel is disabled or no images) -->
+        <div class="static-banner" style="background: url('/static/img/hero-bg.jpg') center center/cover no-repeat; min-height: 100vh; display: flex; align-items: center; position: relative;">
             <div class="carousel-overlay"></div>
             <div class="container home-content">
                 <div class="home-text" data-aos="fade-up" data-aos-delay="100">

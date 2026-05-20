@@ -203,11 +203,11 @@
 <main class="main">
     <!-- home Section with Carousel -->
 <section id="home" class="home section">
-    {% if carousel_settings and carousel_settings.enable_carousel and carousel_images and carousel_images|length > 0 %}
-        <!-- Carousel Container -->
+    {% if carousel_images and carousel_images|length > 0 %}
+        <!-- Carousel Container - ONLY show admin carousel images -->
         <div class="homepage-carousel">
             {% for image in carousel_images %}
-            <div class="carousel-slide {% if loop.first %}active{% endif %}"
+            <div class="carousel-slide {% if loop.first %}active{% endif %}" data-slide-index="{{ loop.index0 }}"
                  style="background: url('{{ image.image_url }}') center center/cover no-repeat;">
                 <div class="carousel-overlay"></div>
                 <div class="container home-content">
@@ -250,17 +250,12 @@
             {% endif %}
         </div>
     {% else %}
-        <!-- Fallback: Single Static Banner (only when carousel is disabled or no images) -->
-        <div class="static-banner" style="background: url('/static/img/hero-bg.jpg') center center/cover no-repeat; min-height: 100vh; display: flex; align-items: center; position: relative;">
-            <div class="carousel-overlay"></div>
-            <div class="container home-content">
-                <div class="home-text" data-aos="fade-up" data-aos-delay="100">
-                    <h2>Premium Home Office Setup</h2>
-                    <p>Transform your workspace with complete desk setups designed for productivity, comfort, and style. From WFH to executive offices, we deliver ready-to-use solutions.</p>
-                    <div class="btn-group">
-                        <a href="{{ url_for('products') }}" class="btn-primary">Get Started</a>
-                    </div>
-                </div>
+        <!-- NO FALLBACK - Empty section when no carousel images -->
+        <div class="empty-carousel-section" style="min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            <div class="container text-center" style="color: white;">
+                <h2 style="font-size: 2.5rem; margin-bottom: 1rem;">Welcome to GSpaces</h2>
+                <p style="font-size: 1.2rem; margin-bottom: 2rem;">Premium Desk Setup Solutions</p>
+                <a href="{{ url_for('products') }}" class="btn-primary">Browse Products</a>
             </div>
         </div>
     {% endif %}

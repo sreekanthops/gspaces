@@ -214,9 +214,10 @@ def create_order_setup():
                     order_id,
                     product_id,
                     quantity,
-                    price
-                ) VALUES (%s, %s, %s, %s)
-            """, (order_id, product_id, quantity, product['price']))
+                    price_at_purchase,
+                    product_name
+                ) VALUES (%s, %s, %s, %s, %s)
+            """, (order_id, product_id, quantity, product['price'], product['name']))
             
             # Log status history
             cur.execute("""

@@ -1668,9 +1668,12 @@
                     </div>
                     <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
                         {% if lead.order_created %}
-                            <a href="/admin/orders/view/{{ lead.order_id }}" class="btn btn-light btn-lg" style="border-radius: 12px; padding: 14px 32px; font-weight: 600; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                            <a href="/admin/orders/view/{{ lead.order_id }}" class="btn btn-light btn-lg me-2" style="border-radius: 12px; padding: 14px 28px; font-weight: 600; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
                                 <i class="bi bi-eye"></i> View Order
                             </a>
+                            <button onclick="openQuotationOrderModal()" class="btn btn-outline-light btn-lg" style="border-radius: 12px; padding: 14px 28px; font-weight: 600; border: 2px solid white;">
+                                <i class="bi bi-pencil"></i> Edit Order
+                            </button>
                         {% else %}
                             <button onclick="openQuotationOrderModal()" class="btn btn-light btn-lg" style="border-radius: 12px; padding: 14px 32px; font-weight: 600; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
                                 <i class="bi bi-plus-circle"></i> Create Order

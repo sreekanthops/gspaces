@@ -54,6 +54,48 @@ ITEM_ICON_MAP = {
     'floor_lamp': 'img/icons/icon_floor_lamp_20260511_204740_floor_lamp.png',
 }
 
+# Simple display names for items (instead of long descriptions)
+ITEM_DISPLAY_NAMES = {
+    'table': 'Office Table',
+    'chair': 'Office Chair',
+    'plants': 'Plants',
+    'mini_plants': 'Mini Plants',
+    'big_plants': 'Big Plants',
+    'lighting': 'Lighting',
+    'storage': 'Storage',
+    'accessories': 'Accessories',
+    'frames': 'Photo Frames',
+    'desk_lamp': 'Desk Lamp',
+    'pen_holder': 'Pen Holder',
+    'wall_racks': 'Wall Racks',
+    'desk_mat': 'Desk Mat',
+    'dustbin': 'Dustbin',
+    'floor_mat': 'Floor Mat',
+    'keyboard': 'Keyboard',
+    'mouse': 'Mouse',
+    'curtains': 'Curtains',
+    'monitor': 'Monitor',
+    'laptop_stand': 'Laptop Stand',
+    'neon': 'Neon Light',
+    'track_light': 'Track Light',
+    'floor_lamp': 'Floor Lamp',
+    'wall_art': 'Wall Art',
+    'desk_organizer': 'Desk Organizer',
+    'monitor_stand': 'Monitor Stand',
+    'cable_management': 'Cable Management',
+    'footrest': 'Footrest',
+    'headphone_stand': 'Headphone Stand',
+    'whiteboard': 'Whiteboard',
+    'bookshelf': 'Bookshelf',
+    'trash_bin': 'Trash Bin',
+    'laptop_holder': 'Laptop Holder',
+    'profile_lighting': 'Profile Lighting',
+    'multi_socket': 'Multi Socket',
+    'wardrobes': 'Wardrobes',
+    'carpet': 'Carpet',
+    'paint': 'Paint',
+}
+
 def extract_items_from_quotation(lead_designs):
     """Extract all items from quotation designs - supports both JSONB arrays and old schema"""
     items = []
@@ -111,11 +153,8 @@ def extract_items_from_quotation(lead_designs):
         
         # Table
         if design.get('has_table') and design.get('table_price', 0) > 0:
-            table_details = design.get('table_details', 'Office Table')
-            # Extract simple name from details (first part before description)
-            table_name = table_details.split('\n')[0] if '\n' in table_details else table_details
             items.append({
-                'name': table_name,
+                'name': ITEM_DISPLAY_NAMES.get('table', 'Office Table'),
                 'quantity': design.get('table_quantity', 1),
                 'price': float(design.get('table_price', 0)),
                 'image': ITEM_ICON_MAP.get('table')
@@ -123,10 +162,8 @@ def extract_items_from_quotation(lead_designs):
         
         # Chair
         if design.get('has_chair') and design.get('chair_price', 0) > 0:
-            chair_details = design.get('chair_details', 'Office Chair')
-            chair_name = chair_details.split('\n')[0] if '\n' in chair_details else chair_details
             items.append({
-                'name': chair_name,
+                'name': ITEM_DISPLAY_NAMES.get('chair', 'Office Chair'),
                 'quantity': design.get('chair_quantity', 1),
                 'price': float(design.get('chair_price', 0)),
                 'image': ITEM_ICON_MAP.get('chair')
@@ -134,10 +171,8 @@ def extract_items_from_quotation(lead_designs):
         
         # Plants
         if design.get('has_plants') and design.get('plants_price', 0) > 0:
-            plants_details = design.get('plants_details', 'Plants')
-            plants_name = plants_details.split('\n')[0] if '\n' in plants_details else plants_details
             items.append({
-                'name': plants_name,
+                'name': ITEM_DISPLAY_NAMES.get('plants', 'Plants'),
                 'quantity': design.get('plants_quantity', 1),
                 'price': float(design.get('plants_price', 0)),
                 'image': ITEM_ICON_MAP.get('plants')
@@ -145,10 +180,8 @@ def extract_items_from_quotation(lead_designs):
         
         # Lighting
         if design.get('has_lighting') and design.get('lighting_price', 0) > 0:
-            lighting_details = design.get('lighting_details', 'Lighting')
-            lighting_name = lighting_details.split('\n')[0] if '\n' in lighting_details else lighting_details
             items.append({
-                'name': lighting_name,
+                'name': ITEM_DISPLAY_NAMES.get('lighting', 'Lighting'),
                 'quantity': design.get('lighting_quantity', 1),
                 'price': float(design.get('lighting_price', 0)),
                 'image': ITEM_ICON_MAP.get('lighting')
@@ -156,10 +189,8 @@ def extract_items_from_quotation(lead_designs):
         
         # Storage
         if design.get('has_storage') and design.get('storage_price', 0) > 0:
-            storage_details = design.get('storage_details', 'Storage')
-            storage_name = storage_details.split('\n')[0] if '\n' in storage_details else storage_details
             items.append({
-                'name': storage_name,
+                'name': ITEM_DISPLAY_NAMES.get('storage', 'Storage'),
                 'quantity': design.get('storage_quantity', 1),
                 'price': float(design.get('storage_price', 0)),
                 'image': ITEM_ICON_MAP.get('storage')
@@ -167,10 +198,8 @@ def extract_items_from_quotation(lead_designs):
         
         # Accessories
         if design.get('has_accessories') and design.get('accessories_price', 0) > 0:
-            accessories_details = design.get('accessories_details', 'Accessories')
-            accessories_name = accessories_details.split('\n')[0] if '\n' in accessories_details else accessories_details
             items.append({
-                'name': accessories_name,
+                'name': ITEM_DISPLAY_NAMES.get('accessories', 'Accessories'),
                 'quantity': design.get('accessories_quantity', 1),
                 'price': float(design.get('accessories_price', 0)),
                 'image': ITEM_ICON_MAP.get('accessories')
@@ -189,13 +218,11 @@ def extract_items_from_quotation(lead_designs):
         for item_type in additional_items:
             has_key = f'has_{item_type}'
             price_key = f'{item_type}_price'
-            details_key = f'{item_type}_details'
             quantity_key = f'{item_type}_quantity'
             
             if design.get(has_key) and design.get(price_key, 0) > 0:
-                item_details = design.get(details_key, item_type.replace('_', ' ').title())
-                # Extract simple name (first line or before newline)
-                item_name = item_details.split('\n')[0] if '\n' in item_details else item_details
+                # Use simple display name from mapping
+                item_name = ITEM_DISPLAY_NAMES.get(item_type, item_type.replace('_', ' ').title())
                 items.append({
                     'name': item_name,
                     'quantity': design.get(quantity_key, 1),

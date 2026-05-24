@@ -522,7 +522,16 @@ def create_order_from_quotation(share_token):
                         'quotation_url': quotation_url
                     }
                     
+                    print(f"DEBUG: Sending email for order #{order_id} (existing: {existing_order_id is not None})")
+                    print(f"DEBUG: Email to: {lead['customer_email']}")
+                    print(f"DEBUG: Items count: {len(items_with_full_urls)}")
+                    
                     email_sent = send_professional_order_email(order_data)
+                    
+                    if email_sent:
+                        print(f"✅ Professional order email sent to {lead['customer_email']}")
+                    else:
+                        print(f"❌ Failed to send email to {lead['customer_email']}")
                     
                     # Log email notification
                     cur.execute("""
@@ -544,7 +553,11 @@ def create_order_from_quotation(share_token):
                     ))
                     conn.commit()
                 except Exception as e:
-                    print(f"Error sending email: {e}")
+                    print(f"❌ Error sending email: {e}")
+                    import traceback
+                    traceback.print_exc()
+            else:
+                print(f"⚠️ No customer email found for order #{order_id}")
             
             return jsonify({
                 'success': True,

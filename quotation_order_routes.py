@@ -162,12 +162,10 @@ def create_order_from_quotation(share_token):
                     'message': 'Quotation not found'
                 }), 404
             
-            # Check if order already exists
-            if lead.get('order_created'):
-                return jsonify({
-                    'success': False,
-                    'message': f'Order already created for this quotation (Order #{lead.get("order_id")})'
-                }), 400
+            # Check if order already exists - if so, update it instead of creating new
+            existing_order_id = None
+            if lead.get('order_created') and lead.get('order_id'):
+                existing_order_id = lead.get('order_id')
             
             # Get quotation designs
             cur.execute("""
@@ -205,96 +203,163 @@ def create_order_from_quotation(share_token):
             design_image = primary_design.get('design_image')
             original_room_image = primary_design.get('original_image')  # Get original room image for before/after
             
-            # Create order
-            cur.execute("""
-                INSERT INTO orders (
-                    quotation_id,
-                    user_id,
-                    order_date,
-                    total_amount,
-                    status,
-                    status_code,
-                    order_source,
+            # Create or update order
+            if existing_order_id:
+                # Update existing order
+                cur.execute("""
+                    UPDATE orders SET
+                        total_amount = %s,
+                        customer_type = %s,
+                        admin_notes = %s,
+                        design_name = %s,
+                        design_image = %s,
+                        original_price = %s,
+                        discount_percentage = %s,
+                        discount_amount = %s,
+                        items_json = %s,
+                        delivery_address = %s
+                    WHERE id = %s
+                """, (
+                    float(final_price),
                     customer_type,
-                    customer_name,
-                    customer_phone,
-                    user_email,
-                    admin_created_by,
-                    requires_payment,
                     admin_notes,
-                    shipping_name,
-                    shipping_phone,
                     design_name,
                     design_image,
-                    original_price,
-                    discount_percentage,
-                    discount_amount,
-                    items_json,
-                    delivery_address
-                ) VALUES (
-                    %s, NULL, CURRENT_TIMESTAMP, %s, 'Pending Confirmation', 'pending_confirmation',
-                    'quotation_order', %s, %s, %s, %s, %s, FALSE, %s, %s, %s,
-                    %s, %s, %s, %s, %s, %s, %s
-                )
-                RETURNING id
-            """, (
-                lead['id'],
-                float(final_price),
-                customer_type,
-                lead['customer_name'],
-                lead['customer_phone'],
-                lead.get('customer_email'),
-                current_user.id,
-                admin_notes,
-                lead['customer_name'],
-                lead['customer_phone'],
-                design_name,
-                design_image,
-                float(original_price),
-                float(discount_percentage),
-                float(discount_amount),
-                json.dumps(items),
-                lead.get('location')
-            ))
-            
-            order_id = cur.fetchone()['id']
-            
-            # Create order items for each product
-            for item in items:
+                    float(original_price),
+                    float(discount_percentage),
+                    float(discount_amount),
+                    json.dumps(items),
+                    lead.get('location'),
+                    existing_order_id
+                ))
+                
+                order_id = existing_order_id
+                
+                # Delete old order items
+                cur.execute("DELETE FROM order_items WHERE order_id = %s", (order_id,))
+                
+                # Insert updated order items
+                for item in items:
+                    cur.execute("""
+                        INSERT INTO order_items (
+                            order_id,
+                            product_id,
+                            quantity,
+                            price_at_purchase,
+                            product_name
+                        ) VALUES (%s, NULL, %s, %s, %s)
+                    """, (order_id, item['quantity'], item['price'], item['name']))
+                
+            else:
+                # Create new order
                 cur.execute("""
-                    INSERT INTO order_items (
-                        order_id,
-                        product_id,
-                        quantity,
-                        price_at_purchase,
-                        product_name
-                    ) VALUES (%s, NULL, %s, %s, %s)
-                """, (order_id, item['quantity'], item['price'], item['name']))
-            
-            # Update quotation with order info
-            cur.execute("""
-                UPDATE leads 
-                SET order_created = TRUE,
-                    order_id = %s,
-                    order_created_at = CURRENT_TIMESTAMP
-                WHERE id = %s
-            """, (order_id, lead['id']))
+                    INSERT INTO orders (
+                        quotation_id,
+                        user_id,
+                        order_date,
+                        total_amount,
+                        status,
+                        status_code,
+                        order_source,
+                        customer_type,
+                        customer_name,
+                        customer_phone,
+                        user_email,
+                        admin_created_by,
+                        requires_payment,
+                        admin_notes,
+                        shipping_name,
+                        shipping_phone,
+                        design_name,
+                        design_image,
+                        original_price,
+                        discount_percentage,
+                        discount_amount,
+                        items_json,
+                        delivery_address
+                    ) VALUES (
+                        %s, NULL, CURRENT_TIMESTAMP, %s, 'Pending Confirmation', 'pending_confirmation',
+                        'quotation_order', %s, %s, %s, %s, %s, FALSE, %s, %s, %s,
+                        %s, %s, %s, %s, %s, %s, %s
+                    )
+                    RETURNING id
+                """, (
+                    lead['id'],
+                    float(final_price),
+                    customer_type,
+                    lead['customer_name'],
+                    lead['customer_phone'],
+                    lead.get('customer_email'),
+                    current_user.id,
+                    admin_notes,
+                    lead['customer_name'],
+                    lead['customer_phone'],
+                    design_name,
+                    design_image,
+                    float(original_price),
+                    float(discount_percentage),
+                    float(discount_amount),
+                    json.dumps(items),
+                    lead.get('location')
+                ))
+                
+                order_id = cur.fetchone()['id']
+                
+                # Create order items for each product
+                for item in items:
+                    cur.execute("""
+                        INSERT INTO order_items (
+                            order_id,
+                            product_id,
+                            quantity,
+                            price_at_purchase,
+                            product_name
+                        ) VALUES (%s, NULL, %s, %s, %s)
+                    """, (order_id, item['quantity'], item['price'], item['name']))
+                
+                # Update quotation with order info
+                cur.execute("""
+                    UPDATE leads
+                    SET order_created = TRUE,
+                        order_id = %s,
+                        order_created_at = CURRENT_TIMESTAMP
+                    WHERE id = %s
+                """, (order_id, lead['id']))
             
             # Log status history
-            cur.execute("""
-                INSERT INTO order_status_history (
+            if not existing_order_id:
+                # Only log for new orders
+                cur.execute("""
+                    INSERT INTO order_status_history (
+                        order_id,
+                        old_status,
+                        new_status,
+                        changed_by,
+                        notes
+                    ) VALUES (%s, NULL, %s, %s, %s)
+                """, (
                     order_id,
-                    old_status,
-                    new_status,
-                    changed_by,
-                    notes
-                ) VALUES (%s, NULL, %s, %s, %s)
-            """, (
-                order_id,
-                'pending_confirmation',
-                current_user.id,
-                f'Order created from quotation. Customer: {lead["customer_name"]}, Design: {design_name}'
-            ))
+                    'pending_confirmation',
+                    current_user.id,
+                    f'Order created from quotation. Customer: {lead["customer_name"]}, Design: {design_name}'
+                ))
+            else:
+                # Log update for existing orders
+                cur.execute("""
+                    INSERT INTO order_status_history (
+                        order_id,
+                        old_status,
+                        new_status,
+                        changed_by,
+                        notes
+                    ) VALUES (%s, %s, %s, %s, %s)
+                """, (
+                    order_id,
+                    'pending_confirmation',
+                    'pending_confirmation',
+                    current_user.id,
+                    f'Order updated from quotation. Discount: {discount_percentage}%, Final Price: ₹{final_price}'
+                ))
             
             conn.commit()
             
@@ -338,10 +403,10 @@ def create_order_from_quotation(share_token):
                         ) VALUES (%s, %s, %s, %s, %s, %s)
                     """, (
                         order_id,
-                        'order_created',
+                        'order_updated' if existing_order_id else 'order_created',
                         lead['customer_email'],
                         lead['customer_phone'],
-                        f'Order Confirmation #{order_id}',
+                        f'Order {"Updated" if existing_order_id else "Confirmation"} #{order_id}',
                         'sent' if email_sent else 'failed'
                     ))
                     conn.commit()
@@ -350,10 +415,11 @@ def create_order_from_quotation(share_token):
             
             return jsonify({
                 'success': True,
-                'message': f'Order #{order_id} created successfully from quotation',
+                'message': f'Order #{order_id} {"updated" if existing_order_id else "created"} successfully from quotation',
                 'order_id': order_id,
-                'email_sent': email_sent
-            }), 201
+                'email_sent': email_sent,
+                'action': 'updated' if existing_order_id else 'created'
+            }), 200 if existing_order_id else 201
             
         except Exception as e:
             conn.rollback()

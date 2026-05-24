@@ -291,29 +291,44 @@
 
   subscribeForm.addEventListener("submit", function(e) {
     e.preventDefault();
-    const formData = new FormData(this);
+    const email = emailInput.value.trim();
 
-    fetch("https://formsubmit.co/ajax/sreekanth.chityala@gspaces.in", {
+    // Disable button during submission
+    const submitBtn = this.querySelector('button[type="submit"]');
+    const originalText = submitBtn.textContent;
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Subscribing...';
+
+    fetch("/api/newsletter/subscribe", {
       method: "POST",
-      headers: { 'Accept': 'application/json' },
-      body: formData
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({ email: email })
     })
-    .then(response => {
-      if (response.ok) {
-        responseMessage.innerText = "✅ Thank you for subscribing!";
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        responseMessage.innerText = "✅ " + data.message;
         responseMessage.style.color = "#10b981";
+        emailInput.value = "";
         setTimeout(() => {
-          emailInput.value = "";
           responseMessage.innerText = "";
-        }, 3000);
+        }, 5000);
       } else {
-        responseMessage.innerText = "❌ Error. Try again later.";
+        responseMessage.innerText = "❌ " + data.message;
         responseMessage.style.color = "#ef4444";
       }
     })
     .catch(error => {
-      responseMessage.innerText = "❌ Network error. Try again.";
+      console.error('Newsletter subscription error:', error);
+      responseMessage.innerText = "❌ Network error. Please try again.";
       responseMessage.style.color = "#ef4444";
+    })
+    .finally(() => {
+      submitBtn.disabled = false;
+      submitBtn.textContent = originalText;
     });
   });
 </script>

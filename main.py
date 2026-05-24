@@ -5672,6 +5672,85 @@ app.register_blueprint(admin_users_bp)
 # Register visitor tracking and system health monitoring
 register_visitor_routes(app, connect_to_db)
 
+
+# --- NEWSLETTER SUBSCRIPTION ROUTE ---
+@app.route('/api/newsletter/subscribe', methods=['POST'])
+def newsletter_subscribe():
+    """Handle newsletter subscription"""
+    try:
+        data = request.get_json() if request.is_json else request.form
+        email = data.get('email', '').strip().lower()
+        
+        if not email:
+            return jsonify({'success': False, 'message': 'Email is required'}), 400
+        
+        # Basic email validation
+        import re
+        email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        if not re.match(email_pattern, email):
+            return jsonify({'success': False, 'message': 'Invalid email format'}), 400
+        
+        conn = connect_to_db()
+        if not conn:
+            return jsonify({'success': False, 'message': 'Database connection failed'}), 500
+        
+        cur = conn.cursor()
+        
+        # Check if email already subscribed
+        cur.execute("SELECT email FROM newsletter_subscribers WHERE email = %s", (email,))
+        existing = cur.fetchone()
+        
+        if existing:
+            cur.close()
+            conn.close()
+            return jsonify({'success': True, 'message': 'You are already subscribed!'}), 200
+        
+        # Insert new subscriber
+        cur.execute("""
+            INSERT INTO newsletter_subscribers (email, subscribed_at, is_active)
+            VALUES (%s, NOW(), true)
+        """, (email,))
+        conn.commit()
+        
+        cur.close()
+        conn.close()
+        
+        # Send welcome email (optional)
+        try:
+            from flask_mail import Message
+            msg = Message(
+                'Welcome to GSpaces Newsletter!',
+                recipients=[email]
+            )
+            msg.html = f"""
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #667eea;">Welcome to GSpaces! 🎉</h2>
+                <p>Thank you for subscribing to our newsletter!</p>
+                <p>You'll now receive updates about:</p>
+                <ul>
+                    <li>New furniture collections</li>
+                    <li>Exclusive deals and offers</li>
+                    <li>Design tips and inspiration</li>
+                    <li>Special promotions</li>
+                </ul>
+                <p>Stay tuned for amazing content!</p>
+                <p style="color: #666; font-size: 12px; margin-top: 30px;">
+                    If you wish to unsubscribe, please contact us at sreekanth.chityala@gspaces.in
+                </p>
+            </div>
+            """
+            mail.send(msg)
+        except Exception as e:
+            print(f"Error sending welcome email: {e}")
+            # Don't fail the subscription if email fails
+        
+        return jsonify({'success': True, 'message': 'Successfully subscribed! Check your email.'}), 200
+        
+    except Exception as e:
+        print(f"Newsletter subscription error: {e}")
+        return jsonify({'success': False, 'message': 'An error occurred. Please try again.'}), 500
+
+
 # --- APPLICATION BOOTSTRAP ---
 if __name__ == '__main__':
     conn = connect_to_db()

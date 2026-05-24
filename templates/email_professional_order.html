@@ -112,11 +112,8 @@
                                                                 <td style="color: #6b7280; font-size: 14px; vertical-align: middle;">
                                                                     <strong style="color: #111827;">{{ item.name }}</strong>
                                                                     {% if item.quantity > 1 %}
-                                                                    <br><span style="color: #9ca3af; font-size: 13px;">Quantity: {{ item.quantity }}</span>
+                                                                    <span style="color: #667eea; font-size: 13px; margin-left: 8px;">×{{ item.quantity }}</span>
                                                                     {% endif %}
-                                                                </td>
-                                                                <td style="text-align: right; color: #111827; font-size: 15px; font-weight: 600; vertical-align: middle; white-space: nowrap;">
-                                                                    ₹{{ "{:,.0f}".format(item.price) }}
                                                                 </td>
                                                             </tr>
                                                         </table>

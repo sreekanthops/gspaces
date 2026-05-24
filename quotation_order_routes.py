@@ -295,66 +295,18 @@ def create_order_from_quotation(share_token):
             primary_design = lead_designs[0]
             design_name = primary_design.get('design_name', lead.get('project_name', 'Custom Design'))
             
-            # Fetch design image from design_gallery (proper source)
-            design_image = None
-            original_room_image = None
+            # Get design image from lead_designs table
+            design_image = primary_design.get('design_image')
+            print(f"DEBUG: Design image from lead_designs: {design_image}")
             
-            try:
-                # Get gallery entry for this design
-                cur.execute("""
-                    SELECT primary_image, description
-                    FROM design_gallery
-                    WHERE lead_id = %s AND design_id = %s
-                    LIMIT 1
-                """, (lead['id'], primary_design['id']))
-                
-                gallery_entry = cur.fetchone()
-                
-                if gallery_entry and gallery_entry.get('primary_image'):
-                    design_image = gallery_entry['primary_image']
-                    print(f"DEBUG: Found design image from gallery: {design_image}")
-                else:
-                    # Fallback to lead_designs table
-                    design_image = primary_design.get('design_image')
-                    print(f"DEBUG: Using design image from lead_designs: {design_image}")
-                
-                # Get media files for original room image
-                cur.execute("""
-                    SELECT file_path, media_type
-                    FROM gallery_media
-                    WHERE gallery_id = (
-                        SELECT id FROM design_gallery
-                        WHERE lead_id = %s AND design_id = %s
-                        LIMIT 1
-                    )
-                    AND media_type = 'original'
-                    LIMIT 1
-                """, (lead['id'], primary_design['id']))
-                
-                original_media = cur.fetchone()
-                if original_media:
-                    original_room_image = original_media['file_path']
-                    print(f"DEBUG: Found original image from gallery_media: {original_room_image}")
-                else:
-                    # Fallback to multiple possible fields
-                    original_room_image = (
-                        primary_design.get('original_image') or
-                        lead.get('room_image') or
-                        lead.get('original_image') or
-                        lead.get('image')
-                    )
-                    print(f"DEBUG: Using original image from fallback: {original_room_image}")
-                    
-            except Exception as e:
-                print(f"WARNING: Error fetching images from gallery: {e}")
-                # Fallback to old method
-                design_image = primary_design.get('design_image')
-                original_room_image = (
-                    primary_design.get('original_image') or
-                    lead.get('room_image') or
-                    lead.get('original_image') or
-                    lead.get('image')
-                )
+            # Get original room image - check multiple possible fields
+            original_room_image = (
+                primary_design.get('original_image') or
+                lead.get('room_image') or
+                lead.get('original_image') or
+                lead.get('image')
+            )
+            print(f"DEBUG: Original room image: {original_room_image}")
             
             # Create or update order
             if existing_order_id:

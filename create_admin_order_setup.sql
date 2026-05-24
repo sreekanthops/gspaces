@@ -35,6 +35,9 @@ ALTER COLUMN razorpay_order_id DROP NOT NULL,
 ALTER COLUMN razorpay_payment_id DROP NOT NULL,
 ALTER COLUMN user_id DROP NOT NULL;
 
+-- Drop foreign key constraint on user_email to allow admin orders with non-registered customer emails
+ALTER TABLE orders DROP CONSTRAINT IF EXISTS orders_user_email_fkey;
+
 -- Update existing orders to have default values
 UPDATE orders 
 SET order_source = 'customer', 

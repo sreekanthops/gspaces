@@ -1,0 +1,263 @@
+<!-- Admin Order Setup Modal -->
+<div class="modal fade" id="orderSetupModal" tabindex="-1" aria-labelledby="orderSetupModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content" style="border-radius: 20px; border: none; box-shadow: 0 10px 40px rgba(0,0,0,0.15);">
+      
+      <!-- Modal Header -->
+      <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 20px 20px 0 0; padding: 25px 30px;">
+        <div>
+          <h5 class="modal-title fw-bold mb-1" id="orderSetupModalLabel">
+            <i class="bi bi-cart-plus me-2"></i>Create Order Setup
+          </h5>
+          <p class="mb-0" style="font-size: 0.9rem; opacity: 0.9;">Quick order creation without payment</p>
+        </div>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      
+      <!-- Modal Body -->
+      <div class="modal-body" style="padding: 30px;">
+        
+        <!-- Product Info Display -->
+        <div id="productInfoDisplay" class="alert alert-info d-none" style="border-radius: 12px; border-left: 4px solid #3b82f6;">
+          <div class="d-flex align-items-center">
+            <i class="bi bi-box-seam fs-4 me-3"></i>
+            <div>
+              <strong id="displayProductName">Product Name</strong>
+              <div class="text-muted small">
+                <span id="displayProductCategory"></span> • 
+                <span class="fw-bold text-success">₹<span id="displayProductPrice">0</span></span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Order Setup Form -->
+        <form id="orderSetupForm">
+          <input type="hidden" id="productId" name="product_id">
+          
+          <!-- Customer Name -->
+          <div class="mb-3">
+            <label for="customerName" class="form-label fw-semibold">
+              <i class="bi bi-person text-primary me-1"></i>Customer Name <span class="text-danger">*</span>
+            </label>
+            <input type="text" class="form-control form-control-lg" id="customerName" name="customer_name" 
+                   placeholder="Enter customer's full name" required minlength="2" 
+                   style="border-radius: 10px; border: 2px solid #e2e8f0;">
+            <div class="invalid-feedback">Please enter customer name (min 2 characters)</div>
+          </div>
+          
+          <!-- Customer Phone -->
+          <div class="mb-3">
+            <label for="customerPhone" class="form-label fw-semibold">
+              <i class="bi bi-telephone text-success me-1"></i>Phone Number <span class="text-danger">*</span>
+            </label>
+            <input type="tel" class="form-control form-control-lg" id="customerPhone" name="customer_phone" 
+                   placeholder="10-digit mobile number" required pattern="[0-9]{10,15}" 
+                   style="border-radius: 10px; border: 2px solid #e2e8f0;">
+            <div class="invalid-feedback">Please enter valid phone number (10-15 digits)</div>
+          </div>
+          
+          <!-- Customer Email (Optional) -->
+          <div class="mb-3">
+            <label for="customerEmail" class="form-label fw-semibold">
+              <i class="bi bi-envelope text-info me-1"></i>Email Address <span class="text-muted small">(Optional)</span>
+            </label>
+            <input type="email" class="form-control form-control-lg" id="customerEmail" name="customer_email" 
+                   placeholder="customer@example.com" 
+                   style="border-radius: 10px; border: 2px solid #e2e8f0;">
+            <small class="text-muted">Email notifications will be sent if provided</small>
+          </div>
+          
+          <!-- Customer Type -->
+          <div class="mb-3">
+            <label for="customerType" class="form-label fw-semibold">
+              <i class="bi bi-tag text-warning me-1"></i>Customer Type <span class="text-danger">*</span>
+            </label>
+            <select class="form-select form-select-lg" id="customerType" name="customer_type" required 
+                    style="border-radius: 10px; border: 2px solid #e2e8f0;">
+              <option value="">Select customer type...</option>
+              <option value="walk-in">🚶 Walk-in Customer</option>
+              <option value="phone_order">📞 Phone Order</option>
+              <option value="referral">🤝 Referral</option>
+              <option value="repeat_customer">🔄 Repeat Customer</option>
+              <option value="corporate">🏢 Corporate Client</option>
+            </select>
+            <div class="invalid-feedback">Please select customer type</div>
+          </div>
+          
+          <!-- Quantity -->
+          <div class="mb-3">
+            <label for="quantity" class="form-label fw-semibold">
+              <i class="bi bi-hash text-secondary me-1"></i>Quantity
+            </label>
+            <input type="number" class="form-control form-control-lg" id="quantity" name="quantity" 
+                   value="1" min="1" max="100" 
+                   style="border-radius: 10px; border: 2px solid #e2e8f0;">
+            <small class="text-muted">Number of units to order</small>
+          </div>
+          
+          <!-- Comments -->
+          <div class="mb-3">
+            <label for="comments" class="form-label fw-semibold">
+              <i class="bi bi-chat-left-text text-purple me-1"></i>Comments / Special Instructions
+            </label>
+            <textarea class="form-control" id="comments" name="comments" rows="3" 
+                      placeholder="Any special requirements, customizations, or notes..." 
+                      style="border-radius: 10px; border: 2px solid #e2e8f0;"></textarea>
+          </div>
+          
+          <!-- Admin Notes (Internal) -->
+          <div class="mb-3">
+            <label for="adminNotes" class="form-label fw-semibold">
+              <i class="bi bi-sticky text-danger me-1"></i>Admin Notes <span class="text-muted small">(Internal Only)</span>
+            </label>
+            <textarea class="form-control" id="adminNotes" name="admin_notes" rows="2" 
+                      placeholder="Internal notes (not visible to customer)..." 
+                      style="border-radius: 10px; border: 2px solid #e2e8f0; background: #fef3c7;"></textarea>
+          </div>
+          
+          <!-- Alert Messages -->
+          <div id="orderSetupAlert" class="alert d-none" role="alert" style="border-radius: 10px;"></div>
+          
+        </form>
+      </div>
+      
+      <!-- Modal Footer -->
+      <div class="modal-footer" style="padding: 20px 30px; background: #f8fafc; border-radius: 0 0 20px 20px;">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="border-radius: 10px; padding: 10px 24px;">
+          <i class="bi bi-x-circle me-1"></i>Cancel
+        </button>
+        <button type="button" class="btn btn-primary" id="submitOrderSetup" style="border-radius: 10px; padding: 10px 24px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none;">
+          <i class="bi bi-check-circle me-1"></i>Create Order
+        </button>
+      </div>
+      
+    </div>
+  </div>
+</div>
+
+<!-- Order Setup JavaScript -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const orderSetupModal = document.getElementById('orderSetupModal');
+  const orderSetupForm = document.getElementById('orderSetupForm');
+  const submitBtn = document.getElementById('submitOrderSetup');
+  const alertDiv = document.getElementById('orderSetupAlert');
+  
+  // Open modal with product data
+  window.openOrderSetupModal = function(productId, productName, productPrice, productCategory) {
+    // Set product info
+    document.getElementById('productId').value = productId;
+    document.getElementById('displayProductName').textContent = productName;
+    document.getElementById('displayProductPrice').textContent = productPrice;
+    document.getElementById('displayProductCategory').textContent = productCategory;
+    document.getElementById('productInfoDisplay').classList.remove('d-none');
+    
+    // Reset form
+    orderSetupForm.reset();
+    orderSetupForm.classList.remove('was-validated');
+    alertDiv.classList.add('d-none');
+    
+    // Show modal
+    const modal = new bootstrap.Modal(orderSetupModal);
+    modal.show();
+  };
+  
+  // Form submission
+  submitBtn.addEventListener('click', function() {
+    // Validate form
+    if (!orderSetupForm.checkValidity()) {
+      orderSetupForm.classList.add('was-validated');
+      return;
+    }
+    
+    // Disable button and show loading
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creating Order...';
+    
+    // Prepare form data
+    const formData = new FormData(orderSetupForm);
+    
+    // Send AJAX request
+    fetch('/admin/orders/create-setup', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(Object.fromEntries(formData))
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        // Show success message
+        showAlert('success', `✅ ${data.message}${data.email_sent ? ' (Email sent)' : ''}`);
+        
+        // Reset form after 2 seconds and close modal
+        setTimeout(() => {
+          bootstrap.Modal.getInstance(orderSetupModal).hide();
+          orderSetupForm.reset();
+          orderSetupForm.classList.remove('was-validated');
+          
+          // Optionally redirect to orders page
+          if (confirm('Order created successfully! View order details?')) {
+            window.location.href = '/admin/orders';
+          }
+        }, 2000);
+      } else {
+        // Show error message
+        showAlert('danger', `❌ ${data.message}`);
+        if (data.errors && data.errors.length > 0) {
+          showAlert('danger', data.errors.join('<br>'));
+        }
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      showAlert('danger', '❌ An error occurred. Please try again.');
+    })
+    .finally(() => {
+      // Re-enable button
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '<i class="bi bi-check-circle me-1"></i>Create Order';
+    });
+  });
+  
+  // Helper function to show alerts
+  function showAlert(type, message) {
+    alertDiv.className = `alert alert-${type}`;
+    alertDiv.innerHTML = message;
+    alertDiv.classList.remove('d-none');
+    
+    // Auto-hide success messages
+    if (type === 'success') {
+      setTimeout(() => {
+        alertDiv.classList.add('d-none');
+      }, 5000);
+    }
+  }
+  
+  // Reset form when modal is closed
+  orderSetupModal.addEventListener('hidden.bs.modal', function() {
+    orderSetupForm.reset();
+    orderSetupForm.classList.remove('was-validated');
+    alertDiv.classList.add('d-none');
+  });
+});
+</script>
+
+<style>
+  .form-control:focus, .form-select:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+  }
+  
+  .was-validated .form-control:invalid,
+  .was-validated .form-select:invalid {
+    border-color: #dc3545;
+  }
+  
+  .was-validated .form-control:valid,
+  .was-validated .form-select:valid {
+    border-color: #10b981;
+  }
+</style>

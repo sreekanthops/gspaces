@@ -188,9 +188,14 @@
                         <option value="{{ code }}" {% if status_filter == code %}selected{% endif %}>{{ label }}</option>
                     {% endfor %}
                 </select>
+                <select name="source" class="form-select" style="width: auto;" onchange="this.form.submit()">
+                    <option value="all" {% if request.args.get('source', 'all') == 'all' %}selected{% endif %}>All Orders</option>
+                    <option value="customer" {% if request.args.get('source') == 'customer' %}selected{% endif %}>💳 Customer Orders</option>
+                    <option value="admin_created" {% if request.args.get('source') == 'admin_created' %}selected{% endif %}>👤 Admin Created</option>
+                </select>
                 <input type="text" name="search" class="form-control" placeholder="Search by Order ID, Email, or Name" value="{{ search_query }}" style="max-width: 300px;">
                 <button type="submit" class="btn btn-primary">Search</button>
-                {% if status_filter != 'all' or search_query %}
+                {% if status_filter != 'all' or search_query or request.args.get('source', 'all') != 'all' %}
                     <a href="{{ url_for('admin_orders') }}" class="btn btn-secondary">Clear Filters</a>
                 {% endif %}
             </form>
@@ -214,11 +219,24 @@
                         <tbody>
                             {% for order in orders %}
                                 <tr>
-                                    <td><strong>#{{ order.id }}</strong></td>
+                                    <td>
+                                        <strong>#{{ order.id }}</strong>
+                                        {% if order.order_source == 'admin_created' %}
+                                        <span class="badge bg-warning text-dark ms-1" title="Admin Created Order">
+                                            <i class="bi bi-person-badge"></i> Admin
+                                        </span>
+                                        {% endif %}
+                                    </td>
                                     <td>{{ order.order_date.strftime('%Y-%m-%d %H:%M') if order.order_date else '-' }}</td>
                                     <td>
-                                        <div><strong>{{ order.shipping_name or order.user_email }}</strong></div>
-                                        <small class="text-muted">{{ order.user_email }}</small>
+                                        <div><strong>{{ order.customer_name or order.shipping_name or order.user_email }}</strong></div>
+                                        <small class="text-muted">
+                                            {% if order.customer_phone %}📞 {{ order.customer_phone }}{% endif %}
+                                            {% if order.user_email %}<br>📧 {{ order.user_email }}{% endif %}
+                                            {% if order.customer_type %}
+                                            <br><span class="badge bg-secondary" style="font-size: 10px;">{{ order.customer_type.replace('_', ' ').title() }}</span>
+                                            {% endif %}
+                                        </small>
                                     </td>
                                     <td>
                                         {% if order.items_count %}

@@ -68,6 +68,7 @@ from system_health_routes import system_health_bp
 from design_gallery_routes import design_gallery_bp
 from admin_users_routes import admin_users_bp, set_db_connection_func
 from visitor_tracking_routes import register_visitor_routes
+from admin_order_setup_routes import register_admin_order_setup_routes
 
 # --- DISPOSABLE EMAIL DOMAINS BLACKLIST ---
 DISPOSABLE_EMAIL_DOMAINS = {
@@ -511,6 +512,9 @@ add_chatbot_routes(app, connect_to_db)
 
 # Initialize deals routes
 register_deals_routes(app)
+
+# Initialize admin order setup routes
+register_admin_order_setup_routes(app, connect_to_db)
 
 def get_catalogue_files():
     """Get list of files from the catalogue directory"""
@@ -3025,6 +3029,7 @@ def admin_orders():
     
     # Get filter parameters
     status_filter = request.args.get('status', 'all')
+    source_filter = request.args.get('source', 'all')
     search_query = request.args.get('search', '').strip()
     
     if conn:
@@ -3047,6 +3052,11 @@ def admin_orders():
                     o.shipping_phone,
                     o.coupon_code,
                     o.coupon_discount,
+                    o.order_source,
+                    o.customer_type,
+                    o.customer_name,
+                    o.customer_phone,
+                    o.requires_payment,
                     COUNT(oi.id) AS items_count
                 FROM orders o
                 LEFT JOIN order_items oi ON oi.order_id = o.id
@@ -3059,17 +3069,23 @@ def admin_orders():
                 query += " AND o.status_code = %s"
                 params.append(status_filter)
             
+            # Add source filter
+            if source_filter != 'all':
+                query += " AND o.order_source = %s"
+                params.append(source_filter)
+            
             # Add search filter
             if search_query:
-                query += " AND (CAST(o.id AS TEXT) LIKE %s OR o.user_email LIKE %s OR o.shipping_name LIKE %s)"
+                query += " AND (CAST(o.id AS TEXT) LIKE %s OR o.user_email LIKE %s OR o.shipping_name LIKE %s OR o.customer_name LIKE %s OR o.customer_phone LIKE %s)"
                 search_pattern = f"%{search_query}%"
-                params.extend([search_pattern, search_pattern, search_pattern])
+                params.extend([search_pattern, search_pattern, search_pattern, search_pattern, search_pattern])
             
             query += """
-                GROUP BY o.id, o.user_id, o.user_email, o.razorpay_order_id, 
-                         o.total_amount, o.status, o.status_code, o.status_updated_at, 
-                         o.order_date, o.shipping_name, o.shipping_phone, 
-                         o.coupon_code, o.coupon_discount
+                GROUP BY o.id, o.user_id, o.user_email, o.razorpay_order_id,
+                         o.total_amount, o.status, o.status_code, o.status_updated_at,
+                         o.order_date, o.shipping_name, o.shipping_phone,
+                         o.coupon_code, o.coupon_discount, o.order_source, o.customer_type,
+                         o.customer_name, o.customer_phone, o.requires_payment
                 ORDER BY o.order_date DESC
                 LIMIT 100
             """

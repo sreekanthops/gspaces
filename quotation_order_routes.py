@@ -252,7 +252,14 @@ def create_order_from_quotation(share_token):
             primary_design = lead_designs[0]
             design_name = primary_design.get('design_name', lead.get('project_name', 'Custom Design'))
             design_image = primary_design.get('design_image')
-            original_room_image = primary_design.get('original_image')  # Get original room image for before/after
+            
+            # Get original room image - check multiple possible fields
+            original_room_image = (
+                primary_design.get('original_image') or
+                lead.get('room_image') or
+                lead.get('original_image') or
+                lead.get('image')
+            )
             
             # Create or update order
             if existing_order_id:
@@ -422,15 +429,27 @@ def create_order_from_quotation(share_token):
                     
                     quotation_url = f"{request.url_root}quotation/{share_token}"
                     
+                    # Fix item image paths to include static/ prefix and full URL
+                    items_with_full_urls = []
+                    for item in items:
+                        item_copy = item.copy()
+                        if item_copy.get('image'):
+                            # Add static/ prefix if not present
+                            img_path = item_copy['image']
+                            if not img_path.startswith('static/'):
+                                img_path = f"static/{img_path}"
+                            item_copy['image'] = f"{request.url_root}{img_path}"
+                        items_with_full_urls.append(item_copy)
+                    
                     order_data = {
                         'customer_name': lead['customer_name'],
                         'customer_email': lead['customer_email'],
                         'customer_phone': lead['customer_phone'],
                         'order_id': order_id,
                         'design_name': design_name,
-                        'design_image': f"{request.url_root}{design_image}" if design_image else None,
-                        'original_room_image': f"{request.url_root}{original_room_image}" if original_room_image else None,
-                        'items': items,
+                        'design_image': f"{request.url_root}static/{design_image}" if design_image and not design_image.startswith('http') else design_image,
+                        'original_room_image': f"{request.url_root}static/{original_room_image}" if original_room_image and not original_room_image.startswith('http') else original_room_image,
+                        'items': items_with_full_urls,
                         'original_price': float(original_price),
                         'discount_percentage': float(discount_percentage),
                         'discount_amount': float(discount_amount),

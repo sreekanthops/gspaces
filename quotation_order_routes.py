@@ -27,6 +27,29 @@ def get_db_connection():
     return _db_connection_func()
 
 
+# Icon mapping for standard items
+ITEM_ICON_MAP = {
+    'table': 'img/icons/icon_table_20260503_170218_table.png',
+    'chair': 'img/icons/icon_chair_20260503_170218_chair.png',
+    'plants': 'img/icons/icon_plants_20260503_170218_plants.png',
+    'mini_plants': 'img/icons/icon_mini_plants_20260503_170218_mini_plants.png',
+    'big_plants': 'img/icons/icon_big_plants_20260503_170218_big_plants.png',
+    'lighting': 'img/icons/icon_lighting_20260503_170218_lighting.png',
+    'storage': 'img/icons/icon_storage_20260503_170218_storage.png',
+    'accessories': 'img/icons/icon_accessories_20260503_170218_accessories.png',
+    'frames': 'img/icons/icon_frames_20260503_170218_frames.png',
+    'desk_lamp': 'img/icons/icon_desk_lamp_20260503_170218_table-lamp.png',
+    'pen_holder': 'img/icons/icon_pen_holder_20260503_170322_Screenshot_2026-05-03_at_10.33.03_PM.png',
+    'wall_racks': 'img/icons/icon_wall_racks_20260503_170218_wall_racks.png',
+    'desk_mat': 'img/icons/icon_desk_mat_20260503_170218_desk_mat.png',
+    'dustbin': 'img/icons/icon_dustbin_20260503_170218_dustbin.png',
+    'floor_mat': 'img/icons/icon_floor_mat_20260503_170218_floor_mat.png',
+    'keyboard': 'img/icons/icon_keyboard_20260503_170218_keyboard.png',
+    'mouse': 'img/icons/icon_mouse_20260503_170218_mouse.png',
+    'curtains': 'img/icons/icon_curtains_20260514_090008_curtains.png',
+    'monitor': 'img/icons/icon_monitor_20260503_170218_monitor.png',
+}
+
 def extract_items_from_quotation(lead_designs):
     """Extract all items from quotation designs - supports both JSONB arrays and old schema"""
     items = []
@@ -84,56 +107,69 @@ def extract_items_from_quotation(lead_designs):
         
         # Table
         if design.get('has_table') and design.get('table_price', 0) > 0:
+            table_details = design.get('table_details', 'Office Table')
+            # Extract simple name from details (first part before description)
+            table_name = table_details.split('\n')[0] if '\n' in table_details else table_details
             items.append({
-                'name': design.get('table_details', 'Table'),
+                'name': table_name,
                 'quantity': design.get('table_quantity', 1),
                 'price': float(design.get('table_price', 0)),
-                'image': None
+                'image': ITEM_ICON_MAP.get('table')
             })
         
         # Chair
         if design.get('has_chair') and design.get('chair_price', 0) > 0:
+            chair_details = design.get('chair_details', 'Office Chair')
+            chair_name = chair_details.split('\n')[0] if '\n' in chair_details else chair_details
             items.append({
-                'name': design.get('chair_details', 'Chair'),
+                'name': chair_name,
                 'quantity': design.get('chair_quantity', 1),
                 'price': float(design.get('chair_price', 0)),
-                'image': None
+                'image': ITEM_ICON_MAP.get('chair')
             })
         
         # Plants
         if design.get('has_plants') and design.get('plants_price', 0) > 0:
+            plants_details = design.get('plants_details', 'Plants')
+            plants_name = plants_details.split('\n')[0] if '\n' in plants_details else plants_details
             items.append({
-                'name': design.get('plants_details', 'Plants'),
+                'name': plants_name,
                 'quantity': design.get('plants_quantity', 1),
                 'price': float(design.get('plants_price', 0)),
-                'image': None
+                'image': ITEM_ICON_MAP.get('plants')
             })
         
         # Lighting
         if design.get('has_lighting') and design.get('lighting_price', 0) > 0:
+            lighting_details = design.get('lighting_details', 'Lighting')
+            lighting_name = lighting_details.split('\n')[0] if '\n' in lighting_details else lighting_details
             items.append({
-                'name': design.get('lighting_details', 'Lighting'),
+                'name': lighting_name,
                 'quantity': design.get('lighting_quantity', 1),
                 'price': float(design.get('lighting_price', 0)),
-                'image': None
+                'image': ITEM_ICON_MAP.get('lighting')
             })
         
         # Storage
         if design.get('has_storage') and design.get('storage_price', 0) > 0:
+            storage_details = design.get('storage_details', 'Storage')
+            storage_name = storage_details.split('\n')[0] if '\n' in storage_details else storage_details
             items.append({
-                'name': design.get('storage_details', 'Storage'),
+                'name': storage_name,
                 'quantity': design.get('storage_quantity', 1),
                 'price': float(design.get('storage_price', 0)),
-                'image': None
+                'image': ITEM_ICON_MAP.get('storage')
             })
         
         # Accessories
         if design.get('has_accessories') and design.get('accessories_price', 0) > 0:
+            accessories_details = design.get('accessories_details', 'Accessories')
+            accessories_name = accessories_details.split('\n')[0] if '\n' in accessories_details else accessories_details
             items.append({
-                'name': design.get('accessories_details', 'Accessories'),
+                'name': accessories_name,
                 'quantity': design.get('accessories_quantity', 1),
                 'price': float(design.get('accessories_price', 0)),
-                'image': None
+                'image': ITEM_ICON_MAP.get('accessories')
             })
         
         # Additional specific items
@@ -153,11 +189,14 @@ def extract_items_from_quotation(lead_designs):
             quantity_key = f'{item_type}_quantity'
             
             if design.get(has_key) and design.get(price_key, 0) > 0:
+                item_details = design.get(details_key, item_type.replace('_', ' ').title())
+                # Extract simple name (first line or before newline)
+                item_name = item_details.split('\n')[0] if '\n' in item_details else item_details
                 items.append({
-                    'name': design.get(details_key, item_type.replace('_', ' ').title()),
+                    'name': item_name,
                     'quantity': design.get(quantity_key, 1),
                     'price': float(design.get(price_key, 0)),
-                    'image': None
+                    'image': ITEM_ICON_MAP.get(item_type)  # Use icon from map if available
                 })
         
         print(f"DEBUG: Extracted {len(items) - items_before_fallback} items from old schema fields")
@@ -441,14 +480,34 @@ def create_order_from_quotation(share_token):
                             item_copy['image'] = f"{request.url_root}{img_path}"
                         items_with_full_urls.append(item_copy)
                     
+                    # Fix design image URL
+                    design_image_url = None
+                    if design_image:
+                        if design_image.startswith('http'):
+                            design_image_url = design_image
+                        elif design_image.startswith('static/'):
+                            design_image_url = f"{request.url_root}{design_image}"
+                        else:
+                            design_image_url = f"{request.url_root}static/{design_image}"
+                    
+                    # Fix original room image URL
+                    original_room_image_url = None
+                    if original_room_image:
+                        if original_room_image.startswith('http'):
+                            original_room_image_url = original_room_image
+                        elif original_room_image.startswith('static/'):
+                            original_room_image_url = f"{request.url_root}{original_room_image}"
+                        else:
+                            original_room_image_url = f"{request.url_root}static/{original_room_image}"
+                    
                     order_data = {
                         'customer_name': lead['customer_name'],
                         'customer_email': lead['customer_email'],
                         'customer_phone': lead['customer_phone'],
                         'order_id': order_id,
                         'design_name': design_name,
-                        'design_image': f"{request.url_root}static/{design_image}" if design_image and not design_image.startswith('http') else design_image,
-                        'original_room_image': f"{request.url_root}static/{original_room_image}" if original_room_image and not original_room_image.startswith('http') else original_room_image,
+                        'design_image': design_image_url,
+                        'original_room_image': original_room_image_url,
                         'items': items_with_full_urls,
                         'original_price': float(original_price),
                         'discount_percentage': float(discount_percentage),

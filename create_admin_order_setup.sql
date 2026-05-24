@@ -29,10 +29,11 @@ CREATE INDEX IF NOT EXISTS idx_orders_admin_created_by ON orders(admin_created_b
 CREATE INDEX IF NOT EXISTS idx_orders_customer_type ON orders(customer_type);
 CREATE INDEX IF NOT EXISTS idx_orders_requires_payment ON orders(requires_payment);
 
--- Make razorpay fields nullable for admin orders
-ALTER TABLE orders 
+-- Make razorpay fields and user_id nullable for admin orders
+ALTER TABLE orders
 ALTER COLUMN razorpay_order_id DROP NOT NULL,
-ALTER COLUMN razorpay_payment_id DROP NOT NULL;
+ALTER COLUMN razorpay_payment_id DROP NOT NULL,
+ALTER COLUMN user_id DROP NOT NULL;
 
 -- Update existing orders to have default values
 UPDATE orders 

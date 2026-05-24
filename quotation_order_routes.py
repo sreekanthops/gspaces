@@ -492,7 +492,6 @@ def create_order_from_quotation(share_token):
                     design_image_url = None
                     if primary_design.get('media_files'):
                         try:
-                            import json
                             media_files = primary_design['media_files']
                             if isinstance(media_files, str):
                                 media_files = json.loads(media_files)

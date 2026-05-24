@@ -27,13 +27,13 @@ def get_db_connection():
     return _db_connection_func()
 
 
-# Icon mapping for standard items (using actual filenames that exist)
+# Icon mapping for standard items (using actual filenames from default_items table)
 ITEM_ICON_MAP = {
     'table': 'img/icons/icon_table_20260503_163612_desk.png',
-    'chair': 'img/icons/icon_lounge_chairs_20260516_182534_lounge_chairs.png',
-    'plants': 'img/icons/icon_buddha_statue_20260516_183321_buddha.png',
-    'mini_plants': 'img/icons/icon_buddha_statue_20260516_183321_buddha.png',
-    'big_plants': 'img/icons/icon_buddha_statue_20260516_183321_buddha.png',
+    'chair': 'img/icons/icon_chair_20260524_151448_chair.png',  # Correct chair icon
+    'plants': None,  # No icon in database - needs to be uploaded
+    'mini_plants': None,  # No icon in database - needs to be uploaded
+    'big_plants': None,  # No icon in database - needs to be uploaded
     'lighting': 'img/icons/icon_track_light_20260511_205430_track_light.png',
     'storage': 'img/icons/icon_wall_racks_20260503_170008_Screenshot_2026-05-03_at_10.29.23_PM.png',
     'accessories': 'img/icons/icon_pen_holder_20260503_170322_Screenshot_2026-05-03_at_10.33.03_PM.png',

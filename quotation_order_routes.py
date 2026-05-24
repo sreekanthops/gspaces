@@ -28,71 +28,90 @@ def get_db_connection():
 
 
 def extract_items_from_quotation(lead_designs):
-    """Extract all items from quotation designs"""
+    """Extract all items from quotation designs - supports both JSONB arrays and old schema"""
     items = []
     
     for design in lead_designs:
-        # Table
-        if design.get('has_table') and design.get('table_price', 0) > 0:
-            items.append({
-                'name': design.get('table_details', 'Table'),
-                'quantity': design.get('table_quantity', 1),
-                'price': float(design.get('table_price', 0))
-            })
+        # Extract from JSONB arrays (new schema)
+        item_categories = ['tables', 'chairs', 'plants', 'lighting', 'storage', 'accessories', 'custom_items']
         
-        # Chair
-        if design.get('has_chair') and design.get('chair_price', 0) > 0:
-            items.append({
-                'name': design.get('chair_details', 'Chair'),
-                'quantity': design.get('chair_quantity', 1),
-                'price': float(design.get('chair_price', 0))
-            })
+        for category in item_categories:
+            category_items = design.get(category)
+            if category_items:
+                try:
+                    # Parse if string, otherwise use as-is
+                    if isinstance(category_items, str):
+                        category_items = json.loads(category_items)
+                    
+                    # Process each item in the category
+                    if isinstance(category_items, list):
+                        for item in category_items:
+                            if isinstance(item, dict) and item.get('price', 0) > 0:
+                                items.append({
+                                    'name': item.get('name') or item.get('details', category.title()),
+                                    'quantity': int(item.get('quantity', 1)),
+                                    'price': float(item.get('price', 0)),
+                                    'image': item.get('image')  # Include image if available
+                                })
+                except Exception as e:
+                    print(f"Error extracting {category}: {e}")
+                    pass
         
-        # Plants
-        if design.get('has_plants') and design.get('plants_price', 0) > 0:
-            items.append({
-                'name': design.get('plants_details', 'Plants'),
-                'quantity': design.get('plants_quantity', 1),
-                'price': float(design.get('plants_price', 0))
-            })
-        
-        # Lighting
-        if design.get('has_lighting') and design.get('lighting_price', 0) > 0:
-            items.append({
-                'name': design.get('lighting_details', 'Lighting'),
-                'quantity': design.get('lighting_quantity', 1),
-                'price': float(design.get('lighting_price', 0))
-            })
-        
-        # Storage
-        if design.get('has_storage') and design.get('storage_price', 0) > 0:
-            items.append({
-                'name': design.get('storage_details', 'Storage'),
-                'quantity': design.get('storage_quantity', 1),
-                'price': float(design.get('storage_price', 0))
-            })
-        
-        # Accessories
-        if design.get('has_accessories') and design.get('accessories_price', 0) > 0:
-            items.append({
-                'name': design.get('accessories_details', 'Accessories'),
-                'quantity': design.get('accessories_quantity', 1),
-                'price': float(design.get('accessories_price', 0))
-            })
-        
-        # Custom items
-        if design.get('custom_items'):
-            try:
-                custom_items = json.loads(design['custom_items']) if isinstance(design['custom_items'], str) else design['custom_items']
-                for item in custom_items:
-                    if item.get('price', 0) > 0:
-                        items.append({
-                            'name': item.get('name', 'Custom Item'),
-                            'quantity': item.get('quantity', 1),
-                            'price': float(item.get('price', 0))
-                        })
-            except:
-                pass
+        # Fallback: Extract from old schema fields (for backward compatibility)
+        if not items:
+            # Table
+            if design.get('has_table') and design.get('table_price', 0) > 0:
+                items.append({
+                    'name': design.get('table_details', 'Table'),
+                    'quantity': design.get('table_quantity', 1),
+                    'price': float(design.get('table_price', 0)),
+                    'image': None
+                })
+            
+            # Chair
+            if design.get('has_chair') and design.get('chair_price', 0) > 0:
+                items.append({
+                    'name': design.get('chair_details', 'Chair'),
+                    'quantity': design.get('chair_quantity', 1),
+                    'price': float(design.get('chair_price', 0)),
+                    'image': None
+                })
+            
+            # Plants
+            if design.get('has_plants') and design.get('plants_price', 0) > 0:
+                items.append({
+                    'name': design.get('plants_details', 'Plants'),
+                    'quantity': design.get('plants_quantity', 1),
+                    'price': float(design.get('plants_price', 0)),
+                    'image': None
+                })
+            
+            # Lighting
+            if design.get('has_lighting') and design.get('lighting_price', 0) > 0:
+                items.append({
+                    'name': design.get('lighting_details', 'Lighting'),
+                    'quantity': design.get('lighting_quantity', 1),
+                    'price': float(design.get('lighting_price', 0)),
+                    'image': None
+                })
+            
+            # Storage
+            if design.get('has_storage') and design.get('storage_price', 0) > 0:
+                items.append({
+                    'name': design.get('storage_details', 'Storage'),
+                    'quantity': design.get('storage_quantity', 1),
+                    'price': float(design.get('storage_price', 0)),
+                    'image': None
+                })
+            
+            # Accessories
+            if design.get('has_accessories') and design.get('accessories_price', 0) > 0:
+                items.append({
+                    'name': design.get('accessories_details', 'Accessories'),
+                    'quantity': design.get('accessories_quantity', 1),
+                    'price': float(design.get('accessories_price', 0)),
+                    'image': None
+                })
     
     return items
 
@@ -184,6 +203,7 @@ def create_order_from_quotation(share_token):
             primary_design = lead_designs[0]
             design_name = primary_design.get('design_name', lead.get('project_name', 'Custom Design'))
             design_image = primary_design.get('design_image')
+            original_room_image = primary_design.get('original_image')  # Get original room image for before/after
             
             # Create order
             cur.execute("""
@@ -293,6 +313,7 @@ def create_order_from_quotation(share_token):
                         'order_id': order_id,
                         'design_name': design_name,
                         'design_image': f"{request.url_root}{design_image}" if design_image else None,
+                        'original_room_image': f"{request.url_root}{original_room_image}" if original_room_image else None,
                         'items': items,
                         'original_price': float(original_price),
                         'discount_percentage': float(discount_percentage),

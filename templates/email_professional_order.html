@@ -32,16 +32,52 @@
                         </td>
                     </tr>
                     
+                    <!-- Before/After Comparison -->
+                    {% if original_room_image and design_image %}
+                    <tr>
+                        <td style="padding: 0 30px 30px;">
+                            <div style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+                                <h3 style="margin: 0 0 15px 0; font-size: 18px; color: #111827; font-weight: 700; text-align: center;">
+                                    ✨ Your Space Transformation
+                                </h3>
+                                <table role="presentation" style="width: 100%;">
+                                    <tr>
+                                        <td style="width: 48%; padding: 10px; vertical-align: top;">
+                                            <div style="background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                                                <img src="{{ original_room_image }}" alt="Before" style="width: 100%; height: 200px; object-fit: cover; display: block;" onerror="this.style.display='none'">
+                                                <div style="padding: 10px; text-align: center; background: #f9fafb;">
+                                                    <strong style="color: #6b7280; font-size: 14px;">BEFORE</strong>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td style="width: 4%; text-align: center; vertical-align: middle; font-size: 24px; color: #667eea;">
+                                            →
+                                        </td>
+                                        <td style="width: 48%; padding: 10px; vertical-align: top;">
+                                            <div style="background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                                                <img src="{{ design_image }}" alt="After" style="width: 100%; height: 200px; object-fit: cover; display: block;" onerror="this.style.display='none'">
+                                                <div style="padding: 10px; text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                                                    <strong style="color: white; font-size: 14px;">AFTER</strong>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endif %}
+                    
                     <!-- Order Card -->
                     <tr>
                         <td style="padding: 0 30px 30px;">
                             <table role="presentation" style="width: 100%; border: 2px solid #e5e7eb; border-radius: 12px; overflow: hidden;">
                                 
-                                <!-- Product Image -->
-                                {% if design_image %}
+                                <!-- Product Image (if no before/after) -->
+                                {% if design_image and not original_room_image %}
                                 <tr>
                                     <td style="padding: 0;">
-                                        <img src="{{ design_image }}" alt="{{ design_name }}" style="width: 100%; height: 300px; object-fit: cover; display: block;">
+                                        <img src="{{ design_image }}" alt="{{ design_name }}" style="width: 100%; height: 300px; object-fit: cover; display: block;" onerror="this.style.display='none'">
                                     </td>
                                 </tr>
                                 {% endif %}
@@ -56,21 +92,34 @@
                                             <h2 style="margin: 10px 0 0 0; font-size: 22px; color: #111827;">{{ design_name }}</h2>
                                         </div>
                                         
-                                        <!-- Items List -->
+                                        <!-- Items List with Images -->
                                         {% if items and items|length > 0 %}
                                         <div style="background: white; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
                                             <h3 style="margin: 0 0 15px 0; font-size: 16px; color: #374151; font-weight: 600;">📦 Items Included:</h3>
                                             <table role="presentation" style="width: 100%;">
                                                 {% for item in items %}
                                                 <tr>
-                                                    <td style="padding: 8px 0; border-bottom: 1px solid #f3f4f6; color: #6b7280; font-size: 14px;">
-                                                        {{ item.name }}
-                                                        {% if item.quantity > 1 %}
-                                                        <span style="color: #9ca3af;">(x{{ item.quantity }})</span>
-                                                        {% endif %}
-                                                    </td>
-                                                    <td style="padding: 8px 0; border-bottom: 1px solid #f3f4f6; text-align: right; color: #111827; font-size: 14px; font-weight: 600;">
-                                                        ₹{{ "{:,.0f}".format(item.price) }}
+                                                    <td style="padding: 12px 0; border-bottom: 1px solid #f3f4f6;">
+                                                        <table role="presentation" style="width: 100%;">
+                                                            <tr>
+                                                                {% if item.image %}
+                                                                <td style="width: 60px; padding-right: 12px; vertical-align: middle;">
+                                                                    <img src="{{ request.url_root }}{{ item.image }}" alt="{{ item.name }}"
+                                                                         style="width: 50px; height: 50px; object-fit: cover; border-radius: 8px; display: block;"
+                                                                         onerror="this.style.display='none'">
+                                                                </td>
+                                                                {% endif %}
+                                                                <td style="color: #6b7280; font-size: 14px; vertical-align: middle;">
+                                                                    <strong style="color: #111827;">{{ item.name }}</strong>
+                                                                    {% if item.quantity > 1 %}
+                                                                    <br><span style="color: #9ca3af; font-size: 13px;">Quantity: {{ item.quantity }}</span>
+                                                                    {% endif %}
+                                                                </td>
+                                                                <td style="text-align: right; color: #111827; font-size: 15px; font-weight: 600; vertical-align: middle; white-space: nowrap;">
+                                                                    ₹{{ "{:,.0f}".format(item.price) }}
+                                                                </td>
+                                                            </tr>
+                                                        </table>
                                                     </td>
                                                 </tr>
                                                 {% endfor %}

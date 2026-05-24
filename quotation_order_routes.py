@@ -27,32 +27,27 @@ def get_db_connection():
     return _db_connection_func()
 
 
-# Icon mapping for standard items (using actual filenames from default_items table)
-ITEM_ICON_MAP = {
-    'table': 'img/icons/icon_table_20260503_163612_desk.png',
-    'chair': 'img/icons/icon_chair_20260524_151448_chair.png',  # Correct chair icon
-    'plants': None,  # No icon in database - needs to be uploaded
-    'mini_plants': None,  # No icon in database - needs to be uploaded
-    'big_plants': None,  # No icon in database - needs to be uploaded
-    'lighting': 'img/icons/icon_track_light_20260511_205430_track_light.png',
-    'storage': 'img/icons/icon_wall_racks_20260503_170008_Screenshot_2026-05-03_at_10.29.23_PM.png',
-    'accessories': 'img/icons/icon_pen_holder_20260503_170322_Screenshot_2026-05-03_at_10.33.03_PM.png',
-    'frames': 'img/icons/icon_wall_mirror_20260512_184840_mirror.png',
-    'desk_lamp': 'img/icons/icon_desk_lamp_20260503_170218_table-lamp.png',
-    'pen_holder': 'img/icons/icon_pen_holder_20260503_170322_Screenshot_2026-05-03_at_10.33.03_PM.png',
-    'wall_racks': 'img/icons/icon_wall_racks_20260503_170008_Screenshot_2026-05-03_at_10.29.23_PM.png',
-    'desk_mat': 'img/icons/icon_desk_mat_20260503_170116_Screenshot_2026-05-03_at_10.31.05_PM.png',
-    'dustbin': 'img/icons/icon_socket_20260503_164948_extension.png',
-    'floor_mat': 'img/icons/icon_floor_mat_20260503_170630_Screenshot_2026-05-03_at_10.36.11_PM.png',
-    'keyboard': 'img/icons/icon_laptop_stand_20260503_170522_Screenshot_2026-05-03_at_10.35.00_PM.png',
-    'mouse': 'img/icons/icon_laptop_stand_20260503_170522_Screenshot_2026-05-03_at_10.35.00_PM.png',
-    'curtains': 'img/icons/icon_curtains_20260514_090008_curtains.png',
-    'monitor': 'img/icons/icon_laptop_stand_20260503_170522_Screenshot_2026-05-03_at_10.35.00_PM.png',
-    'laptop_stand': 'img/icons/icon_laptop_stand_20260503_170522_Screenshot_2026-05-03_at_10.35.00_PM.png',
-    'neon': 'img/icons/icon_neon_20260514_090322_neon.png',
-    'track_light': 'img/icons/icon_track_light_20260511_205430_track_light.png',
-    'floor_lamp': 'img/icons/icon_floor_lamp_20260511_204740_floor_lamp.png',
-}
+def get_item_icon_from_db(item_slug):
+    """Fetch icon path from default_items table dynamically"""
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        
+        cur.execute("""
+            SELECT icon_image FROM default_items
+            WHERE item_slug = %s AND icon_image IS NOT NULL
+            LIMIT 1
+        """, (item_slug,))
+        
+        result = cur.fetchone()
+        conn.close()
+        
+        if result and result.get('icon_image'):
+            return result['icon_image']
+        return None
+    except Exception as e:
+        print(f"Error fetching icon for {item_slug}: {e}")
+        return None
 
 # Simple display names for items (instead of long descriptions)
 ITEM_DISPLAY_NAMES = {
@@ -157,7 +152,7 @@ def extract_items_from_quotation(lead_designs):
                 'name': ITEM_DISPLAY_NAMES.get('table', 'Office Table'),
                 'quantity': design.get('table_quantity', 1),
                 'price': float(design.get('table_price', 0)),
-                'image': ITEM_ICON_MAP.get('table')
+                'image': get_item_icon_from_db('table')
             })
         
         # Chair
@@ -166,7 +161,7 @@ def extract_items_from_quotation(lead_designs):
                 'name': ITEM_DISPLAY_NAMES.get('chair', 'Office Chair'),
                 'quantity': design.get('chair_quantity', 1),
                 'price': float(design.get('chair_price', 0)),
-                'image': ITEM_ICON_MAP.get('chair')
+                'image': get_item_icon_from_db('chair')
             })
         
         # Plants
@@ -175,7 +170,7 @@ def extract_items_from_quotation(lead_designs):
                 'name': ITEM_DISPLAY_NAMES.get('plants', 'Plants'),
                 'quantity': design.get('plants_quantity', 1),
                 'price': float(design.get('plants_price', 0)),
-                'image': ITEM_ICON_MAP.get('plants')
+                'image': get_item_icon_from_db('plants')
             })
         
         # Lighting
@@ -184,7 +179,7 @@ def extract_items_from_quotation(lead_designs):
                 'name': ITEM_DISPLAY_NAMES.get('lighting', 'Lighting'),
                 'quantity': design.get('lighting_quantity', 1),
                 'price': float(design.get('lighting_price', 0)),
-                'image': ITEM_ICON_MAP.get('lighting')
+                'image': get_item_icon_from_db('lighting')
             })
         
         # Storage
@@ -193,7 +188,7 @@ def extract_items_from_quotation(lead_designs):
                 'name': ITEM_DISPLAY_NAMES.get('storage', 'Storage'),
                 'quantity': design.get('storage_quantity', 1),
                 'price': float(design.get('storage_price', 0)),
-                'image': ITEM_ICON_MAP.get('storage')
+                'image': get_item_icon_from_db('storage')
             })
         
         # Accessories
@@ -202,7 +197,7 @@ def extract_items_from_quotation(lead_designs):
                 'name': ITEM_DISPLAY_NAMES.get('accessories', 'Accessories'),
                 'quantity': design.get('accessories_quantity', 1),
                 'price': float(design.get('accessories_price', 0)),
-                'image': ITEM_ICON_MAP.get('accessories')
+                'image': get_item_icon_from_db('accessories')
             })
         
         # Additional specific items
@@ -227,7 +222,7 @@ def extract_items_from_quotation(lead_designs):
                     'name': item_name,
                     'quantity': design.get(quantity_key, 1),
                     'price': float(design.get(price_key, 0)),
-                    'image': ITEM_ICON_MAP.get(item_type)  # Use icon from map if available
+                    'image': get_item_icon_from_db(item_type)  # Fetch icon from database dynamically
                 })
         
         print(f"DEBUG: Extracted {len(items) - items_before_fallback} items from old schema fields")

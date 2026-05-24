@@ -172,13 +172,14 @@ app.config['SESSION_COOKIE_SECURE'] = os.getenv('SESSION_COOKIE_SECURE', 'False'
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
-# Mail Configuration
-app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER', 'smtp.gmail.com')
-app.config['MAIL_PORT'] = int(os.getenv('MAIL_PORT', 587))
-app.config['MAIL_USE_TLS'] = os.getenv('MAIL_USE_TLS', 'True').lower() == 'true'
-app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME', 'sri.chityala501@gmail.com') # Your email for sending
-app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD', 'zupd zixc vvzp kptk') # Your app password
-app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_DEFAULT_SENDER', 'sri.chityala501@gmail.com')
+# Mail Configuration - Hostinger Mail (SSL on port 465)
+app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER', 'smtp.hostinger.com')
+app.config['MAIL_PORT'] = int(os.getenv('MAIL_PORT', '465'))
+app.config['MAIL_USE_SSL'] = os.getenv('MAIL_USE_SSL', 'True').lower() == 'true'
+app.config['MAIL_USE_TLS'] = False  # Use SSL instead of TLS for port 465
+app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME', 'sreekanth.chityala@gspaces.in')
+app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')  # Password from environment variable only
+app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_DEFAULT_SENDER', 'sreekanth.chityala@gspaces.in')
 
 mail = Mail(app)
 

@@ -9,11 +9,11 @@ from email.mime.multipart import MIMEMultipart
 from flask import render_template
 import os
 
-# Email configuration - Using same credentials as main.py
-SMTP_SERVER = os.getenv('SMTP_SERVER', 'smtp.gmail.com')
-SMTP_PORT = int(os.getenv('SMTP_PORT', 587))
-SMTP_USERNAME = os.getenv('MAIL_USERNAME', 'sri.chityala501@gmail.com')
-SMTP_PASSWORD = os.getenv('MAIL_PASSWORD', 'zupd zixc vvzp kptk')
+# Email configuration - Hostinger Mail
+SMTP_SERVER = os.getenv('SMTP_SERVER', 'smtp.hostinger.com')
+SMTP_PORT = int(os.getenv('SMTP_PORT', '465'))  # Hostinger recommended port with SSL
+SMTP_USERNAME = os.getenv('MAIL_USERNAME', 'sreekanth.chityala@gspaces.in')
+SMTP_PASSWORD = os.getenv('MAIL_PASSWORD')  # Password from environment variable only
 FROM_EMAIL = os.getenv('FROM_EMAIL', SMTP_USERNAME)
 FROM_NAME = 'GSpaces Team'
 
@@ -53,9 +53,8 @@ def send_referral_update_email(user_email, user_name, referral_code, **kwargs):
         html_part = MIMEText(html_content, 'html')
         msg.attach(html_part)
         
-        # Send email
-        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
-            server.starttls()
+        # Send email using SSL (port 465)
+        with smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT) as server:
             server.login(SMTP_USERNAME, SMTP_PASSWORD)
             server.send_message(msg)
         
@@ -186,9 +185,8 @@ def send_personal_coupon_email(user_email, user_name, coupon_code, discount, exp
         html_part = MIMEText(html_content, 'html')
         msg.attach(html_part)
         
-        # Send email
-        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
-            server.starttls()
+        # Send email using SSL (port 465)
+        with smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT) as server:
             server.login(SMTP_USERNAME, SMTP_PASSWORD)
             server.send_message(msg)
         

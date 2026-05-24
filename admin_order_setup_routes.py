@@ -143,7 +143,7 @@ def create_order_setup():
             # Get product details
             cur.execute("""
                 SELECT id, name, price, category
-                FROM setups
+                FROM products
                 WHERE id = %s
             """, (product_id,))
             
@@ -212,7 +212,7 @@ def create_order_setup():
             cur.execute("""
                 INSERT INTO order_items (
                     order_id,
-                    setup_id,
+                    product_id,
                     quantity,
                     price
                 ) VALUES (%s, %s, %s, %s)
@@ -384,9 +384,9 @@ def update_admin_order_status(order_id):
             if send_notification and order.get('user_email'):
                 # Get product name
                 cur.execute("""
-                    SELECT s.name
+                    SELECT p.name
                     FROM order_items oi
-                    JOIN setups s ON s.id = oi.setup_id
+                    JOIN products p ON p.id = oi.product_id
                     WHERE oi.order_id = %s
                     LIMIT 1
                 """, (order_id,))
@@ -475,7 +475,7 @@ def get_product_details(product_id):
             
             cur.execute("""
                 SELECT id, name, price, category, description
-                FROM setups
+                FROM products
                 WHERE id = %s
             """, (product_id,))
             

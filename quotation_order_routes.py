@@ -496,7 +496,11 @@ def create_order_from_quotation(share_token):
                         elif design_image.startswith('static/'):
                             design_image_url = f"{request.url_root}{design_image}"
                         else:
-                            design_image_url = f"{request.url_root}static/{design_image}"
+                            # Remove 'img/' prefix if present (paths like 'img/leads/media/...')
+                            clean_path = design_image.replace('img/', '', 1) if design_image.startswith('img/') else design_image
+                            design_image_url = f"{request.url_root}static/{clean_path}"
+                    
+                    print(f"DEBUG: Design image URL: {design_image_url}")
                     
                     # Fix original room image URL
                     original_room_image_url = None
@@ -506,7 +510,11 @@ def create_order_from_quotation(share_token):
                         elif original_room_image.startswith('static/'):
                             original_room_image_url = f"{request.url_root}{original_room_image}"
                         else:
-                            original_room_image_url = f"{request.url_root}static/{original_room_image}"
+                            # Remove 'img/' prefix if present
+                            clean_path = original_room_image.replace('img/', '', 1) if original_room_image.startswith('img/') else original_room_image
+                            original_room_image_url = f"{request.url_root}static/{clean_path}"
+                    
+                    print(f"DEBUG: Original room image URL: {original_room_image_url}")
                     
                     order_data = {
                         'customer_name': lead['customer_name'],

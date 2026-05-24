@@ -488,17 +488,37 @@ def create_order_from_quotation(share_token):
                             item_copy['image'] = f"{request.url_root}{img_path}"
                         items_with_full_urls.append(item_copy)
                     
-                    # Fix design image URL
+                    # Fix design image URL - use media_files from JSONB if available
                     design_image_url = None
-                    if design_image:
+                    if primary_design.get('media_files'):
+                        try:
+                            import json
+                            media_files = primary_design['media_files']
+                            if isinstance(media_files, str):
+                                media_files = json.loads(media_files)
+                            if isinstance(media_files, list) and len(media_files) > 0:
+                                # Use first media file (primary image)
+                                first_media = media_files[0]
+                                media_url = first_media.get('url', '')
+                                if media_url:
+                                    if media_url.startswith('http'):
+                                        design_image_url = media_url
+                                    elif media_url.startswith('static/'):
+                                        design_image_url = f"{request.url_root}{media_url}"
+                                    else:
+                                        # Just prepend static/ - Flask url_for does this automatically
+                                        design_image_url = f"{request.url_root}static/{media_url}"
+                        except Exception as e:
+                            print(f"WARNING: Error parsing media_files: {e}")
+                    
+                    # Fallback to design_image if media_files not available
+                    if not design_image_url and design_image:
                         if design_image.startswith('http'):
                             design_image_url = design_image
                         elif design_image.startswith('static/'):
                             design_image_url = f"{request.url_root}{design_image}"
                         else:
-                            # Remove 'img/' prefix if present (paths like 'img/leads/media/...')
-                            clean_path = design_image.replace('img/', '', 1) if design_image.startswith('img/') else design_image
-                            design_image_url = f"{request.url_root}static/{clean_path}"
+                            design_image_url = f"{request.url_root}static/{design_image}"
                     
                     print(f"DEBUG: Design image URL: {design_image_url}")
                     
@@ -510,9 +530,7 @@ def create_order_from_quotation(share_token):
                         elif original_room_image.startswith('static/'):
                             original_room_image_url = f"{request.url_root}{original_room_image}"
                         else:
-                            # Remove 'img/' prefix if present
-                            clean_path = original_room_image.replace('img/', '', 1) if original_room_image.startswith('img/') else original_room_image
-                            original_room_image_url = f"{request.url_root}static/{clean_path}"
+                            original_room_image_url = f"{request.url_root}static/{original_room_image}"
                     
                     print(f"DEBUG: Original room image URL: {original_room_image_url}")
                     

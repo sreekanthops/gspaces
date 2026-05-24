@@ -27,27 +27,31 @@ def get_db_connection():
     return _db_connection_func()
 
 
-# Icon mapping for standard items
+# Icon mapping for standard items (using actual filenames that exist)
 ITEM_ICON_MAP = {
-    'table': 'img/icons/icon_table_20260503_170218_table.png',
-    'chair': 'img/icons/icon_chair_20260503_170218_chair.png',
-    'plants': 'img/icons/icon_plants_20260503_170218_plants.png',
-    'mini_plants': 'img/icons/icon_mini_plants_20260503_170218_mini_plants.png',
-    'big_plants': 'img/icons/icon_big_plants_20260503_170218_big_plants.png',
-    'lighting': 'img/icons/icon_lighting_20260503_170218_lighting.png',
-    'storage': 'img/icons/icon_storage_20260503_170218_storage.png',
-    'accessories': 'img/icons/icon_accessories_20260503_170218_accessories.png',
-    'frames': 'img/icons/icon_frames_20260503_170218_frames.png',
+    'table': 'img/icons/icon_table_20260503_163612_desk.png',
+    'chair': 'img/icons/icon_lounge_chairs_20260516_182534_lounge_chairs.png',
+    'plants': 'img/icons/icon_buddha_statue_20260516_183321_buddha.png',
+    'mini_plants': 'img/icons/icon_buddha_statue_20260516_183321_buddha.png',
+    'big_plants': 'img/icons/icon_buddha_statue_20260516_183321_buddha.png',
+    'lighting': 'img/icons/icon_track_light_20260511_205430_track_light.png',
+    'storage': 'img/icons/icon_wall_racks_20260503_170008_Screenshot_2026-05-03_at_10.29.23_PM.png',
+    'accessories': 'img/icons/icon_pen_holder_20260503_170322_Screenshot_2026-05-03_at_10.33.03_PM.png',
+    'frames': 'img/icons/icon_wall_mirror_20260512_184840_mirror.png',
     'desk_lamp': 'img/icons/icon_desk_lamp_20260503_170218_table-lamp.png',
     'pen_holder': 'img/icons/icon_pen_holder_20260503_170322_Screenshot_2026-05-03_at_10.33.03_PM.png',
-    'wall_racks': 'img/icons/icon_wall_racks_20260503_170218_wall_racks.png',
-    'desk_mat': 'img/icons/icon_desk_mat_20260503_170218_desk_mat.png',
-    'dustbin': 'img/icons/icon_dustbin_20260503_170218_dustbin.png',
-    'floor_mat': 'img/icons/icon_floor_mat_20260503_170218_floor_mat.png',
-    'keyboard': 'img/icons/icon_keyboard_20260503_170218_keyboard.png',
-    'mouse': 'img/icons/icon_mouse_20260503_170218_mouse.png',
+    'wall_racks': 'img/icons/icon_wall_racks_20260503_170008_Screenshot_2026-05-03_at_10.29.23_PM.png',
+    'desk_mat': 'img/icons/icon_desk_mat_20260503_170116_Screenshot_2026-05-03_at_10.31.05_PM.png',
+    'dustbin': 'img/icons/icon_socket_20260503_164948_extension.png',
+    'floor_mat': 'img/icons/icon_floor_mat_20260503_170630_Screenshot_2026-05-03_at_10.36.11_PM.png',
+    'keyboard': 'img/icons/icon_laptop_stand_20260503_170522_Screenshot_2026-05-03_at_10.35.00_PM.png',
+    'mouse': 'img/icons/icon_laptop_stand_20260503_170522_Screenshot_2026-05-03_at_10.35.00_PM.png',
     'curtains': 'img/icons/icon_curtains_20260514_090008_curtains.png',
-    'monitor': 'img/icons/icon_monitor_20260503_170218_monitor.png',
+    'monitor': 'img/icons/icon_laptop_stand_20260503_170522_Screenshot_2026-05-03_at_10.35.00_PM.png',
+    'laptop_stand': 'img/icons/icon_laptop_stand_20260503_170522_Screenshot_2026-05-03_at_10.35.00_PM.png',
+    'neon': 'img/icons/icon_neon_20260514_090322_neon.png',
+    'track_light': 'img/icons/icon_track_light_20260511_205430_track_light.png',
+    'floor_lamp': 'img/icons/icon_floor_lamp_20260511_204740_floor_lamp.png',
 }
 
 def extract_items_from_quotation(lead_designs):

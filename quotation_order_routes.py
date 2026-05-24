@@ -136,6 +136,30 @@ def extract_items_from_quotation(lead_designs):
                 'image': None
             })
         
+        # Additional specific items
+        additional_items = [
+            'mini_plants', 'big_plants', 'frames', 'wall_racks', 'desk_mat', 'dustbin',
+            'floor_mat', 'keyboard', 'mouse', 'paint', 'wardrobes', 'deskmat', 'carpet',
+            'curtains', 'wall_art', 'desk_organizer', 'monitor_stand', 'cable_management',
+            'footrest', 'monitor', 'laptop_stand', 'headphone_stand', 'whiteboard',
+            'bookshelf', 'trash_bin', 'desk_lamp', 'pen_holder', 'laptop_holder',
+            'profile_lighting', 'multi_socket'
+        ]
+        
+        for item_type in additional_items:
+            has_key = f'has_{item_type}'
+            price_key = f'{item_type}_price'
+            details_key = f'{item_type}_details'
+            quantity_key = f'{item_type}_quantity'
+            
+            if design.get(has_key) and design.get(price_key, 0) > 0:
+                items.append({
+                    'name': design.get(details_key, item_type.replace('_', ' ').title()),
+                    'quantity': design.get(quantity_key, 1),
+                    'price': float(design.get(price_key, 0)),
+                    'image': None
+                })
+        
         print(f"DEBUG: Extracted {len(items) - items_before_fallback} items from old schema fields")
     
     print(f"DEBUG: Total items extracted: {len(items)}")

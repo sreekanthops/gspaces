@@ -129,11 +129,17 @@ def extract_items_from_quotation(lead_designs):
                         print(f"DEBUG: Found {len(category_items)} items in {category_plural}")
                         for item in category_items:
                             if isinstance(item, dict) and item.get('price', 0) > 0:
+                                # Get item slug to fetch icon from database
+                                item_slug = item.get('slug') or item.get('name', '').lower().replace(' ', '_')
+                                
+                                # Fetch icon from database instead of using stored emoji/path
+                                icon_from_db = get_item_icon_from_db(item_slug)
+                                
                                 extracted_item = {
                                     'name': item.get('name') or item.get('details', category_plural.title()),
                                     'quantity': int(item.get('quantity', 1)),
                                     'price': float(item.get('price', 0)),
-                                    'image': item.get('image') or item.get('icon')  # Include image/icon if available
+                                    'image': icon_from_db  # Use icon from database, not from custom_items
                                 }
                                 items.append(extracted_item)
                                 print(f"DEBUG: Added item: {extracted_item}")

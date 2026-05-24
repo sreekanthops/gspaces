@@ -11,15 +11,15 @@ import requests
 from datetime import datetime
 
 # Configuration from environment variables
-ADMIN_EMAIL = os.getenv('ADMIN_EMAIL', 'sri.chityala501@gmail.com')
+ADMIN_EMAIL = os.getenv('ADMIN_EMAIL', 'sreekanth.chityala@gspaces.in')
 ADMIN_PHONE = os.getenv('ADMIN_PHONE', '+917075077384')  # WhatsApp number with country code
 APP_BASE_URL = os.getenv('APP_BASE_URL', 'http://13.51.205.239')  # Base URL for links in emails
 
-# Email Configuration (using existing MAIL_ variables from main.py)
-SMTP_SERVER = os.getenv('MAIL_SERVER', 'smtp.gmail.com')
-SMTP_PORT = int(os.getenv('MAIL_PORT', '587'))
-SMTP_USERNAME = os.getenv('MAIL_USERNAME', 'sri.chityala501@gmail.com')
-SMTP_PASSWORD = os.getenv('MAIL_PASSWORD', 'zupd zixc vvzp kptk')
+# Email Configuration - Hostinger Mail (SSL on port 465)
+SMTP_SERVER = os.getenv('MAIL_SERVER', 'smtp.hostinger.com')
+SMTP_PORT = int(os.getenv('MAIL_PORT', '465'))
+SMTP_USERNAME = os.getenv('MAIL_USERNAME', 'sreekanth.chityala@gspaces.in')
+SMTP_PASSWORD = os.getenv('MAIL_PASSWORD')  # Password from environment variable only
 SMTP_FROM_EMAIL = os.getenv('MAIL_DEFAULT_SENDER', SMTP_USERNAME)
 
 # WhatsApp Configuration (using CallMeBot - Free service)
@@ -60,9 +60,8 @@ def send_email_notification(to_email, subject, html_body, text_body=None):
         part2 = MIMEText(html_body, 'html')
         msg.attach(part2)
         
-        # Send email
-        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
-            server.starttls()
+        # Send email using SSL (port 465)
+        with smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT) as server:
             server.login(SMTP_USERNAME, SMTP_PASSWORD)
             server.send_message(msg)
         

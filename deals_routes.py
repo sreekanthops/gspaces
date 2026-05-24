@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 import os
 
 # Admin emails - must match main.py
-ADMIN_EMAILS = {"sri.chityala501@gmail.com", "srichityala501@gmail.com", "sreekanth.chityala@gspaces.com"}
+ADMIN_EMAILS = {"sreekanth.chityala@gspaces.in", "srichityala501@gmail.com", "sreekanth.chityala@gspaces.com"}
 
 def get_db_connection():
     """Get database connection"""

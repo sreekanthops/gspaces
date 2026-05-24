@@ -191,7 +191,7 @@ GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "226581903418-3ed1eqsl14qlou4nm
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "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")
 
 # Admin Emails (for simple admin check)
-ADMIN_EMAILS = {"sri.chityala501@gmail.com", "srichityala501@gmail.com", "sreekanth.chityala@gspaces.com"} # Replace with actual admin emails
+ADMIN_EMAILS = {"sreekanth.chityala@gspaces.in", "srichityala501@gmail.com", "sreekanth.chityala@gspaces.com"} # Replace with actual admin emails
 
 # Database Configuration
 DB_NAME = os.getenv("DB_NAME", "gspaces")
@@ -2468,11 +2468,9 @@ def send_order():
         # Attach as plain ASCII text (safe encoding)
         msg.attach(MIMEText(message_body, "plain", "utf-8"))
 
-        with smtplib.SMTP("smtp.gmail.com", 587) as server:
-            server.starttls()
-            # FIX: Use MAIL_USERNAME and MAIL_PASSWORD for consistency
-            server.login(os.getenv("MAIL_USERNAME", "sri.chityala501@gmail.com"),
-                        os.getenv("MAIL_PASSWORD", "zupd zixc vvzp kptk"))
+        # Use Hostinger SMTP with SSL
+        with smtplib.SMTP_SSL(app.config['MAIL_SERVER'], app.config['MAIL_PORT']) as server:
+            server.login(app.config['MAIL_USERNAME'], app.config['MAIL_PASSWORD'])
             server.sendmail(msg["From"], [msg["To"]], msg.as_string())
 
         # ------------------ RESPONSE ------------------ #
@@ -4065,7 +4063,7 @@ def payment_success():
         except Exception as e:
             print(f"Error sending new order notification: {e}")
 
-        sender = os.getenv("MAIL_USERNAME", "sri.chityala501@gmail.com")
+        sender = app.config['MAIL_USERNAME']
         receiver = current_user.email
         discount_amount = totals.get('coupon_discount', Decimal('0.00'))
         order_status_label = ORDER_STATUS_LABELS['confirmed']
@@ -4186,8 +4184,8 @@ def payment_success():
         """
         msg.attach(MIMEText(html_body, "html", "utf-8"))
 
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-            server.login(sender, os.getenv("MAIL_PASSWORD", "zupd zixc vvzp kptk"))
+        with smtplib.SMTP_SSL(app.config['MAIL_SERVER'], app.config['MAIL_PORT']) as server:
+            server.login(sender, app.config['MAIL_PASSWORD'])
             server.sendmail(sender, receiver, msg.as_string())
 
         return jsonify({

@@ -166,16 +166,18 @@ def create_order_from_quotation(share_token):
             # Extract items from quotation
             items = extract_items_from_quotation(lead_designs)
             
-            # Calculate pricing
-            original_price = sum(design.get('subtotal', 0) for design in lead_designs)
+            # Calculate pricing - ensure all values are Decimal for consistency
+            from decimal import Decimal
+            original_price = sum(Decimal(str(design.get('subtotal', 0) or design.get('final_price', 0) or design.get('price', 0))) for design in lead_designs)
             
             if final_price_override:
-                final_price = float(final_price_override)
+                final_price = Decimal(str(final_price_override))
                 discount_amount = original_price - final_price
                 if original_price > 0:
-                    discount_percentage = (discount_amount / original_price) * 100
+                    discount_percentage = float((discount_amount / original_price) * 100)
             else:
-                discount_amount = (original_price * discount_percentage) / 100
+                discount_percentage = float(discount_percentage)
+                discount_amount = (original_price * Decimal(str(discount_percentage))) / Decimal('100')
                 final_price = original_price - discount_amount
             
             # Get primary design details
@@ -217,7 +219,7 @@ def create_order_from_quotation(share_token):
                 RETURNING id
             """, (
                 lead['id'],
-                final_price,
+                float(final_price),
                 customer_type,
                 lead['customer_name'],
                 lead['customer_phone'],
@@ -228,9 +230,9 @@ def create_order_from_quotation(share_token):
                 lead['customer_phone'],
                 design_name,
                 design_image,
-                original_price,
-                discount_percentage,
-                discount_amount,
+                float(original_price),
+                float(discount_percentage),
+                float(discount_amount),
                 json.dumps(items),
                 lead.get('location')
             ))
@@ -292,10 +294,10 @@ def create_order_from_quotation(share_token):
                         'design_name': design_name,
                         'design_image': f"{request.url_root}{design_image}" if design_image else None,
                         'items': items,
-                        'original_price': original_price,
-                        'discount_percentage': discount_percentage,
-                        'discount_amount': discount_amount,
-                        'final_price': final_price,
+                        'original_price': float(original_price),
+                        'discount_percentage': float(discount_percentage),
+                        'discount_amount': float(discount_amount),
+                        'final_price': float(final_price),
                         'delivery_address': lead.get('location'),
                         'comments': lead.get('notes'),
                         'quotation_url': quotation_url

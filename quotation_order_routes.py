@@ -31,31 +31,43 @@ def extract_items_from_quotation(lead_designs):
     """Extract all items from quotation designs - supports both JSONB arrays and old schema"""
     items = []
     
-    for design in lead_designs:
+    print(f"DEBUG: Extracting items from {len(lead_designs)} designs")
+    
+    for design_idx, design in enumerate(lead_designs):
+        print(f"DEBUG: Processing design {design_idx + 1}")
+        print(f"DEBUG: Design keys: {design.keys()}")
+        
         # Extract from JSONB arrays (new schema)
         item_categories = ['tables', 'chairs', 'plants', 'lighting', 'storage', 'accessories', 'custom_items']
         
         for category in item_categories:
             category_items = design.get(category)
+            print(f"DEBUG: Category '{category}' type: {type(category_items)}, value: {category_items}")
+            
             if category_items:
                 try:
                     # Parse if string, otherwise use as-is
                     if isinstance(category_items, str):
                         category_items = json.loads(category_items)
+                        print(f"DEBUG: Parsed {category} from string: {category_items}")
                     
                     # Process each item in the category
                     if isinstance(category_items, list):
+                        print(f"DEBUG: Found {len(category_items)} items in {category}")
                         for item in category_items:
                             if isinstance(item, dict) and item.get('price', 0) > 0:
-                                items.append({
+                                extracted_item = {
                                     'name': item.get('name') or item.get('details', category.title()),
                                     'quantity': int(item.get('quantity', 1)),
                                     'price': float(item.get('price', 0)),
                                     'image': item.get('image')  # Include image if available
-                                })
+                                }
+                                items.append(extracted_item)
+                                print(f"DEBUG: Added item: {extracted_item}")
                 except Exception as e:
-                    print(f"Error extracting {category}: {e}")
-                    pass
+                    print(f"ERROR extracting {category}: {e}")
+                    import traceback
+                    traceback.print_exc()
         
         # Fallback: Extract from old schema fields (for backward compatibility)
         if not items:
@@ -113,6 +125,8 @@ def extract_items_from_quotation(lead_designs):
                     'image': None
                 })
     
+    print(f"DEBUG: Total items extracted: {len(items)}")
+    print(f"DEBUG: Items list: {items}")
     return items
 
 

@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Confirmation</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8fafc;">
+    <table role="presentation" style="width: 100%; border-collapse: collapse;">
+        <tr>
+            <td style="padding: 40px 20px;">
+                <table role="presentation" style="max-width: 600px; margin: 0 auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
+                    
+                    <!-- Header -->
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 30px; text-align: center;">
+                            <img src="{{ logo_url }}" alt="GSpaces" style="height: 60px; margin-bottom: 20px;">
+                            <h1 style="color: white; margin: 0; font-size: 28px; font-weight: 700;">Order Confirmation</h1>
+                            <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 16px;">Thank you for your order!</p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Greeting -->
+                    <tr>
+                        <td style="padding: 30px 30px 20px;">
+                            <p style="margin: 0; font-size: 16px; color: #111827; line-height: 1.6;">
+                                Hi <strong>{{ customer_name }}</strong>,
+                            </p>
+                            <p style="margin: 15px 0 0 0; font-size: 16px; color: #6b7280; line-height: 1.6;">
+                                We're excited to confirm your order! Our team will contact you shortly at <strong>{{ customer_phone }}</strong> to discuss the details and delivery timeline.
+                            </p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Order Card -->
+                    <tr>
+                        <td style="padding: 0 30px 30px;">
+                            <table role="presentation" style="width: 100%; border: 2px solid #e5e7eb; border-radius: 12px; overflow: hidden;">
+                                
+                                <!-- Product Image -->
+                                {% if design_image %}
+                                <tr>
+                                    <td style="padding: 0;">
+                                        <img src="{{ design_image }}" alt="{{ design_name }}" style="width: 100%; height: 300px; object-fit: cover; display: block;">
+                                    </td>
+                                </tr>
+                                {% endif %}
+                                
+                                <!-- Order Details -->
+                                <tr>
+                                    <td style="padding: 25px; background: #f9fafb;">
+                                        <div style="text-align: center; margin-bottom: 20px;">
+                                            <div style="display: inline-block; background: #667eea; color: white; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 600; margin-bottom: 10px;">
+                                                Order #{{ order_id }}
+                                            </div>
+                                            <h2 style="margin: 10px 0 0 0; font-size: 22px; color: #111827;">{{ design_name }}</h2>
+                                        </div>
+                                        
+                                        <!-- Items List -->
+                                        {% if items and items|length > 0 %}
+                                        <div style="background: white; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+                                            <h3 style="margin: 0 0 15px 0; font-size: 16px; color: #374151; font-weight: 600;">📦 Items Included:</h3>
+                                            <table role="presentation" style="width: 100%;">
+                                                {% for item in items %}
+                                                <tr>
+                                                    <td style="padding: 8px 0; border-bottom: 1px solid #f3f4f6; color: #6b7280; font-size: 14px;">
+                                                        {{ item.name }}
+                                                        {% if item.quantity > 1 %}
+                                                        <span style="color: #9ca3af;">(x{{ item.quantity }})</span>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td style="padding: 8px 0; border-bottom: 1px solid #f3f4f6; text-align: right; color: #111827; font-size: 14px; font-weight: 600;">
+                                                        ₹{{ "{:,.0f}".format(item.price) }}
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            </table>
+                                        </div>
+                                        {% endif %}
+                                        
+                                        <!-- Pricing Breakdown -->
+                                        <div style="background: white; border-radius: 8px; padding: 20px;">
+                                            <table role="presentation" style="width: 100%;">
+                                                <tr>
+                                                    <td style="padding: 10px 0; color: #6b7280; font-size: 15px;">Original Price:</td>
+                                                    <td style="padding: 10px 0; text-align: right; color: #6b7280; font-size: 15px;">₹{{ "{:,.0f}".format(original_price) }}</td>
+                                                </tr>
+                                                {% if discount_percentage > 0 %}
+                                                <tr>
+                                                    <td style="padding: 10px 0; color: #10b981; font-size: 15px; font-weight: 600;">
+                                                        Discount ({{ discount_percentage }}%):
+                                                    </td>
+                                                    <td style="padding: 10px 0; text-align: right; color: #10b981; font-size: 15px; font-weight: 600;">
+                                                        -₹{{ "{:,.0f}".format(discount_amount) }}
+                                                    </td>
+                                                </tr>
+                                                {% endif %}
+                                                <tr>
+                                                    <td colspan="2" style="padding: 15px 0 10px 0;">
+                                                        <div style="border-top: 2px solid #e5e7eb;"></div>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td style="padding: 10px 0; color: #111827; font-size: 18px; font-weight: 700;">Final Price:</td>
+                                                    <td style="padding: 10px 0; text-align: right; color: #667eea; font-size: 24px; font-weight: 700;">
+                                                        ₹{{ "{:,.0f}".format(final_price) }}
+                                                    </td>
+                                                </tr>
+                                                {% if discount_percentage > 0 %}
+                                                <tr>
+                                                    <td colspan="2" style="padding: 10px 0 0 0;">
+                                                        <div style="background: #d1fae5; color: #065f46; padding: 10px; border-radius: 6px; text-align: center; font-size: 14px; font-weight: 600;">
+                                                            🎉 You saved ₹{{ "{:,.0f}".format(discount_amount) }}!
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                                {% endif %}
+                                            </table>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    
+                    <!-- Additional Details -->
+                    {% if delivery_address or comments %}
+                    <tr>
+                        <td style="padding: 0 30px 30px;">
+                            <div style="background: #f9fafb; border-radius: 12px; padding: 20px;">
+                                <h3 style="margin: 0 0 15px 0; font-size: 16px; color: #374151; font-weight: 600;">📋 Order Details</h3>
+                                
+                                {% if delivery_address %}
+                                <div style="margin-bottom: 15px;">
+                                    <div style="color: #6b7280; font-size: 14px; margin-bottom: 5px;">Delivery Address:</div>
+                                    <div style="color: #111827; font-size: 15px; line-height: 1.5;">{{ delivery_address }}</div>
+                                </div>
+                                {% endif %}
+                                
+                                {% if comments %}
+                                <div>
+                                    <div style="color: #6b7280; font-size: 14px; margin-bottom: 5px;">Special Instructions:</div>
+                                    <div style="color: #111827; font-size: 15px; line-height: 1.5;">{{ comments }}</div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endif %}
+                    
+                    <!-- What's Next -->
+                    <tr>
+                        <td style="padding: 0 30px 30px;">
+                            <div style="background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%); border-radius: 12px; padding: 25px;">
+                                <h3 style="margin: 0 0 15px 0; font-size: 18px; color: #111827; font-weight: 700;">📞 What's Next?</h3>
+                                <ul style="margin: 0; padding-left: 20px; color: #374151; font-size: 15px; line-height: 1.8;">
+                                    <li>Our team will call you at <strong>{{ customer_phone }}</strong> within 24 hours</li>
+                                    <li>We'll confirm all details and discuss customization options</li>
+                                    <li>Delivery timeline and installation will be scheduled</li>
+                                    <li>You'll receive updates via email as your order progresses</li>
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+                    
+                    <!-- Action Buttons -->
+                    <tr>
+                        <td style="padding: 0 30px 40px; text-align: center;">
+                            <a href="{{ quotation_url }}" style="display: inline-block; background: #667eea; color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-size: 16px; font-weight: 600; margin: 0 10px 10px 0;">
+                                View Quotation
+                            </a>
+                            <a href="mailto:{{ company_email }}" style="display: inline-block; background: white; color: #667eea; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-size: 16px; font-weight: 600; border: 2px solid #667eea; margin: 0 0 10px 0;">
+                                Contact Us
+                            </a>
+                        </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                        <td style="background: #f9fafb; padding: 30px; text-align: center; border-top: 1px solid #e5e7eb;">
+                            <p style="margin: 0 0 10px 0; color: #6b7280; font-size: 14px;">
+                                <strong style="color: #111827;">GSpaces</strong> - Transform Your Space
+                            </p>
+                            <p style="margin: 0 0 10px 0; color: #9ca3af; font-size: 13px;">
+                                📧 {{ company_email }} | 📞 {{ company_phone }}
+                            </p>
+                            <p style="margin: 0; color: #9ca3af; font-size: 12px;">
+                                © 2026 GSpaces. All rights reserved.
+                            </p>
+                        </td>
+                    </tr>
+                    
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

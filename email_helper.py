@@ -198,6 +198,70 @@ def send_personal_coupon_email(user_email, user_name, coupon_code, discount, exp
         return False
 
 
+def send_professional_order_email(order_data):
+    """
+    Send professional order confirmation email with product images and pricing
+    
+    Args:
+        order_data: Dictionary containing:
+            - customer_name, customer_email, customer_phone
+            - order_id, design_name, design_image
+            - items: list of {name, quantity, price}
+            - original_price, discount_percentage, discount_amount, final_price
+            - delivery_address, comments
+            - quotation_url
+    """
+    try:
+        from flask import render_template, url_for
+        
+        # Prepare email data
+        email_context = {
+            'customer_name': order_data.get('customer_name'),
+            'customer_phone': order_data.get('customer_phone'),
+            'order_id': order_data.get('order_id'),
+            'design_name': order_data.get('design_name', 'Custom Design'),
+            'design_image': order_data.get('design_image'),
+            'items': order_data.get('items', []),
+            'original_price': order_data.get('original_price', 0),
+            'discount_percentage': order_data.get('discount_percentage', 0),
+            'discount_amount': order_data.get('discount_amount', 0),
+            'final_price': order_data.get('final_price', 0),
+            'delivery_address': order_data.get('delivery_address'),
+            'comments': order_data.get('comments'),
+            'quotation_url': order_data.get('quotation_url', 'https://gspaces.in'),
+            'logo_url': 'https://gspaces.in/static/img/gspaces-logo.png',
+            'company_email': 'sreekanth.chityala@gspaces.in',
+            'company_phone': '+91-XXXXXXXXXX'
+        }
+        
+        # Render HTML template
+        html_content = render_template('email_professional_order.html', **email_context)
+        
+        # Create message
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = f'🎉 Order Confirmation #{order_data.get("order_id")} - GSpaces'
+        msg['From'] = f'{FROM_NAME} <{FROM_EMAIL}>'
+        msg['To'] = order_data.get('customer_email')
+        
+        # Attach HTML content
+        html_part = MIMEText(html_content, 'html')
+        msg.attach(html_part)
+        
+        # Send email using SSL (port 465)
+        with smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT) as server:
+            server.login(SMTP_USERNAME, SMTP_PASSWORD)
+            server.send_message(msg)
+        
+        print(f"✅ Professional order email sent to {order_data.get('customer_email')}")
+        return True
+        
+    except Exception as e:
+        print(f"❌ Error sending professional order email: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
+
 def send_admin_order_notification(customer_email, customer_name, customer_phone, order_id, 
                                   product_name, notification_type='order_created', **kwargs):
     """

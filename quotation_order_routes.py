@@ -37,93 +37,106 @@ def extract_items_from_quotation(lead_designs):
         print(f"DEBUG: Processing design {design_idx + 1}")
         print(f"DEBUG: Design keys: {design.keys()}")
         
-        # Extract from JSONB arrays (new schema)
-        item_categories = ['tables', 'chairs', 'plants', 'lighting', 'storage', 'accessories', 'custom_items']
+        # Try both plural and singular forms, and check what's actually in the design
+        item_categories = [
+            ('tables', 'table'),
+            ('chairs', 'chair'),
+            ('plants', 'plant'),
+            ('lighting', 'light'),
+            ('storage', 'storage'),
+            ('accessories', 'accessory'),
+            ('custom_items', 'custom_item')
+        ]
         
-        for category in item_categories:
-            category_items = design.get(category)
-            print(f"DEBUG: Category '{category}' type: {type(category_items)}, value: {category_items}")
+        for category_plural, category_singular in item_categories:
+            # Try plural first, then singular
+            category_items = design.get(category_plural) or design.get(category_singular)
+            print(f"DEBUG: Category '{category_plural}/{category_singular}' type: {type(category_items)}, value: {category_items}")
             
             if category_items:
                 try:
                     # Parse if string, otherwise use as-is
                     if isinstance(category_items, str):
                         category_items = json.loads(category_items)
-                        print(f"DEBUG: Parsed {category} from string: {category_items}")
+                        print(f"DEBUG: Parsed {category_plural} from string: {category_items}")
                     
                     # Process each item in the category
                     if isinstance(category_items, list):
-                        print(f"DEBUG: Found {len(category_items)} items in {category}")
+                        print(f"DEBUG: Found {len(category_items)} items in {category_plural}")
                         for item in category_items:
                             if isinstance(item, dict) and item.get('price', 0) > 0:
                                 extracted_item = {
-                                    'name': item.get('name') or item.get('details', category.title()),
+                                    'name': item.get('name') or item.get('details', category_plural.title()),
                                     'quantity': int(item.get('quantity', 1)),
                                     'price': float(item.get('price', 0)),
-                                    'image': item.get('image')  # Include image if available
+                                    'image': item.get('image') or item.get('icon')  # Include image/icon if available
                                 }
                                 items.append(extracted_item)
                                 print(f"DEBUG: Added item: {extracted_item}")
                 except Exception as e:
-                    print(f"ERROR extracting {category}: {e}")
+                    print(f"ERROR extracting {category_plural}: {e}")
                     import traceback
                     traceback.print_exc()
         
-        # Fallback: Extract from old schema fields (for backward compatibility)
-        if not items:
-            # Table
-            if design.get('has_table') and design.get('table_price', 0) > 0:
-                items.append({
-                    'name': design.get('table_details', 'Table'),
-                    'quantity': design.get('table_quantity', 1),
-                    'price': float(design.get('table_price', 0)),
-                    'image': None
-                })
-            
-            # Chair
-            if design.get('has_chair') and design.get('chair_price', 0) > 0:
-                items.append({
-                    'name': design.get('chair_details', 'Chair'),
-                    'quantity': design.get('chair_quantity', 1),
-                    'price': float(design.get('chair_price', 0)),
-                    'image': None
-                })
-            
-            # Plants
-            if design.get('has_plants') and design.get('plants_price', 0) > 0:
-                items.append({
-                    'name': design.get('plants_details', 'Plants'),
-                    'quantity': design.get('plants_quantity', 1),
-                    'price': float(design.get('plants_price', 0)),
-                    'image': None
-                })
-            
-            # Lighting
-            if design.get('has_lighting') and design.get('lighting_price', 0) > 0:
-                items.append({
-                    'name': design.get('lighting_details', 'Lighting'),
-                    'quantity': design.get('lighting_quantity', 1),
-                    'price': float(design.get('lighting_price', 0)),
-                    'image': None
-                })
-            
-            # Storage
-            if design.get('has_storage') and design.get('storage_price', 0) > 0:
-                items.append({
-                    'name': design.get('storage_details', 'Storage'),
-                    'quantity': design.get('storage_quantity', 1),
-                    'price': float(design.get('storage_price', 0)),
-                    'image': None
-                })
-            
-            # Accessories
-            if design.get('has_accessories') and design.get('accessories_price', 0) > 0:
-                items.append({
-                    'name': design.get('accessories_details', 'Accessories'),
-                    'quantity': design.get('accessories_quantity', 1),
-                    'price': float(design.get('accessories_price', 0)),
-                    'image': None
-                })
+        # Also extract from old schema fields (for backward compatibility)
+        # Don't use "if not items" - we want to extract from BOTH if available
+        items_before_fallback = len(items)
+        
+        # Table
+        if design.get('has_table') and design.get('table_price', 0) > 0:
+            items.append({
+                'name': design.get('table_details', 'Table'),
+                'quantity': design.get('table_quantity', 1),
+                'price': float(design.get('table_price', 0)),
+                'image': None
+            })
+        
+        # Chair
+        if design.get('has_chair') and design.get('chair_price', 0) > 0:
+            items.append({
+                'name': design.get('chair_details', 'Chair'),
+                'quantity': design.get('chair_quantity', 1),
+                'price': float(design.get('chair_price', 0)),
+                'image': None
+            })
+        
+        # Plants
+        if design.get('has_plants') and design.get('plants_price', 0) > 0:
+            items.append({
+                'name': design.get('plants_details', 'Plants'),
+                'quantity': design.get('plants_quantity', 1),
+                'price': float(design.get('plants_price', 0)),
+                'image': None
+            })
+        
+        # Lighting
+        if design.get('has_lighting') and design.get('lighting_price', 0) > 0:
+            items.append({
+                'name': design.get('lighting_details', 'Lighting'),
+                'quantity': design.get('lighting_quantity', 1),
+                'price': float(design.get('lighting_price', 0)),
+                'image': None
+            })
+        
+        # Storage
+        if design.get('has_storage') and design.get('storage_price', 0) > 0:
+            items.append({
+                'name': design.get('storage_details', 'Storage'),
+                'quantity': design.get('storage_quantity', 1),
+                'price': float(design.get('storage_price', 0)),
+                'image': None
+            })
+        
+        # Accessories
+        if design.get('has_accessories') and design.get('accessories_price', 0) > 0:
+            items.append({
+                'name': design.get('accessories_details', 'Accessories'),
+                'quantity': design.get('accessories_quantity', 1),
+                'price': float(design.get('accessories_price', 0)),
+                'image': None
+            })
+        
+        print(f"DEBUG: Extracted {len(items) - items_before_fallback} items from old schema fields")
     
     print(f"DEBUG: Total items extracted: {len(items)}")
     print(f"DEBUG: Items list: {items}")

@@ -1155,6 +1155,87 @@
                         </div>
                     </div>
 
+                    <!-- 💰 COST ANALYSIS & PROFIT CALCULATOR (Admin Only - Internal) -->
+                    <div class="mt-4 p-4" style="background: linear-gradient(135deg, #fff5f5 0%, #ffe5e5 100%); border-radius: 15px; border: 3px solid #dc3545;">
+                        <h5 class="mb-3" style="color: #dc3545;">
+                            <i class="bi bi-calculator-fill"></i> Cost Analysis & Profit Calculator
+                            <span class="badge bg-danger ms-2">Admin Only - Internal</span>
+                        </h5>
+                        <p class="small text-muted mb-4">
+                            <i class="bi bi-info-circle"></i> Enter your actual cost prices to calculate profit/loss. This section is confidential and not visible to customers.
+                        </p>
+
+                        <!-- Items Cost Breakdown -->
+                        <div class="table-responsive mb-3">
+                            <table class="table table-sm table-bordered" style="background: white;">
+                                <thead style="background: #dc3545; color: white;">
+                                    <tr>
+                                        <th style="width: 25%;">Item</th>
+                                        <th style="width: 10%;">Qty</th>
+                                        <th style="width: 15%;">Your Cost (₹)</th>
+                                        <th style="width: 15%;">Customer Price (₹)</th>
+                                        <th style="width: 15%;">Total Cost (₹)</th>
+                                        <th style="width: 15%;">Total Revenue (₹)</th>
+                                        <th style="width: 15%;">Item Profit (₹)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="costAnalysisItems{{ design.id }}">
+                                    <!-- Will be populated by JavaScript -->
+                                </tbody>
+                                <tfoot style="background: #f8f9fa; font-weight: bold;">
+                                    <tr>
+                                        <td colspan="4" class="text-end">Items Subtotal:</td>
+                                        <td id="itemsTotalCost{{ design.id }}">₹0</td>
+                                        <td id="itemsTotalRevenue{{ design.id }}">₹0</td>
+                                        <td id="itemsTotalProfit{{ design.id }}" style="color: #28a745;">₹0</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+
+                        <!-- Additional Costs (Transportation, Installation, etc.) -->
+                        <div class="mb-3 p-3" style="background: white; border-radius: 10px; border: 2px dashed #dc3545;">
+                            <h6 class="mb-3"><i class="bi bi-truck"></i> Additional Costs (Transportation, Installation, Labor, etc.)</h6>
+                            <div id="additionalCosts{{ design.id }}">
+                                <!-- Additional cost rows will be added here -->
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-danger mt-2"
+                                    onclick="addAdditionalCost({{ design.id }})">
+                                <i class="bi bi-plus"></i> Add Cost Item
+                            </button>
+                            <div class="mt-3 p-2" style="background: #fff3cd; border-radius: 5px;">
+                                <strong>Additional Costs Total: <span id="additionalCostsTotal{{ design.id }}">₹0</span></strong>
+                            </div>
+                        </div>
+
+                        <!-- Final Profit Summary -->
+                        <div class="row g-3 p-3" style="background: white; border-radius: 10px; border: 2px solid #28a745;">
+                            <div class="col-12 mb-2">
+                                <h6 class="text-success"><i class="bi bi-graph-up-arrow"></i> Final Profit Analysis</h6>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-bold">Total Cost (Items + Additional)</label>
+                                <input type="text" id="finalTotalCost{{ design.id }}" class="form-control" readonly
+                                       style="background: #fff3cd; font-weight: bold; font-size: 1.1em; color: #856404;">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-bold">Customer Pays (After Discount)</label>
+                                <input type="text" id="finalTotalRevenue{{ design.id }}" class="form-control" readonly
+                                       style="background: #d1ecf1; font-weight: bold; font-size: 1.1em; color: #0c5460;">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-bold">Net Profit/Loss</label>
+                                <input type="text" id="finalProfit{{ design.id }}" class="form-control" readonly
+                                       style="font-weight: bold; font-size: 1.2em;">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-bold">Profit Margin %</label>
+                                <input type="text" id="profitMargin{{ design.id }}" class="form-control" readonly
+                                       style="font-weight: bold; font-size: 1.2em;">
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="row mt-3">
                         <div class="col-md-12 mb-3">
                             <label class="form-label">Additional Notes</label>
@@ -1459,6 +1540,229 @@
             
             // Update final price
             document.getElementById('finalPrice' + designId).value = finalPrice.toFixed(2);
+            
+            // Update cost analysis after calculating totals
+            updateCostAnalysis(designId);
+        }
+        
+        // ===== COST ANALYSIS FUNCTIONS =====
+        
+        function updateCostAnalysis(designId) {
+            const form = document.getElementById('updateForm' + designId);
+            if (!form) return;
+            
+            const tbody = document.getElementById('costAnalysisItems' + designId);
+            if (!tbody) return;
+            
+            tbody.innerHTML = '';
+            
+            let totalItemsCost = 0;
+            let totalItemsRevenue = 0;
+            
+            // List of all items
+            const items = [
+                {name: 'table', label: 'Table'},
+                {name: 'chair', label: 'Chair'},
+                {name: 'lighting', label: 'Rope Lighting'},
+                {name: 'profile_lighting', label: 'Profile Lighting'},
+                {name: 'storage', label: 'Storage'},
+                {name: 'big_plants', label: 'Big Plants'},
+                {name: 'mini_plants', label: 'Small Plants'},
+                {name: 'frames', label: 'Frames'},
+                {name: 'wall_racks', label: 'Wall Racks'},
+                {name: 'dustbin', label: 'Dustbin'},
+                {name: 'paint', label: 'Paint'},
+                {name: 'wardrobes', label: 'Wardrobes'},
+                {name: 'desk_mat', label: 'Desk Mat'},
+                {name: 'multi_socket', label: 'Multi Socket'},
+                {name: 'desk_lamp', label: 'Desk Lamp'},
+                {name: 'pen_holder', label: 'Pen Holder'},
+                {name: 'laptop_holder', label: 'Laptop Holder'}
+            ];
+            
+            // Process each item
+            items.forEach(item => {
+                const checkbox = form.querySelector(`[name="has_${item.name}"]`);
+                if (!checkbox || !checkbox.checked) return;
+                
+                let quantity = 1;
+                let customerPrice = 0;
+                let totalRevenue = 0;
+                
+                // Calculate quantity and revenue based on item type
+                if (item.name === 'table' || item.name === 'wardrobes') {
+                    const length = parseFloat(form.querySelector(`[name="${item.name}_length_ft"]`)?.value || 0);
+                    const width = parseFloat(form.querySelector(`[name="${item.name}_width_ft"]`)?.value || 0);
+                    const pricePerSqFt = parseFloat(form.querySelector(`[name="${item.name}_price"]`)?.value || 0);
+                    const sqFt = length * width;
+                    quantity = sqFt;
+                    customerPrice = pricePerSqFt;
+                    totalRevenue = sqFt * pricePerSqFt;
+                } else {
+                    quantity = parseFloat(form.querySelector(`[name="${item.name}_quantity"]`)?.value || 1);
+                    customerPrice = parseFloat(form.querySelector(`[name="${item.name}_price"]`)?.value || 0);
+                    totalRevenue = quantity * customerPrice;
+                }
+                
+                // Create row
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><strong>${item.label}</strong></td>
+                    <td>${quantity.toFixed(2)}</td>
+                    <td>
+                        <input type="number" class="form-control form-control-sm cost-price-input"
+                               data-item="${item.name}" data-design="${designId}"
+                               placeholder="Enter cost" min="0" step="0.01" value="0"
+                               onchange="calculateCostAnalysis(${designId})"
+                               style="width: 120px;">
+                    </td>
+                    <td>₹${customerPrice.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                    <td class="item-total-cost">₹0.00</td>
+                    <td>₹${totalRevenue.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                    <td class="item-profit" style="font-weight: bold;">₹0.00</td>
+                `;
+                tbody.appendChild(row);
+                
+                totalItemsRevenue += totalRevenue;
+            });
+            
+            // Add custom items
+            const customNames = form.querySelectorAll('[name="custom_item_name[]"]');
+            const customQuantities = form.querySelectorAll('[name="custom_item_quantity[]"]');
+            const customPrices = form.querySelectorAll('[name="custom_item_price[]"]');
+            
+            for (let i = 0; i < customNames.length; i++) {
+                const name = customNames[i].value || 'Custom Item';
+                const qty = parseFloat(customQuantities[i]?.value || 1);
+                const price = parseFloat(customPrices[i]?.value || 0);
+                const revenue = qty * price;
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><strong>${name}</strong> <span class="badge bg-info">Custom</span></td>
+                    <td>${qty}</td>
+                    <td>
+                        <input type="number" class="form-control form-control-sm cost-price-input"
+                               data-item="custom_${i}" data-design="${designId}"
+                               placeholder="Enter cost" min="0" step="0.01" value="0"
+                               onchange="calculateCostAnalysis(${designId})"
+                               style="width: 120px;">
+                    </td>
+                    <td>₹${price.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                    <td class="item-total-cost">₹0.00</td>
+                    <td>₹${revenue.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                    <td class="item-profit" style="font-weight: bold;">₹0.00</td>
+                `;
+                tbody.appendChild(row);
+                
+                totalItemsRevenue += revenue;
+            }
+            
+            // Update items totals
+            document.getElementById('itemsTotalCost' + designId).textContent = '₹0.00';
+            document.getElementById('itemsTotalRevenue' + designId).textContent =
+                '₹' + totalItemsRevenue.toLocaleString('en-IN', {minimumFractionDigits: 2});
+            document.getElementById('itemsTotalProfit' + designId).textContent = '₹0.00';
+            
+            // Calculate final profit
+            calculateCostAnalysis(designId);
+        }
+        
+        function calculateCostAnalysis(designId) {
+            const tbody = document.getElementById('costAnalysisItems' + designId);
+            if (!tbody) return;
+            
+            let totalItemsCost = 0;
+            let totalItemsRevenue = 0;
+            
+            // Calculate each item's cost and profit
+            const rows = tbody.querySelectorAll('tr');
+            rows.forEach(row => {
+                const costInput = row.querySelector('.cost-price-input');
+                const costPrice = parseFloat(costInput?.value || 0);
+                const qtyCell = row.cells[1];
+                const quantity = parseFloat(qtyCell.textContent);
+                const revenueCell = row.cells[5];
+                const revenue = parseFloat(revenueCell.textContent.replace('₹', '').replace(/,/g, ''));
+                
+                const itemTotalCost = quantity * costPrice;
+                const itemProfit = revenue - itemTotalCost;
+                
+                // Update row
+                row.querySelector('.item-total-cost').textContent =
+                    '₹' + itemTotalCost.toLocaleString('en-IN', {minimumFractionDigits: 2});
+                row.querySelector('.item-profit').textContent =
+                    '₹' + itemProfit.toLocaleString('en-IN', {minimumFractionDigits: 2});
+                row.querySelector('.item-profit').style.color = itemProfit >= 0 ? '#28a745' : '#dc3545';
+                
+                totalItemsCost += itemTotalCost;
+                totalItemsRevenue += revenue;
+            });
+            
+            // Update items subtotal
+            document.getElementById('itemsTotalCost' + designId).textContent =
+                '₹' + totalItemsCost.toLocaleString('en-IN', {minimumFractionDigits: 2});
+            document.getElementById('itemsTotalRevenue' + designId).textContent =
+                '₹' + totalItemsRevenue.toLocaleString('en-IN', {minimumFractionDigits: 2});
+            document.getElementById('itemsTotalProfit' + designId).textContent =
+                '₹' + (totalItemsRevenue - totalItemsCost).toLocaleString('en-IN', {minimumFractionDigits: 2});
+            
+            // Calculate additional costs
+            let additionalCostsTotal = 0;
+            const additionalCostInputs = document.querySelectorAll(`#additionalCosts${designId} .additional-cost-amount`);
+            additionalCostInputs.forEach(input => {
+                additionalCostsTotal += parseFloat(input.value || 0);
+            });
+            
+            document.getElementById('additionalCostsTotal' + designId).textContent =
+                '₹' + additionalCostsTotal.toLocaleString('en-IN', {minimumFractionDigits: 2});
+            
+            // Calculate final profit
+            const finalTotalCost = totalItemsCost + additionalCostsTotal;
+            const finalPrice = parseFloat(document.getElementById('finalPrice' + designId).value || 0);
+            const finalProfit = finalPrice - finalTotalCost;
+            const profitMargin = finalPrice > 0 ? (finalProfit / finalPrice * 100) : 0;
+            
+            // Update final summary
+            document.getElementById('finalTotalCost' + designId).value =
+                '₹' + finalTotalCost.toLocaleString('en-IN', {minimumFractionDigits: 2});
+            document.getElementById('finalTotalRevenue' + designId).value =
+                '₹' + finalPrice.toLocaleString('en-IN', {minimumFractionDigits: 2});
+            
+            const profitField = document.getElementById('finalProfit' + designId);
+            profitField.value = '₹' + finalProfit.toLocaleString('en-IN', {minimumFractionDigits: 2});
+            profitField.style.background = finalProfit >= 0 ? '#d4edda' : '#f8d7da';
+            profitField.style.color = finalProfit >= 0 ? '#155724' : '#721c24';
+            
+            const marginField = document.getElementById('profitMargin' + designId);
+            marginField.value = profitMargin.toFixed(2) + '%';
+            marginField.style.background = profitMargin >= 30 ? '#d4edda' : profitMargin >= 15 ? '#fff3cd' : '#f8d7da';
+            marginField.style.color = profitMargin >= 30 ? '#155724' : profitMargin >= 15 ? '#856404' : '#721c24';
+        }
+        
+        function addAdditionalCost(designId) {
+            const container = document.getElementById('additionalCosts' + designId);
+            const row = document.createElement('div');
+            row.className = 'row g-2 mb-2 additional-cost-row';
+            row.innerHTML = `
+                <div class="col-md-5">
+                    <input type="text" class="form-control form-control-sm" placeholder="e.g., Transportation, Installation"
+                           name="additional_cost_name[]">
+                </div>
+                <div class="col-md-5">
+                    <input type="number" class="form-control form-control-sm additional-cost-amount"
+                           placeholder="Amount (₹)" min="0" step="0.01" value="0"
+                           name="additional_cost_amount[]"
+                           onchange="calculateCostAnalysis(${designId})">
+                </div>
+                <div class="col-md-2">
+                    <button type="button" class="btn btn-danger btn-sm w-100"
+                            onclick="this.closest('.additional-cost-row').remove(); calculateCostAnalysis(${designId})">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            `;
+            container.appendChild(row);
         }
 
         function toggleDiscountInput(select, designId) {

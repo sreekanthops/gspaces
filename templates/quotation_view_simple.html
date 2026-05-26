@@ -2506,7 +2506,7 @@
                             <div class="input-group">
                                 <span class="input-group-text">₹</span>
                                 <input type="number" class="form-control" id="finalPrice" name="final_price_override"
-                                       min="0" step="0.01" required onchange="calculateDiscountFromPrice()">
+                                       min="0" step="0.01" required onchange="calculateDiscountFromPrice(); calculatePendingAmount();">
                             </div>
                             <small class="text-muted">You can manually adjust the final price</small>
                         </div>
@@ -2514,6 +2514,30 @@
                         <!-- Savings Display -->
                         <div class="alert alert-success mb-3" id="savingsDisplay" style="display: none;">
                             <strong>💰 Customer Saves:</strong> ₹<span id="savingsAmount">0</span>
+                        </div>
+
+                        <!-- Advance Amount -->
+                        <div class="mb-3">
+                            <label for="advanceAmount" class="form-label">Advance Amount Received</label>
+                            <div class="input-group">
+                                <span class="input-group-text">₹</span>
+                                <input type="number" class="form-control" id="advanceAmount" name="advance_amount"
+                                       min="0" step="0.01" value="0" onchange="calculatePendingAmount()">
+                            </div>
+                            <small class="text-muted">Amount already paid by customer</small>
+                        </div>
+
+                        <!-- Pending Amount Display -->
+                        <div class="alert alert-warning mb-3" id="pendingDisplay">
+                            <strong>⏳ Pending Amount:</strong> ₹<span id="pendingAmount">0</span>
+                        </div>
+
+                        <!-- Expected Delivery Date -->
+                        <div class="mb-3">
+                            <label for="expectedDeliveryDate" class="form-label">Expected Delivery Date</label>
+                            <input type="date" class="form-control" id="expectedDeliveryDate" name="expected_delivery_date"
+                                   min="{{ today }}">
+                            <small class="text-muted">When will the order be delivered?</small>
                         </div>
 
                         <!-- Delivery Address -->
@@ -2615,6 +2639,26 @@
                 savingsDisplay.style.display = 'block';
             } else {
                 savingsDisplay.style.display = 'none';
+            }
+        }
+
+        // Calculate pending amount
+        function calculatePendingAmount() {
+            const finalPrice = parseFloat(document.getElementById('finalPrice').value) || 0;
+            const advanceAmount = parseFloat(document.getElementById('advanceAmount').value) || 0;
+            
+            const pendingAmount = Math.max(0, finalPrice - advanceAmount);
+            
+            document.getElementById('pendingAmount').textContent = pendingAmount.toFixed(0);
+            
+            // Update display style based on pending amount
+            const pendingDisplay = document.getElementById('pendingDisplay');
+            if (pendingAmount > 0) {
+                pendingDisplay.classList.remove('alert-success');
+                pendingDisplay.classList.add('alert-warning');
+            } else {
+                pendingDisplay.classList.remove('alert-warning');
+                pendingDisplay.classList.add('alert-success');
             }
         }
 

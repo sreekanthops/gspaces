@@ -260,6 +260,10 @@ def create_order_from_quotation(share_token):
         customer_type = data.get('customer_type', 'quotation_order')
         admin_notes = data.get('admin_notes', '').strip()
         
+        # Get advance payment and delivery date
+        advance_amount = float(data.get('advance_amount', 0))
+        expected_delivery_date = data.get('expected_delivery_date', '').strip() or None
+        
         # Connect to database
         conn = get_db_connection()
         if not conn:
@@ -319,6 +323,9 @@ def create_order_from_quotation(share_token):
                 discount_amount = (original_price * Decimal(str(discount_percentage))) / Decimal('100')
                 final_price = original_price - discount_amount
             
+            # Calculate pending amount
+            pending_amount = final_price - Decimal(str(advance_amount))
+            
             # Get primary design details
             primary_design = lead_designs[0]
             design_name = primary_design.get('design_name', lead.get('project_name', 'Custom Design'))
@@ -350,7 +357,10 @@ def create_order_from_quotation(share_token):
                         discount_percentage = %s,
                         discount_amount = %s,
                         items_json = %s,
-                        delivery_address = %s
+                        delivery_address = %s,
+                        advance_amount = %s,
+                        pending_amount = %s,
+                        expected_delivery_date = %s
                     WHERE id = %s
                 """, (
                     float(final_price),
@@ -363,6 +373,9 @@ def create_order_from_quotation(share_token):
                     float(discount_amount),
                     json.dumps(items),
                     lead.get('location'),
+                    float(advance_amount),
+                    float(pending_amount),
+                    expected_delivery_date,
                     existing_order_id
                 ))
                 
@@ -409,11 +422,14 @@ def create_order_from_quotation(share_token):
                         discount_percentage,
                         discount_amount,
                         items_json,
-                        delivery_address
+                        delivery_address,
+                        advance_amount,
+                        pending_amount,
+                        expected_delivery_date
                     ) VALUES (
                         %s, NULL, CURRENT_TIMESTAMP, %s, 'Pending Confirmation', 'pending_confirmation',
                         'quotation_order', %s, %s, %s, %s, %s, FALSE, %s, %s, %s,
-                        %s, %s, %s, %s, %s, %s, %s
+                        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
                     )
                     RETURNING id
                 """, (
@@ -433,7 +449,10 @@ def create_order_from_quotation(share_token):
                     float(discount_percentage),
                     float(discount_amount),
                     json.dumps(items),
-                    lead.get('location')
+                    lead.get('location'),
+                    float(advance_amount),
+                    float(pending_amount),
+                    expected_delivery_date
                 ))
                 
                 order_id = cur.fetchone()['id']
@@ -561,6 +580,16 @@ def create_order_from_quotation(share_token):
                     
                     print(f"DEBUG: Original room image URL: {original_room_image_url}")
                     
+                    # Format delivery date if provided
+                    formatted_delivery_date = None
+                    if expected_delivery_date:
+                        try:
+                            from datetime import datetime
+                            date_obj = datetime.strptime(expected_delivery_date, '%Y-%m-%d')
+                            formatted_delivery_date = date_obj.strftime('%B %d, %Y')
+                        except:
+                            formatted_delivery_date = expected_delivery_date
+                    
                     order_data = {
                         'customer_name': lead['customer_name'],
                         'customer_email': lead['customer_email'],
@@ -574,6 +603,9 @@ def create_order_from_quotation(share_token):
                         'discount_percentage': float(discount_percentage),
                         'discount_amount': float(discount_amount),
                         'final_price': float(final_price),
+                        'advance_amount': float(advance_amount),
+                        'pending_amount': float(pending_amount),
+                        'expected_delivery_date': formatted_delivery_date,
                         'delivery_address': lead.get('location'),
                         'comments': lead.get('notes'),
                         'quotation_url': quotation_url

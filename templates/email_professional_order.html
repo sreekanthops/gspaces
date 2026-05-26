@@ -27,7 +27,7 @@
                                 Hi <strong>{{ customer_name }}</strong>,
                             </p>
                             <p style="margin: 15px 0 0 0; font-size: 16px; color: #6b7280; line-height: 1.6;">
-                                We're excited to confirm your order! Our team will contact you shortly at <strong>{{ customer_phone }}</strong> to discuss the details and delivery timeline.
+                                We're glad to have you as part of the GSpaces family! Your order has been confirmed and is now being processed. Thank you for choosing us to transform your space.
                             </p>
                         </td>
                     </tr>
@@ -195,7 +195,7 @@
                     {% endif %}
                     
                     <!-- Payment Summary -->
-                    {% if advance_amount is defined and advance_amount > 0 %}
+                    {% if advance_amount is defined %}
                     <tr>
                         <td style="padding: 0 30px 30px;">
                             <div style="background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); border-radius: 12px; padding: 25px;">
@@ -205,6 +205,7 @@
                                         <td style="padding: 8px 0; color: #374151; font-size: 15px;">Total Amount:</td>
                                         <td style="padding: 8px 0; text-align: right; color: #374151; font-size: 15px; font-weight: 600;">₹{{ "{:,.0f}".format(final_price) }}</td>
                                     </tr>
+                                    {% if advance_amount > 0 %}
                                     <tr>
                                         <td style="padding: 8px 0; color: #059669; font-size: 15px;">Advance Paid:</td>
                                         <td style="padding: 8px 0; text-align: right; color: #059669; font-size: 15px; font-weight: 600;">₹{{ "{:,.0f}".format(advance_amount) }}</td>
@@ -218,6 +219,17 @@
                                         <td style="padding: 8px 0; color: #111827; font-size: 17px; font-weight: 700;">Pending Amount:</td>
                                         <td style="padding: 8px 0; text-align: right; color: #dc2626; font-size: 20px; font-weight: 700;">₹{{ "{:,.0f}".format(pending_amount) }}</td>
                                     </tr>
+                                    {% else %}
+                                    <tr>
+                                        <td colspan="2" style="padding: 10px 0;">
+                                            <div style="border-top: 2px solid #10b981;"></div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 8px 0; color: #111827; font-size: 17px; font-weight: 700;">Amount Due:</td>
+                                        <td style="padding: 8px 0; text-align: right; color: #dc2626; font-size: 20px; font-weight: 700;">₹{{ "{:,.0f}".format(final_price) }}</td>
+                                    </tr>
+                                    {% endif %}
                                 </table>
                             </div>
                         </td>

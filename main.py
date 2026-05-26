@@ -592,6 +592,10 @@ def terms():
 def refund_policy():
     return render_template('refund.html')
 
+@app.route('/return-policy')
+def return_policy():
+    return render_template('return-policy.html')
+
 @app.route('/shipping')
 def shipping_policy():
     return render_template('shipping.html')

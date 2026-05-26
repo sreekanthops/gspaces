@@ -221,17 +221,21 @@ def send_professional_order_email(order_data):
             'order_id': order_data.get('order_id'),
             'design_name': order_data.get('design_name', 'Custom Design'),
             'design_image': order_data.get('design_image'),
+            'original_room_image': order_data.get('original_room_image'),
             'items': order_data.get('items', []),
             'original_price': order_data.get('original_price', 0),
             'discount_percentage': order_data.get('discount_percentage', 0),
             'discount_amount': order_data.get('discount_amount', 0),
             'final_price': order_data.get('final_price', 0),
+            'advance_amount': order_data.get('advance_amount', 0),
+            'pending_amount': order_data.get('pending_amount', 0),
+            'expected_delivery_date': order_data.get('expected_delivery_date'),
             'delivery_address': order_data.get('delivery_address'),
             'comments': order_data.get('comments'),
             'quotation_url': order_data.get('quotation_url', 'https://gspaces.in'),
             'logo_url': 'https://gspaces.in/static/img/gspaces-logo.png',
             'company_email': 'sreekanth.chityala@gspaces.in',
-            'company_phone': '+91-XXXXXXXXXX'
+            'company_phone': '+91-7075077384'
         }
         
         # Render HTML template

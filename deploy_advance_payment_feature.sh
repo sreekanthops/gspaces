@@ -16,7 +16,7 @@ NC='\033[0m' # No Color
 
 # Step 1: Database Migration
 echo -e "${BLUE}Step 1: Running database migration...${NC}"
-psql -U postgres -d gspaces -f add_advance_payment_delivery_date.sql
+psql -U sri -d gspaces -f add_advance_payment_delivery_date.sql
 
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}✅ Database migration completed successfully${NC}"
@@ -29,7 +29,7 @@ echo ""
 
 # Step 2: Verify database changes
 echo -e "${BLUE}Step 2: Verifying database changes...${NC}"
-psql -U postgres -d gspaces -c "SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'orders' AND column_name IN ('advance_amount', 'pending_amount', 'expected_delivery_date');"
+psql -U sri -d gspaces -c "SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'orders' AND column_name IN ('advance_amount', 'pending_amount', 'expected_delivery_date');"
 
 echo ""
 

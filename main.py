@@ -70,6 +70,7 @@ from admin_users_routes import admin_users_bp, set_db_connection_func
 from visitor_tracking_routes import register_visitor_routes
 from admin_order_setup_routes import register_admin_order_setup_routes
 from quotation_order_routes import register_quotation_order_routes
+from admin_cost_prices_routes import register_admin_cost_prices_routes
 
 # --- DISPOSABLE EMAIL DOMAINS BLACKLIST ---
 DISPOSABLE_EMAIL_DOMAINS = {
@@ -519,6 +520,9 @@ register_admin_order_setup_routes(app, connect_to_db)
 
 # Initialize quotation to order routes
 register_quotation_order_routes(app, connect_to_db)
+
+# Initialize admin cost prices routes
+register_admin_cost_prices_routes(app, connect_to_db)
 
 def get_catalogue_files():
     """Get list of files from the catalogue directory"""

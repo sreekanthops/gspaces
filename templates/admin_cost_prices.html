@@ -1,0 +1,213 @@
+{% extends "admin_sidebar.html" %}
+
+{% block title %}Manage Cost Prices - Admin{% endblock %}
+
+{% block admin_content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-gradient-primary text-white py-3">
+                    <h4 class="mb-0">
+                        <i class="bi bi-calculator"></i> Manage Cost Prices
+                        <span class="badge bg-warning text-dark ms-2">For Profit Analysis</span>
+                    </h4>
+                    <p class="mb-0 mt-2 small">Set the actual cost price for each item to calculate profit margins accurately</p>
+                </div>
+                <div class="card-body">
+                    <!-- Search and Filter -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <input type="text" id="searchInput" class="form-control" placeholder="🔍 Search items...">
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <button class="btn btn-success" onclick="saveAllCostPrices()">
+                                <i class="bi bi-save"></i> Save All Changes
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Cost Prices Table -->
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="costPricesTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Item Name</th>
+                                    <th>Category</th>
+                                    <th>Selling Price (Default)</th>
+                                    <th>Cost Price</th>
+                                    <th>Profit Margin</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="costPricesBody">
+                                <!-- Will be populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Load cost prices from database
+async function loadCostPrices() {
+    try {
+        const response = await fetch('/admin/api/cost-prices');
+        const data = await response.json();
+        
+        if (data.success) {
+            renderCostPricesTable(data.items);
+        }
+    } catch (error) {
+        console.error('Error loading cost prices:', error);
+        alert('Error loading cost prices');
+    }
+}
+
+// Render table
+function renderCostPricesTable(items) {
+    const tbody = document.getElementById('costPricesBody');
+    tbody.innerHTML = '';
+    
+    items.forEach(item => {
+        const sellingPrice = item.price || 0;
+        const costPrice = item.cost_price || 0;
+        const profitMargin = sellingPrice > 0 ? (((sellingPrice - costPrice) / sellingPrice) * 100) : 0;
+        
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>
+                <strong>${item.name}</strong>
+                ${item.icon_image ? `<img src="/${item.icon_image}" style="width: 24px; height: 24px; margin-left: 8px;">` : ''}
+            </td>
+            <td><span class="badge bg-info">${item.category || 'General'}</span></td>
+            <td>₹${sellingPrice.toLocaleString('en-IN')}</td>
+            <td>
+                <input type="number" 
+                       class="form-control cost-price-input" 
+                       data-item-id="${item.id}"
+                       value="${costPrice}"
+                       min="0"
+                       step="100"
+                       onchange="updateProfitMargin(this)">
+            </td>
+            <td>
+                <span class="profit-margin badge ${profitMargin >= 30 ? 'bg-success' : profitMargin >= 15 ? 'bg-warning' : 'bg-danger'}" 
+                      id="margin-${item.id}">
+                    ${profitMargin.toFixed(1)}%
+                </span>
+            </td>
+            <td>
+                <button class="btn btn-sm btn-primary" onclick="saveSingleCostPrice(${item.id})">
+                    <i class="bi bi-save"></i> Save
+                </button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+// Update profit margin display
+function updateProfitMargin(input) {
+    const itemId = input.dataset.itemId;
+    const costPrice = parseFloat(input.value) || 0;
+    const row = input.closest('tr');
+    const sellingPriceText = row.cells[2].textContent.replace('₹', '').replace(/,/g, '');
+    const sellingPrice = parseFloat(sellingPriceText) || 0;
+    
+    const profitMargin = sellingPrice > 0 ? (((sellingPrice - costPrice) / sellingPrice) * 100) : 0;
+    const marginBadge = document.getElementById(`margin-${itemId}`);
+    
+    marginBadge.textContent = profitMargin.toFixed(1) + '%';
+    marginBadge.className = `profit-margin badge ${profitMargin >= 30 ? 'bg-success' : profitMargin >= 15 ? 'bg-warning' : 'bg-danger'}`;
+}
+
+// Save single cost price
+async function saveSingleCostPrice(itemId) {
+    const input = document.querySelector(`input[data-item-id="${itemId}"]`);
+    const costPrice = parseFloat(input.value) || 0;
+    
+    try {
+        const response = await fetch('/admin/api/cost-prices/update', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({item_id: itemId, cost_price: costPrice})
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+            alert('✅ Cost price updated successfully!');
+        } else {
+            alert('❌ Error: ' + data.message);
+        }
+    } catch (error) {
+        console.error('Error saving cost price:', error);
+        alert('Error saving cost price');
+    }
+}
+
+// Save all cost prices
+async function saveAllCostPrices() {
+    const inputs = document.querySelectorAll('.cost-price-input');
+    const updates = [];
+    
+    inputs.forEach(input => {
+        updates.push({
+            item_id: parseInt(input.dataset.itemId),
+            cost_price: parseFloat(input.value) || 0
+        });
+    });
+    
+    try {
+        const response = await fetch('/admin/api/cost-prices/bulk-update', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({updates: updates})
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+            alert(`✅ Updated ${data.updated_count} cost prices successfully!`);
+        } else {
+            alert('❌ Error: ' + data.message);
+        }
+    } catch (error) {
+        console.error('Error saving cost prices:', error);
+        alert('Error saving cost prices');
+    }
+}
+
+// Search functionality
+document.getElementById('searchInput')?.addEventListener('input', function(e) {
+    const searchTerm = e.target.value.toLowerCase();
+    const rows = document.querySelectorAll('#costPricesBody tr');
+    
+    rows.forEach(row => {
+        const itemName = row.cells[0].textContent.toLowerCase();
+        const category = row.cells[1].textContent.toLowerCase();
+        
+        if (itemName.includes(searchTerm) || category.includes(searchTerm)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+});
+
+// Load on page load
+document.addEventListener('DOMContentLoaded', loadCostPrices);
+</script>
+
+<style>
+.cost-price-input {
+    width: 150px;
+}
+.profit-margin {
+    font-size: 0.9rem;
+    padding: 6px 12px;
+}
+</style>
+{% endblock %}

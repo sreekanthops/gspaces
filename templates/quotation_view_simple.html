@@ -1749,7 +1749,14 @@
                         </div>
                         
                         <div class="alert alert-warning mt-3" style="border-radius: 12px; border: 2px solid #fbbf24; background: #fef3c7;">
-                            <i class="bi bi-info-circle"></i> <strong>Note:</strong> Cost prices are fetched from the database. Update them in the admin panel to see accurate profit calculations.
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <i class="bi bi-info-circle"></i> <strong>Note:</strong> Cost prices are fetched from the database. Update them to see accurate profit calculations.
+                                </div>
+                                <a href="/admin/cost-prices" class="btn btn-sm btn-warning" style="border-radius: 8px;">
+                                    <i class="bi bi-pencil-square"></i> Manage Cost Prices
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1757,59 +1764,44 @@
             
             <script>
                 // Cost Analysis Calculator
+                // Fetch cost prices from database and calculate
                 document.addEventListener('DOMContentLoaded', function() {
-                    calculateCostAnalysis();
+                    fetchCostPricesAndCalculate();
                 });
                 
-                function calculateCostAnalysis() {
+                async function fetchCostPricesAndCalculate() {
+                    try {
+                        // Fetch cost prices from database
+                        const response = await fetch('/admin/api/cost-prices');
+                        const data = await response.json();
+                        
+                        if (data.success) {
+                            // Create cost prices map from database
+                            const costPricesMap = {};
+                            data.items.forEach(item => {
+                                costPricesMap[item.item_slug] = item.cost_price || (item.price * 0.6);
+                            });
+                            
+                            calculateCostAnalysis(costPricesMap);
+                        } else {
+                            console.error('Failed to fetch cost prices');
+                            // Use default 60% cost if fetch fails
+                            calculateCostAnalysis({});
+                        }
+                    } catch (error) {
+                        console.error('Error fetching cost prices:', error);
+                        // Use default 60% cost if fetch fails
+                        calculateCostAnalysis({});
+                    }
+                }
+                
+                function calculateCostAnalysis(costPricesMap = {}) {
                     const designs = {{ designs|tojson|safe }};
                     const tbody = document.getElementById('costAnalysisBody');
                     tbody.innerHTML = '';
                     
                     let totalCost = 0;
                     let totalSelling = 0;
-                    
-                    // Sample cost prices (in real implementation, fetch from database)
-                    const costPrices = {
-                        'table': 8000,
-                        'chair': 5000,
-                        'plants': 500,
-                        'mini_plants': 300,
-                        'big_plants': 800,
-                        'lighting': 2000,
-                        'storage': 6000,
-                        'accessories': 1000,
-                        'frames': 200,
-                        'desk_lamp': 800,
-                        'pen_holder': 150,
-                        'wall_racks': 1500,
-                        'desk_mat': 300,
-                        'dustbin': 200,
-                        'floor_mat': 500,
-                        'keyboard': 1500,
-                        'mouse': 800,
-                        'curtains': 2000,
-                        'monitor': 8000,
-                        'laptop_stand': 1200,
-                        'neon': 3000,
-                        'track_light': 2500,
-                        'floor_lamp': 1800,
-                        'wall_art': 1000,
-                        'desk_organizer': 400,
-                        'monitor_stand': 1000,
-                        'cable_management': 300,
-                        'footrest': 800,
-                        'headphone_stand': 500,
-                        'whiteboard': 2000,
-                        'bookshelf': 5000,
-                        'trash_bin': 300,
-                        'laptop_holder': 1000,
-                        'profile_lighting': 2500,
-                        'multi_socket': 500,
-                        'wardrobes': 15000,
-                        'carpet': 3000,
-                        'paint': 2000
-                    };
                     
                     designs.forEach(design => {
                         // Extract items from all categories
@@ -1822,7 +1814,7 @@
                                 items.forEach(item => {
                                     if (item.price > 0) {
                                         const itemSlug = item.slug || item.name.toLowerCase().replace(/\s+/g, '_');
-                                        const costPrice = costPrices[itemSlug] || (item.price * 0.6); // Default 40% margin if not found
+                                        const costPrice = costPricesMap[itemSlug] || (item.price * 0.6); // Default 40% margin if not found
                                         const quantity = item.quantity || 1;
                                         
                                         allItems.push({

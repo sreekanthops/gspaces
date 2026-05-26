@@ -1682,6 +1682,198 @@
                     </div>
                 </div>
             </div>
+            
+            <!-- Admin Cost Analysis Section -->
+            {% if current_user.is_authenticated and current_user.is_admin %}
+            <div class="admin-cost-analysis no-print" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); padding: 32px 48px; margin-top: 24px; border-radius: 20px; box-shadow: 0 8px 24px rgba(245, 158, 11, 0.2);">
+                <div class="row">
+                    <div class="col-12">
+                        <h3 style="color: white; font-weight: 700; font-size: 1.6rem; margin-bottom: 20px;">
+                            <i class="bi bi-calculator" style="font-size: 1.8rem; margin-right: 12px;"></i>
+                            Cost Analysis & Profit Calculator
+                            <span style="font-size: 0.75rem; background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 12px; margin-left: 12px;">Admin Only</span>
+                        </h3>
+                        
+                        <!-- Cost Breakdown Table -->
+                        <div style="background: white; border-radius: 16px; padding: 24px; margin-bottom: 20px;">
+                            <table class="table table-hover" id="costAnalysisTable">
+                                <thead style="background: #fef3c7; border-radius: 8px;">
+                                    <tr>
+                                        <th style="padding: 12px; border: none;">Item</th>
+                                        <th style="padding: 12px; border: none; text-align: center;">Qty</th>
+                                        <th style="padding: 12px; border: none; text-align: right;">Cost Price</th>
+                                        <th style="padding: 12px; border: none; text-align: right;">Selling Price</th>
+                                        <th style="padding: 12px; border: none; text-align: right;">Profit</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="costAnalysisBody">
+                                    <!-- Will be populated by JavaScript -->
+                                </tbody>
+                                <tfoot style="border-top: 3px solid #f59e0b;">
+                                    <tr style="font-weight: 700; font-size: 1.1rem;">
+                                        <td colspan="2" style="padding: 16px;">TOTAL</td>
+                                        <td style="padding: 16px; text-align: right; color: #dc2626;" id="totalCost">₹0</td>
+                                        <td style="padding: 16px; text-align: right; color: #2563eb;" id="totalSelling">₹0</td>
+                                        <td style="padding: 16px; text-align: right; color: #16a34a;" id="totalProfit">₹0</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                        
+                        <!-- Profit Summary Cards -->
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <div style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); padding: 20px; border-radius: 12px; text-align: center;">
+                                    <div style="color: rgba(255,255,255,0.9); font-size: 0.85rem; margin-bottom: 8px;">Total Cost</div>
+                                    <div style="color: white; font-size: 1.8rem; font-weight: 700;" id="summaryTotalCost">₹0</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); padding: 20px; border-radius: 12px; text-align: center;">
+                                    <div style="color: rgba(255,255,255,0.9); font-size: 0.85rem; margin-bottom: 8px;">Selling Price</div>
+                                    <div style="color: white; font-size: 1.8rem; font-weight: 700;" id="summarySellingPrice">₹0</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div style="background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); padding: 20px; border-radius: 12px; text-align: center;">
+                                    <div style="color: rgba(255,255,255,0.9); font-size: 0.85rem; margin-bottom: 8px;">Profit Amount</div>
+                                    <div style="color: white; font-size: 1.8rem; font-weight: 700;" id="summaryProfit">₹0</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div style="background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%); padding: 20px; border-radius: 12px; text-align: center;">
+                                    <div style="color: rgba(255,255,255,0.9); font-size: 0.85rem; margin-bottom: 8px;">Profit Margin</div>
+                                    <div style="color: white; font-size: 1.8rem; font-weight: 700;" id="summaryProfitMargin">0%</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-warning mt-3" style="border-radius: 12px; border: 2px solid #fbbf24; background: #fef3c7;">
+                            <i class="bi bi-info-circle"></i> <strong>Note:</strong> Cost prices are fetched from the database. Update them in the admin panel to see accurate profit calculations.
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <script>
+                // Cost Analysis Calculator
+                document.addEventListener('DOMContentLoaded', function() {
+                    calculateCostAnalysis();
+                });
+                
+                function calculateCostAnalysis() {
+                    const designs = {{ designs|tojson|safe }};
+                    const tbody = document.getElementById('costAnalysisBody');
+                    tbody.innerHTML = '';
+                    
+                    let totalCost = 0;
+                    let totalSelling = 0;
+                    
+                    // Sample cost prices (in real implementation, fetch from database)
+                    const costPrices = {
+                        'table': 8000,
+                        'chair': 5000,
+                        'plants': 500,
+                        'mini_plants': 300,
+                        'big_plants': 800,
+                        'lighting': 2000,
+                        'storage': 6000,
+                        'accessories': 1000,
+                        'frames': 200,
+                        'desk_lamp': 800,
+                        'pen_holder': 150,
+                        'wall_racks': 1500,
+                        'desk_mat': 300,
+                        'dustbin': 200,
+                        'floor_mat': 500,
+                        'keyboard': 1500,
+                        'mouse': 800,
+                        'curtains': 2000,
+                        'monitor': 8000,
+                        'laptop_stand': 1200,
+                        'neon': 3000,
+                        'track_light': 2500,
+                        'floor_lamp': 1800,
+                        'wall_art': 1000,
+                        'desk_organizer': 400,
+                        'monitor_stand': 1000,
+                        'cable_management': 300,
+                        'footrest': 800,
+                        'headphone_stand': 500,
+                        'whiteboard': 2000,
+                        'bookshelf': 5000,
+                        'trash_bin': 300,
+                        'laptop_holder': 1000,
+                        'profile_lighting': 2500,
+                        'multi_socket': 500,
+                        'wardrobes': 15000,
+                        'carpet': 3000,
+                        'paint': 2000
+                    };
+                    
+                    designs.forEach(design => {
+                        // Extract items from all categories
+                        const allItems = [];
+                        
+                        // Process each category
+                        ['tables', 'chairs', 'plants', 'lighting', 'storage', 'accessories', 'custom_items'].forEach(category => {
+                            const items = design[category] || [];
+                            if (Array.isArray(items)) {
+                                items.forEach(item => {
+                                    if (item.price > 0) {
+                                        const itemSlug = item.slug || item.name.toLowerCase().replace(/\s+/g, '_');
+                                        const costPrice = costPrices[itemSlug] || (item.price * 0.6); // Default 40% margin if not found
+                                        const quantity = item.quantity || 1;
+                                        
+                                        allItems.push({
+                                            name: item.name,
+                                            quantity: quantity,
+                                            costPrice: costPrice,
+                                            sellingPrice: item.price,
+                                            totalCost: costPrice * quantity,
+                                            totalSelling: item.price * quantity,
+                                            profit: (item.price - costPrice) * quantity
+                                        });
+                                    }
+                                });
+                            }
+                        });
+                        
+                        // Add rows to table
+                        allItems.forEach(item => {
+                            const row = document.createElement('tr');
+                            row.innerHTML = `
+                                <td style="padding: 12px;">${item.name}</td>
+                                <td style="padding: 12px; text-align: center;">${item.quantity}</td>
+                                <td style="padding: 12px; text-align: right; color: #dc2626;">₹${item.totalCost.toLocaleString('en-IN')}</td>
+                                <td style="padding: 12px; text-align: right; color: #2563eb;">₹${item.totalSelling.toLocaleString('en-IN')}</td>
+                                <td style="padding: 12px; text-align: right; color: ${item.profit >= 0 ? '#16a34a' : '#dc2626'}; font-weight: 600;">
+                                    ₹${item.profit.toLocaleString('en-IN')}
+                                </td>
+                            `;
+                            tbody.appendChild(row);
+                            
+                            totalCost += item.totalCost;
+                            totalSelling += item.totalSelling;
+                        });
+                    });
+                    
+                    const totalProfit = totalSelling - totalCost;
+                    const profitMargin = totalSelling > 0 ? ((totalProfit / totalSelling) * 100) : 0;
+                    
+                    // Update footer totals
+                    document.getElementById('totalCost').textContent = '₹' + totalCost.toLocaleString('en-IN');
+                    document.getElementById('totalSelling').textContent = '₹' + totalSelling.toLocaleString('en-IN');
+                    document.getElementById('totalProfit').textContent = '₹' + totalProfit.toLocaleString('en-IN');
+                    
+                    // Update summary cards
+                    document.getElementById('summaryTotalCost').textContent = '₹' + totalCost.toLocaleString('en-IN');
+                    document.getElementById('summarySellingPrice').textContent = '₹' + totalSelling.toLocaleString('en-IN');
+                    document.getElementById('summaryProfit').textContent = '₹' + totalProfit.toLocaleString('en-IN');
+                    document.getElementById('summaryProfitMargin').textContent = profitMargin.toFixed(1) + '%';
+                }
+            </script>
+            {% endif %}
             {% endif %}
         </div>
         <!-- Customer Feedback Section -->

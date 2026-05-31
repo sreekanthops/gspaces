@@ -240,6 +240,9 @@ def move_lead_section(lead_id):
 
         if lead_section == 'confirmed':
             lead_status = 'customer'
+        elif lead_section == 'delivered':
+            lead_status = 'delivered'
+            reminder_completed = True
         elif lead_section == 'reminders':
             lead_status = 'reminder'
             if not reminder_date_raw:
@@ -248,9 +251,6 @@ def move_lead_section(lead_id):
                 reminder_date = datetime.fromisoformat(reminder_date_raw)
             except ValueError:
                 return jsonify({'success': False, 'error': 'Invalid reminder date/time'}), 400
-
-        if lead_section == 'delivered':
-            reminder_completed = True
 
         leads_columns = get_leads_table_columns(cur)
         has_lead_section = 'lead_section' in leads_columns

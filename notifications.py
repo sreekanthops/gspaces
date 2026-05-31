@@ -494,8 +494,8 @@ def notify_order_status_update(order_id, customer_name, customer_email, customer
                 <div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px; margin-top: 30px; text-align: center;">
                     <p style="margin: 0 0 10px 0; color: #666; font-size: 14px;">Need help with your order?</p>
                     <p style="margin: 0;">
-                        <a href="mailto:support@gspaces.in" style="color: #667eea; text-decoration: none; font-weight: 600;">
-                            📧 support@gspaces.in
+                        <a href="mailto:sreekanth.chityala@gspaces.in" style="color: #667eea; text-decoration: none; font-weight: 600;">
+                            📧 sreekanth.chityala@gspaces.in
                         </a>
                         <span style="color: #ccc; margin: 0 10px;">|</span>
                         <a href="tel:+917075077384" style="color: #667eea; text-decoration: none; font-weight: 600;">
@@ -688,8 +688,8 @@ def send_custom_email_to_customer(customer_email, customer_name, order_id, subje
                 <div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px; margin-top: 30px; text-align: center;">
                     <p style="margin: 0 0 10px 0; color: #666; font-size: 14px;">Need further assistance?</p>
                     <p style="margin: 0;">
-                        <a href="mailto:support@gspaces.in" style="color: #667eea; text-decoration: none; font-weight: 600;">
-                            📧 support@gspaces.in
+                        <a href="mailto:sreekanth.chityala@gspaces.in" style="color: #667eea; text-decoration: none; font-weight: 600;">
+                            📧 sreekanth.chityala@gspaces.in
                         </a>
                         <span style="color: #ccc; margin: 0 10px;">|</span>
                         <a href="tel:+917075077384" style="color: #667eea; text-decoration: none; font-weight: 600;">
@@ -721,8 +721,8 @@ def send_custom_email_to_customer(customer_email, customer_name, order_id, subje
     {message}
     
     View your order: {APP_BASE_URL}/profile
-    
-    For assistance, contact us at support@gspaces.in or +91 707 507 7384
+    For assistance, contact us at sreekanth.chityala@gspaces.in or +91 707 507 7384
+
     
     Thank you for choosing GSpaces!
     """

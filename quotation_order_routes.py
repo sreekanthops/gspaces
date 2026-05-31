@@ -398,6 +398,9 @@ def create_order_from_quotation(share_token):
                 
             else:
                 # Create new order
+                # Use customer_email from lead, or construct from customer_name if not available
+                customer_email = lead.get('customer_email') or f"{lead['customer_name'].lower().replace(' ', '')}@customer.gspaces.in"
+                
                 cur.execute("""
                     INSERT INTO orders (
                         quotation_id,
@@ -416,7 +419,6 @@ def create_order_from_quotation(share_token):
                         admin_notes,
                         shipping_name,
                         shipping_phone,
-                        design_name,
                         design_image,
                         original_price,
                         discount_percentage,
@@ -429,7 +431,7 @@ def create_order_from_quotation(share_token):
                     ) VALUES (
                         %s, NULL, CURRENT_TIMESTAMP, %s, 'Pending Confirmation', 'pending_confirmation',
                         'quotation_order', %s, %s, %s, %s, %s, FALSE, %s, %s, %s,
-                        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                        %s, %s, %s, %s, %s, %s, %s, %s, %s
                     )
                     RETURNING id
                 """, (
@@ -438,12 +440,11 @@ def create_order_from_quotation(share_token):
                     customer_type,
                     lead['customer_name'],
                     lead['customer_phone'],
-                    lead.get('customer_email'),
+                    customer_email,  # Use the customer email, not admin email
                     current_user.id,
                     admin_notes,
                     lead['customer_name'],
                     lead['customer_phone'],
-                    design_name,
                     design_image,
                     float(original_price),
                     float(discount_percentage),

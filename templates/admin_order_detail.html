@@ -239,8 +239,7 @@
                             <div class="col-md-6">
                                 <label for="delivery_date" class="form-label">Delivery Date *</label>
                                 <input type="date" class="form-control" id="delivery_date" name="delivery_date"
-                                       value="{{ order.delivery_date.strftime('%Y-%m-%d') if order.delivery_date else '' }}"
-                                       max="{{ now().strftime('%Y-%m-%d') }}">
+                                       value="{{ order.delivery_date.strftime('%Y-%m-%d') if order.delivery_date else '' }}">
                                 <small class="text-muted">When was the order delivered?</small>
                             </div>
                             <div class="col-md-6">

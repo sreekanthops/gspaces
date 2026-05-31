@@ -28,5 +28,28 @@ Thumbs.db
 # --- Logs ---
 *.log
 
+# --- Uploaded Images (user-generated content) ---
+# These should NOT be in git - they're managed on the server
 static/img/Products/*
 !static/img/Products/.gitkeep
+
+static/img/profiles/*
+!static/img/profiles/.gitkeep
+
+static/img/leads/media/*
+!static/img/leads/media/.gitkeep
+
+static/img/leads/reference/*
+!static/img/leads/reference/.gitkeep
+
+static/img/icons/*
+!static/img/icons/.gitkeep
+
+static/img/blogs/*
+!static/img/blogs/.gitkeep
+
+static/img/testimonials/*
+!static/img/testimonials/.gitkeep
+
+static/img/team/*
+!static/img/team/.gitkeep

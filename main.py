@@ -3153,11 +3153,19 @@ def update_order_status(order_id):
             order_data = cur.fetchone()
             old_status = order_data['status_code'] if order_data else None
             
-            # Get order items - use simple format for now
+            # Get order items with icon information from default_items
             cur.execute("""
-                SELECT product_name, quantity, price_at_purchase
-                FROM order_items
-                WHERE order_id = %s
+                SELECT
+                    oi.product_name,
+                    oi.quantity,
+                    oi.price_at_purchase,
+                    di.icon_image,
+                    di.icon_emoji,
+                    di.description
+                FROM order_items oi
+                LEFT JOIN default_items di ON oi.product_id = di.id
+                WHERE oi.order_id = %s
+                ORDER BY oi.id
             """, (order_id,))
             order_items = cur.fetchall()
             

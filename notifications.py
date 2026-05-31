@@ -280,35 +280,79 @@ def notify_order_status_update(order_id, customer_name, customer_email, customer
     # Build order items HTML if provided
     items_html = ""
     if order_items and len(order_items) > 0:
-        items_rows = ""
-        for item in order_items:
-            items_rows += f"""
-            <tr style="border-bottom: 1px solid #e5e7eb;">
-                <td style="padding: 12px 8px;">
-                    <strong>{item.get('product_name', 'Product')}</strong>
-                </td>
-                <td style="padding: 12px 8px; text-align: center;">{item.get('quantity', 1)}</td>
-                <td style="padding: 12px 8px; text-align: right;">₹{item.get('price_at_purchase', 0)}</td>
-            </tr>
-            """
-        
-        items_html = f"""
-        <div style="margin: 20px 0;">
-            <h3 style="color: #2c3e50; margin-bottom: 15px;">Order Items</h3>
-            <table style="width: 100%; border-collapse: collapse; background: white; border: 1px solid #e5e7eb; border-radius: 8px;">
-                <thead>
-                    <tr style="background-color: #f8f9fa; border-bottom: 2px solid #e5e7eb;">
-                        <th style="padding: 12px 8px; text-align: left;">Product</th>
-                        <th style="padding: 12px 8px; text-align: center;">Qty</th>
-                        <th style="padding: 12px 8px; text-align: right;">Price</th>
-                    </tr>
-                </thead>
-                <tbody>
+        # For delivered status, show items without prices (like quotation page)
+        if new_status == 'delivered':
+            items_rows = ""
+            for item in order_items:
+                # Get icon - use emoji as fallback
+                icon_html = f'<span style="font-size: 24px;">📦</span>'
+                
+                # Try to get icon from item data if available
+                if item.get('icon_image'):
+                    icon_html = f'<img src="{item.get("icon_image")}" alt="{item.get("product_name", "Product")}" style="width: 32px; height: 32px; object-fit: contain; vertical-align: middle;">'
+                elif item.get('icon_emoji'):
+                    icon_html = f'<span style="font-size: 24px;">{item.get("icon_emoji")}</span>'
+                
+                quantity_badge = ""
+                if item.get('quantity', 1) > 1:
+                    quantity_badge = f'<span style="background: #e0e7ff; color: #4338ca; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; margin-left: 8px;">×{item.get("quantity")}</span>'
+                
+                items_rows += f"""
+                <div style="display: flex; align-items: flex-start; padding: 15px; margin-bottom: 10px; border-bottom: 1px solid #e5e7eb;">
+                    <div style="margin-right: 15px; min-width: 40px; text-align: center;">
+                        {icon_html}
+                    </div>
+                    <div style="flex: 1;">
+                        <div style="font-weight: 600; color: #374151; margin-bottom: 5px; font-size: 15px;">
+                            {item.get('product_name', 'Product')}
+                            {quantity_badge}
+                        </div>
+                        <div style="color: #6b7280; font-size: 14px; line-height: 1.5;">
+                            {item.get('description', 'Premium quality product for your workspace')}
+                        </div>
+                    </div>
+                </div>
+                """
+            
+            items_html = f"""
+            <div style="margin: 20px 0;">
+                <h3 style="color: #2c3e50; margin-bottom: 15px;">✅ Delivered Items</h3>
+                <div style="background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 10px;">
                     {items_rows}
-                </tbody>
-            </table>
-        </div>
-        """
+                </div>
+            </div>
+            """
+        else:
+            # For other statuses, show items with prices in table format
+            items_rows = ""
+            for item in order_items:
+                items_rows += f"""
+                <tr style="border-bottom: 1px solid #e5e7eb;">
+                    <td style="padding: 12px 8px;">
+                        <strong>{item.get('product_name', 'Product')}</strong>
+                    </td>
+                    <td style="padding: 12px 8px; text-align: center;">{item.get('quantity', 1)}</td>
+                    <td style="padding: 12px 8px; text-align: right;">₹{item.get('price_at_purchase', 0):,.2f}</td>
+                </tr>
+                """
+            
+            items_html = f"""
+            <div style="margin: 20px 0;">
+                <h3 style="color: #2c3e50; margin-bottom: 15px;">Order Items</h3>
+                <table style="width: 100%; border-collapse: collapse; background: white; border: 1px solid #e5e7eb; border-radius: 8px;">
+                    <thead>
+                        <tr style="background-color: #f8f9fa; border-bottom: 2px solid #e5e7eb;">
+                            <th style="padding: 12px 8px; text-align: left;">Product</th>
+                            <th style="padding: 12px 8px; text-align: center;">Qty</th>
+                            <th style="padding: 12px 8px; text-align: right;">Price</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {items_rows}
+                    </tbody>
+                </table>
+            </div>
+            """
     
     # Build payment summary section if provided
     payment_html = ""

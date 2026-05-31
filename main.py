@@ -3146,20 +3146,63 @@ def update_order_status(order_id):
             # Get old status, customer details, and order items before update
             cur.execute("""
                 SELECT o.status_code, o.user_email, o.shipping_name, o.shipping_phone, o.total_amount,
-                       o.advance_amount, o.pending_amount
+                       o.advance_amount, o.pending_amount, o.quotation_id
                 FROM orders o
                 WHERE o.id = %s
             """, (order_id,))
             order_data = cur.fetchone()
             old_status = order_data['status_code'] if order_data else None
             
-            # Get order items
-            cur.execute("""
-                SELECT product_name, quantity, price_at_purchase
-                FROM order_items
-                WHERE order_id = %s
-            """, (order_id,))
-            order_items = cur.fetchall()
+            # Get quotation items with icons if this order has a quotation
+            quotation_items = []
+            if order_data.get('quotation_id'):
+                cur.execute("""
+                    SELECT
+                        ld.design_name,
+                        ld.tables, ld.chairs, ld.storage, ld.decor, ld.lighting,
+                        ld.final_price, ld.price
+                    FROM lead_designs ld
+                    WHERE ld.lead_id = %s
+                    ORDER BY ld.design_order
+                """, (order_data['quotation_id'],))
+                designs = cur.fetchall()
+                
+                # Extract items from designs with icons
+                for design in designs:
+                    design_items = []
+                    for category in ['tables', 'chairs', 'storage', 'decor', 'lighting']:
+                        items = design.get(category)
+                        if items:
+                            import json
+                            try:
+                                items_list = json.loads(items) if isinstance(items, str) else items
+                                for item in items_list:
+                                    design_items.append({
+                                        'name': item.get('name', 'Item'),
+                                        'quantity': item.get('quantity', 1),
+                                        'icon': item.get('icon', '📦'),
+                                        'category': category.title()
+                                    })
+                            except:
+                                pass
+                    
+                    if design_items:
+                        quotation_items.append({
+                            'design_name': design.get('design_name', 'Design'),
+                            'items': design_items,
+                            'price': design.get('final_price') or design.get('price', 0)
+                        })
+            
+            # Fallback to order items if no quotation
+            if not quotation_items:
+                cur.execute("""
+                    SELECT product_name, quantity, price_at_purchase
+                    FROM order_items
+                    WHERE order_id = %s
+                """, (order_id,))
+                order_items = cur.fetchall()
+            else:
+                order_items = quotation_items
             
             # Update order status
             cur.execute("""

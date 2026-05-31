@@ -3159,7 +3159,7 @@ def update_order_status(order_id):
                 cur.execute("""
                     SELECT
                         ld.design_name,
-                        ld.tables, ld.chairs, ld.storage, ld.decor, ld.lighting,
+                        ld.items_json,
                         ld.final_price, ld.price
                     FROM lead_designs ld
                     WHERE ld.lead_id = %s
@@ -3168,23 +3168,28 @@ def update_order_status(order_id):
                 designs = cur.fetchall()
                 
                 # Extract items from designs with icons
+                import json
                 for design in designs:
                     design_items = []
-                    for category in ['tables', 'chairs', 'storage', 'decor', 'lighting']:
-                        items = design.get(category)
-                        if items:
-                            import json
-                            try:
-                                items_list = json.loads(items) if isinstance(items, str) else items
-                                for item in items_list:
-                                    design_items.append({
-                                        'name': item.get('name', 'Item'),
-                                        'quantity': item.get('quantity', 1),
-                                        'icon': item.get('icon', '📦'),
-                                        'category': category.title()
-                                    })
-                            except:
-                                pass
+                    items_json = design.get('items_json')
+                    
+                    if items_json:
+                        try:
+                            items_data = json.loads(items_json) if isinstance(items_json, str) else items_json
+                            
+                            # items_json contains categories like tables, chairs, etc.
+                            for category, items_list in items_data.items():
+                                if isinstance(items_list, list):
+                                    for item in items_list:
+                                        if isinstance(item, dict):
+                                            design_items.append({
+                                                'name': item.get('name', 'Item'),
+                                                'quantity': item.get('quantity', 1),
+                                                'icon': item.get('icon', '📦'),
+                                                'category': category.replace('_', ' ').title()
+                                            })
+                        except Exception as e:
+                            print(f"Error parsing items_json: {e}")
                     
                     if design_items:
                         quotation_items.append({

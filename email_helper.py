@@ -266,7 +266,7 @@ def send_professional_order_email(order_data):
         return False
 
 
-def send_admin_order_notification(customer_email, customer_name, customer_phone, order_id, 
+def send_admin_order_notification(customer_email, customer_name, customer_phone, order_id,
                                   product_name, notification_type='order_created', **kwargs):
     """
     Send email notification for admin-created orders
@@ -278,7 +278,8 @@ def send_admin_order_notification(customer_email, customer_name, customer_phone,
         order_id: Order ID
         product_name: Product/setup name
         notification_type: 'order_created' or 'status_update'
-        **kwargs: Additional data (quantity, comments, old_status, new_status, etc.)
+        **kwargs: Additional data (quantity, comments, old_status, new_status, advance_amount,
+                  pending_amount, expected_delivery_date, order_items, etc.)
     """
     try:
         if notification_type == 'order_created':
@@ -286,7 +287,43 @@ def send_admin_order_notification(customer_email, customer_name, customer_phone,
             quantity = kwargs.get('quantity', 1)
             comments = kwargs.get('comments', '')
             total_amount = kwargs.get('total_amount', 0)
+            advance_amount = kwargs.get('advance_amount', 0)
+            pending_amount = kwargs.get('pending_amount', total_amount)
+            expected_delivery_date = kwargs.get('expected_delivery_date', '')
+            order_items = kwargs.get('order_items', [])
             
+            # Build items table HTML
+            items_html = ''
+            if order_items:
+                items_html = '<div style="margin: 20px 0;"><h3 style="color: #374151; margin-bottom: 15px;">📦 Order Items</h3><table style="width: 100%; border-collapse: collapse;">'
+                items_html += '<thead><tr style="background: #f3f4f6;"><th style="padding: 10px; text-align: left; border-bottom: 2px solid #e5e7eb;">Item</th><th style="padding: 10px; text-align: center; border-bottom: 2px solid #e5e7eb;">Qty</th><th style="padding: 10px; text-align: right; border-bottom: 2px solid #e5e7eb;">Price</th></tr></thead><tbody>'
+                for item in order_items:
+                    items_html += f'<tr><td style="padding: 10px; border-bottom: 1px solid #e5e7eb;">{item.get("product_name", "Item")}</td><td style="padding: 10px; text-align: center; border-bottom: 1px solid #e5e7eb;">{item.get("quantity", 1)}</td><td style="padding: 10px; text-align: right; border-bottom: 1px solid #e5e7eb;">₹{item.get("price_at_purchase", 0):,.2f}</td></tr>'
+                items_html += '</tbody></table></div>'
+
+            # Build payment summary HTML
+            payment_html = ''
+            if advance_amount > 0:
+                payment_html = f'''
+                <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 20px; border-radius: 12px; margin: 20px 0; color: white;">
+                    <h3 style="color: white; margin-top: 0;">💰 Payment Summary</h3>
+                    <div style="display: flex; justify-content: space-around; margin-top: 15px;">
+                        <div style="text-align: center;">
+                            <div style="font-size: 14px; opacity: 0.9;">Total Amount</div>
+                            <div style="font-size: 24px; font-weight: bold;">₹{total_amount:,.2f}</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 14px; opacity: 0.9;">Advance Paid</div>
+                            <div style="font-size: 24px; font-weight: bold;">₹{advance_amount:,.2f}</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 14px; opacity: 0.9;">Pending</div>
+                            <div style="font-size: 24px; font-weight: bold;">₹{pending_amount:,.2f}</div>
+                        </div>
+                    </div>
+                </div>
+                '''
+
             html_content = f"""
             <!DOCTYPE html>
             <html>
@@ -305,6 +342,7 @@ def send_admin_order_notification(customer_email, customer_name, customer_phone,
                     .button {{ display: inline-block; background: #8b5cf6; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; margin: 20px 0; }}
                     .footer {{ text-align: center; color: #6b7280; font-size: 12px; margin-top: 30px; }}
                     .highlight {{ background: #dbeafe; padding: 15px; border-left: 4px solid #3b82f6; margin: 20px 0; border-radius: 4px; }}
+                    .thank-you {{ background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); padding: 20px; border-radius: 12px; margin: 20px 0; text-align: center; color: white; }}
                 </style>
             </head>
             <body>
@@ -328,17 +366,15 @@ def send_admin_order_notification(customer_email, customer_name, customer_phone,
                                 <span class="info-label">Product:</span>
                                 <span class="info-value">{product_name}</span>
                             </div>
-                            <div class="info-row">
-                                <span class="info-label">Quantity:</span>
-                                <span class="info-value">{quantity}</span>
-                            </div>
-                            {f'<div class="info-row"><span class="info-label">Total Amount:</span><span class="info-value">₹{total_amount:,.2f}</span></div>' if total_amount > 0 else ''}
+                            {f'<div class="info-row"><span class="info-label">Expected Delivery:</span><span class="info-value">{expected_delivery_date}</span></div>' if expected_delivery_date else ''}
                             <div class="info-row">
                                 <span class="info-label">Contact Phone:</span>
                                 <span class="info-value">{customer_phone}</span>
                             </div>
                         </div>
                         
+                        {items_html}
+                        {payment_html}
                         {f'<div class="highlight"><strong>Your Comments:</strong><br>{comments}</div>' if comments else ''}
                         
                         <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
@@ -346,9 +382,14 @@ def send_admin_order_notification(customer_email, customer_name, customer_phone,
                             <ul style="color: #6b7280; margin: 10px 0;">
                                 <li>Our team will call you at <strong>{customer_phone}</strong> to confirm order details</li>
                                 <li>We'll discuss delivery timeline and any customization options</li>
-                                <li>Payment details will be shared during confirmation</li>
+                                {f'<li>Pending amount of <strong>₹{pending_amount:,.2f}</strong> to be paid on delivery</li>' if advance_amount > 0 else '<li>Payment details will be shared during confirmation</li>'}
                                 <li>You'll receive updates via email as your order progresses</li>
                             </ul>
+                        </div>
+                        
+                        <div class="thank-you">
+                            <h3 style="color: white; margin-top: 0;">🙏 Thank You for Choosing GSpaces!</h3>
+                            <p style="margin: 10px 0; font-size: 16px;">We're excited to transform your space and deliver an exceptional experience.</p>
                         </div>
                         
                         <p style="text-align: center;">
@@ -361,7 +402,7 @@ def send_admin_order_notification(customer_email, customer_name, customer_phone,
                     </div>
                     <div class="footer">
                         <p><strong>GSpaces</strong> - Transform Your Space</p>
-                        <p>📧 sreekanth.chityala@gspaces.in | 📞 +91-XXXXXXXXXX</p>
+                        <p>📧 sreekanth.chityala@gspaces.in | 📞 +91-7075077384</p>
                         <p>© 2026 GSpaces. All rights reserved.</p>
                     </div>
                 </div>
@@ -373,6 +414,11 @@ def send_admin_order_notification(customer_email, customer_name, customer_phone,
             old_status = kwargs.get('old_status', '').replace('_', ' ').title()
             new_status = kwargs.get('new_status', '').replace('_', ' ').title()
             subject = f'Order Status Update - #{order_id} | GSpaces'
+            
+            advance_amount = kwargs.get('advance_amount', 0)
+            pending_amount = kwargs.get('pending_amount', 0)
+            total_amount = kwargs.get('total_amount', 0)
+            order_items = kwargs.get('order_items', [])
             
             # Status-specific messages
             status_messages = {
@@ -388,6 +434,71 @@ def send_admin_order_notification(customer_email, customer_name, customer_phone,
             
             status_key = kwargs.get('new_status', '').lower()
             status_message = status_messages.get(status_key, 'Your order status has been updated.')
+            
+            # Build delivered items HTML for delivered status
+            delivered_items_html = ''
+            if status_key == 'delivered' and order_items:
+                delivered_items_html = '''
+                <div style="background: #f0fdf4; padding: 20px; border-radius: 12px; margin: 20px 0; border: 2px solid #10b981;">
+                    <h3 style="color: #059669; margin-top: 0;">📦 Delivered Items</h3>
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="background: #d1fae5;">
+                                <th style="padding: 10px; text-align: left; border-bottom: 2px solid #10b981;">Item</th>
+                                <th style="padding: 10px; text-align: center; border-bottom: 2px solid #10b981;">Qty</th>
+                                <th style="padding: 10px; text-align: center; border-bottom: 2px solid #10b981;">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                '''
+                for item in order_items:
+                    delivered_items_html += f'''
+                        <tr>
+                            <td style="padding: 10px; border-bottom: 1px solid #d1fae5;">{item.get("product_name", "Item")}</td>
+                            <td style="padding: 10px; text-align: center; border-bottom: 1px solid #d1fae5;">{item.get("quantity", 1)}</td>
+                            <td style="padding: 10px; text-align: center; border-bottom: 1px solid #d1fae5;"><span style="background: #10b981; color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px;">✓ Delivered</span></td>
+                        </tr>
+                    '''
+                delivered_items_html += '</tbody></table></div>'
+            
+            # Build payment summary for delivered orders
+            payment_summary_html = ''
+            if status_key == 'delivered' and pending_amount > 0:
+                payment_summary_html = f'''
+                <div style="background: #fef3c7; padding: 20px; border-radius: 12px; margin: 20px 0; border-left: 4px solid #f59e0b;">
+                    <h4 style="color: #92400e; margin-top: 0;">💰 Payment Summary</h4>
+                    <div style="display: flex; justify-content: space-between; margin: 10px 0;">
+                        <span style="color: #6b7280;">Total Amount:</span>
+                        <strong>₹{total_amount:,.2f}</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin: 10px 0;">
+                        <span style="color: #6b7280;">Advance Paid:</span>
+                        <strong style="color: #10b981;">₹{advance_amount:,.2f}</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin: 10px 0; padding-top: 10px; border-top: 2px solid #fbbf24;">
+                        <span style="color: #92400e; font-weight: bold;">Pending Amount:</span>
+                        <strong style="color: #f59e0b; font-size: 18px;">₹{pending_amount:,.2f}</strong>
+                    </div>
+                    <p style="color: #92400e; font-size: 14px; margin-top: 15px; margin-bottom: 0;">
+                        Please pay the pending amount to complete your order.
+                    </p>
+                </div>
+                '''
+            
+            # Thank you message for delivered orders
+            thank_you_html = ''
+            if status_key == 'delivered':
+                thank_you_html = '''
+                <div style="background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); padding: 25px; border-radius: 12px; margin: 20px 0; text-align: center; color: white;">
+                    <h2 style="color: white; margin-top: 0;">🙏 Thank You for Choosing GSpaces!</h2>
+                    <p style="font-size: 16px; margin: 15px 0;">We hope you love your new space! Your satisfaction is our priority.</p>
+                    <p style="font-size: 14px; margin: 10px 0;">If you have any questions or feedback, please don't hesitate to reach out.</p>
+                    <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.3);">
+                        <p style="font-size: 14px; margin: 5px 0;">⭐ Love your experience? Share your feedback!</p>
+                        <p style="font-size: 14px; margin: 5px 0;">📸 Tag us on social media @gspaces</p>
+                    </div>
+                </div>
+                '''
             
             html_content = f"""
             <!DOCTYPE html>
@@ -428,11 +539,16 @@ def send_admin_order_notification(customer_email, customer_name, customer_phone,
                             <p style="margin: 0; font-size: 16px;"><strong>{status_message}</strong></p>
                         </div>
                         
+                        {delivered_items_html}
+                        {payment_summary_html}
+                        
                         <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
                             <h3 style="margin-top: 0; color: #374151;">Order Details</h3>
                             <p style="margin: 5px 0;"><strong>Product:</strong> {product_name}</p>
                             <p style="margin: 5px 0;"><strong>Contact:</strong> {customer_phone}</p>
                         </div>
+                        
+                        {thank_you_html}
                         
                         <p style="text-align: center;">
                             <a href="https://gspaces.in/contact" class="button">Contact Us</a>
@@ -444,7 +560,7 @@ def send_admin_order_notification(customer_email, customer_name, customer_phone,
                     </div>
                     <div class="footer">
                         <p><strong>GSpaces</strong> - Transform Your Space</p>
-                        <p>📧 sreekanth.chityala@gspaces.in</p>
+                        <p>📧 sreekanth.chityala@gspaces.in | 📞 +91-7075077384</p>
                         <p>© 2026 GSpaces. All rights reserved.</p>
                     </div>
                 </div>

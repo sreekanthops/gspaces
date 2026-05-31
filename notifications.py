@@ -246,7 +246,8 @@ def _get_delivery_timeline_html(status):
 
 
 def notify_order_status_update(order_id, customer_name, customer_email, customer_phone,
-                               old_status, new_status, status_label, order_items=None, total_amount=None):
+                               old_status, new_status, status_label, order_items=None, total_amount=None,
+                               advance_amount=None, pending_amount=None):
     """
     Notify customer about order status update
     
@@ -260,6 +261,8 @@ def notify_order_status_update(order_id, customer_name, customer_email, customer
         status_label: Human-readable status label
         order_items: List of order items (optional)
         total_amount: Total order amount (optional)
+        advance_amount: Advance amount paid (optional)
+        pending_amount: Pending amount to be paid (optional)
     """
     # Status emojis
     status_emojis = {
@@ -307,13 +310,49 @@ def notify_order_status_update(order_id, customer_name, customer_email, customer
         </div>
         """
     
-    # Build total amount section if provided
-    total_html = ""
+    # Build payment summary section if provided
+    payment_html = ""
     if total_amount:
-        total_html = f"""
-        <div style="background-color: #e8f5e9; padding: 15px; border-radius: 8px; margin: 20px 0; text-align: right;">
-            <span style="font-size: 18px; font-weight: bold; color: #2c3e50;">Total Amount: </span>
-            <span style="font-size: 24px; font-weight: bold; color: #27ae60;">₹{total_amount}</span>
+        if advance_amount and advance_amount > 0:
+            # Show detailed payment breakdown
+            payment_html = f"""
+            <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 20px; border-radius: 12px; margin: 20px 0; color: white;">
+                <h3 style="color: white; margin-top: 0; margin-bottom: 15px;">💰 Payment Summary</h3>
+                <div style="display: flex; justify-content: space-between; margin: 10px 0; padding: 10px; background: rgba(255,255,255,0.2); border-radius: 8px;">
+                    <span style="font-size: 16px;">Total Amount:</span>
+                    <strong style="font-size: 18px;">₹{total_amount:,.2f}</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin: 10px 0; padding: 10px; background: rgba(255,255,255,0.2); border-radius: 8px;">
+                    <span style="font-size: 16px;">Advance Paid:</span>
+                    <strong style="font-size: 18px; color: #d1fae5;">₹{advance_amount:,.2f}</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin: 10px 0; padding: 10px; background: rgba(255,255,255,0.3); border-radius: 8px; border: 2px solid white;">
+                    <span style="font-size: 16px; font-weight: bold;">Pending Amount:</span>
+                    <strong style="font-size: 20px;">₹{pending_amount or (total_amount - advance_amount):,.2f}</strong>
+                </div>
+            </div>
+            """
+        else:
+            # Show simple total
+            payment_html = f"""
+            <div style="background-color: #e8f5e9; padding: 15px; border-radius: 8px; margin: 20px 0; text-align: right;">
+                <span style="font-size: 18px; font-weight: bold; color: #2c3e50;">Total Amount: </span>
+                <span style="font-size: 24px; font-weight: bold; color: #27ae60;">₹{total_amount:,.2f}</span>
+            </div>
+            """
+    
+    # Build thank you message for delivered orders
+    thank_you_html = ""
+    if new_status == 'delivered':
+        thank_you_html = """
+        <div style="background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); padding: 25px; border-radius: 12px; margin: 20px 0; text-align: center; color: white;">
+            <h2 style="color: white; margin-top: 0; margin-bottom: 15px;">🙏 Thank You for Choosing GSpaces!</h2>
+            <p style="font-size: 16px; margin: 10px 0;">We hope you love your new space! Your satisfaction is our priority.</p>
+            <p style="font-size: 14px; margin: 10px 0;">If you have any questions or feedback, please don't hesitate to reach out.</p>
+            <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.3);">
+                <p style="font-size: 14px; margin: 5px 0;">⭐ Love your experience? Share your feedback!</p>
+                <p style="font-size: 14px; margin: 5px 0;">📸 Tag us on social media @gspaces</p>
+            </div>
         </div>
         """
     
@@ -379,8 +418,11 @@ def notify_order_status_update(order_id, customer_name, customer_email, customer
                 <!-- Order Items -->
                 {items_html}
                 
-                <!-- Total Amount -->
-                {total_html}
+                <!-- Payment Summary -->
+                {payment_html}
+                
+                <!-- Thank You Message -->
+                {thank_you_html}
                 
                 <!-- Action Buttons -->
                 <div style="text-align: center; margin: 30px 0;">

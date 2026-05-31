@@ -168,14 +168,53 @@
                     <div class="info-value">₹{{ order.total_amount }}</div>
                 </div>
                 <div class="info-item">
+                    <div class="info-label">Advance Paid</div>
+                    <div class="info-value" style="color: #10b981;">₹{{ order.advance_amount or 0 }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Pending Amount</div>
+                    <div class="info-value" style="color: #f59e0b;">₹{{ order.pending_amount or order.total_amount }}</div>
+                </div>
+                <div class="info-item">
                     <div class="info-label">Payment ID</div>
                     <div class="info-value">{{ order.razorpay_payment_id or 'Pending' }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Expected Delivery</div>
+                    <div class="info-value">{{ order.expected_delivery_date.strftime('%B %d, %Y') if order.expected_delivery_date else 'TBD' }}</div>
                 </div>
                 <div class="info-item">
                     <div class="info-label">Last Updated</div>
                     <div class="info-value">{{ order.status_updated_at.strftime('%Y-%m-%d %H:%M') if order.status_updated_at else '-' }}</div>
                 </div>
             </div>
+
+            <!-- Payment Summary Card -->
+            {% if order.advance_amount and order.advance_amount > 0 %}
+            <div class="mt-4 p-4" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-radius: 16px; color: white;">
+                <h5 class="mb-3" style="color: white;"><i class="bi bi-cash-stack"></i> Payment Summary</h5>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 12px; text-align: center;">
+                            <div style="font-size: 14px; opacity: 0.9;">Total Amount</div>
+                            <div style="font-size: 24px; font-weight: bold;">₹{{ order.total_amount }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 12px; text-align: center;">
+                            <div style="font-size: 14px; opacity: 0.9;">Advance Paid</div>
+                            <div style="font-size: 24px; font-weight: bold;">₹{{ order.advance_amount }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 12px; text-align: center;">
+                            <div style="font-size: 14px; opacity: 0.9;">Pending</div>
+                            <div style="font-size: 24px; font-weight: bold;">₹{{ order.pending_amount or (order.total_amount - order.advance_amount) }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
 
             <!-- Update Status Section -->
             <div class="mt-4 p-3 bg-light rounded">
@@ -359,6 +398,7 @@ Thank you for your business!`;
                                 <th>Quantity</th>
                                 <th>Price</th>
                                 <th>Total</th>
+                                <th>Status</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -375,24 +415,61 @@ Thank you for your business!`;
                                     <td>{{ item.quantity }}</td>
                                     <td>₹{{ item.price_at_purchase }}</td>
                                     <td><strong>₹{{ (item.price_at_purchase * item.quantity)|round(2) }}</strong></td>
+                                    <td>
+                                        {% if order.status_code == 'delivered' %}
+                                            <span class="badge bg-success">✓ Delivered</span>
+                                        {% elif order.status_code in ['shipped', 'out_for_delivery'] %}
+                                            <span class="badge bg-info">🚚 In Transit</span>
+                                        {% elif order.status_code in ['confirmed', 'packed'] %}
+                                            <span class="badge bg-warning">📦 Processing</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">⏳ Pending</span>
+                                        {% endif %}
+                                    </td>
                                 </tr>
                             {% endfor %}
                         </tbody>
                         <tfoot>
                             <tr>
-                                <td colspan="4" class="text-end"><strong>Total Amount:</strong></td>
+                                <td colspan="5" class="text-end"><strong>Total Amount:</strong></td>
                                 <td><strong>₹{{ order.total_amount }}</strong></td>
                             </tr>
                             {% if order.coupon_code %}
                                 <tr>
-                                    <td colspan="4" class="text-end">Coupon ({{ order.coupon_code }}):</td>
+                                    <td colspan="5" class="text-end">Coupon ({{ order.coupon_code }}):</td>
                                     <td class="text-success">- ₹{{ order.coupon_discount }}</td>
+                                </tr>
+                            {% endif %}
+                            {% if order.advance_amount and order.advance_amount > 0 %}
+                                <tr style="background: #f0fdf4;">
+                                    <td colspan="5" class="text-end"><strong>Advance Paid:</strong></td>
+                                    <td><strong style="color: #10b981;">₹{{ order.advance_amount }}</strong></td>
+                                </tr>
+                                <tr style="background: #fef3c7;">
+                                    <td colspan="5" class="text-end"><strong>Pending Amount:</strong></td>
+                                    <td><strong style="color: #f59e0b;">₹{{ order.pending_amount or (order.total_amount - order.advance_amount) }}</strong></td>
                                 </tr>
                             {% endif %}
                         </tfoot>
                     </table>
                 </div>
             </div>
+
+            <!-- Delivery Status Summary -->
+            {% if order.status_code == 'delivered' %}
+            <div class="mt-4 p-4" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-radius: 16px; color: white;">
+                <div class="text-center">
+                    <h4 style="color: white; margin-bottom: 15px;">🎉 Order Delivered Successfully!</h4>
+                    <p style="font-size: 16px; margin-bottom: 10px;">All items have been delivered to the customer.</p>
+                    {% if order.expected_delivery_date %}
+                    <p style="font-size: 14px; opacity: 0.9;">Delivered on: {{ order.expected_delivery_date.strftime('%B %d, %Y') }}</p>
+                    {% endif %}
+                    <div class="mt-3">
+                        <strong>Thank you for choosing GSpaces! 🙏</strong>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
         </div>
     </div>
 

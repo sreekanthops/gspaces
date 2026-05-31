@@ -3145,7 +3145,8 @@ def update_order_status(order_id):
             
             # Get old status, customer details, and order items before update
             cur.execute("""
-                SELECT o.status_code, o.user_email, o.shipping_name, o.shipping_phone, o.total_amount
+                SELECT o.status_code, o.user_email, o.shipping_name, o.shipping_phone, o.total_amount,
+                       o.advance_amount, o.pending_amount
                 FROM orders o
                 WHERE o.id = %s
             """, (order_id,))
@@ -3182,7 +3183,9 @@ def update_order_status(order_id):
                         new_status=new_status,
                         status_label=ORDER_STATUS_LABELS[new_status],
                         order_items=order_items,
-                        total_amount=order_data['total_amount']
+                        total_amount=order_data['total_amount'],
+                        advance_amount=order_data.get('advance_amount', 0),
+                        pending_amount=order_data.get('pending_amount', order_data['total_amount'])
                     )
                 except Exception as e:
                     print(f"Error sending status update notification: {e}")

@@ -284,14 +284,22 @@ def notify_order_status_update(order_id, customer_name, customer_email, customer
         if new_status == 'delivered':
             items_rows = ""
             for item in order_items:
-                # Get icon - use emoji as fallback
+                # Get icon - priority: icon_image > icon_emoji > product image_url > fallback emoji
                 icon_html = f'<span style="font-size: 24px;">📦</span>'
                 
-                # Try to get icon from item data if available
+                # Try to get icon from default_items first
                 if item.get('icon_image'):
-                    icon_html = f'<img src="{item.get("icon_image")}" alt="{item.get("product_name", "Product")}" style="width: 32px; height: 32px; object-fit: contain; vertical-align: middle;">'
+                    # Icon from default_items table
+                    icon_url = item.get('icon_image')
+                    if not icon_url.startswith('http'):
+                        # Relative path, need to construct full URL
+                        icon_url = f"https://gspaces.in/static/{icon_url}" if not icon_url.startswith('/') else f"https://gspaces.in{icon_url}"
+                    icon_html = f'<img src="{icon_url}" alt="{item.get("product_name", "Product")}" style="width: 32px; height: 32px; object-fit: contain; vertical-align: middle;">'
                 elif item.get('icon_emoji'):
                     icon_html = f'<span style="font-size: 24px;">{item.get("icon_emoji")}</span>'
+                elif item.get('image_url'):
+                    # Fallback to product image from order_items
+                    icon_html = f'<img src="{item.get("image_url")}" alt="{item.get("product_name", "Product")}" style="width: 32px; height: 32px; object-fit: contain; vertical-align: middle;">'
                 
                 quantity_badge = ""
                 if item.get('quantity', 1) > 1:

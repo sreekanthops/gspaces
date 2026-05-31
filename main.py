@@ -3154,6 +3154,7 @@ def update_order_status(order_id):
             old_status = order_data['status_code'] if order_data else None
             
             # Get order items with icon information from default_items
+            # Match by product name (case-insensitive) or by slug
             cur.execute("""
                 SELECT
                     oi.product_name,
@@ -3161,9 +3162,13 @@ def update_order_status(order_id):
                     oi.price_at_purchase,
                     di.icon_image,
                     di.icon_emoji,
-                    di.description
+                    di.description,
+                    oi.image_url
                 FROM order_items oi
-                LEFT JOIN default_items di ON oi.product_id = di.id
+                LEFT JOIN default_items di ON (
+                    LOWER(TRIM(oi.product_name)) = LOWER(TRIM(di.name))
+                    OR LOWER(REPLACE(REPLACE(TRIM(oi.product_name), ' ', '_'), '-', '_')) = di.item_slug
+                )
                 WHERE oi.order_id = %s
                 ORDER BY oi.id
             """, (order_id,))

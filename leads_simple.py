@@ -108,6 +108,7 @@ def admin_leads_list():
         CASE
             WHEN COALESCE(l.is_priority, FALSE) = TRUE THEN 'star'
             WHEN COALESCE(l.lead_status, 'lead') = 'customer' THEN 'confirmed'
+            WHEN COALESCE(l.lead_status, 'lead') = 'delivered' THEN 'delivered'
             WHEN COALESCE(l.lead_status, 'lead') = 'reminder' THEN 'reminders'
             ELSE 'leads'
         END AS lead_section
@@ -124,6 +125,7 @@ def admin_leads_list():
         CASE
             WHEN COALESCE(l.is_priority, FALSE) = TRUE THEN 1
             WHEN COALESCE(l.lead_status, 'lead') = 'customer' THEN 2
+            WHEN COALESCE(l.lead_status, 'lead') = 'delivered' THEN 3
             WHEN COALESCE(l.lead_status, 'lead') = 'reminder' THEN 4
             ELSE 5
         END

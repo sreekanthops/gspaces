@@ -234,7 +234,16 @@
                     
                     <!-- Delivery Date/Time Fields (shown only when delivered is selected) -->
                     <div id="deliveryDateTimeFields" style="display: none; margin-top: 20px; padding: 20px; background: #fff; border-radius: 12px; border: 2px solid #10b981;">
-                        <h6 class="mb-3" style="color: #10b981;">📅 Delivery Date & Time</h6>
+                        <h6 class="mb-3" style="color: #10b981;">📅 Delivery Information</h6>
+                        
+                        <div class="mb-3">
+                            <label for="delivery_description" class="form-label">What was delivered? *</label>
+                            <input type="text" class="form-control" id="delivery_description" name="delivery_description"
+                                   placeholder="e.g., Studio Setup, Study Unit, Office Furniture"
+                                   value="{{ order.delivery_description if order.delivery_description else '' }}">
+                            <small class="text-muted">This will appear in the email header (e.g., "GSpaces - Studio Setup")</small>
+                        </div>
+                        
                         <div class="row">
                             <div class="col-md-6">
                                 <label for="delivery_date" class="form-label">Delivery Date *</label>
@@ -256,11 +265,13 @@
                     function toggleDeliveryDateTime() {
                         const statusSelect = document.getElementById('statusSelect');
                         const deliveryFields = document.getElementById('deliveryDateTimeFields');
+                        const deliveryDescInput = document.getElementById('delivery_description');
                         const deliveryDateInput = document.getElementById('delivery_date');
                         const deliveryTimeInput = document.getElementById('delivery_time');
                         
                         if (statusSelect.value === 'delivered') {
                             deliveryFields.style.display = 'block';
+                            deliveryDescInput.required = true;
                             deliveryDateInput.required = true;
                             deliveryTimeInput.required = true;
                             
@@ -275,6 +286,7 @@
                             }
                         } else {
                             deliveryFields.style.display = 'none';
+                            deliveryDescInput.required = false;
                             deliveryDateInput.required = false;
                             deliveryTimeInput.required = false;
                         }
@@ -288,13 +300,14 @@
                     // Validate form before submission
                     document.getElementById('statusUpdateForm').addEventListener('submit', function(e) {
                         const statusSelect = document.getElementById('statusSelect');
+                        const deliveryDescInput = document.getElementById('delivery_description');
                         const deliveryDateInput = document.getElementById('delivery_date');
                         const deliveryTimeInput = document.getElementById('delivery_time');
                         
                         if (statusSelect.value === 'delivered') {
-                            if (!deliveryDateInput.value || !deliveryTimeInput.value) {
+                            if (!deliveryDescInput.value || !deliveryDateInput.value || !deliveryTimeInput.value) {
                                 e.preventDefault();
-                                alert('Please provide both delivery date and time for delivered orders.');
+                                alert('Please provide delivery description, date, and time for delivered orders.');
                                 return false;
                             }
                         }

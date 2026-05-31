@@ -247,7 +247,8 @@ def _get_delivery_timeline_html(status):
 
 def notify_order_status_update(order_id, customer_name, customer_email, customer_phone,
                                old_status, new_status, status_label, order_items=None, total_amount=None,
-                               advance_amount=None, pending_amount=None, delivery_date=None, delivery_time=None):
+                               advance_amount=None, pending_amount=None, delivery_date=None, delivery_time=None,
+                               delivery_description=None):
     """
     Notify customer about order status update
     
@@ -265,6 +266,7 @@ def notify_order_status_update(order_id, customer_name, customer_email, customer
         pending_amount: Pending amount to be paid (optional)
         delivery_date: Actual delivery date (optional, for delivered status)
         delivery_time: Actual delivery time (optional, for delivered status)
+        delivery_description: Description of what was delivered (optional, for delivered status)
     """
     # Status emojis
     status_emojis = {
@@ -431,7 +433,7 @@ def notify_order_status_update(order_id, customer_name, customer_email, customer
                     {emoji} Order Status Update
                 </h1>
                 <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 16px;">
-                    GSpaces - Home Office Setup
+                    GSpaces - {delivery_description if delivery_description else 'Home Office Setup'}
                 </p>
             </div>
             

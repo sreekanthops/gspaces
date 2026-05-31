@@ -3135,15 +3135,16 @@ def update_order_status(order_id):
     new_status = request.form.get('status')
     delivery_date = request.form.get('delivery_date')
     delivery_time = request.form.get('delivery_time')
+    delivery_description = request.form.get('delivery_description')
     
     if not new_status or new_status not in ORDER_STATUS_LABELS:
         flash("Invalid status selected.", "danger")
         return redirect(url_for('admin_orders'))
     
-    # Validate delivery date/time for delivered status
+    # Validate delivery date/time/description for delivered status
     if new_status == 'delivered':
-        if not delivery_date or not delivery_time:
-            flash("Delivery date and time are required for delivered orders.", "danger")
+        if not delivery_date or not delivery_time or not delivery_description:
+            flash("Delivery description, date, and time are required for delivered orders.", "danger")
             return redirect(url_for('admin_view_order', order_id=order_id))
     
     conn = connect_to_db()
@@ -3182,17 +3183,18 @@ def update_order_status(order_id):
             """, (order_id,))
             order_items = cur.fetchall()
             
-            # Update order status with delivery date/time if provided
-            if new_status == 'delivered' and delivery_date and delivery_time:
+            # Update order status with delivery date/time/description if provided
+            if new_status == 'delivered' and delivery_date and delivery_time and delivery_description:
                 cur.execute("""
                     UPDATE orders
                     SET status_code = %s,
                         status = %s,
                         status_updated_at = NOW(),
                         delivery_date = %s,
-                        delivery_time = %s
+                        delivery_time = %s,
+                        delivery_description = %s
                     WHERE id = %s
-                """, (new_status, ORDER_STATUS_LABELS[new_status], delivery_date, delivery_time, order_id))
+                """, (new_status, ORDER_STATUS_LABELS[new_status], delivery_date, delivery_time, delivery_description, order_id))
             else:
                 cur.execute("""
                     UPDATE orders
@@ -3219,7 +3221,8 @@ def update_order_status(order_id):
                         advance_amount=order_data.get('advance_amount', 0),
                         pending_amount=order_data.get('pending_amount', order_data['total_amount']),
                         delivery_date=delivery_date if new_status == 'delivered' else None,
-                        delivery_time=delivery_time if new_status == 'delivered' else None
+                        delivery_time=delivery_time if new_status == 'delivered' else None,
+                        delivery_description=delivery_description if new_status == 'delivered' else None
                     )
                 except Exception as e:
                     print(f"Error sending status update notification: {e}")

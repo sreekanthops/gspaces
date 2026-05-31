@@ -247,7 +247,7 @@ def _get_delivery_timeline_html(status):
 
 def notify_order_status_update(order_id, customer_name, customer_email, customer_phone,
                                old_status, new_status, status_label, order_items=None, total_amount=None,
-                               advance_amount=None, pending_amount=None):
+                               advance_amount=None, pending_amount=None, delivery_date=None, delivery_time=None):
     """
     Notify customer about order status update
     
@@ -263,6 +263,8 @@ def notify_order_status_update(order_id, customer_name, customer_email, customer
         total_amount: Total order amount (optional)
         advance_amount: Advance amount paid (optional)
         pending_amount: Pending amount to be paid (optional)
+        delivery_date: Actual delivery date (optional, for delivered status)
+        delivery_time: Actual delivery time (optional, for delivered status)
     """
     # Status emojis
     status_emojis = {
@@ -459,9 +461,11 @@ def notify_order_status_update(order_id, customer_name, customer_email, customer
                             </td>
                         </tr>
                         <tr>
-                            <td style="padding: 10px 0; font-weight: 600; color: #555; font-size: 14px;">Updated At:</td>
+                            <td style="padding: 10px 0; font-weight: 600; color: #555; font-size: 14px;">
+                                {'Delivered On:' if new_status == 'delivered' and delivery_date else 'Updated At:'}
+                            </td>
                             <td style="padding: 10px 0; text-align: right; color: #666; font-size: 14px;">
-                                {datetime.now().strftime('%d %b %Y, %I:%M %p')}
+                                {f"{datetime.strptime(delivery_date, '%Y-%m-%d').strftime('%d %b %Y')}, {datetime.strptime(delivery_time, '%H:%M').strftime('%I:%M %p')}" if new_status == 'delivered' and delivery_date and delivery_time else datetime.now().strftime('%d %b %Y, %I:%M %p')}
                             </td>
                         </tr>
                     </table>
@@ -475,17 +479,6 @@ def notify_order_status_update(order_id, customer_name, customer_email, customer
                 
                 <!-- Thank You Message -->
                 {thank_you_html}
-                
-                <!-- Action Buttons -->
-                <div style="text-align: center; margin: 30px 0;">
-                    <a href="{APP_BASE_URL}/profile"
-                       class="button"
-                       style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                              color: white; text-decoration: none; border-radius: 25px; font-weight: 600; font-size: 16px;
-                              box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4); transition: all 0.3s ease;">
-                        📦 Track Your Order
-                    </a>
-                </div>
                 
                 <!-- Delivery Timeline (for certain statuses) -->
                 {_get_delivery_timeline_html(new_status)}

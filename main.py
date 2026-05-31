@@ -3133,10 +3133,18 @@ def update_order_status(order_id):
         return jsonify({"status": "error", "message": "Access denied"}), 403
     
     new_status = request.form.get('status')
+    delivery_date = request.form.get('delivery_date')
+    delivery_time = request.form.get('delivery_time')
     
     if not new_status or new_status not in ORDER_STATUS_LABELS:
         flash("Invalid status selected.", "danger")
         return redirect(url_for('admin_orders'))
+    
+    # Validate delivery date/time for delivered status
+    if new_status == 'delivered':
+        if not delivery_date or not delivery_time:
+            flash("Delivery date and time are required for delivered orders.", "danger")
+            return redirect(url_for('admin_view_order', order_id=order_id))
     
     conn = connect_to_db()
     if conn:
@@ -3174,14 +3182,25 @@ def update_order_status(order_id):
             """, (order_id,))
             order_items = cur.fetchall()
             
-            # Update order status
-            cur.execute("""
-                UPDATE orders
-                SET status_code = %s,
-                    status = %s,
-                    status_updated_at = NOW()
-                WHERE id = %s
-            """, (new_status, ORDER_STATUS_LABELS[new_status], order_id))
+            # Update order status with delivery date/time if provided
+            if new_status == 'delivered' and delivery_date and delivery_time:
+                cur.execute("""
+                    UPDATE orders
+                    SET status_code = %s,
+                        status = %s,
+                        status_updated_at = NOW(),
+                        delivery_date = %s,
+                        delivery_time = %s
+                    WHERE id = %s
+                """, (new_status, ORDER_STATUS_LABELS[new_status], delivery_date, delivery_time, order_id))
+            else:
+                cur.execute("""
+                    UPDATE orders
+                    SET status_code = %s,
+                        status = %s,
+                        status_updated_at = NOW()
+                    WHERE id = %s
+                """, (new_status, ORDER_STATUS_LABELS[new_status], order_id))
             conn.commit()
             
             # Send notification to customer about status update
@@ -3198,7 +3217,9 @@ def update_order_status(order_id):
                         order_items=order_items,
                         total_amount=order_data['total_amount'],
                         advance_amount=order_data.get('advance_amount', 0),
-                        pending_amount=order_data.get('pending_amount', order_data['total_amount'])
+                        pending_amount=order_data.get('pending_amount', order_data['total_amount']),
+                        delivery_date=delivery_date if new_status == 'delivered' else None,
+                        delivery_time=delivery_time if new_status == 'delivered' else None
                     )
                 except Exception as e:
                     print(f"Error sending status update notification: {e}")

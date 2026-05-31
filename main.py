@@ -3166,7 +3166,7 @@ def update_order_status(order_id):
                     oi.image_url
                 FROM order_items oi
                 LEFT JOIN default_items di ON (
-                    LOWER(TRIM(oi.product_name)) = LOWER(TRIM(di.name))
+                    LOWER(TRIM(oi.product_name)) = LOWER(TRIM(di.item_name))
                     OR LOWER(REPLACE(REPLACE(TRIM(oi.product_name), ' ', '_'), '-', '_')) = di.item_slug
                 )
                 WHERE oi.order_id = %s

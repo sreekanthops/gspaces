@@ -327,9 +327,7 @@
               {% if product.sale_id %}
               <div class="sale-timer-badge" id="sale-badge-{{ product.id }}" data-end-time="{{ product.sale_end_time.isoformat() }}" style="position: absolute; top: 10px; left: 10px; background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%); color: white; padding: 8px 12px; border-radius: 15px; font-weight: bold; font-size: 0.85rem; box-shadow: 0 4px 15px rgba(255, 107, 53, 0.4); z-index: 2; line-height: 1.3;">
                 <div style="font-size: 0.95rem;">🔥 {{ product.discount_percentage }}% OFF</div>
-                <div class="timer-text" style="font-size: 0.75rem; opacity: 0.95; margin-top: 2px;">
-                  <span class="days">0</span>d <span class="hours">0</span>h <span class="mins">0</span>m
-                </div>
+                <div class="timer-text" style="font-size: 0.75rem; opacity: 0.95; margin-top: 2px;"></div>
               </div>
               {% endif %}
               <div class="product-category-badge">
@@ -511,14 +509,18 @@ function updateProductSaleTimers() {
     const days = Math.floor(timeRemaining / (1000 * 60 * 60 * 24));
     const hours = Math.floor((timeRemaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
     const minutes = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((timeRemaining % (1000 * 60)) / 1000);
     
-    const daysEl = badge.querySelector('.days');
-    const hoursEl = badge.querySelector('.hours');
-    const minsEl = badge.querySelector('.mins');
-    
-    if (daysEl) daysEl.textContent = days;
-    if (hoursEl) hoursEl.textContent = hours;
-    if (minsEl) minsEl.textContent = minutes;
+    const timerText = badge.querySelector('.timer-text');
+    if (timerText) {
+      let timeStr = '';
+      if (days > 0) {
+        timeStr = `${days}d ${hours}h ${minutes}m ${seconds}s`;
+      } else {
+        timeStr = `${hours}h ${minutes}m ${seconds}s`;
+      }
+      timerText.textContent = timeStr;
+    }
   });
 }
 

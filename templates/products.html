@@ -324,6 +324,11 @@
               <a href="{{ url_for('product_detail', product_id=product.id) }}">
                 <img src="{{ url_for('static', filename=product.image_url) }}" class="product-image" alt="{{ product.name }}" loading="lazy">
               </a>
+              {% if product.sale_id %}
+              <div style="position: absolute; top: 10px; left: 10px; background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%); color: white; padding: 8px 15px; border-radius: 20px; font-weight: bold; font-size: 0.9rem; box-shadow: 0 4px 15px rgba(255, 107, 53, 0.4); z-index: 2;">
+                🔥 {{ product.discount_percentage }}% OFF
+              </div>
+              {% endif %}
               <div class="product-category-badge">
                 {{ product.category }}
               </div>
@@ -346,7 +351,14 @@
                 {% endfor %}
               </div>
               
+              {% if product.sale_id %}
+              <div class="product-price">
+                <span style="text-decoration: line-through; color: #999; font-size: 0.9rem;">₹ {{ product.price | inr }}</span>
+                <span style="color: #ff6b35; font-weight: bold; margin-left: 8px;">₹ {{ product.sale_price | inr }}</span>
+              </div>
+              {% else %}
               <div class="product-price">₹ {{ product.price | inr }}</div>
+              {% endif %}
               
               <a href="{{ url_for('add_to_cart', product_id=product.id) }}" class="add-to-cart-btn">
                 <i class="bi bi-cart-plus"></i> Add to Cart
@@ -358,11 +370,6 @@
                         onclick="openSaleModal({{ product.id }}, '{{ product.name }}', {{ product.price }})"
                         title="Add product to flash sale">
                   <i class="bi bi-lightning-fill"></i> Add to Sale
-                </button>
-                <button type="button" class="btn btn-success w-100 mb-2"
-                        onclick="openOrderSetupModal({{ product.id }}, '{{ product.name }}', '{{ product.price }}', '{{ product.category }}')"
-                        title="Create order for customer">
-                  <i class="bi bi-cart-plus"></i> Order Setup
                 </button>
                 <div class="d-flex gap-2">
                   <form action="/delete_product/{{ product.id }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this product?');" style="flex: 1;">

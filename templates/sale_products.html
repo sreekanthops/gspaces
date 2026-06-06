@@ -220,7 +220,7 @@
             <div class="col-md-6 col-lg-4">
                 <div class="sale-card">
                     <div class="sale-image-container">
-                        <img src="{{ product.product_image }}" alt="{{ product.product_name }}" class="sale-image">
+                        <img src="{{ url_for('static', filename=product.product_image) }}" alt="{{ product.product_name }}" class="sale-image">
                         <div class="discount-badge">{{ product.discount_percentage }}% OFF</div>
                     </div>
                     

@@ -5444,8 +5444,20 @@ def products():
     
     cursor = conn.cursor(cursor_factory=RealDictCursor)
     
-    # Get all products
-    cursor.execute('SELECT * FROM products ORDER BY id DESC')
+    # Get all products with sale information
+    cursor.execute('''
+        SELECT p.*,
+               sp.id as sale_id,
+               sp.sale_price,
+               sp.discount_percentage,
+               sp.sale_end_time
+        FROM products p
+        LEFT JOIN sale_products sp ON p.id = sp.product_id
+            AND sp.is_active = TRUE
+            AND sp.sale_start_time <= CURRENT_TIMESTAMP
+            AND sp.sale_end_time > CURRENT_TIMESTAMP
+        ORDER BY p.id DESC
+    ''')
     products = cursor.fetchall()
     
     # Get categories

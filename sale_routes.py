@@ -159,7 +159,7 @@ def add_sale_product():
         conn.close()
         
         flash('Sale product added successfully!', 'success')
-        return redirect(url_for('sale.admin_sale_products'))
+        return redirect(url_for('products'))
         
     except Exception as e:
         flash(f'Error adding sale product: {str(e)}', 'danger')

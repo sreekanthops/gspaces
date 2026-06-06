@@ -5461,7 +5461,7 @@ def products():
     products = cursor.fetchall()
     
     # Get categories
-    cursor.execute('SELECT * FROM categories ORDER BY name')
+    cursor.execute('SELECT * FROM categories ORDER BY display_order, name')
     categories = cursor.fetchall()
     
     # Get catalogue files

@@ -60,8 +60,8 @@
                 <li class="nav-item {% if request.endpoint == 'customer_inquiry_page' %}active{% endif %}">
                     <a class="nav-link" href="{{ url_for('customer_inquiry_page') }}">Enquiry</a>
                 </li>
-                <li class="nav-item {% if request.endpoint == 'sale_products' %}active{% endif %}">
-                    <a class="nav-link" href="{{ url_for('sale_products') }}" style="color: #ff6b35; font-weight: 600;">
+                <li class="nav-item {% if request.endpoint == 'sale.sale_products' %}active{% endif %}">
+                    <a class="nav-link" href="{{ url_for('sale.sale_products') }}" style="color: #ff6b35; font-weight: 600;">
                         🔥 Sale
                     </a>
                 </li>

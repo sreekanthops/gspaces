@@ -354,6 +354,11 @@
               
               {% if is_admin %}
               <div class="admin-controls">
+                <button type="button" class="btn btn-warning w-100 mb-2"
+                        onclick="openSaleModal({{ product.id }}, '{{ product.name }}', {{ product.price }})"
+                        title="Add product to flash sale">
+                  <i class="bi bi-lightning-fill"></i> Add to Sale
+                </button>
                 <button type="button" class="btn btn-success w-100 mb-2"
                         onclick="openOrderSetupModal({{ product.id }}, '{{ product.name }}', '{{ product.price }}', '{{ product.category }}')"
                         title="Create order for customer">
@@ -384,6 +389,101 @@
   </section>
 
 </main>
+
+<!-- Add to Sale Modal -->
+<div class="modal fade" id="addToSaleModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header" style="background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%); color: white;">
+        <h5 class="modal-title">🔥 Add Product to Flash Sale</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="POST" action="{{ url_for('sale.add_sale_product') }}">
+        <div class="modal-body">
+          <input type="hidden" name="product_id" id="sale_product_id">
+          
+          <div class="mb-3">
+            <label class="form-label fw-bold">Product Name</label>
+            <input type="text" class="form-control" id="sale_product_name" readonly style="background: #f8f9fa;">
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label fw-bold">Original Price</label>
+            <div class="input-group">
+              <span class="input-group-text">₹</span>
+              <input type="number" name="original_price" id="sale_original_price" class="form-control" readonly style="background: #f8f9fa;">
+            </div>
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label fw-bold">Sale Price <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <span class="input-group-text">₹</span>
+              <input type="number" name="sale_price" id="sale_price" class="form-control" required step="0.01" oninput="calculateSaleDiscount()">
+            </div>
+            <small class="text-muted">Enter the discounted price</small>
+          </div>
+          
+          <div id="discount_display" class="alert alert-success" style="display: none;">
+            <strong>Discount:</strong> <span id="discount_percentage">0</span>% OFF
+            <br><strong>Savings:</strong> ₹<span id="savings_amount">0</span>
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label fw-bold">Sale Duration (Hours) <span class="text-danger">*</span></label>
+            <input type="number" name="sale_duration_hours" class="form-control" value="24" min="1" required>
+            <small class="text-muted">How long the sale will run (default: 24 hours)</small>
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label fw-bold">Contact Phone</label>
+            <input type="text" name="contact_phone" class="form-control" value="+919876543210" required>
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label fw-bold">WhatsApp Number</label>
+            <input type="text" name="contact_whatsapp" class="form-control" value="+919876543210" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-warning">
+            <i class="bi bi-lightning-fill"></i> Add to Sale
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+function openSaleModal(productId, productName, productPrice) {
+  document.getElementById('sale_product_id').value = productId;
+  document.getElementById('sale_product_name').value = productName;
+  document.getElementById('sale_original_price').value = productPrice;
+  document.getElementById('sale_price').value = '';
+  document.getElementById('discount_display').style.display = 'none';
+  
+  const modal = new bootstrap.Modal(document.getElementById('addToSaleModal'));
+  modal.show();
+}
+
+function calculateSaleDiscount() {
+  const originalPrice = parseFloat(document.getElementById('sale_original_price').value) || 0;
+  const salePrice = parseFloat(document.getElementById('sale_price').value) || 0;
+  
+  if (originalPrice > 0 && salePrice > 0 && salePrice < originalPrice) {
+    const discount = Math.round(((originalPrice - salePrice) / originalPrice) * 100);
+    const savings = originalPrice - salePrice;
+    
+    document.getElementById('discount_percentage').textContent = discount;
+    document.getElementById('savings_amount').textContent = savings.toFixed(0);
+    document.getElementById('discount_display').style.display = 'block';
+  } else {
+    document.getElementById('discount_display').style.display = 'none';
+  }
+}
+</script>
 
 {% include 'footer.html' %}
 

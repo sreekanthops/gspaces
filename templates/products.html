@@ -367,11 +367,19 @@
               
               {% if is_admin %}
               <div class="admin-controls">
+                {% if product.sale_id %}
+                <form action="{{ url_for('sale.delete_sale_product', sale_id=product.sale_id) }}" method="POST" onsubmit="return confirm('Remove this product from sale?');">
+                  <button type="submit" class="btn btn-danger w-100 mb-2" title="Remove from flash sale">
+                    <i class="bi bi-x-circle"></i> Remove from Sale
+                  </button>
+                </form>
+                {% else %}
                 <button type="button" class="btn btn-warning w-100 mb-2"
                         onclick="openSaleModal({{ product.id }}, '{{ product.name }}', {{ product.price }})"
                         title="Add product to flash sale">
                   <i class="bi bi-lightning-fill"></i> Add to Sale
                 </button>
+                {% endif %}
                 <div class="d-flex gap-2">
                   <form action="/delete_product/{{ product.id }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this product?');" style="flex: 1;">
                     <button type="submit" class="btn btn-outline-danger w-100">

@@ -186,8 +186,8 @@ def delete_sale_product(sale_id):
         cursor.close()
         conn.close()
         
-        flash('Sale product deleted successfully!', 'success')
-        return redirect(url_for('sale.admin_sale_products'))
+        flash('Product removed from sale successfully!', 'success')
+        return redirect(url_for('products'))
         
     except Exception as e:
         flash(f'Error deleting sale product: {str(e)}', 'danger')

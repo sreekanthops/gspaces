@@ -127,8 +127,8 @@ def add_sale_product():
         sale_price = float(request.form.get('sale_price', 0))
         original_price = float(request.form.get('original_price', 0))
         sale_duration_hours = int(request.form.get('sale_duration_hours', 24))
-        contact_phone = request.form.get('contact_phone', '+919876543210')
-        contact_whatsapp = request.form.get('contact_whatsapp', '+919876543210')
+        contact_phone = request.form.get('contact_phone', '+917075077384')
+        contact_whatsapp = request.form.get('contact_whatsapp', '+917075077384')
         
         # Calculate discount percentage
         discount_percentage = int(((original_price - sale_price) / original_price) * 100)

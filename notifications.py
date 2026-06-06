@@ -83,7 +83,7 @@ def send_whatsapp_notification(phone_number, message):
     3. You'll receive your API key
     
     Args:
-        phone_number: Phone number with country code (e.g., +919876543210)
+        phone_number: Phone number with country code (e.g., +917075077384)
         message: Message text
     
     Returns:

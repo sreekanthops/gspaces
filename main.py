@@ -2099,6 +2099,19 @@ def product_detail(product_id):
           ORDER BY id ASC
         """, (product_id,))
         sub_images = cur.fetchall()  # list of dicts
+        
+        # Check if product is on sale
+        cur.execute("""
+            SELECT id, sale_price, original_price, discount_percentage,
+                   sale_end_time, contact_phone, contact_whatsapp
+            FROM sale_products
+            WHERE product_id = %s
+            AND is_active = TRUE
+            AND sale_start_time <= CURRENT_TIMESTAMP
+            AND sale_end_time > CURRENT_TIMESTAMP
+            LIMIT 1
+        """, (product_id,))
+        sale_info = cur.fetchone()
 
     except Error as e:
         print(f"product_detail error: {e}")
@@ -2112,7 +2125,8 @@ def product_detail(product_id):
         product=product,
         reviews=reviews,
         user_review=user_review,
-        sub_images=sub_images
+        sub_images=sub_images,
+        sale_info=sale_info
     )
 
 # --- REVIEW HELPFUL VOTE ROUTE ---

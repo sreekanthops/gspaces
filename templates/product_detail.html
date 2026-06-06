@@ -860,8 +860,52 @@
           {% endif %}
         </div>
 
+        {% if sale_info %}
+        <!-- Flash Sale Banner -->
+        <div class="sale-banner" style="background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%); padding: 20px; border-radius: 15px; margin: 20px 0; color: white; box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
+            <h4 style="margin: 0; font-weight: bold;">🔥 FLASH SALE!</h4>
+            <span style="background: rgba(255,255,255,0.3); padding: 5px 15px; border-radius: 20px; font-weight: bold;">{{ sale_info.discount_percentage }}% OFF</span>
+          </div>
+          <div style="display: flex; gap: 10px; align-items: baseline; margin-bottom: 15px;">
+            <span style="text-decoration: line-through; opacity: 0.8; font-size: 1.2rem;">₹{{ sale_info.original_price|int }}</span>
+            <span style="font-size: 2rem; font-weight: bold;">₹{{ sale_info.sale_price|int }}</span>
+            <span style="background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 10px; font-size: 0.9rem;">Save ₹{{ (sale_info.original_price - sale_info.sale_price)|int }}</span>
+          </div>
+          <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 10px;">
+            <div style="font-weight: bold; margin-bottom: 10px;">⏰ Sale Ending In:</div>
+            <div id="sale-timer" data-end-time="{{ sale_info.sale_end_time.isoformat() }}" style="display: flex; gap: 15px; justify-content: center;">
+              <div style="text-align: center;">
+                <div class="timer-value" style="font-size: 2rem; font-weight: bold;">00</div>
+                <div style="font-size: 0.8rem; opacity: 0.9;">Days</div>
+              </div>
+              <div style="text-align: center;">
+                <div class="timer-hours" style="font-size: 2rem; font-weight: bold;">00</div>
+                <div style="font-size: 0.8rem; opacity: 0.9;">Hours</div>
+              </div>
+              <div style="text-align: center;">
+                <div class="timer-minutes" style="font-size: 2rem; font-weight: bold;">00</div>
+                <div style="font-size: 0.8rem; opacity: 0.9;">Mins</div>
+              </div>
+              <div style="text-align: center;">
+                <div class="timer-seconds" style="font-size: 2rem; font-weight: bold;">00</div>
+                <div style="font-size: 0.8rem; opacity: 0.9;">Secs</div>
+              </div>
+            </div>
+          </div>
+          <div style="display: flex; gap: 10px; margin-top: 15px;">
+            <a href="tel:{{ sale_info.contact_phone }}" style="flex: 1; background: white; color: #ff6b35; padding: 12px; border-radius: 10px; text-decoration: none; text-align: center; font-weight: bold;">
+              📞 Call Now
+            </a>
+            <a href="https://wa.me/{{ sale_info.contact_whatsapp.replace('+', '').replace(' ', '') }}?text=Hi, I'm interested in {{ product.name }} from your Flash Sale!" target="_blank" style="flex: 1; background: #25D366; color: white; padding: 12px; border-radius: 10px; text-decoration: none; text-align: center; font-weight: bold;">
+              💬 WhatsApp
+            </a>
+          </div>
+        </div>
+        {% endif %}
+
         <div class="price-section">
-          <div class="price-label">Price</div>
+          <div class="price-label">{% if sale_info %}Regular {% endif %}Price</div>
           <div class="price">
             <span class="price-currency">₹</span>{{ product['price']|inr }}
           </div>
@@ -1323,6 +1367,36 @@
       updateNavDisabled();
     }
   })();
+  
+  // Sale Timer Update
+  {% if sale_info %}
+  function updateSaleTimer() {
+    const timerEl = document.getElementById('sale-timer');
+    if (!timerEl) return;
+    
+    const endTime = new Date(timerEl.dataset.endTime);
+    const now = new Date();
+    const timeRemaining = endTime - now;
+    
+    if (timeRemaining <= 0) {
+      location.reload(); // Reload page when sale ends
+      return;
+    }
+    
+    const days = Math.floor(timeRemaining / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((timeRemaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((timeRemaining % (1000 * 60)) / 1000);
+    
+    timerEl.querySelector('.timer-value').textContent = days.toString().padStart(2, '0');
+    timerEl.querySelector('.timer-hours').textContent = hours.toString().padStart(2, '0');
+    timerEl.querySelector('.timer-minutes').textContent = minutes.toString().padStart(2, '0');
+    timerEl.querySelector('.timer-seconds').textContent = seconds.toString().padStart(2, '0');
+  }
+  
+  updateSaleTimer();
+  setInterval(updateSaleTimer, 1000);
+  {% endif %}
   </script>
 </body>
 </html>

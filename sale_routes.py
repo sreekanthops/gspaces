@@ -1,15 +1,38 @@
 from flask import Blueprint, render_template, request, jsonify, flash, redirect, url_for
 from flask_login import login_required, current_user
 from datetime import datetime, timedelta
-import mysql.connector
-from db_setup import get_db_connection
+import psycopg2
+from psycopg2.extras import RealDictCursor
+import os
 
 sale_bp = Blueprint('sale', __name__)
 
+# Database Configuration
+DB_NAME = os.getenv("DB_NAME", "gspaces")
+DB_USER = os.getenv("DB_USER", "sri")
+DB_PASSWORD = os.getenv("DB_PASSWORD", "gspaces2025")
+DB_HOST = os.getenv("DB_HOST", "localhost")
+DB_PORT = os.getenv("DB_PORT", "5432")
+
+def connect_to_db():
+    """Connect to PostgreSQL database"""
+    try:
+        conn = psycopg2.connect(
+            database=DB_NAME, user=DB_USER, password=DB_PASSWORD,
+            host=DB_HOST, port=DB_PORT
+        )
+        return conn
+    except Exception as e:
+        print(f"DB connection error: {e}")
+        return None
+
 def get_active_sale_products():
     """Get all active sale products with time remaining"""
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
+    conn = connect_to_db()
+    if not conn:
+        return []
+    
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
     
     now = datetime.now()
     
@@ -61,8 +84,12 @@ def admin_sale_products():
         flash('Access denied. Admin privileges required.', 'danger')
         return redirect(url_for('index'))
     
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
+    conn = connect_to_db()
+    if not conn:
+        flash('Database connection error', 'danger')
+        return redirect(url_for('index'))
+    
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
     
     # Get all sale products
     query = """
@@ -97,8 +124,8 @@ def add_sale_product():
     
     try:
         product_id = request.form.get('product_id')
-        sale_price = float(request.form.get('sale_price'))
-        original_price = float(request.form.get('original_price'))
+        sale_price = float(request.form.get('sale_price', 0))
+        original_price = float(request.form.get('original_price', 0))
         sale_duration_hours = int(request.form.get('sale_duration_hours', 24))
         contact_phone = request.form.get('contact_phone', '+919876543210')
         contact_whatsapp = request.form.get('contact_whatsapp', '+919876543210')
@@ -110,7 +137,11 @@ def add_sale_product():
         sale_start_time = datetime.now()
         sale_end_time = sale_start_time + timedelta(hours=sale_duration_hours)
         
-        conn = get_db_connection()
+        conn = connect_to_db()
+        if not conn:
+            flash('Database connection error', 'danger')
+            return redirect(url_for('sale.admin_sale_products'))
+        
         cursor = conn.cursor()
         
         query = """
@@ -142,7 +173,11 @@ def delete_sale_product(sale_id):
         return jsonify({'success': False, 'message': 'Access denied'}), 403
     
     try:
-        conn = get_db_connection()
+        conn = connect_to_db()
+        if not conn:
+            flash('Database connection error', 'danger')
+            return redirect(url_for('sale.admin_sale_products'))
+        
         cursor = conn.cursor()
         
         cursor.execute("DELETE FROM sale_products WHERE id = %s", (sale_id,))
@@ -166,7 +201,10 @@ def toggle_sale_product(sale_id):
         return jsonify({'success': False, 'message': 'Access denied'}), 403
     
     try:
-        conn = get_db_connection()
+        conn = connect_to_db()
+        if not conn:
+            return jsonify({'success': False, 'message': 'Database connection error'}), 500
+        
         cursor = conn.cursor()
         
         cursor.execute("UPDATE sale_products SET is_active = NOT is_active WHERE id = %s", (sale_id,))

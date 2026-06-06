@@ -325,8 +325,11 @@
                 <img src="{{ url_for('static', filename=product.image_url) }}" class="product-image" alt="{{ product.name }}" loading="lazy">
               </a>
               {% if product.sale_id %}
-              <div style="position: absolute; top: 10px; left: 10px; background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%); color: white; padding: 8px 15px; border-radius: 20px; font-weight: bold; font-size: 0.9rem; box-shadow: 0 4px 15px rgba(255, 107, 53, 0.4); z-index: 2;">
-                🔥 {{ product.discount_percentage }}% OFF
+              <div class="sale-timer-badge" id="sale-badge-{{ product.id }}" data-end-time="{{ product.sale_end_time.isoformat() }}" style="position: absolute; top: 10px; left: 10px; background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%); color: white; padding: 8px 12px; border-radius: 15px; font-weight: bold; font-size: 0.85rem; box-shadow: 0 4px 15px rgba(255, 107, 53, 0.4); z-index: 2; line-height: 1.3;">
+                <div style="font-size: 0.95rem;">🔥 {{ product.discount_percentage }}% OFF</div>
+                <div class="timer-text" style="font-size: 0.75rem; opacity: 0.95; margin-top: 2px;">
+                  <span class="days">0</span>d <span class="hours">0</span>h <span class="mins">0</span>m
+                </div>
               </div>
               {% endif %}
               <div class="product-category-badge">
@@ -489,6 +492,40 @@ function calculateSaleDiscount() {
   } else {
     document.getElementById('discount_display').style.display = 'none';
   }
+}
+
+// Update sale timers on products page
+function updateProductSaleTimers() {
+  const badges = document.querySelectorAll('.sale-timer-badge');
+  
+  badges.forEach(badge => {
+    const endTime = new Date(badge.dataset.endTime);
+    const now = new Date();
+    const timeRemaining = endTime - now;
+    
+    if (timeRemaining <= 0) {
+      badge.style.display = 'none';
+      return;
+    }
+    
+    const days = Math.floor(timeRemaining / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((timeRemaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
+    
+    const daysEl = badge.querySelector('.days');
+    const hoursEl = badge.querySelector('.hours');
+    const minsEl = badge.querySelector('.mins');
+    
+    if (daysEl) daysEl.textContent = days;
+    if (hoursEl) hoursEl.textContent = hours;
+    if (minsEl) minsEl.textContent = minutes;
+  });
+}
+
+// Update timers every second
+if (document.querySelectorAll('.sale-timer-badge').length > 0) {
+  updateProductSaleTimers();
+  setInterval(updateProductSaleTimers, 1000);
 }
 </script>
 

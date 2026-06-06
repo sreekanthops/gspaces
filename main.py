@@ -71,6 +71,7 @@ from visitor_tracking_routes import register_visitor_routes
 from admin_order_setup_routes import register_admin_order_setup_routes
 from quotation_order_routes import register_quotation_order_routes
 from admin_cost_prices_routes import register_admin_cost_prices_routes
+from sale_routes import sale_bp
 
 # --- DISPOSABLE EMAIL DOMAINS BLACKLIST ---
 DISPOSABLE_EMAIL_DOMAINS = {
@@ -5735,6 +5736,10 @@ app.register_blueprint(system_health_bp)
 # Register design gallery blueprint
 app.register_blueprint(design_gallery_bp)
 app.register_blueprint(admin_users_bp)
+
+# --- SALE PRODUCTS ---
+# Register sale products blueprint
+app.register_blueprint(sale_bp)
 
 # --- VISITOR TRACKING SYSTEM ---
 # Register visitor tracking and system health monitoring

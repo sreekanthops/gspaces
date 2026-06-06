@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔥 Flash Sale - GSpaces</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding-top: 20px;
+        }
+        
+        .sale-header {
+            text-align: center;
+            color: white;
+            padding: 40px 0;
+            margin-bottom: 30px;
+        }
+        
+        .sale-header h1 {
+            font-size: 3rem;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        .sale-card {
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.3s, box-shadow 0.3s;
+            height: 100%;
+        }
+        
+        .sale-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+        }
+        
+        .sale-image-container {
+            position: relative;
+            height: 250px;
+            overflow: hidden;
+        }
+        
+        .sale-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .discount-badge {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-weight: bold;
+            font-size: 1.2rem;
+            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.4);
+            animation: bounce 2s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .timer-container {
+            background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        .timer {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 10px;
+        }
+        
+        .timer-unit {
+            background: rgba(255,255,255,0.2);
+            padding: 10px 15px;
+            border-radius: 10px;
+            min-width: 60px;
+        }
+        
+        .timer-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            display: block;
+        }
+        
+        .timer-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            opacity: 0.9;
+        }
+        
+        .sale-content {
+            padding: 20px;
+        }
+        
+        .product-name {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .price-container {
+            margin: 15px 0;
+        }
+        
+        .original-price {
+            text-decoration: line-through;
+            color: #999;
+            font-size: 1rem;
+        }
+        
+        .sale-price {
+            color: #ff6b35;
+            font-size: 2rem;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        
+        .contact-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .contact-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .call-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .call-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+            color: white;
+        }
+        
+        .whatsapp-btn {
+            background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+            color: white;
+        }
+        
+        .whatsapp-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(37, 211, 102, 0.4);
+            color: white;
+        }
+        
+        .no-sales {
+            text-align: center;
+            color: white;
+            padding: 60px 20px;
+        }
+        
+        .no-sales h2 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+        }
+        
+        .expired-badge {
+            background: #dc3545;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            display: inline-block;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    {% include 'navbar.html' %}
+    
+    <div class="sale-header">
+        <h1>🔥 FLASH SALE 🔥</h1>
+        <p class="lead">Limited Time Offers - Grab Them Before They're Gone!</p>
+    </div>
+    
+    <div class="container mb-5">
+        {% if products %}
+        <div class="row g-4">
+            {% for product in products %}
+            <div class="col-md-6 col-lg-4">
+                <div class="sale-card">
+                    <div class="sale-image-container">
+                        <img src="{{ product.product_image }}" alt="{{ product.product_name }}" class="sale-image">
+                        <div class="discount-badge">{{ product.discount_percentage }}% OFF</div>
+                    </div>
+                    
+                    <div class="timer-container" id="timer-{{ product.id }}" data-end-time="{{ product.sale_end_time.isoformat() }}">
+                        <div>⏰ Sale Ending In:</div>
+                        <div class="timer">
+                            <div class="timer-unit">
+                                <span class="timer-value days">{{ product.days }}</span>
+                                <span class="timer-label">Days</span>
+                            </div>
+                            <div class="timer-unit">
+                                <span class="timer-value hours">{{ product.hours }}</span>
+                                <span class="timer-label">Hours</span>
+                            </div>
+                            <div class="timer-unit">
+                                <span class="timer-value minutes">{{ product.minutes }}</span>
+                                <span class="timer-label">Mins</span>
+                            </div>
+                            <div class="timer-unit">
+                                <span class="timer-value seconds">{{ product.seconds }}</span>
+                                <span class="timer-label">Secs</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="sale-content">
+                        <div class="product-name">{{ product.product_name }}</div>
+                        
+                        {% if product.product_description %}
+                        <p class="text-muted small">{{ product.product_description[:100] }}...</p>
+                        {% endif %}
+                        
+                        <div class="price-container">
+                            <span class="original-price">₹{{ product.original_price|int }}</span>
+                            <span class="sale-price">₹{{ product.sale_price|int }}</span>
+                        </div>
+                        
+                        <div class="text-success fw-bold">
+                            <i class="bi bi-piggy-bank"></i> You Save: ₹{{ (product.original_price - product.sale_price)|int }}
+                        </div>
+                        
+                        {% if product.show_contact %}
+                        <div class="contact-buttons">
+                            <a href="tel:{{ product.contact_phone }}" class="contact-btn call-btn">
+                                <i class="bi bi-telephone-fill"></i> Call Now
+                            </a>
+                            <a href="https://wa.me/{{ product.contact_whatsapp.replace('+', '').replace(' ', '') }}?text=Hi, I'm interested in {{ product.product_name }} from your Flash Sale!" 
+                               target="_blank" class="contact-btn whatsapp-btn">
+                                <i class="bi bi-whatsapp"></i> WhatsApp
+                            </a>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="mt-3">
+                            <a href="{{ url_for('product_detail', product_id=product.product_id) }}" class="btn btn-outline-primary w-100">
+                                <i class="bi bi-eye"></i> View Details
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="no-sales">
+            <h2>😔 No Active Sales Right Now</h2>
+            <p>Check back soon for amazing deals!</p>
+            <a href="{{ url_for('products') }}" class="btn btn-light btn-lg mt-3">
+                <i class="bi bi-shop"></i> Browse All Products
+            </a>
+        </div>
+        {% endif %}
+    </div>
+    
+    {% include 'footer.html' %}
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Update all timers
+        function updateTimers() {
+            const timerContainers = document.querySelectorAll('[id^="timer-"]');
+            
+            timerContainers.forEach(container => {
+                const endTime = new Date(container.dataset.endTime);
+                const now = new Date();
+                const timeRemaining = endTime - now;
+                
+                if (timeRemaining <= 0) {
+                    // Sale ended
+                    container.innerHTML = '<div class="expired-badge">⏰ Sale Ended</div>';
+                    return;
+                }
+                
+                // Calculate time units
+                const days = Math.floor(timeRemaining / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((timeRemaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((timeRemaining % (1000 * 60)) / 1000);
+                
+                // Update display
+                const daysEl = container.querySelector('.days');
+                const hoursEl = container.querySelector('.hours');
+                const minutesEl = container.querySelector('.minutes');
+                const secondsEl = container.querySelector('.seconds');
+                
+                if (daysEl) daysEl.textContent = days.toString().padStart(2, '0');
+                if (hoursEl) hoursEl.textContent = hours.toString().padStart(2, '0');
+                if (minutesEl) minutesEl.textContent = minutes.toString().padStart(2, '0');
+                if (secondsEl) secondsEl.textContent = seconds.toString().padStart(2, '0');
+            });
+        }
+        
+        // Update timers every second
+        updateTimers();
+        setInterval(updateTimers, 1000);
+        
+        // Reload page when any sale ends to remove expired items
+        function checkForExpiredSales() {
+            const timerContainers = document.querySelectorAll('[id^="timer-"]');
+            let hasExpired = false;
+            
+            timerContainers.forEach(container => {
+                const endTime = new Date(container.dataset.endTime);
+                const now = new Date();
+                if (endTime <= now) {
+                    hasExpired = true;
+                }
+            });
+            
+            if (hasExpired) {
+                location.reload();
+            }
+        }
+        
+        // Check every minute for expired sales
+        setInterval(checkForExpiredSales, 60000);
+    </script>
+</body>
+</html>

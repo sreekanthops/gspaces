@@ -573,12 +573,18 @@ if (document.querySelectorAll('.sale-timer-badge').length > 0) {
     var $grid = $('.isotope-container').isotope({
       itemSelector: '.isotope-item',
       layoutMode: 'fitRows',
-      filter: '*'
+      filter: ':not(.filter-individual)'  // Exclude Individual category by default
     });
 
     // Filter items when filter pill is clicked
     $('.isotope-filters .filter-pill').on('click', function() {
       var filterValue = $(this).attr('data-filter');
+      
+      // If "All Products" is clicked, exclude Individual category
+      if (filterValue === '*') {
+        filterValue = ':not(.filter-individual)';
+      }
+      
       $grid.isotope({ filter: filterValue });
 
       // Update active class
